@@ -1,11 +1,44 @@
-<div align="center">
+# مصاريفي (Masarifi) - تطبيق إدارة المصاريف الشخصية
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+تطبيق ويب تقدمي (PWA) لإدارة المصاريف الشخصية والميزانية، مبني باستخدام React و Tailwind CSS و Vite.
 
-  <h1>Built with AI Studio</h2>
+## المميزات
+- **إدارة المصاريف والدخل:** تتبع أموالك بسهولة.
+- **الإحصائيات والتحليلات:** رسوم بيانية تفصيلية لمصاريفك.
+- **الميزانيات والأهداف:** حدد ميزانيتك الشهرية وتتبع أهدافك المالية.
+- **تطبيق تقدمي (PWA):** يمكنك تثبيته على هاتفك أو حاسوبك واستخدامه بدون إنترنت.
+- **الوضع الليلي:** يدعم الوضع الليلي والنهاري.
+- **بيانات محلية:** جميع بياناتك يتم حفظها محلياً في متصفحك لضمان الخصوصية.
+- **تصدير واستيراد:** يمكنك أخذ نسخة احتياطية من بياناتك واستعادتها في أي وقت.
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## النشر على GitHub Pages
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+هذا التطبيق جاهز للنشر مباشرة على GitHub Pages. اتبع الخطوات التالية:
 
-</div>
+1. قم بإنشاء مستودع (Repository) جديد على GitHub.
+2. ارفع ملفات المشروع إلى المستودع.
+3. في إعدادات المستودع (Settings) -> Pages:
+   - اختر `GitHub Actions` كمصدر (Source).
+   - قم بإعداد سير عمل (Workflow) لـ Node.js أو استخدم القالب الجاهز لـ Vite/React.
+   - أو يمكنك بناء المشروع محلياً باستخدام `npm run build` ورفع مجلد `dist` إلى فرع `gh-pages`.
+
+### النشر اليدوي السريع (باستخدام gh-pages)
+يمكنك استخدام حزمة `gh-pages` للنشر بضغطة زر:
+1. `npm install gh-pages --save-dev`
+2. أضف السكربت التالي إلى `package.json`:
+   `"deploy": "npm run build && gh-pages -d dist"`
+3. قم بتشغيل `npm run deploy`.
+
+## التطوير المحلي
+1. `npm install`
+2. `npm run dev`
+
+## التقنيات المستخدمة
+- React 19
+- Vite
+- Tailwind CSS v4
+- Framer Motion
+- Recharts
+- Lucide React
+- React Hot Toast
+- Vite PWA Plugin
