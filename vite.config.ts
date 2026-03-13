@@ -7,7 +7,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
-    base: './',
+    base: '/-my-wallet/',
     plugins: [
       react(), 
       tailwindcss(),
@@ -28,17 +28,19 @@ export default defineConfig(({mode}) => {
           theme_color: '#10b981',
           background_color: '#f9fafb',
           display: 'standalone',
+          start_url: '/-my-wallet/',
+          scope: '/-my-wallet/',
           shortcuts: [
             {
               name: "إضافة مصروف",
               short_name: "مصروف",
-              url: "/?action=add-expense",
+              url: "/-my-wallet/?action=add-expense",
               icons: [{ src: "icon-192.png", sizes: "192x192" }]
             },
             {
               name: "لوحة التحكم",
               short_name: "الرئيسية",
-              url: "/",
+              url: "/-my-wallet/",
               icons: [{ src: "icon-192.png", sizes: "192x192" }]
             }
           ],
