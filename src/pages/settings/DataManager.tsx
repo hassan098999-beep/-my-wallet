@@ -52,6 +52,27 @@ const DataManager = () => {
     }
   };
 
+  const checkPwaStatus = async () => {
+    let status = 'حالة PWA:\n';
+    
+    // Check Standalone
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    status += `- وضع Standalone: ${isStandalone ? 'نعم' : 'لا'}\n`;
+    
+    // Check Service Worker
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      status += `- Service Worker: ${registrations.length > 0 ? 'مسجل' : 'غير مسجل'}\n`;
+    } else {
+      status += `- Service Worker: غير مدعوم\n`;
+    }
+    
+    // Check deferredPrompt
+    status += `- حدث التثبيت (deferredPrompt): ${window.deferredPrompt ? 'متاح' : 'غير متاح'}\n`;
+    
+    alert(status);
+  };
+
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xl">
@@ -69,7 +90,10 @@ const DataManager = () => {
         </div>
 
         <div className="mt-6 pt-6 md:mt-8 md:pt-8 border-t border-slate-100 dark:border-slate-800">
-          <h3 className="text-[10px] md:text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4 md:mb-6">تثبيت التطبيق</h3>
+          <div className="flex justify-between items-center mb-4 md:mb-6">
+            <h3 className="text-[10px] md:text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">تثبيت التطبيق</h3>
+            <button onClick={checkPwaStatus} className="text-[10px] text-slate-500 underline">فحص حالة التثبيت</button>
+          </div>
           <button 
             onClick={handleInstallClick}
             className={cn(

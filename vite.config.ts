@@ -8,13 +8,13 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
 
   return {
-    base: './', // Use relative base to work on any GitHub Pages subpath
+    base: '/', // Use absolute root base since the app is hosted at the root domain
     plugins: [
       react(), 
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        injectRegister: 'auto',
+        injectRegister: false, // We will manually register in main.tsx for better debugging
         includeAssets: ['icon-192.png', 'icon-512.png', 'icon.svg'],
         devOptions: {
           enabled: true,
@@ -35,20 +35,32 @@ export default defineConfig(({mode}) => {
           background_color: '#ffffff',
           display: 'standalone',
           orientation: 'portrait',
-          start_url: '.',
-          scope: '.',
+          start_url: '/',
+          scope: '/',
           icons: [
             {
               src: 'icon-192.png',
               sizes: '192x192',
               type: 'image/png',
-              purpose: 'any maskable'
+              purpose: 'any'
+            },
+            {
+              src: 'icon-192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'maskable'
             },
             {
               src: 'icon-512.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'any maskable'
+              purpose: 'any'
+            },
+            {
+              src: 'icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable'
             }
           ]
         }
