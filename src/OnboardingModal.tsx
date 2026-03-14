@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../store/AppContext';
+import { useAppContext } from './store/AppContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { Wallet, Landmark, Coins, CheckCircle2, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
-import { cn } from '../utils';
+import { cn } from './utils';
 
 const OnboardingModal: React.FC = () => {
   const { hasCompletedOnboarding, completeOnboarding, setCurrency, updateAccount, accounts } = useAppContext();

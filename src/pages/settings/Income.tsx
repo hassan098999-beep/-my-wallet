@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../store/AppContext';
-import { formatCurrency, cn } from '../utils';
+import { useAppContext } from '../../store/AppContext';
+import { formatCurrency, cn } from '../../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Trash2, Wallet, Calendar, Landmark, ArrowDownCircle, TrendingUp } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from 'date-fns';

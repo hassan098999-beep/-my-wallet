@@ -3,7 +3,7 @@ import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AppProvider } from './store/AppContext';
 import Layout from './components/Layout';
-import OnboardingModal from './components/OnboardingModal';
+import OnboardingModal from './OnboardingModal';
 import LoadingScreen from './components/LoadingScreen';
 
 // Lazy load pages
@@ -13,7 +13,7 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const Settings = lazy(() => import('./pages/Settings'));
 const BudgetPage = lazy(() => import('./pages/Budget'));
 const GoalsPage = lazy(() => import('./pages/Goals'));
-const IncomePage = lazy(() => import('./pages/Income'));
+const IncomePage = lazy(() => import('./pages/settings/Income'));
 const RecurringExpenses = lazy(() => import('./pages/RecurringExpenses'));
 const SavingsPage = lazy(() => import('./pages/Savings'));
 

@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils';
 import { Layers, Wallet, Database } from 'lucide-react';
-import CategoryManager from '../components/settings/CategoryManager';
-import AccountManager from '../components/settings/AccountManager';
-import DataManager from '../components/settings/DataManager';
+import CategoryManager from './settings/CategoryManager';
+import AccountManager from './settings/AccountManager';
+import DataManager from './settings/DataManager';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },

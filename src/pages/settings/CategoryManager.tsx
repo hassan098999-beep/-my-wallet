@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../store/AppContext';
 import { Layers, Plus, Trash2, Edit2, Search, X } from 'lucide-react';
-import { DynamicIcon } from '../DynamicIcon';
-import { IconSelect } from '../IconSelect';
+import { DynamicIcon } from '../../components/DynamicIcon';
+import { IconSelect } from '../../components/IconSelect';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../utils';
 

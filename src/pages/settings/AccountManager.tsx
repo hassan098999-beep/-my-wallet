@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../store/AppContext';
 import { Wallet, Plus, Trash2, Edit2, ArrowRightLeft } from 'lucide-react';
-import { DynamicIcon } from '../DynamicIcon';
-import { IconSelect } from '../IconSelect';
+import { DynamicIcon } from '../../components/DynamicIcon';
+import { IconSelect } from '../../components/IconSelect';
 import { formatCurrency } from '../../utils';
 
 const AccountManager = () => {
