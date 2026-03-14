@@ -5,6 +5,7 @@ import { AppProvider } from './store/AppContext';
 import Layout from './components/Layout';
 import OnboardingModal from './OnboardingModal';
 import LoadingScreen from './components/LoadingScreen';
+import PwaInstallPrompt from './components/PwaInstallPrompt';
 
 // Lazy load pages
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -18,8 +19,6 @@ const RecurringExpenses = lazy(() => import('./pages/RecurringExpenses'));
 const SavingsPage = lazy(() => import('./pages/Savings'));
 
 export default function App() {
-  const [deferredPrompt, setDeferredPrompt] = React.useState<any>(window.deferredPrompt || null);
-
   useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     console.log('PWA Standalone Mode:', isStandalone);
@@ -27,36 +26,7 @@ export default function App() {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
-
-    const handleInstallPrompt = () => {
-      setDeferredPrompt(window.deferredPrompt);
-    };
-
-    window.addEventListener('pwa-install-prompt', handleInstallPrompt);
-
-    // Also listen to beforeinstallprompt just in case
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault();
-      window.deferredPrompt = e;
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('pwa-install-prompt', handleInstallPrompt);
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
   }, []);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
-      window.deferredPrompt = null;
-    }
-  };
 
   return (
     <AppProvider>
@@ -69,30 +39,7 @@ export default function App() {
         }
       }} />
       
-      {deferredPrompt && (
-        <div className="fixed bottom-20 left-4 right-4 z-[100] md:left-auto md:right-4 md:w-80">
-          <div className="bg-emerald-500 text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between animate-bounce">
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 p-2 rounded-xl">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm font-black">تثبيت التطبيق</p>
-                <p className="text-[10px] opacity-80">ثبت التطبيق للوصول السريع</p>
-              </div>
-            </div>
-            <button 
-              onClick={handleInstallClick}
-              className="bg-white text-emerald-600 px-4 py-2 rounded-xl text-xs font-black hover:bg-emerald-50 shadow-sm transition-colors"
-            >
-              تثبيت
-            </button>
-          </div>
-        </div>
-      )}
-
+      <PwaInstallPrompt />
       <OnboardingModal />
       <Router>
         <Suspense fallback={<LoadingScreen />}>

@@ -6,26 +6,37 @@ import { cn } from '../../utils';
 
 const DataManager = () => {
   const { exportData, importData } = useAppContext();
-  const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = React.useState<any>(window.deferredPrompt || null);
 
   React.useEffect(() => {
+    const handleInstallPrompt = () => {
+      setDeferredPrompt(window.deferredPrompt);
+    };
+    window.addEventListener('pwa-install-prompt', handleInstallPrompt);
+
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
+      window.deferredPrompt = e;
       setDeferredPrompt(e);
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('pwa-install-prompt', handleInstallPrompt);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      toast.error('التطبيق مثبت بالفعل أو أن المتصفح لا يدعم التثبيت حالياً.');
+      toast.error('التطبيق مثبت بالفعل أو أن المتصفح لا يدعم التثبيت حالياً. (مستخدمي iPhone يجب عليهم استخدام زر المشاركة)');
       return;
     }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
       setDeferredPrompt(null);
+      window.deferredPrompt = null;
     }
   };
 
