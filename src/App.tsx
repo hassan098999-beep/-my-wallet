@@ -18,7 +18,7 @@ const RecurringExpenses = lazy(() => import('./pages/RecurringExpenses'));
 const SavingsPage = lazy(() => import('./pages/Savings'));
 
 export default function App() {
-  const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = React.useState<any>(window.deferredPrompt || null);
 
   useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
@@ -28,14 +28,22 @@ export default function App() {
       Notification.requestPermission();
     }
 
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
+    const handleInstallPrompt = () => {
+      setDeferredPrompt(window.deferredPrompt);
     };
 
+    window.addEventListener('pwa-install-prompt', handleInstallPrompt);
+
+    // Also listen to beforeinstallprompt just in case
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+      setDeferredPrompt(e);
+    };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     return () => {
+      window.removeEventListener('pwa-install-prompt', handleInstallPrompt);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
@@ -46,6 +54,7 @@ export default function App() {
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
       setDeferredPrompt(null);
+      window.deferredPrompt = null;
     }
   };
 

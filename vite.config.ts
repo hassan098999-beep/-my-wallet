@@ -17,7 +17,6 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        injectRegister: 'auto',
         includeAssets: ['icon-192.png', 'icon-512.png', 'icon.svg'],
         devOptions: {
           enabled: true,
@@ -38,7 +37,6 @@ export default defineConfig(({mode}) => {
           background_color: '#ffffff',
           display: 'standalone',
           orientation: 'portrait',
-          id: base,
           start_url: base,
           scope: base,
           icons: [
