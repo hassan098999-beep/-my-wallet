@@ -6,8 +6,12 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
+  // Use / as base by default (for local dev and AI Studio preview)
+  // Use /-my-wallet/ only when building for GitHub Pages
+  const base = env.VITE_GITHUB_PAGES === 'true' ? '/-my-wallet/' : '/';
+
   return {
-    base: '/-my-wallet/',
+    base,
     plugins: [
       react(), 
       tailwindcss(),
@@ -15,6 +19,10 @@ export default defineConfig(({mode}) => {
         registerType: 'autoUpdate',
         injectRegister: 'script-defer',
         includeAssets: ['icon-192.png', 'icon-512.png'],
+        devOptions: {
+          enabled: true,
+          type: 'module'
+        },
         workbox: {
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
           cleanupOutdatedCaches: true,
@@ -28,19 +36,19 @@ export default defineConfig(({mode}) => {
           theme_color: '#10b981',
           background_color: '#f9fafb',
           display: 'standalone',
-          start_url: '/-my-wallet/',
-          scope: '/-my-wallet/',
+          start_url: base,
+          scope: base,
           shortcuts: [
             {
               name: "إضافة مصروف",
               short_name: "مصروف",
-              url: "/-my-wallet/?action=add-expense",
+              url: `${base}?action=add-expense`,
               icons: [{ src: "icon-192.png", sizes: "192x192" }]
             },
             {
               name: "لوحة التحكم",
               short_name: "الرئيسية",
-              url: "/-my-wallet/",
+              url: base,
               icons: [{ src: "icon-192.png", sizes: "192x192" }]
             }
           ],
