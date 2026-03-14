@@ -6,15 +6,18 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
+  
+  // Use /-/ for GitHub Pages since the repo name is "-"
+  const base = env.VITE_GITHUB_PAGES === 'true' ? '/-/' : '/';
 
   return {
-    base: '/', // Use absolute root base since the app is hosted at the root domain
+    base,
     plugins: [
       react(), 
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        injectRegister: false, // We will manually register in main.tsx for better debugging
+        injectRegister: 'auto',
         includeAssets: ['icon-192.png', 'icon-512.png', 'icon.svg'],
         devOptions: {
           enabled: true,
@@ -35,8 +38,8 @@ export default defineConfig(({mode}) => {
           background_color: '#ffffff',
           display: 'standalone',
           orientation: 'portrait',
-          start_url: '/',
-          scope: '/',
+          start_url: base,
+          scope: base,
           icons: [
             {
               src: 'icon-192.png',
