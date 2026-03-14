@@ -458,14 +458,14 @@ const Analytics = () => {
                   dataKey="date" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fontSize: 7, md: 8, fontWeight: 700, fill: '#94a3b8' }}
+                  tick={{ fontSize: window.innerWidth < 768 ? 7 : 8, fontWeight: 700, fill: '#94a3b8' }}
                   dy={8}
                   interval={window.innerWidth < 640 ? 3 : 0}
                 />
                 <YAxis 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fontSize: 7, md: 8, fontWeight: 700, fill: '#94a3b8' }}
+                  tick={{ fontSize: window.innerWidth < 768 ? 7 : 8, fontWeight: 700, fill: '#94a3b8' }}
                 />
                 <Tooltip 
                   cursor={{ fill: '#f1f5f9', radius: 6 }}

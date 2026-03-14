@@ -457,7 +457,7 @@ const RecurringExpenses = () => {
       <div className="space-y-3 md:space-y-4 px-2">
         <div className="flex items-center gap-2 md:gap-3">
           <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center text-primary-500">
-            <Clock size={14} md:size={16} />
+            <Clock className="size-3.5 md:size-4" />
           </div>
           <div>
             <h3 className="text-xs md:text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase">قائمة المصاريف المتكررة</h3>
@@ -484,7 +484,7 @@ const RecurringExpenses = () => {
                         style={{ backgroundColor: category?.color || '#ccc' }}
                       >
                         {category?.icon ? (
-                          <DynamicIcon name={category.icon} className="size-[16px] md:size-[18px]" />
+                          <DynamicIcon name={category.icon} size={16} className="md:size-[18px]" />
                         ) : (
                           <span className="text-[10px] md:text-xs font-black">{category?.name.charAt(0)}</span>
                         )}
@@ -556,7 +556,7 @@ const RecurringExpenses = () => {
                         className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"
                         title="حذف"
                       >
-                        <Trash2 size={12} md:size={14} />
+                        <Trash2 className="size-3 md:size-3.5" />
                       </motion.button>
                     </div>
                   </div>
@@ -571,7 +571,7 @@ const RecurringExpenses = () => {
             className="text-center py-8 md:py-12 bg-white/40 dark:bg-slate-900/20 backdrop-blur-3xl rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800"
           >
             <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center mx-auto mb-3 md:mb-4 text-slate-400">
-              <Repeat size={24} md:size={32} />
+              <Repeat className="size-6 md:size-8" />
             </div>
             <h3 className="text-xs md:text-sm font-black text-slate-900 dark:text-white mb-1 uppercase tracking-tight">لا توجد مصاريف متكررة</h3>
             <p className="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 font-medium max-w-[180px] md:max-w-xs mx-auto">قم بإضافة مصاريفك الثابتة (مثل الإيجار أو الاشتراكات) ليتم تسجيلها تلقائياً</p>

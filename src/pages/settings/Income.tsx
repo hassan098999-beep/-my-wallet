@@ -197,7 +197,7 @@ const IncomePage = () => {
         {income.length === 0 ? (
           <div className="p-16 md:p-24 text-center">
             <div className="w-24 h-24 md:w-32 md:h-32 mx-auto bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-center text-slate-400 mb-8 md:mb-10 shadow-inner">
-              <Wallet size={40} md:size={56} />
+              <Wallet className="size-10 md:size-14" />
             </div>
             <p className="text-lg md:text-xl font-bold text-slate-500">لا توجد مصادر دخل مسجلة حالياً</p>
           </div>

@@ -8,7 +8,7 @@ import { Plus, CheckCircle2, Wallet, CreditCard, Banknote, Landmark, TrendingUp,
 import { DynamicIcon } from '../components/DynamicIcon';
 import { PaymentMethod } from '../types';
 import { CategorySelect } from '../components/CategorySelect';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, Variants } from 'motion/react';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
@@ -82,7 +82,7 @@ const Dashboard = () => {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,

@@ -181,7 +181,7 @@ const GoalsPage = () => {
           type="submit" 
           className="mt-6 md:mt-8 w-full bg-primary-600 hover:bg-primary-700 text-white py-3.5 md:py-4 rounded-2xl font-black flex items-center justify-center gap-2 text-sm md:text-base transition-all shadow-lg shadow-primary-500/20"
         >
-          <Plus size={20} md:size={24} /> إضافة هدف جديد
+          <Plus className="size-5 md:size-6" /> إضافة هدف جديد
         </motion.button>
       </motion.form>
 
@@ -206,7 +206,7 @@ const GoalsPage = () => {
                       {goal.name}
                     </h3>
                     <div className="flex items-center gap-2 md:gap-3 text-slate-400">
-                      <Calendar size={14} md:size={16} />
+                      <Calendar className="size-3.5 md:size-4" />
                       <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest">الموعد: {goal.deadline}</p>
                     </div>
                   </div>
@@ -214,7 +214,7 @@ const GoalsPage = () => {
                     onClick={() => deleteGoal(goal.id)} 
                     className="text-slate-300 hover:text-rose-500 p-2.5 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all shadow-sm hover:shadow-md"
                   >
-                    <Trash2 size={18} md:size={20} />
+                    <Trash2 className="size-[18px] md:size-5" />
                   </button>
                 </div>
 
@@ -262,7 +262,7 @@ const GoalsPage = () => {
                   <div className="p-4 md:p-5 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-inner">
                     <div className="flex items-center gap-3 md:gap-4">
                       <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-primary-500 shadow-sm">
-                        <Target size={20} md:size={24} />
+                        <Target className="size-5 md:size-6" />
                       </div>
                       <div className="space-y-1">
                         <p className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest">مربوط بـ</p>
@@ -279,7 +279,7 @@ const GoalsPage = () => {
                         onClick={() => handleContributeSurplus(goal)}
                         className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 md:px-5 md:py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
                       >
-                        <Plus size={16} md:size={18} className="font-black" />
+                        <Plus className="size-4 md:size-[18px] font-black" />
                         <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">توفير الفائض</span>
                       </motion.button>
                     )}

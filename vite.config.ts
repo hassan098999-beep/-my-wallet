@@ -6,12 +6,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
-  
-  // Use /-/ for GitHub Pages since the repo name is "-"
-  const base = env.VITE_GITHUB_PAGES === 'true' ? '/-/' : '/';
 
   return {
-    base,
+    base: './', // Use relative base to ensure it works on any domain or subpath
     plugins: [
       react(), 
       tailwindcss(),
@@ -38,8 +35,8 @@ export default defineConfig(({mode}) => {
           background_color: '#ffffff',
           display: 'standalone',
           orientation: 'portrait',
-          start_url: base,
-          scope: base,
+          start_url: '.',
+          scope: '.',
           icons: [
             {
               src: 'icon-192.png',

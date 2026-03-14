@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, PlusCircle, List, PieChart, Wallet, Trophy } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, List, PieChart, BrainCircuit } from 'lucide-react';
 import { cn } from '../utils';
 
 const mainNavItems = [
@@ -8,7 +8,7 @@ const mainNavItems = [
   { path: '/transactions', name: 'العمليات', icon: List },
   { path: '/add', name: 'إضافة', icon: PlusCircle, isFab: true },
   { path: '/analytics', name: 'الإحصائيات', icon: PieChart },
-  { path: '/income', name: 'الدخل', icon: Wallet },
+  { path: '/assistant', name: 'المساعد', icon: BrainCircuit },
 ];
 
 interface BottomNavProps {
