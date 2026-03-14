@@ -21,6 +21,9 @@ export default function App() {
   const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
 
   useEffect(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    console.log('PWA Standalone Mode:', isStandalone);
+
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }

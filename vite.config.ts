@@ -17,14 +17,15 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        injectRegister: 'script-defer',
-        includeAssets: ['icon-192.png', 'icon-512.png'],
+        injectRegister: 'auto',
+        includeAssets: ['icon-192.png', 'icon-512.png', 'icon.svg'],
         devOptions: {
           enabled: true,
           type: 'module'
         },
         workbox: {
-          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
+          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           cleanupOutdatedCaches: true,
           skipWaiting: true,
           clientsClaim: true,
@@ -34,10 +35,38 @@ export default defineConfig(({mode}) => {
           short_name: 'مصاريفي',
           description: 'تطبيق لإدارة المصاريف الشخصية وتتبع الميزانية',
           theme_color: '#10b981',
-          background_color: '#f9fafb',
+          background_color: '#ffffff',
           display: 'standalone',
+          orientation: 'portrait',
+          id: base,
           start_url: base,
           scope: base,
+          icons: [
+            {
+              src: 'icon-192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: 'icon-192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'maskable'
+            },
+            {
+              src: 'icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: 'icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable'
+            }
+          ],
           shortcuts: [
             {
               name: "إضافة مصروف",
@@ -50,20 +79,6 @@ export default defineConfig(({mode}) => {
               short_name: "الرئيسية",
               url: base,
               icons: [{ src: "icon-192.png", sizes: "192x192" }]
-            }
-          ],
-          icons: [
-            {
-              src: 'icon-192.png',
-              sizes: '192x192',
-              type: 'image/png',
-              purpose: 'any'
-            },
-            {
-              src: 'icon-512.png',
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'any maskable'
             }
           ]
         }
