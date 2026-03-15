@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { PaymentMethod } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Calendar, CreditCard, Banknote, Landmark, FileText, Wallet, X, AlertTriangle, Check } from 'lucide-react';
+import { Plus, Calendar, CreditCard, Banknote, Landmark, X, AlertTriangle, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatCurrency, cn } from '../utils';
 import { startOfMonth, endOfMonth, parseISO } from 'date-fns';
 import { DynamicIcon } from './DynamicIcon';
@@ -24,6 +24,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) =>
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [note, setNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const selectedCategory = categories.find(c => c.id === categoryId);
 
@@ -81,6 +82,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) =>
       setDate(new Date().toISOString().split('T')[0]);
       setNote('');
       setPaymentMethod('cash');
+      setShowAdvanced(false);
     }
   }, [isOpen, categories, accounts]);
 
@@ -117,15 +119,6 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) =>
     onClose();
   };
 
-  const quickAmounts = [5, 10, 20, 50];
-
-  const handleQuickAmount = (val: number) => {
-    setAmount((prev) => {
-      const current = isNaN(Number(prev)) ? 0 : Number(prev);
-      return (current + val).toString();
-    });
-  };
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -145,8 +138,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) =>
             className="fixed bottom-0 left-0 right-0 md:top-1/2 md:left-1/2 md:right-auto md:bottom-auto md:-translate-x-1/2 md:-translate-y-1/2 w-full md:w-[500px] bg-white dark:bg-slate-900 rounded-t-[2.5rem] md:rounded-[2.5rem] z-[70] shadow-2xl max-h-[95vh] flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
-              <h2 className="text-xl font-black text-slate-900 dark:text-white">إضافة مصروف جديد</h2>
+            <div className="flex items-center justify-between p-5 md:p-6 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white">إضافة مصروف جديد</h2>
               <button
                 onClick={onClose}
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
@@ -155,82 +148,96 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) =>
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
-              <form id="add-expense-form" onSubmit={handleSubmit} className="space-y-8">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-5 md:p-6 space-y-6">
+              <form id="add-expense-form" onSubmit={handleSubmit} className="space-y-6">
                 
-                {/* Amount Section */}
-                <div className="space-y-4">
-                  <div className="text-center space-y-1">
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-2xl font-black text-slate-400">{currency}</span>
-                      <div className="relative inline-block">
-                        <input
-                          type="number"
-                          step="0.001"
-                          value={amount}
-                          onChange={(e) => setAmount(e.target.value)}
-                          className="bg-transparent text-slate-900 dark:text-white text-center font-mono font-black text-6xl md:text-7xl tracking-tighter placeholder:text-slate-100 dark:placeholder:text-slate-800 focus:ring-0 border-none w-full max-w-[280px]"
-                          placeholder="0.000"
-                          required
-                          autoFocus
-                        />
-                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-12 bg-primary-500 rounded-full animate-pulse" />
-                      </div>
+                {/* Amount Section - Prominent Card */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] p-6 flex flex-col items-center justify-center relative border border-slate-100 dark:border-slate-800 shadow-inner">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-2xl font-black text-slate-400">{currency}</span>
+                    <div className="relative inline-block">
+                      <input
+                        type="number"
+                        step="0.001"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="bg-transparent text-slate-900 dark:text-white text-center font-mono font-black text-5xl md:text-6xl tracking-tighter placeholder:text-slate-200 dark:placeholder:text-slate-700 focus:ring-0 border-none w-full max-w-[240px]"
+                        placeholder="0.000"
+                        required
+                        autoFocus
+                      />
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-10 bg-primary-500 rounded-full animate-pulse" />
                     </div>
                   </div>
+                </div>
 
-                  {/* Quick Amounts */}
-                  <div className="flex justify-center gap-3">
-                    {quickAmounts.map((val) => (
+                {/* Account Selection - Chips */}
+                <div className="space-y-3">
+                  <label className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 block text-right">
+                    الحساب
+                  </label>
+                  <div className="flex gap-3 overflow-x-auto pb-2 snap-x custom-scrollbar">
+                    {accounts.map((acc) => (
                       <button
-                        key={val}
+                        key={acc.id}
                         type="button"
-                        onClick={() => handleQuickAmount(val)}
-                        className="px-6 py-2 rounded-full border-2 border-slate-100 dark:border-slate-800 font-black text-slate-600 dark:text-slate-400 hover:border-primary-500 hover:text-primary-500 transition-all active:scale-95"
+                        onClick={() => setAccountId(acc.id)}
+                        className={cn(
+                          "snap-start shrink-0 px-4 py-3 rounded-2xl flex items-center gap-3 transition-all border-2",
+                          accountId === acc.id
+                            ? "bg-primary-50 dark:bg-primary-900/20 border-primary-500 text-primary-600 dark:text-primary-400 shadow-md shadow-primary-500/10"
+                            : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-primary-200 dark:hover:border-primary-800"
+                        )}
                       >
-                        {val}+
+                        <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ backgroundColor: acc.color }}>
+                          <DynamicIcon name={acc.icon || 'Wallet'} size={16} />
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-black">{acc.name}</p>
+                          <p className="text-[10px] font-bold opacity-70">{formatCurrency(acc.balance, currency)}</p>
+                        </div>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* Category Grid */}
-                <div className="space-y-6">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between px-1">
-                    <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block text-right">
+                    <label className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block text-right">
                       الفئة
                     </label>
                     {categoryId && (
                       <button 
                         type="button"
                         onClick={() => { setCategoryId(''); setSubcategoryId(''); }}
-                        className="text-[10px] font-black text-primary-500 hover:text-primary-600 transition-colors"
+                        className="text-[10px] font-black text-primary-500 hover:text-primary-600 transition-colors bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-lg"
                       >
                         إعادة تعيين
                       </button>
                     )}
                   </div>
                   
-                  <div className="grid grid-cols-4 gap-x-4 gap-y-6">
+                  <div className="grid grid-cols-4 gap-x-3 gap-y-4">
                     {categories.map((cat) => (
                       <button
                         key={cat.id}
                         type="button"
                         onClick={() => setCategoryId(cat.id)}
-                        className="flex flex-col items-center gap-2.5 group relative"
+                        className="flex flex-col items-center gap-2 group relative"
                       >
                         <motion.div 
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           className={cn(
-                            "w-16 h-16 rounded-3xl flex items-center justify-center text-white transition-all relative shadow-lg",
+                            "w-14 h-14 md:w-16 md:h-16 rounded-2xl md:rounded-3xl flex items-center justify-center text-white transition-all relative shadow-md",
                             categoryId === cat.id 
                               ? "ring-4 ring-primary-500/30 scale-110 z-10 shadow-primary-500/20" 
-                              : "opacity-60 hover:opacity-100 grayscale-[0.5] hover:grayscale-0"
+                              : "opacity-70 hover:opacity-100 grayscale-[0.3] hover:grayscale-0"
                           )}
                           style={{ backgroundColor: cat.color }}
                         >
-                          <DynamicIcon name={cat.icon || 'Circle'} size={28} />
+                          <DynamicIcon name={cat.icon || 'Circle'} size={24} className="md:size-7" />
                           
                           <AnimatePresence>
                             {categoryId === cat.id && (
@@ -238,16 +245,16 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) =>
                                 initial={{ scale: 0, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 exit={{ scale: 0, opacity: 0 }}
-                                className="absolute -top-2 -right-2 w-6 h-6 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-md border-2 border-primary-500"
+                                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-md border-2 border-primary-500"
                               >
-                                <Check size={14} className="text-primary-500" />
+                                <Check size={12} className="text-primary-500" />
                               </motion.div>
                             )}
                           </AnimatePresence>
                         </motion.div>
                         
                         <span className={cn(
-                          "text-[10px] font-black transition-all tracking-tight",
+                          "text-[9px] md:text-[10px] font-black transition-all tracking-tight text-center",
                           categoryId === cat.id 
                             ? "text-slate-900 dark:text-white scale-110" 
                             : "text-slate-400 group-hover:text-slate-600"
@@ -258,7 +265,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) =>
                         {categoryId === cat.id && (
                           <motion.div 
                             layoutId="active-cat-bg"
-                            className="absolute -inset-2 bg-primary-500/5 dark:bg-primary-500/10 rounded-[2rem] -z-10"
+                            className="absolute -inset-1.5 bg-primary-500/5 dark:bg-primary-500/10 rounded-[2rem] -z-10"
                           />
                         )}
                       </button>
@@ -272,11 +279,11 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) =>
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="space-y-4 pt-2"
+                        className="space-y-3 pt-2"
                       >
                         <div className="flex items-center gap-2">
                           <div className="h-[1px] flex-1 bg-slate-100 dark:bg-slate-800" />
-                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                          <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                             الفئات الفرعية لـ {selectedCategory.name}
                           </label>
                           <div className="h-[1px] flex-1 bg-slate-100 dark:bg-slate-800" />
@@ -289,9 +296,9 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) =>
                               type="button"
                               onClick={() => setSubcategoryId(sub)}
                               className={cn(
-                                "px-5 py-2.5 rounded-2xl text-[11px] font-black transition-all border-2 flex items-center gap-2",
+                                "px-4 py-2 rounded-xl text-[10px] font-black transition-all border-2 flex items-center gap-1.5",
                                 subcategoryId === sub
-                                  ? "bg-primary-500 border-primary-500 text-white shadow-lg shadow-primary-500/20 scale-105"
+                                  ? "bg-primary-500 border-primary-500 text-white shadow-md shadow-primary-500/20 scale-105"
                                   : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-800 text-slate-500 hover:border-primary-500/30 hover:text-primary-500"
                               )}
                             >
@@ -315,7 +322,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) =>
                         exit={{ opacity: 0, height: 0 }}
                         className="overflow-hidden"
                       >
-                        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl flex items-start gap-3">
+                        <div className="p-3 md:p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl flex items-start gap-3 mt-4">
                           <AlertTriangle className="size-5 text-amber-500 shrink-0 mt-0.5" />
                           <div>
                             <p className="text-xs font-black text-amber-700 dark:text-amber-500">تنبيه الميزانية</p>
@@ -330,111 +337,115 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose }) =>
                   </AnimatePresence>
                 </div>
 
-                {/* Bottom Controls Grid */}
-                <div className="grid grid-cols-2 gap-6">
-                  {/* Payment Method */}
-                  <div className="space-y-3">
-                    <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 block text-right">
-                      طريقة الدفع
-                    </label>
-                    <div className="flex p-1 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                      {[
-                        { id: 'cash', label: 'نقد', icon: Banknote },
-                        { id: 'card', label: 'بطاقة', icon: CreditCard },
-                        { id: 'transfer', label: 'تحويل', icon: Landmark }
-                      ].map(method => (
-                        <button
-                          key={method.id}
-                          type="button"
-                          onClick={() => setPaymentMethod(method.id as PaymentMethod)}
-                          className={cn(
-                            "flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition-all",
-                            paymentMethod === method.id 
-                              ? "bg-white dark:bg-slate-700 text-primary-600 dark:text-primary-400 shadow-sm" 
-                              : "text-slate-400 hover:text-slate-600"
-                          )}
+                {/* Advanced Options Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className="w-full py-3 flex items-center justify-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800"
+                >
+                  {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  {showAdvanced ? 'إخفاء التفاصيل الإضافية' : 'إضافة تفاصيل أخرى (التاريخ، ملاحظات...)'}
+                </button>
+
+                <AnimatePresence>
+                  {showAdvanced && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-6 overflow-hidden pt-2"
+                    >
+                      {/* Payment Method & Date Grid */}
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Payment Method */}
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 block text-right">
+                            طريقة الدفع
+                          </label>
+                          <div className="flex p-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                            {[
+                              { id: 'cash', label: 'نقد', icon: Banknote },
+                              { id: 'card', label: 'بطاقة', icon: CreditCard },
+                              { id: 'transfer', label: 'تحويل', icon: Landmark }
+                            ].map(method => (
+                              <button
+                                key={method.id}
+                                type="button"
+                                onClick={() => setPaymentMethod(method.id as PaymentMethod)}
+                                className={cn(
+                                  "flex-1 flex flex-col items-center gap-1 py-1.5 rounded-lg transition-all",
+                                  paymentMethod === method.id 
+                                    ? "bg-white dark:bg-slate-700 text-primary-600 dark:text-primary-400 shadow-sm" 
+                                    : "text-slate-400 hover:text-slate-600"
+                                )}
+                              >
+                                <method.icon size={14} />
+                                <span className="text-[9px] font-black">{method.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Date Picker */}
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 block text-right">
+                            التاريخ
+                          </label>
+                          <div className="relative h-[52px]">
+                            <input
+                              type="date"
+                              value={date}
+                              onChange={(e) => setDate(e.target.value)}
+                              className="w-full h-full px-3 py-2 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white font-black text-xs focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all"
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Goal Selection */}
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 block text-right">
+                          الهدف (اختياري)
+                        </label>
+                        <select
+                          value={goalId}
+                          onChange={(e) => setGoalId(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white font-black text-xs focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all appearance-none"
                         >
-                          <method.icon size={16} />
-                          <span className="text-[10px] font-black">{method.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                          <option value="">بدون ربط</option>
+                          {goals.map((goal) => (
+                            <option key={goal.id} value={goal.id}>{goal.name}</option>
+                          ))}
+                        </select>
+                      </div>
 
-                  {/* Date Picker */}
-                  <div className="space-y-3">
-                    <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 block text-right">
-                      التاريخ
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="date"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white font-black text-xs focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Account & Goal Selection */}
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 block text-right">
-                      الحساب
-                    </label>
-                    <select
-                      value={accountId}
-                      onChange={(e) => setAccountId(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white font-black text-xs focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all appearance-none"
-                      required
-                    >
-                      {accounts.map((acc) => (
-                        <option key={acc.id} value={acc.id}>{acc.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 block text-right">
-                      الهدف (اختياري)
-                    </label>
-                    <select
-                      value={goalId}
-                      onChange={(e) => setGoalId(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white font-black text-xs focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all appearance-none"
-                    >
-                      <option value="">بدون ربط</option>
-                      {goals.map((goal) => (
-                        <option key={goal.id} value={goal.id}>{goal.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Note Section */}
-                <div className="space-y-3">
-                  <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 block text-right">
-                    ملاحظة (اختياري)
-                  </label>
-                  <textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    className="w-full px-6 py-4 rounded-[1.5rem] border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white font-bold text-sm focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all resize-none h-24"
-                    placeholder="تفاصيل إضافية..."
-                  />
-                </div>
+                      {/* Note Section */}
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 block text-right">
+                          ملاحظة (اختياري)
+                        </label>
+                        <textarea
+                          value={note}
+                          onChange={(e) => setNote(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white font-bold text-xs focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all resize-none h-20"
+                          placeholder="تفاصيل إضافية..."
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </form>
             </div>
 
             {/* Footer Action */}
-            <div className="p-6 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800">
+            <div className="p-5 md:p-6 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="submit"
                 form="add-expense-form"
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-primary-500/30 flex items-center justify-center gap-3 active:scale-95 text-base uppercase tracking-widest"
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-black py-3.5 md:py-4 rounded-2xl transition-all shadow-xl shadow-primary-500/30 flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base uppercase tracking-widest"
               >
-                <Plus size={24} />
+                <Plus size={20} className="md:size-6" />
                 إضافة العملية
               </button>
             </div>
