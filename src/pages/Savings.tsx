@@ -1,12 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
-import { formatCurrency } from '../utils';
+import { formatCurrency, hapticFeedback } from '../utils';
+import { Skeleton } from '../components/Skeleton';
 import { motion } from 'motion/react';
 import { PiggyBank, Target, ArrowRight, TrendingUp, Percent } from 'lucide-react';
 
 const SavingsPage = () => {
   const { income, expenses, goals, updateGoal, currency } = useAppContext();
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
   const [savingsPercentage, setSavingsPercentage] = useState(10);
 
   const totalIncome = useMemo(() => income.reduce((sum, i) => sum + i.amount, 0), [income]);
@@ -15,7 +23,11 @@ const SavingsPage = () => {
   const calculatedSavings = (potentialSavings * savingsPercentage) / 100;
 
   const handleAllocate = () => {
-    if (goals.length === 0) return;
+    if (goals.length === 0) {
+      hapticFeedback('error');
+      return;
+    }
+    hapticFeedback('success');
     const allocationPerGoal = calculatedSavings / goals.length;
     goals.forEach(goal => {
       updateGoal(goal.id, { currentAmount: goal.currentAmount + allocationPerGoal });
@@ -54,10 +66,13 @@ const SavingsPage = () => {
         </div>
       </div>
 
-      <motion.div 
-        variants={itemVariants}
-        className="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all"
-      >
+      {isLoading ? (
+        <Skeleton className="h-64 rounded-2xl md:rounded-3xl" />
+      ) : (
+        <motion.div 
+          variants={itemVariants}
+          className="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all"
+        >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div className="space-y-3 md:space-y-4">
             <div className="flex items-center gap-3 md:gap-4">
@@ -130,6 +145,7 @@ const SavingsPage = () => {
           )}
         </div>
       </motion.div>
+    )}
     </motion.div>
   );
 };

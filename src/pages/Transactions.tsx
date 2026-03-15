@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useRef } from 'react';
+import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
-import { cn, formatCurrency } from '../utils';
+import { cn, formatCurrency, hapticFeedback } from '../utils';
+import { Skeleton, TransactionSkeleton } from '../components/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Search, Filter, Trash2, Download, ArrowUpDown, ArrowUp, ArrowDown, Calendar, FileText, PieChart, CreditCard, Banknote, Landmark, Edit2, X, AlertCircle, Wallet, Copy, RefreshCw } from 'lucide-react';
@@ -13,8 +15,15 @@ import { PaymentMethod } from '../types';
 const Transactions = () => {
   const { expenses, categories, accounts, deleteExpense, updateExpense, addExpense, currency } = useAppContext();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleRefresh = async () => {
+    hapticFeedback('medium');
     setIsRefreshing(true);
     // Simulate data refresh
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -84,8 +93,10 @@ const Transactions = () => {
   }, [filteredExpenses, categories]);
 
   const handleDelete = (id: string) => {
+    hapticFeedback('warning');
     deleteExpense(id);
     setShowDeleteConfirm(null);
+    toast.success('تم حذف العملية بنجاح');
   };
 
   const handleEditClick = (expense: any) => {
@@ -175,9 +186,50 @@ const Transactions = () => {
     }
   };
 
+  const [refreshing, setRefreshing] = useState(false);
+  const [pullProgress, setPullProgress] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handlePullToRefresh = async (event: any, info: any) => {
+    if (info.offset.y > 80 && !refreshing) {
+      setRefreshing(true);
+      await handleRefresh();
+      setRefreshing(false);
+    }
+    setPullProgress(0);
+  };
+
+  const handleDrag = (event: any, info: any) => {
+    if (info.offset.y > 0 && !refreshing) {
+      setPullProgress(Math.min(info.offset.y / 100, 1));
+    }
+  };
+
   return (
-    <div className="space-y-4 md:space-y-8 pb-12">
-      {/* Header Section */}
+    <div className="space-y-4 md:space-y-8 pb-12 relative" ref={containerRef}>
+      {/* Pull to Refresh Indicator */}
+      <motion.div 
+        style={{ 
+          height: refreshing ? 60 : pullProgress * 60,
+          opacity: refreshing ? 1 : pullProgress,
+          scale: refreshing ? 1 : 0.8 + pullProgress * 0.2
+        }}
+        className="absolute top-[-20px] left-0 right-0 flex items-center justify-center pointer-events-none z-50 overflow-hidden"
+      >
+        <div className="bg-white dark:bg-slate-800 p-2 rounded-full shadow-lg border border-slate-100 dark:border-slate-700">
+          <RefreshCw className={cn("text-emerald-500 size-5", refreshing && "animate-spin")} />
+        </div>
+      </motion.div>
+
+      <motion.div
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={0.2}
+        onDrag={handleDrag}
+        onDragEnd={handlePullToRefresh}
+        className="space-y-4 md:space-y-8"
+      >
+        {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 md:gap-8">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -448,7 +500,13 @@ const Transactions = () => {
           </button>
         </div>
 
-        {filteredExpenses.length > 0 ? (
+        {isLoading ? (
+          <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <TransactionSkeleton key={i} />
+            ))}
+          </div>
+        ) : filteredExpenses.length > 0 ? (
           <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
             <AnimatePresence mode="popLayout">
               {filteredExpenses.map((expense, index) => {
@@ -457,18 +515,34 @@ const Transactions = () => {
                 const typeColor = category?.type === 'need' ? 'text-indigo-500' : category?.type === 'want' ? 'text-amber-500' : 'text-emerald-500';
 
                 return (
-                  <motion.div 
-                    layout
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ delay: index * 0.03 }}
-                    key={expense.id} 
-                    className={cn(
-                      "p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 md:gap-6 transition-all group",
-                      isDeleting ? "bg-red-50/50 dark:bg-red-900/10" : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
-                    )}
-                  >
+                  <div key={expense.id} className="relative overflow-hidden">
+                    {/* Swipe Background (Delete Button) */}
+                    <div className="absolute inset-0 bg-rose-500 flex items-center justify-end px-6">
+                      <div className="flex flex-col items-center gap-1 text-white">
+                        <Trash2 size={24} />
+                        <span className="text-[10px] font-black uppercase">حذف</span>
+                      </div>
+                    </div>
+
+                    <motion.div 
+                      layout
+                      drag="x"
+                      dragConstraints={{ left: -100, right: 0 }}
+                      dragElastic={0.1}
+                      onDragEnd={(e, info) => {
+                        if (info.offset.x < -70) {
+                          setShowDeleteConfirm(expense.id);
+                        }
+                      }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ delay: index * 0.03 }}
+                      className={cn(
+                        "relative z-10 p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 md:gap-6 transition-all group bg-white dark:bg-slate-900",
+                        isDeleting ? "bg-red-50/50 dark:bg-red-900/10" : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                      )}
+                    >
                     <div className="flex items-center gap-4 md:gap-6">
                       <div 
                         className={cn("w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-[1.5rem] flex items-center justify-center text-white shrink-0 shadow-lg transition-transform group-hover:scale-110 duration-300", typeColor.replace('text-', 'bg-'))}
@@ -543,8 +617,9 @@ const Transactions = () => {
                       </div>
                     </div>
                   </motion.div>
-                );
-              })}
+                </div>
+              );
+            })}
             </AnimatePresence>
           </div>
         ) : (
@@ -785,6 +860,7 @@ const Transactions = () => {
           </div>
         )}
       </AnimatePresence>
+      </motion.div>
     </div>
   );
 };

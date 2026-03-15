@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../store/AppContext';
-import { formatCurrency, cn } from '../../utils';
+import { formatCurrency, cn, hapticFeedback } from '../../utils';
+import { Skeleton, CardSkeleton } from '../../components/Skeleton';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Trash2, Wallet, Calendar, Landmark, ArrowDownCircle, TrendingUp } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from 'date-fns';
@@ -9,6 +10,13 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 const IncomePage = () => {
   const { income = [], addIncome, deleteIncome, currency, accounts } = useAppContext();
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
   const [source, setSource] = useState('');
   const [amount, setAmount] = useState('');
   const [accountId, setAccountId] = useState('');
@@ -17,6 +25,7 @@ const IncomePage = () => {
   const handleAddIncome = (e: React.FormEvent) => {
     e.preventDefault();
     if (source.trim() && Number(amount) > 0) {
+      hapticFeedback('success');
       addIncome({
         source,
         amount: Number(amount),
@@ -81,7 +90,12 @@ const IncomePage = () => {
       </div>
 
       {income.length > 0 && (
-        <motion.div variants={itemVariants} className="glass-card p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-lg h-64 md:h-80">
+        isLoading ? (
+          <div className="h-64 md:h-80">
+            <Skeleton className="w-full h-full rounded-[1.5rem] md:rounded-[2rem]" />
+          </div>
+        ) : (
+          <motion.div variants={itemVariants} className="glass-card p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-lg h-64 md:h-80">
           <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
             <TrendingUp className="text-emerald-500 size-5 md:size-6" />
             <h3 className="text-base md:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">تحليل الدخل</h3>
@@ -96,13 +110,17 @@ const IncomePage = () => {
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
+        )
       )}
 
-      <motion.form 
-        variants={itemVariants}
-        onSubmit={handleAddIncome} 
-        className="glass-card p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all"
-      >
+      {isLoading ? (
+        <Skeleton className="h-[300px] rounded-[1.5rem] md:rounded-[2rem]" />
+      ) : (
+        <motion.form 
+          variants={itemVariants}
+          onSubmit={handleAddIncome} 
+          className="glass-card p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all"
+        >
         <div className="flex items-center gap-4 mb-6 md:mb-8">
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-primary-50 dark:bg-primary-900/40 flex items-center justify-center text-primary-500 shadow-inner">
             <Plus size={24} className="md:size-28" />
@@ -180,6 +198,7 @@ const IncomePage = () => {
           </motion.button>
         </div>
       </motion.form>
+    )}
 
       <motion.div variants={itemVariants} className="glass-card rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-lg overflow-hidden">
         <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">

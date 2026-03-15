@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '../utils';
+import { cn, hapticFeedback } from '../utils';
 import { Layers, Wallet, Database, Sparkles } from 'lucide-react';
 import CategoryManager from './settings/CategoryManager';
 import AccountManager from './settings/AccountManager';
@@ -49,7 +49,10 @@ const Settings = () => {
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => {
+              hapticFeedback('light');
+              setActiveTab(tab.id as any);
+            }}
             className={cn(
               "flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 rounded-lg md:rounded-xl text-[9px] md:text-xs font-black transition-all uppercase tracking-widest",
               activeTab === tab.id 

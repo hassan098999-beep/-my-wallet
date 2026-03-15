@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../store/AppContext';
-import { cn, formatCurrency } from '../utils';
+import { cn, formatCurrency, hapticFeedback } from '../utils';
+import { Skeleton, CardSkeleton } from '../components/Skeleton';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, startOfYear, endOfYear, eachMonthOfInterval } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Brush } from 'recharts';
@@ -10,6 +11,13 @@ import { Calendar, TrendingUp, PieChart as PieChartIcon, BarChart3, ArrowUpRight
 
 const Analytics = () => {
   const { expenses, income = [], categories, currency, budget } = useAppContext();
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
   const [rangeType, setRangeType] = useState<'monthly' | 'custom'>('monthly');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -217,7 +225,15 @@ const Analytics = () => {
 
       {/* 1. Top Level Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-        <motion.div variants={itemVariants} className={cn(
+        {isLoading ? (
+          <>
+            <Skeleton className="h-[120px] md:h-[160px] rounded-2xl md:rounded-3xl" />
+            <Skeleton className="h-[120px] md:h-[160px] rounded-2xl md:rounded-3xl" />
+            <Skeleton className="h-[120px] md:h-[160px] rounded-2xl md:rounded-3xl" />
+          </>
+        ) : (
+          <>
+            <motion.div variants={itemVariants} className={cn(
           "rounded-2xl md:rounded-3xl p-3 md:p-5 text-white shadow-lg relative overflow-hidden group",
           netBalance >= 0 ? "bg-gradient-to-br from-blue-600 to-indigo-700 shadow-blue-200/20" : "bg-gradient-to-br from-rose-500 to-red-700 shadow-rose-200/20"
         )}>
@@ -282,7 +298,9 @@ const Analytics = () => {
             </div>
           </div>
         </motion.div>
-      </div>
+      </>
+    )}
+  </div>
 
       {/* 2. Quick Insights Mini-Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">

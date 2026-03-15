@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Send, Bot, User, BrainCircuit, Loader2, Settings as SettingsIcon } from 'lucide-react';
 import { GoogleGenAI, ThinkingLevel, Type, FunctionDeclaration } from '@google/genai';
 import { useAppContext } from '../store/AppContext';
+import { hapticFeedback } from '../utils';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
 
@@ -45,6 +46,7 @@ export default function Assistant() {
     }
 
     const userQuery = query.trim();
+    hapticFeedback('medium');
     setQuery('');
     setMessages(prev => [...prev, { role: 'user', content: userQuery }]);
     setIsLoading(true);
@@ -121,6 +123,7 @@ export default function Assistant() {
 
       // Handle function calls
       if (response.functionCalls && response.functionCalls.length > 0) {
+        hapticFeedback('success');
         for (const call of response.functionCalls) {
           const args = call.args as any;
           if (call.name === 'addExpense') {

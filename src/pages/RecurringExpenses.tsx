@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
-import { cn, formatCurrency } from '../utils';
+import { cn, formatCurrency, hapticFeedback } from '../utils';
+import { Skeleton, TransactionSkeleton } from '../components/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Plus, Trash2, Repeat, Calendar, CreditCard, Wallet, ArrowRightLeft, AlertCircle, Clock, X } from 'lucide-react';
@@ -12,6 +13,12 @@ import { motion, AnimatePresence } from 'motion/react';
 
 const RecurringExpenses = () => {
   const { recurringExpenses, categories, accounts, currency, addRecurringExpense, deleteRecurringExpense } = useAppContext();
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [isAdding, setIsAdding] = useState(false);
   const [amount, setAmount] = useState('');
@@ -88,10 +95,12 @@ const RecurringExpenses = () => {
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      hapticFeedback('error');
       toast.error('الرجاء إدخال مبلغ صحيح');
       return;
     }
 
+    hapticFeedback('success');
     const base = new Date(startDate);
     const finalStartDate = calculateNextOccurrence(interval, base);
 
@@ -465,7 +474,13 @@ const RecurringExpenses = () => {
           </div>
         </div>
         
-        {recurringExpenses && recurringExpenses.length > 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 gap-2 md:gap-3">
+            <TransactionSkeleton />
+            <TransactionSkeleton />
+            <TransactionSkeleton />
+          </div>
+        ) : recurringExpenses && recurringExpenses.length > 0 ? (
           <div className="grid grid-cols-1 gap-2 md:gap-3">
             {recurringExpenses.map(expense => {
               const category = categories.find(c => c.id === expense.categoryId);

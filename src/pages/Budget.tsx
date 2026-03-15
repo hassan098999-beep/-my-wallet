@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../store/AppContext';
-import { cn, formatCurrency } from '../utils';
+import { cn, formatCurrency, hapticFeedback } from '../utils';
+import { Skeleton, CardSkeleton } from '../components/Skeleton';
 import { isThisMonth, parseISO, format, startOfMonth, endOfMonth } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Save, AlertCircle, TrendingUp, Target, Wallet, Activity, ArrowUpRight, ArrowDownRight, CheckCircle2, Calendar, ChevronDown, Wand2, Loader2 } from 'lucide-react';
@@ -9,6 +10,12 @@ import { motion, AnimatePresence } from 'motion/react';
 
 const BudgetPage = () => {
   const { budget, setBudget, categories, expenses, income, currency } = useAppContext();
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [globalBudget, setGlobalBudget] = useState(budget?.amount.toString() || '');
   const [selectedMonth, setSelectedMonth] = useState(budget?.month || new Date().toISOString().slice(0, 7));
@@ -21,6 +28,7 @@ const BudgetPage = () => {
   );
 
   const handleSave = () => {
+    hapticFeedback('success');
     const parsedGlobal = Number(globalBudget) || 0;
     const parsedCategories: Record<string, number> = {};
     
@@ -81,7 +89,19 @@ const BudgetPage = () => {
       className="space-y-4 md:space-y-6 pb-20 max-w-5xl mx-auto"
     >
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 md:gap-6">
+      {isLoading ? (
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 md:gap-6">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <div className="flex gap-3 w-full md:w-auto">
+            <Skeleton className="h-10 w-32 rounded-xl" />
+            <Skeleton className="h-10 w-32 rounded-xl" />
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 md:gap-6">
         <div className="space-y-1">
           <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
             إدارة <span className="text-primary-500">الميزانية</span>
@@ -148,9 +168,13 @@ const BudgetPage = () => {
           </motion.button>
         </div>
       </div>
+    )}
 
       {/* Global Budget Card - Compact */}
-      <motion.div variants={itemVariants} className="bg-slate-900 rounded-3xl p-5 md:p-6 text-white relative overflow-hidden group shadow-xl shadow-slate-900/10">
+      {isLoading ? (
+        <Skeleton className="h-40 rounded-3xl" />
+      ) : (
+        <motion.div variants={itemVariants} className="bg-slate-900 rounded-3xl p-5 md:p-6 text-white relative overflow-hidden group shadow-xl shadow-slate-900/10">
         <div className="absolute -right-10 -top-10 w-32 h-32 bg-primary-500/20 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-1000" />
         <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-1000" />
         
@@ -212,11 +236,23 @@ const BudgetPage = () => {
           </div>
         </div>
       </motion.div>
+    )}
 
       {/* Smart Allocation Section */}
       {/* Category Budgets Grouped */}
       <div className="space-y-5 md:space-y-8">
-        {groupedCategories.map(group => (
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="space-y-4">
+              <Skeleton className="h-6 w-48 rounded-lg" />
+              <div className="space-y-3">
+                <Skeleton className="h-20 rounded-2xl" />
+                <Skeleton className="h-20 rounded-2xl" />
+              </div>
+            </div>
+          ))
+        ) : (
+          groupedCategories.map(group => (
           <div key={group.id} className="space-y-3 md:space-y-4">
             <div className="flex items-center gap-3 px-2">
               <div className={`w-3 h-3 rounded-full ${group.color} shadow-sm animate-pulse`} />
@@ -321,9 +357,10 @@ const BudgetPage = () => {
               </div>
             )}
           </div>
-        ))}
-      </div>
-    </motion.div>
+        ))
+      )}
+    </div>
+  </motion.div>
   );
 };
 

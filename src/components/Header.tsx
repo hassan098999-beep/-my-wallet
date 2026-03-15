@@ -18,7 +18,7 @@ const dropdownItems = [
 const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { setIsAddModalOpen, theme, setTheme } = useAppContext();
+  const { theme, setTheme } = useAppContext();
   const location = useLocation();
 
   const getPageName = () => {
@@ -32,6 +32,7 @@ const Header = () => {
       case '/savings': return 'تخصيص الادخار';
       case '/income': return 'الدخل';
       case '/settings': return 'الإعدادات';
+      case '/assistant': return 'المساعد الذكي';
       default: return 'مصاريفي';
     }
   };
@@ -47,7 +48,7 @@ const Header = () => {
   }, []);
 
   return (
-    <header className="h-14 md:h-16 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between px-4 md:px-6 z-[100] sticky top-0">
+    <header className="h-14 md:h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between px-4 md:px-6 z-[100] sticky top-0">
       <div className="flex items-center gap-4">
         <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter uppercase">
           {getPageName()}
@@ -60,20 +61,6 @@ const Header = () => {
           className="p-2 rounded-xl bg-slate-100/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors backdrop-blur-md"
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-        
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="sm:hidden p-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white transition-all active:scale-95 shadow-lg shadow-indigo-500/20"
-        >
-          <PlusCircle size={20} />
-        </button>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white px-4 py-2 rounded-xl transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
-        >
-          <PlusCircle size={16} />
-          <span className="font-black text-xs uppercase tracking-widest">إضافة</span>
         </button>
         
         <NotificationBell />
@@ -93,11 +80,11 @@ const Header = () => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                className="absolute left-0 mt-3 w-64 glass-card rounded-2xl shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100/50 dark:border-slate-700/50 overflow-hidden z-50"
+                className="absolute left-0 mt-3 w-64 glass-card rounded-2xl shadow-2xl border border-slate-100/50 dark:border-slate-700/50 overflow-hidden z-50"
               >
                 <div className="p-5 border-b border-slate-100/50 dark:border-slate-700/50 bg-slate-50/30 dark:bg-slate-800/30">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white shadow-lg">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg">
                       <User size={22} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -117,7 +104,7 @@ const Header = () => {
                         cn(
                           "flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black transition-all",
                           isActive
-                            ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                            ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 shadow-sm"
                             : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                         )
                       }
