@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../store/AppContext';
 import { Goal } from '../types';
 import { formatCurrency, hapticFeedback } from '../utils';
@@ -35,17 +35,32 @@ const GoalsPage = () => {
     }
   };
 
+  const currentMonth = useMemo(() => new Date().toISOString().slice(0, 7), []);
+
+  const monthlyTotals = useMemo(() => {
+    const totalExpense = expenses
+      .filter(e => e.date.startsWith(currentMonth))
+      .reduce((sum, e) => sum + e.amount, 0);
+    const totalIncome = income
+      .filter(i => i.date.startsWith(currentMonth))
+      .reduce((sum, i) => sum + i.amount, 0);
+    
+    const categoryExpenses = expenses
+      .filter(e => e.date.startsWith(currentMonth))
+      .reduce((acc, e) => {
+        acc[e.categoryId] = (acc[e.categoryId] || 0) + e.amount;
+        return acc;
+      }, {} as Record<string, number>);
+
+    return { totalExpense, totalIncome, categoryExpenses };
+  }, [expenses, income, currentMonth]);
+
   const calculateSurplus = (goal: Goal) => {
-    const currentMonth = new Date().toISOString().slice(0, 7);
     if (goal.isLinkedToOverallBudget) {
-      const totalExpense = expenses.filter(e => e.date.startsWith(currentMonth)).reduce((sum, e) => sum + e.amount, 0);
-      const totalIncome = income.filter(i => i.date.startsWith(currentMonth)).reduce((sum, i) => sum + i.amount, 0);
-      return Math.max(0, totalIncome - totalExpense);
+      return Math.max(0, monthlyTotals.totalIncome - monthlyTotals.totalExpense);
     }
     if (goal.linkedCategoryId && budget?.categoryBudgets?.[goal.linkedCategoryId]) {
-      const categoryExpense = expenses
-        .filter(e => e.date.startsWith(currentMonth) && e.categoryId === goal.linkedCategoryId)
-        .reduce((sum, e) => sum + e.amount, 0);
+      const categoryExpense = monthlyTotals.categoryExpenses[goal.linkedCategoryId] || 0;
       const categoryBudget = budget.categoryBudgets[goal.linkedCategoryId];
       return Math.max(0, categoryBudget - categoryExpense);
     }

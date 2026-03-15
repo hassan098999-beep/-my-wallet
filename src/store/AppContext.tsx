@@ -67,6 +67,7 @@ interface AppContextProps extends AppState {
   removeNotification: (id: string) => void;
   completeOnboarding: () => void;
   setCurrency: (currency: string) => void;
+  resetData: () => void;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -714,6 +715,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(prev => ({ ...prev, currency }));
   };
 
+  const resetData = () => {
+    setState(INITIAL_STATE);
+    toast.success('تم تصفير جميع البيانات بنجاح');
+  };
+
   const updateAchievement = (id: string, progress: number) => {
     setState((prev) => {
       const achievements = prev.achievements || [];
@@ -782,6 +788,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeNotification,
         completeOnboarding,
         setCurrency,
+        resetData,
       }}
     >
       {children}

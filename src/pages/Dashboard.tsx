@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { formatCurrency, cn, hapticFeedback } from '../utils';
@@ -60,24 +60,46 @@ const Dashboard = () => {
     toast.success('تم حفظ العملية بنجاح!');
   };
 
-  const recentTransactions = expenses.slice(0, 5);
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const monthlyExpenses = expenses.filter(e => e.date.startsWith(currentMonth));
-  const totalMonthlyExpense = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const recentTransactions = useMemo(() => expenses.slice(0, 5), [expenses]);
+  const currentMonth = useMemo(() => new Date().toISOString().slice(0, 7), []);
+  
+  const monthlyExpenses = useMemo(() => 
+    expenses.filter(e => e.date.startsWith(currentMonth)),
+  [expenses, currentMonth]);
+
+  const totalMonthlyExpense = useMemo(() => 
+    monthlyExpenses.reduce((sum, e) => sum + e.amount, 0),
+  [monthlyExpenses]);
 
   // Smart Calculations
-  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-  const currentDay = new Date().getDate();
-  const dailyAverage = totalMonthlyExpense / (currentDay || 1);
-  const forecastExpense = dailyAverage * daysInMonth;
+  const daysInMonth = useMemo(() => 
+    new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate(),
+  []);
   
-  const totalMonthlyIncome = income.filter(i => i.date.startsWith(currentMonth)).reduce((sum, i) => sum + i.amount, 0);
-  const potentialSavings = Math.max(0, totalMonthlyIncome - totalMonthlyExpense);
+  const currentDay = useMemo(() => new Date().getDate(), []);
+  
+  const dailyAverage = useMemo(() => 
+    totalMonthlyExpense / (currentDay || 1),
+  [totalMonthlyExpense, currentDay]);
 
-  const upcomingBills = recurringExpenses
-    .filter(r => isAfter(parseISO(r.nextDate), new Date()) && isBefore(parseISO(r.nextDate), addDays(new Date(), 14)))
-    .sort((a, b) => new Date(a.nextDate).getTime() - new Date(b.nextDate).getTime())
-    .slice(0, 3);
+  const forecastExpense = useMemo(() => 
+    dailyAverage * daysInMonth,
+  [dailyAverage, daysInMonth]);
+  
+  const totalMonthlyIncome = useMemo(() => 
+    income.filter(i => i.date.startsWith(currentMonth)).reduce((sum, i) => sum + i.amount, 0),
+  [income, currentMonth]);
+
+  const potentialSavings = useMemo(() => 
+    Math.max(0, totalMonthlyIncome - totalMonthlyExpense),
+  [totalMonthlyIncome, totalMonthlyExpense]);
+
+  const upcomingBills = useMemo(() => 
+    recurringExpenses
+      .filter(r => isAfter(parseISO(r.nextDate), new Date()) && isBefore(parseISO(r.nextDate), addDays(new Date(), 14)))
+      .sort((a, b) => new Date(a.nextDate).getTime() - new Date(b.nextDate).getTime())
+      .slice(0, 3),
+  [recurringExpenses]);
 
   const containerVariants = {
     hidden: { opacity: 0 },

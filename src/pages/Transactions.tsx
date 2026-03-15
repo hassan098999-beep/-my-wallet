@@ -84,12 +84,17 @@ const Transactions = () => {
   }, [filteredExpenses]);
 
   const categoryData = useMemo(() => {
-    return categories.map(cat => {
-      const amount = filteredExpenses
-        .filter(e => e.categoryId === cat.id)
-        .reduce((sum, e) => sum + e.amount, 0);
-      return { id: cat.id, name: cat.name, value: amount, color: cat.color };
-    }).filter(d => d.value > 0).sort((a, b) => b.value - a.value);
+    const categorySums = filteredExpenses.reduce((acc, e) => {
+      acc[e.categoryId] = (acc[e.categoryId] || 0) + e.amount;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return categories.map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      value: categorySums[cat.id] || 0,
+      color: cat.color
+    })).filter(d => d.value > 0).sort((a, b) => b.value - a.value);
   }, [filteredExpenses, categories]);
 
   const handleDelete = (id: string) => {

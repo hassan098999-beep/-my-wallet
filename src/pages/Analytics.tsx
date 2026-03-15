@@ -57,30 +57,42 @@ const Analytics = () => {
   const netBalance = totalMonthlyIncome - totalMonthlyExpense;
 
   const categoryData = useMemo(() => {
-    return categories.map(cat => {
-      const amount = filteredExpenses
-        .filter(e => e.categoryId === cat.id)
-        .reduce((sum, e) => sum + e.amount, 0);
-      return { id: cat.id, name: cat.name, value: amount, color: cat.color, icon: cat.icon };
-    }).filter(d => d.value > 0).sort((a, b) => b.value - a.value);
+    const categorySums = filteredExpenses.reduce((acc, e) => {
+      acc[e.categoryId] = (acc[e.categoryId] || 0) + e.amount;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return categories.map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      value: categorySums[cat.id] || 0,
+      color: cat.color,
+      icon: cat.icon
+    })).filter(d => d.value > 0).sort((a, b) => b.value - a.value);
   }, [filteredExpenses, categories]);
 
   const dailyData = useMemo(() => {
     const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
     
+    const expenseMap = filteredExpenses.reduce((acc, e) => {
+      const dateStr = e.date.split('T')[0];
+      acc[dateStr] = (acc[dateStr] || 0) + e.amount;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const incomeMap = filteredIncome.reduce((acc, i) => {
+      const dateStr = i.date.split('T')[0];
+      acc[dateStr] = (acc[dateStr] || 0) + i.amount;
+      return acc;
+    }, {} as Record<string, number>);
+
     return days.map(day => {
       const dateStr = format(day, 'yyyy-MM-dd');
-      const expenseAmount = filteredExpenses
-        .filter(e => e.date.startsWith(dateStr))
-        .reduce((sum, e) => sum + e.amount, 0);
-      const incomeAmount = filteredIncome
-        .filter(i => i.date.startsWith(dateStr))
-        .reduce((sum, i) => sum + i.amount, 0);
       return {
         date: format(day, 'dd', { locale: ar }),
         fullDate: format(day, 'dd MMMM', { locale: ar }),
-        expenseAmount,
-        incomeAmount
+        expenseAmount: expenseMap[dateStr] || 0,
+        incomeAmount: incomeMap[dateStr] || 0
       };
     });
   }, [filteredExpenses, filteredIncome, dateRange]);
@@ -90,7 +102,9 @@ const Analytics = () => {
     return dailyData.reduce((max, day) => day.expenseAmount > max.expenseAmount ? day : max, dailyData[0]);
   }, [dailyData]);
 
-  const averageDailyExpense = totalMonthlyExpense / (dailyData.length || 1);
+  const averageDailyExpense = useMemo(() => 
+    totalMonthlyExpense / (dailyData.length || 1), 
+  [totalMonthlyExpense, dailyData.length]);
 
   const prevMonthDateRange = useMemo(() => {
     const d = new Date(dateRange.start);
@@ -115,22 +129,35 @@ const Analytics = () => {
     }).reduce((sum, i) => sum + i.amount, 0);
   }, [income, prevMonthDateRange]);
 
-  const expenseDiff = prevMonthExpenses > 0 ? ((totalMonthlyExpense - prevMonthExpenses) / prevMonthExpenses) * 100 : 0;
-  const incomeDiff = prevMonthIncome > 0 ? ((totalMonthlyIncome - prevMonthIncome) / prevMonthIncome) * 100 : 0;
+  const expenseDiff = useMemo(() => 
+    prevMonthExpenses > 0 ? ((totalMonthlyExpense - prevMonthExpenses) / prevMonthExpenses) * 100 : 0,
+  [totalMonthlyExpense, prevMonthExpenses]);
+
+  const incomeDiff = useMemo(() => 
+    prevMonthIncome > 0 ? ((totalMonthlyIncome - prevMonthIncome) / prevMonthIncome) * 100 : 0,
+  [totalMonthlyIncome, prevMonthIncome]);
 
   const monthlyData = useMemo(() => {
     const yearStart = startOfYear(new Date());
     const yearEnd = endOfYear(new Date());
     const months = eachMonthOfInterval({ start: yearStart, end: yearEnd });
     
+    const expenseMap = expenses.reduce((acc, e) => {
+      const monthStr = e.date.slice(0, 7);
+      acc[monthStr] = (acc[monthStr] || 0) + e.amount;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const incomeMap = income.reduce((acc, i) => {
+      const monthStr = i.date.slice(0, 7);
+      acc[monthStr] = (acc[monthStr] || 0) + i.amount;
+      return acc;
+    }, {} as Record<string, number>);
+
     return months.map(month => {
       const monthStr = format(month, 'yyyy-MM');
-      const expenseAmount = expenses
-        .filter(e => e.date.startsWith(monthStr))
-        .reduce((sum, e) => sum + e.amount, 0);
-      const incomeAmount = income
-        .filter(i => i.date.startsWith(monthStr))
-        .reduce((sum, i) => sum + i.amount, 0);
+      const expenseAmount = expenseMap[monthStr] || 0;
+      const incomeAmount = incomeMap[monthStr] || 0;
       
       return {
         month: format(month, 'MMM', { locale: ar }),

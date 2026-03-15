@@ -15,15 +15,6 @@ const OnboardingModal: React.FC = () => {
 
   if (hasCompletedOnboarding) return null;
 
-  const currencies = [
-    { code: 'TND', name: 'دينار تونسي', flag: '🇹🇳' },
-    { code: 'SAR', name: 'ريال سعودي', flag: '🇸🇦' },
-    { code: 'AED', name: 'درهم إماراتي', flag: '🇦🇪' },
-    { code: 'USD', name: 'دولار أمريكي', flag: '🇺🇸' },
-    { code: 'EUR', name: 'يورو', flag: '🇪🇺' },
-    { code: 'EGP', name: 'جنيه مصري', flag: '🇪🇬' },
-  ];
-
   const handleNext = () => {
     if (step < 3) {
       setStep(step + 1);
@@ -87,29 +78,14 @@ const OnboardingModal: React.FC = () => {
                     </div>
                     <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">مرحباً بك في <span className="text-primary-500">مصاريفي</span></h2>
                     <p className="text-slate-500 dark:text-slate-400 font-bold">لنقم بإعداد تطبيقك في ثوانٍ معدودة لنبدأ رحلة تنظيم أموالك.</p>
-                  </div>
-
-                  <div className="space-y-4 pt-4">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">اختر عملتك الأساسية</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {currencies.map((c) => (
-                        <button
-                          key={c.code}
-                          onClick={() => setSelectedCurrency(c.code)}
-                          className={cn(
-                            "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-right",
-                            selectedCurrency === c.code
-                              ? "border-primary-500 bg-primary-50 dark:bg-primary-900/10 text-primary-700 dark:text-primary-400"
-                              : "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-700"
-                          )}
-                        >
-                          <span className="text-2xl">{c.flag}</span>
-                          <div className="flex flex-col">
-                            <span className="font-black text-sm">{c.code}</span>
-                            <span className="text-[10px] font-bold opacity-70">{c.name}</span>
-                          </div>
-                        </button>
-                      ))}
+                    <div className="mt-8 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center gap-3">
+                        <span className="text-3xl">🇹🇳</span>
+                        <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">العملة الافتراضية</p>
+                          <p className="text-sm font-black text-slate-900 dark:text-white">الدينار التونسي (TND)</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
