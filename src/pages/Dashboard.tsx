@@ -7,6 +7,7 @@ import { parseISO, format, isAfter, isBefore, addDays } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Plus, CheckCircle2, Wallet, CreditCard, Banknote, Landmark, TrendingUp, Activity, CalendarClock } from 'lucide-react';
 import { DynamicIcon } from '../components/DynamicIcon';
+import { AIAdvisor } from '../components/AIAdvisor';
 import { PaymentMethod } from '../types';
 import { CategorySelect } from '../components/CategorySelect';
 import { motion, AnimatePresence, Variants } from 'motion/react';
@@ -272,6 +273,11 @@ const Dashboard = () => {
       )}
     </div>
   </div>
+
+      {/* AI Advisor Section */}
+      <motion.div variants={itemVariants} className="mb-8">
+        <AIAdvisor />
+      </motion.div>
 
       {/* Quick Add & Transactions Section */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">

@@ -1,0 +1,170 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "hassan098999@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['uid', 'email', 'currency', 'theme', 'hasCompletedOnboarding', 'role']) &&
+             data.uid is string &&
+             (data.email == null || isValidEmail(data.email));
+    }
+
+    function isValidExpense(data) {
+      return hasRequiredFields(['amount', 'categoryId', 'date', 'uid']) &&
+             data.amount is number && data.amount >= 0 &&
+             data.categoryId is string &&
+             data.date is string &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidIncome(data) {
+      return hasRequiredFields(['source', 'amount', 'date', 'uid']) &&
+             data.source is string && data.source.size() > 0 &&
+             data.amount is number && data.amount >= 0 &&
+             data.date is string &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidCategory(data) {
+      return hasRequiredFields(['name', 'color', 'uid']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.color is string &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidAccount(data) {
+      return hasRequiredFields(['name', 'balance', 'uid']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.balance is number &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidGoal(data) {
+      return hasRequiredFields(['name', 'targetAmount', 'uid']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.targetAmount is number && data.targetAmount > 0 &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidRecurringExpense(data) {
+      return hasRequiredFields(['amount', 'categoryId', 'interval', 'startDate', 'nextDate', 'uid']) &&
+             data.amount is number && data.amount >= 0 &&
+             data.interval in ['daily', 'weekly', 'monthly', 'yearly'] &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidBudget(data) {
+      return hasRequiredFields(['amount', 'month', 'uid']) &&
+             data.amount is number && data.amount >= 0 &&
+             data.month is string &&
+             data.uid == request.auth.uid;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && uidNotModified();
+      allow delete: if isAdmin();
+
+      match /expenses/{expenseId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidExpense(request.resource.data);
+        allow update: if isOwner(userId) && isValidExpense(request.resource.data) && uidNotModified();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /income/{incomeId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidIncome(request.resource.data);
+        allow update: if isOwner(userId) && isValidIncome(request.resource.data) && uidNotModified();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /categories/{categoryId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidCategory(request.resource.data);
+        allow update: if isOwner(userId) && isValidCategory(request.resource.data) && uidNotModified();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /accounts/{accountId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidAccount(request.resource.data);
+        allow update: if isOwner(userId) && isValidAccount(request.resource.data) && uidNotModified();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /goals/{goalId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidGoal(request.resource.data);
+        allow update: if isOwner(userId) && isValidGoal(request.resource.data) && uidNotModified();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /recurringExpenses/{recurringId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidRecurringExpense(request.resource.data);
+        allow update: if isOwner(userId) && isValidRecurringExpense(request.resource.data) && uidNotModified();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /budgets/{budgetId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidBudget(request.resource.data);
+        allow update: if isOwner(userId) && isValidBudget(request.resource.data) && uidNotModified();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+  }
+}
