@@ -157,10 +157,10 @@ const Analytics = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-4">
         <div className="space-y-0.5 md:space-y-1">
           <h1 className="text-lg md:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            تحليل <span className="text-primary-500">المصاريف</span>
+            التحليل <span className="text-primary-500">المالي</span>
           </h1>
           <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium">
-            نظرة عميقة على عاداتك الشرائية وتوزيع ميزانيتك
+            نظرة عميقة على مصاريفك ودخلك وتوزيع ميزانيتك
           </p>
         </div>
 

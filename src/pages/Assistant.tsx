@@ -1,18 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Bot, User, Sparkles, BrainCircuit, Loader2 } from 'lucide-react';
-import { GoogleGenAI, ThinkingLevel } from '@google/genai';
+import { Send, Bot, User, BrainCircuit, Loader2, Settings as SettingsIcon } from 'lucide-react';
+import { GoogleGenAI, ThinkingLevel, Type, FunctionDeclaration } from '@google/genai';
 import { useAppContext } from '../store/AppContext';
 import ReactMarkdown from 'react-markdown';
+import { Link } from 'react-router-dom';
 
 export default function Assistant() {
-  const { accounts, expenses, budget, currency } = useAppContext();
+  const { accounts, expenses, budget, currency, categories, addExpense, addIncome } = useAppContext();
   const [query, setQuery] = useState('');
-  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string, isThinking?: boolean}[]>([
-    { role: 'assistant', content: 'مرحباً! أنا مساعدك المالي الذكي. يمكنني تحليل مصاريفك، تقديم نصائح لتوفير المال، أو الإجابة على أي أسئلة مالية معقدة. كيف يمكنني مساعدتك اليوم؟' }
+  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([
+    { role: 'assistant', content: 'مرحباً! أنا مساعدك المالي الذكي. يمكنني تحليل مصاريفك، تقديم نصائح، أو حتى إضافة مصاريف ودخول جديدة نيابة عنك. كيف يمكنني مساعدتك اليوم؟' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [apiKeyMissing, setApiKeyMissing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatHistoryRef = useRef<any[]>([]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -22,9 +25,24 @@ export default function Assistant() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    const key = localStorage.getItem('gemini_api_key') || process.env.GEMINI_API_KEY;
+    if (!key) {
+      setApiKeyMissing(true);
+    } else {
+      setApiKeyMissing(false);
+    }
+  }, []);
+
   const handleAsk = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim() || isLoading) return;
+
+    const apiKey = localStorage.getItem('gemini_api_key') || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      setApiKeyMissing(true);
+      return;
+    }
 
     const userQuery = query.trim();
     setQuery('');
@@ -32,45 +50,138 @@ export default function Assistant() {
     setIsLoading(true);
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error('مفتاح API غير متوفر');
-      }
-
       const ai = new GoogleGenAI({ apiKey });
 
-      // Build context from user data
+      const addExpenseDeclaration: FunctionDeclaration = {
+        name: 'addExpense',
+        description: 'إضافة مصروف جديد إلى حساب المستخدم',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            amount: { type: Type.NUMBER, description: 'قيمة المصروف (رقم موجب)' },
+            categoryId: { type: Type.STRING, description: 'معرف الفئة (ID). يجب اختياره من قائمة الفئات المتاحة.' },
+            note: { type: Type.STRING, description: 'ملاحظة أو وصف للمصروف' },
+            accountId: { type: Type.STRING, description: 'معرف الحساب (ID). يجب اختياره من قائمة الحسابات المتاحة.' },
+            date: { type: Type.STRING, description: 'تاريخ المصروف بصيغة YYYY-MM-DD. استخدم تاريخ اليوم إذا لم يحدد المستخدم.' }
+          },
+          required: ['amount', 'categoryId', 'note', 'accountId', 'date']
+        }
+      };
+
+      const addIncomeDeclaration: FunctionDeclaration = {
+        name: 'addIncome',
+        description: 'إضافة دخل جديد إلى حساب المستخدم',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            amount: { type: Type.NUMBER, description: 'قيمة الدخل (رقم موجب)' },
+            source: { type: Type.STRING, description: 'مصدر الدخل (مثال: راتب، مكافأة، إلخ)' },
+            accountId: { type: Type.STRING, description: 'معرف الحساب (ID). يجب اختياره من قائمة الحسابات المتاحة.' },
+            date: { type: Type.STRING, description: 'تاريخ الدخل بصيغة YYYY-MM-DD. استخدم تاريخ اليوم إذا لم يحدد المستخدم.' }
+          },
+          required: ['amount', 'source', 'accountId', 'date']
+        }
+      };
+
       const context = `
         أنت مساعد مالي ذكي وخبير في إدارة الميزانية الشخصية.
         العملة: ${currency}
+        تاريخ اليوم: ${new Date().toISOString().split('T')[0]}
         
         بيانات المستخدم الحالية:
         - إجمالي الرصيد: ${accounts.reduce((sum, acc) => sum + acc.balance, 0)}
-        - عدد المعاملات: ${expenses.length}
+        - الحسابات المتاحة: ${JSON.stringify(accounts.map(a => ({ id: a.id, name: a.name, balance: a.balance })))}
+        - الفئات المتاحة: ${JSON.stringify(categories.map(c => ({ id: c.id, name: c.name, type: c.type })))}
         - الميزانية الشهرية: ${budget?.amount || 'غير محددة'}
         
-        المعاملات الأخيرة (آخر 10):
-        ${JSON.stringify(expenses.slice(0, 10))}
+        لديك القدرة على استدعاء دوال (Tools) لإضافة مصاريف أو دخول نيابة عن المستخدم إذا طلب ذلك صراحة.
+        إذا طلب المستخدم إضافة مصروف، استخدم أداة addExpense. وإذا طلب إضافة دخل، استخدم أداة addIncome.
+        تأكد من استخدام معرفات الحسابات والفئات (IDs) الصحيحة من القوائم أعلاه.
         
-        أجب باللغة العربية بأسلوب احترافي وودود. قدم نصائح عملية ومخصصة بناءً على بيانات المستخدم.
+        أجب باللغة العربية بأسلوب احترافي وودود.
       `;
 
-      const response = await ai.models.generateContent({
+      // Append user message to history
+      chatHistoryRef.current.push({ role: 'user', parts: [{ text: userQuery }] });
+
+      let response = await ai.models.generateContent({
         model: 'gemini-3.1-pro-preview',
-        contents: `السياق:\n${context}\n\nسؤال المستخدم: ${userQuery}`,
+        contents: [
+          { role: 'user', parts: [{ text: context }] },
+          { role: 'model', parts: [{ text: 'فهمت السياق والتعليمات. أنا مستعد للمساعدة.' }] },
+          ...chatHistoryRef.current
+        ],
         config: {
+          tools: [{ functionDeclarations: [addExpenseDeclaration, addIncomeDeclaration] }],
           thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
         }
       });
 
-      setMessages(prev => [...prev, { role: 'assistant', content: response.text || 'عذراً، لم أتمكن من توليد إجابة.' }]);
+      let responseText = response.text || '';
+
+      // Handle function calls
+      if (response.functionCalls && response.functionCalls.length > 0) {
+        for (const call of response.functionCalls) {
+          const args = call.args as any;
+          if (call.name === 'addExpense') {
+            addExpense({
+              amount: Number(args.amount),
+              categoryId: args.categoryId,
+              note: args.note,
+              accountId: args.accountId,
+              date: args.date,
+              paymentMethod: 'cash'
+            });
+            responseText += '\n\n✅ تم إضافة المصروف بنجاح إلى سجلاتك.';
+          } else if (call.name === 'addIncome') {
+            addIncome({
+              amount: Number(args.amount),
+              source: args.source,
+              accountId: args.accountId,
+              date: args.date
+            });
+            responseText += '\n\n✅ تم إضافة الدخل بنجاح إلى سجلاتك.';
+          }
+        }
+        
+        // Append model's function call to history
+        chatHistoryRef.current.push({ role: 'model', parts: [{ functionCall: response.functionCalls[0] }] });
+        // Append function response to history
+        chatHistoryRef.current.push({ role: 'user', parts: [{ functionResponse: { name: response.functionCalls[0].name, response: { success: true } } }] });
+      } else {
+        // Append normal text response to history
+        chatHistoryRef.current.push({ role: 'model', parts: [{ text: responseText }] });
+      }
+
+      setMessages(prev => [...prev, { role: 'assistant', content: responseText || 'تم تنفيذ العملية.' }]);
     } catch (error) {
       console.error('Error calling Gemini:', error);
-      setMessages(prev => [...prev, { role: 'assistant', content: 'عذراً، حدث خطأ أثناء الاتصال بالمساعد الذكي. يرجى المحاولة مرة أخرى لاحقاً.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: 'عذراً، حدث خطأ أثناء الاتصال بالمساعد الذكي. يرجى التأكد من صحة مفتاح API والمحاولة مرة أخرى.' }]);
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (apiKeyMissing) {
+    return (
+      <div className="max-w-md mx-auto mt-20 p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl text-center">
+        <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
+          <SettingsIcon className="size-8" />
+        </div>
+        <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">مفتاح API مفقود</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+          لتشغيل المساعد الذكي خارج منصة التطوير، يرجى إضافة مفتاح Gemini API الخاص بك في صفحة الإعدادات.
+        </p>
+        <Link 
+          to="/settings" 
+          className="inline-flex items-center justify-center gap-2 bg-primary-500 text-white px-6 py-3 rounded-xl font-black hover:bg-primary-600 transition-colors w-full"
+        >
+          <SettingsIcon className="size-5" />
+          الذهاب إلى الإعدادات
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <motion.div 
@@ -84,7 +195,7 @@ export default function Assistant() {
         </div>
         <div>
           <h1 className="text-xl font-black text-slate-900 dark:text-white">المساعد <span className="text-primary-500">الذكي</span></h1>
-          <p className="text-xs text-slate-500 font-medium">تحليل مالي متقدم ونصائح مخصصة</p>
+          <p className="text-xs text-slate-500 font-medium">تحليل مالي متقدم وإدارة ذكية</p>
         </div>
       </div>
 
@@ -136,7 +247,7 @@ export default function Assistant() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="اسأل عن مصاريفك، ميزانيتك، أو اطلب نصيحة مالية..."
+              placeholder="اطلب إضافة مصروف، أو اسأل عن ميزانيتك..."
               className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl md:rounded-2xl py-3 md:py-4 pr-4 pl-14 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all dark:text-white"
               disabled={isLoading}
             />

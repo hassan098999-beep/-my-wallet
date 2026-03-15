@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings, Target, Repeat, Trophy, Flag, LogOut, User, PlusCircle, PiggyBank, Moon, Sun } from 'lucide-react';
+import { Settings, Target, Repeat, Trophy, Flag, LogOut, User, PlusCircle, PiggyBank, Moon, Sun, Landmark } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { motion, AnimatePresence } from 'motion/react';
@@ -7,6 +7,7 @@ import { cn } from '../utils';
 import { useAppContext } from '../store/AppContext';
 
 const dropdownItems = [
+  { path: '/income', name: 'إدارة الدخل', icon: Landmark },
   { path: '/budget', name: 'الميزانيات', icon: Target },
   { path: '/recurring', name: 'المصاريف المتكررة', icon: Repeat },
   { path: '/goals', name: 'الأهداف المالية', icon: Flag },

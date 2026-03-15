@@ -113,7 +113,7 @@ const Dashboard = () => {
             className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 rounded-xl transition-all shadow-xl hover:shadow-2xl active:scale-95 font-black text-[10px]"
           >
             <Plus size={14} />
-            إضافة مصروف
+            إضافة عملية
           </button>
         </div>
       </div>
@@ -214,15 +214,17 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          <motion.div variants={itemVariants} className="glass-card p-3 md:p-4 rounded-2xl md:rounded-3xl flex items-center gap-2 md:gap-3 group hover:scale-[1.02] transition-all duration-300">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0 shadow-inner group-hover:rotate-12 transition-transform">
-              <TrendingUp size={18} />
-            </div>
-            <div className="space-y-0.5">
-              <h4 className="text-[7px] md:text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">التوفير المحتمل</h4>
-              <p className="text-base md:text-xl font-black text-slate-900 dark:text-white tracking-tighter">{formatCurrency(potentialSavings, currency)}</p>
-              <p className="text-[7px] md:text-[9px] font-bold text-slate-500/70">الفرق بين دخلك ومصاريفك</p>
-            </div>
+          <motion.div variants={itemVariants}>
+            <Link to="/income" className="glass-card p-3 md:p-4 rounded-2xl md:rounded-3xl flex items-center gap-2 md:gap-3 group hover:scale-[1.02] transition-all duration-300">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0 shadow-inner group-hover:rotate-12 transition-transform">
+                <TrendingUp size={18} />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="text-[7px] md:text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">التوفير المحتمل</h4>
+                <p className="text-base md:text-xl font-black text-slate-900 dark:text-white tracking-tighter">{formatCurrency(potentialSavings, currency)}</p>
+                <p className="text-[7px] md:text-[9px] font-bold text-slate-500/70">الفرق بين دخلك ومصاريفك</p>
+              </div>
+            </Link>
           </motion.div>
 
           {/* Upcoming Bills */}

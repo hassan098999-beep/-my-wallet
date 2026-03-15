@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils';
-import { Layers, Wallet, Database } from 'lucide-react';
+import { Layers, Wallet, Database, Sparkles } from 'lucide-react';
 import CategoryManager from './settings/CategoryManager';
 import AccountManager from './settings/AccountManager';
 import DataManager from './settings/DataManager';
+import AIManager from './settings/AIManager';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -19,7 +20,7 @@ const containerVariants = {
 };
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState<'categories' | 'accounts' | 'data'>('categories');
+  const [activeTab, setActiveTab] = useState<'categories' | 'accounts' | 'data' | 'ai'>('categories');
 
   return (
     <motion.div 
@@ -34,16 +35,17 @@ const Settings = () => {
             الإعدادات <span className="text-primary-500">والتخصيص</span>
           </h1>
           <p className="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-            إدارة الفئات، الحسابات، والبيانات في مكان واحد
+            إدارة الفئات، الحسابات، البيانات، والذكاء الاصطناعي
           </p>
         </div>
       </div>
 
-      <div className="flex p-1 md:p-1.5 bg-slate-100 dark:bg-slate-900/80 rounded-xl md:rounded-2xl border border-slate-200 dark:border-slate-800 w-fit gap-1 md:gap-1.5 shadow-inner">
+      <div className="flex flex-wrap p-1 md:p-1.5 bg-slate-100 dark:bg-slate-900/80 rounded-xl md:rounded-2xl border border-slate-200 dark:border-slate-800 w-fit gap-1 md:gap-1.5 shadow-inner">
         {[
           { id: 'categories', name: 'الفئات', icon: Layers },
           { id: 'accounts', name: 'الحسابات', icon: Wallet },
           { id: 'data', name: 'البيانات', icon: Database },
+          { id: 'ai', name: 'الذكاء الاصطناعي', icon: Sparkles },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -72,6 +74,7 @@ const Settings = () => {
           {activeTab === 'categories' && <CategoryManager />}
           {activeTab === 'accounts' && <AccountManager />}
           {activeTab === 'data' && <DataManager />}
+          {activeTab === 'ai' && <AIManager />}
         </motion.div>
       </AnimatePresence>
     </motion.div>
