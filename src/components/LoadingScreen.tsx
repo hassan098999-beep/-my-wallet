@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Wallet, Sparkles, TrendingUp } from 'lucide-react';
+import { Wallet, Sparkles, TrendingUp, PieChart } from 'lucide-react';
 
 const LoadingScreen = () => {
   return (
@@ -10,18 +10,26 @@ const LoadingScreen = () => {
         <motion.div 
           animate={{ 
             scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
+            opacity: [0.15, 0.3, 0.15],
           }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/4 -left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-[100px]" 
+          className="absolute top-1/4 -left-1/4 w-96 h-96 bg-emerald-500/30 rounded-full blur-[100px]" 
         />
         <motion.div 
           animate={{ 
-            scale: [1, 1.5, 1],
-            opacity: [0.2, 0.4, 0.2],
+            scale: [1, 1.3, 1],
+            opacity: [0.15, 0.3, 0.15],
           }}
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-[100px]" 
+          className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-blue-500/30 rounded-full blur-[100px]" 
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.4, 1],
+            opacity: [0.1, 0.25, 0.1],
+          }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px]" 
         />
       </div>
 
@@ -29,32 +37,46 @@ const LoadingScreen = () => {
         {/* Animated Icons Container */}
         <div className="relative w-32 h-32 flex items-center justify-center mb-8">
           <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", damping: 15, stiffness: 100 }}
-            className="absolute inset-0 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-3xl shadow-xl shadow-emerald-500/30 opacity-20 animate-pulse"
+            initial={{ scale: 0, rotate: -180, opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 0.2 }}
+            transition={{ type: "spring", damping: 20, stiffness: 100, duration: 1.5 }}
+            className="absolute inset-0 bg-gradient-to-tr from-emerald-500 via-blue-500 to-purple-500 rounded-3xl shadow-2xl shadow-emerald-500/30 animate-pulse"
           />
           
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2, type: "spring" }}
-            className="relative bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 z-20"
+            initial={{ y: 30, opacity: 0, scale: 0.8 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, type: "spring", damping: 15, stiffness: 150 }}
+            className="relative bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 z-20 overflow-hidden group"
           >
-            <Wallet className="size-12 text-emerald-500" />
+            <motion.div
+              animate={{ 
+                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+              }}
+              transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-0 opacity-10 bg-[length:200%_200%] bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-500"
+            />
+            <Wallet className="size-12 text-emerald-500 relative z-10" />
           </motion.div>
 
           {/* Orbiting elements */}
           <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, rotate: 360 }}
+            transition={{ 
+              opacity: { delay: 0.6, duration: 1 },
+              rotate: { duration: 10, repeat: Infinity, ease: "linear" } 
+            }}
             className="absolute inset-0 z-10"
           >
-            <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-md border border-slate-100 dark:border-slate-700">
-              <Sparkles className="size-4 text-amber-500" />
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-lg border border-slate-100 dark:border-slate-700">
+              <Sparkles className="size-4 text-purple-500" />
             </div>
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-md border border-slate-100 dark:border-slate-700">
-              <TrendingUp className="size-4 text-blue-500" />
+            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-lg border border-slate-100 dark:border-slate-700">
+              <TrendingUp className="size-4 text-emerald-500" />
+            </div>
+            <div className="absolute top-1/2 -right-3 -translate-y-1/2 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-lg border border-slate-100 dark:border-slate-700">
+              <PieChart className="size-4 text-blue-500" />
             </div>
           </motion.div>
         </div>
@@ -63,33 +85,52 @@ const LoadingScreen = () => {
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
           className="text-center space-y-3"
         >
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          <motion.h1 
+            className="text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-500"
+            animate={{ 
+              backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+            }}
+            transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+            style={{ backgroundSize: '200% auto' }}
+          >
             مصاريفي
-          </h1>
+          </motion.h1>
           
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">
+          <div className="flex flex-col items-center gap-3">
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8, duration: 0.5 }}
+              className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest"
+            >
               إدارة مالية ذكية
-            </p>
+            </motion.p>
             
             {/* Loading dots */}
-            <div className="flex gap-1.5 mt-2">
-              {[0, 1, 2].map((i) => (
+            <div className="flex gap-2 mt-2">
+              {[
+                { color: 'bg-emerald-500', delay: 0 },
+                { color: 'bg-blue-500', delay: 0.2 },
+                { color: 'bg-purple-500', delay: 0.4 }
+              ].map((dot, i) => (
                 <motion.div
                   key={i}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ 
-                    scale: [1, 1.5, 1],
-                    opacity: [0.3, 1, 0.3]
+                    opacity: [0.3, 1, 0.3],
+                    y: [0, -5, 0],
+                    scale: [1, 1.2, 1]
                   }}
                   transition={{ 
-                    duration: 1, 
-                    repeat: Infinity, 
-                    delay: i * 0.2 
+                    opacity: { delay: 1 + dot.delay, duration: 0.5 },
+                    y: { duration: 1.2, repeat: Infinity, delay: 1 + dot.delay, ease: "easeInOut" },
+                    scale: { duration: 1.2, repeat: Infinity, delay: 1 + dot.delay, ease: "easeInOut" },
+                    opacity_repeat: { duration: 1.2, repeat: Infinity, delay: 1 + dot.delay, ease: "easeInOut" }
                   }}
-                  className="w-2 h-2 rounded-full bg-emerald-500"
+                  className={`w-2.5 h-2.5 rounded-full ${dot.color}`}
                 />
               ))}
             </div>
