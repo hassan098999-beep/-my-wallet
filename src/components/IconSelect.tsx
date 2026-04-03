@@ -11,11 +11,11 @@ interface IconSelectProps {
 
 const ICON_CATEGORIES: Record<string, string[]> = {
   'عام': ['Circle', 'Star', 'Award', 'Target', 'Zap', 'Bell', 'Mail', 'Clock', 'Calendar'],
-  'تسوق': ['ShoppingBag', 'ShoppingCard', 'Gift', 'CreditCard', 'Wallet'],
-  'طعام': ['Coffee', 'Utensils', 'Pizza', 'Beer', 'Wine'],
-  'نقل': ['Car', 'Plane', 'MapPin', 'Globe', 'Truck', 'Bike'],
-  'منزل': ['Home', 'FileText', 'Zap', 'Trash2', 'Wrench'],
-  'ترفيه': ['Gamepad2', 'Music', 'Camera', 'Video', 'Mic', 'Headphones', 'Tv'],
+  'تسوق': ['ShoppingBag', 'ShoppingCart', 'Gift', 'CreditCard', 'Wallet'],
+  'طعام': ['Coffee', 'UtensilsCrossed', 'Pizza', 'Beer', 'Wine'],
+  'نقل': ['CarFront', 'BusFront', 'Plane', 'MapPin', 'Globe', 'Truck', 'Bike'],
+  'منزل': ['House', 'ReceiptText', 'Zap', 'Trash', 'Wrench'],
+  'ترفيه': ['Ticket', 'Gamepad2', 'Music', 'Camera', 'Video', 'Mic', 'Headphones', 'Tv'],
   'صحة': ['HeartPulse', 'Stethoscope', 'Activity', 'Thermometer'],
   'عمل': ['Briefcase', 'Smartphone', 'Book', 'Users', 'TrendingUp', 'TrendingDown']
 };
@@ -68,7 +68,7 @@ export const IconSelect: React.FC<IconSelectProps> = ({ value, onChange, availab
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-72 mt-2 -right-2 sm:right-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-3 animate-in fade-in slide-in-from-top-2">
+        <div className="absolute z-50 w-72 mt-2 -right-2 sm:right-0 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-3 animate-in fade-in slide-in-from-top-2">
           <div className="relative mb-3">
             <Search className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
             <input
