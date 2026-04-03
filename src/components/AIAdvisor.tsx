@@ -104,9 +104,15 @@ export const AIAdvisor: React.FC = () => {
     <div className="space-y-8">
       <div className="flex items-center justify-between px-2">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
+          <motion.div 
+            animate={{ 
+              boxShadow: ["0 0 0px rgba(99, 102, 241, 0)", "0 0 20px rgba(99, 102, 241, 0.3)", "0 0 0px rgba(99, 102, 241, 0)"] 
+            }}
+            transition={{ duration: 3, repeat: Infinity }}
+            className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner"
+          >
             <Sparkles size={28} />
-          </div>
+          </motion.div>
           <div>
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">المستشار الذكي</h2>
@@ -153,8 +159,14 @@ export const AIAdvisor: React.FC = () => {
                 className="flex flex-col items-center justify-center py-24 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800/50 shadow-sm"
               >
                 <div className="relative">
-                  <div className="absolute inset-0 bg-indigo-500 blur-2xl opacity-20 animate-pulse" />
-                  <Loader2 className="w-12 h-12 text-indigo-500 animate-spin relative z-10" />
+                  <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-20 animate-pulse" />
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    className="relative z-10"
+                  >
+                    <Loader2 className="w-12 h-12 text-indigo-500" />
+                  </motion.div>
                 </div>
                 <p className="text-slate-400 font-black mt-6 uppercase tracking-widest text-xs">جاري تحليل بياناتك...</p>
               </motion.div>

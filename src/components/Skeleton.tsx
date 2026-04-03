@@ -32,8 +32,8 @@ export const TransactionSkeleton = () => (
   </div>
 );
 
-export const CardSkeleton = () => (
-  <div className="glass-card p-6 rounded-3xl space-y-4">
+export const CardSkeleton = ({ className }: { className?: string }) => (
+  <div className={cn("glass-card p-6 rounded-3xl space-y-4", className)}>
     <Skeleton className="h-4 w-24" />
     <Skeleton className="h-8 w-40" />
     <Skeleton className="h-2 w-full" />

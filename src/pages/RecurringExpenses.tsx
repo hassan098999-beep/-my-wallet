@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
-import { cn, formatCurrency } from '../utils';
+import { cn, formatCurrency, hapticFeedback } from '../utils';
+import { Skeleton, TransactionSkeleton } from '../components/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Plus, Trash2, Repeat, Calendar, CreditCard, Wallet, ArrowRightLeft, AlertCircle, Clock, X } from 'lucide-react';
+import { Plus, Trash, RefreshCcw, Calendar, CreditCard, Wallet, ArrowRightLeft, AlertCircle, Clock, X } from 'lucide-react';
 import { DynamicIcon } from '../components/DynamicIcon';
 import { PaymentMethod, RecurringInterval } from '../types';
 import { CategorySelect } from '../components/CategorySelect';
@@ -12,7 +13,7 @@ import { motion, AnimatePresence } from 'motion/react';
 
 const RecurringExpenses = () => {
   const { recurringExpenses, categories, accounts, currency, addRecurringExpense, deleteRecurringExpense } = useAppContext();
-
+  
   const [isAdding, setIsAdding] = useState(false);
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState(categories[0]?.id || '');
@@ -88,10 +89,12 @@ const RecurringExpenses = () => {
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      hapticFeedback('error');
       toast.error('الرجاء إدخال مبلغ صحيح');
       return;
     }
 
+    hapticFeedback('success');
     const base = new Date(startDate);
     const finalStartDate = calculateNextOccurrence(interval, base);
 
@@ -162,46 +165,43 @@ const RecurringExpenses = () => {
 
       <AnimatePresence>
         {isAdding && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, height: 0, y: -20 }}
             animate={{ opacity: 1, height: 'auto', y: 0 }}
             exit={{ opacity: 0, height: 0, y: -20 }}
-            className="overflow-hidden"
+            className="overflow-hidden px-2"
           >
-            <div className="bg-white/40 dark:bg-slate-900/20 backdrop-blur-3xl p-3 md:p-5 rounded-xl md:rounded-2xl border-2 border-dashed border-primary-500/30 shadow-xl shadow-primary-500/5">
-              <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-5">
-                <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-primary-500/10 flex items-center justify-center text-primary-500">
-                  <Plus size={16} />
+            <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-6 md:p-8 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm mb-8">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-500 shadow-inner">
+                  <Plus size={24} />
                 </div>
-                <h2 className="text-xs md:text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase">إضافة مصروف متكرر جديد</h2>
+                <div>
+                  <h2 className="text-base md:text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase">إضافة مصروف دوري جديد</h2>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">قم بجدولة مدفوعاتك القادمة بدقة</p>
+                </div>
               </div>
 
-              <form onSubmit={handleAdd} className="space-y-3 md:space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
-                  <div className="space-y-1">
-                    <label className="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-1">
-                      <div className="w-1 h-1 bg-primary-500 rounded-full animate-pulse"></div>
-                      المبلغ ({currency})
-                    </label>
+              <form onSubmit={handleAdd} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">المبلغ ({currency})</label>
                     <div className="relative group">
                       <input
                         type="number"
                         step="0.001"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
-                        className="w-full pl-8 pr-3 py-2 md:pl-9 md:pr-4 md:py-2.2 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-mono font-black text-sm md:text-base"
                         placeholder="0.000"
+                        className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono font-black"
                         required
                       />
-                      <span className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-primary-500 text-[9px] md:text-[10px] font-black font-mono">{currency}</span>
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xs">{currency}</span>
                     </div>
                   </div>
                   
-                  <div className="space-y-1">
-                    <label className="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-1">
-                      <div className="w-1 h-1 bg-primary-500 rounded-full"></div>
-                      الفئة
-                    </label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">الفئة</label>
                     <CategorySelect
                       categories={categories}
                       selectedId={categoryId}
@@ -209,20 +209,17 @@ const RecurringExpenses = () => {
                         setCategoryId(id);
                         setSubcategoryId('');
                       }}
-                      className="!h-[36px] md:!h-[42px]"
+                      className="!h-[56px] !rounded-2xl"
                     />
                   </div>
 
                   {categories.find(c => c.id === categoryId)?.subcategories && categories.find(c => c.id === categoryId)!.subcategories!.length > 0 && (
-                    <div className="space-y-1">
-                      <label className="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-1">
-                        <div className="w-1 h-1 bg-primary-500 rounded-full"></div>
-                        التصنيف الفرعي
-                      </label>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">التصنيف الفرعي</label>
                       <select
                         value={subcategoryId}
                         onChange={(e) => setSubcategoryId(e.target.value)}
-                        className="w-full px-3 py-2 md:px-4 md:py-2.2 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none font-black text-[9px] md:text-xs appearance-none"
+                        className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-black uppercase tracking-tight appearance-none cursor-pointer"
                       >
                         <option value="">اختر تصنيفاً فرعياً (اختياري)</option>
                         {categories.find(c => c.id === categoryId)?.subcategories?.map((sub, idx) => (
@@ -232,21 +229,18 @@ const RecurringExpenses = () => {
                     </div>
                   )}
 
-                  <div className="space-y-1">
-                    <label className="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-1">
-                      <div className="w-1 h-1 bg-primary-500 rounded-full"></div>
-                      دورة التكرار
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="space-y-2 lg:col-span-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">دورة التكرار</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {(['daily', 'weekly', 'monthly', 'yearly'] as RecurringInterval[]).map((int) => (
                         <button
                           key={int}
                           type="button"
                           onClick={() => setInterval(int)}
                           className={cn(
-                            "py-2 rounded-xl border-2 border-dashed text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all",
+                            "py-4 rounded-2xl border-2 border-dashed text-[10px] font-black uppercase tracking-widest transition-all",
                             interval === int
-                              ? "border-primary-500 bg-primary-500/5 text-primary-600"
+                              ? "border-primary-500 bg-primary-500/5 text-primary-600 shadow-lg shadow-primary-500/5"
                               : "border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-200"
                           )}
                         >
@@ -262,22 +256,19 @@ const RecurringExpenses = () => {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="space-y-1"
+                        className="space-y-2 lg:col-span-3"
                       >
-                        <label className="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-1">
-                          <div className="w-1 h-1 bg-primary-500 rounded-full"></div>
-                          يوم التكرار
-                        </label>
-                        <div className="flex flex-wrap gap-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">يوم التكرار</label>
+                        <div className="flex flex-wrap gap-2">
                           {daysOfWeek.map((day) => (
                             <button
                               key={day.id}
                               type="button"
                               onClick={() => setSelectedDayOfWeek(day.id)}
                               className={cn(
-                                "px-2 py-1.5 rounded-lg border-2 border-dashed text-[8px] font-black transition-all",
+                                "px-4 py-3 rounded-xl border-2 border-dashed text-[10px] font-black transition-all uppercase tracking-widest",
                                 selectedDayOfWeek === day.id
-                                  ? "border-primary-500 bg-primary-500 text-white"
+                                  ? "border-primary-500 bg-primary-500 text-white shadow-lg shadow-primary-500/20"
                                   : "border-slate-100 dark:border-slate-800 text-slate-400"
                               )}
                             >
@@ -293,22 +284,19 @@ const RecurringExpenses = () => {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="space-y-1"
+                        className="space-y-2 lg:col-span-3"
                       >
-                        <label className="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-1">
-                          <div className="w-1 h-1 bg-primary-500 rounded-full"></div>
-                          يوم الشهر
-                        </label>
-                        <div className="grid grid-cols-7 gap-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">يوم الشهر</label>
+                        <div className="grid grid-cols-7 sm:grid-cols-10 gap-2">
                           {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                             <button
                               key={day}
                               type="button"
                               onClick={() => setSelectedDayOfMonth(day)}
                               className={cn(
-                                "w-7 h-7 rounded-lg border-2 border-dashed text-[8px] font-black transition-all flex items-center justify-center",
+                                "w-10 h-10 rounded-xl border-2 border-dashed text-[10px] font-black transition-all flex items-center justify-center",
                                 selectedDayOfMonth === day
-                                  ? "border-primary-500 bg-primary-500 text-white"
+                                  ? "border-primary-500 bg-primary-500 text-white shadow-lg shadow-primary-500/20"
                                   : "border-slate-100 dark:border-slate-800 text-slate-400"
                               )}
                             >
@@ -324,48 +312,41 @@ const RecurringExpenses = () => {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="grid grid-cols-2 gap-3"
+                        className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:col-span-3"
                       >
-                        <div className="space-y-1">
-                          <label className="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-1">
-                            الشهر
-                          </label>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">الشهر</label>
                           <select
                             value={selectedMonthOfYear}
                             onChange={(e) => setSelectedMonthOfYear(Number(e.target.value))}
-                            className="w-full px-3 py-2 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none font-black text-[9px] md:text-xs appearance-none"
+                            className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-black uppercase tracking-tight appearance-none cursor-pointer"
                           >
                             {monthsOfYear.map((month, idx) => (
                               <option key={idx} value={idx}>{month}</option>
                             ))}
                           </select>
                         </div>
-                        <div className="space-y-1">
-                          <label className="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-1">
-                            اليوم
-                          </label>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">اليوم</label>
                           <input
                             type="number"
                             min="1"
                             max="31"
-                            value={selectedDayOfYear}
-                            onChange={(e) => setSelectedDayOfYear(Number(e.target.value))}
-                            className="w-full px-3 py-2 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none font-black text-[9px] md:text-xs"
+                            value={selectedDayOfMonth}
+                            onChange={(e) => setSelectedDayOfMonth(Number(e.target.value))}
+                            className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono font-black"
                           />
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
 
-                  <div className="space-y-1">
-                    <label className="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-1">
-                      <div className="w-1 h-1 bg-primary-500 rounded-full"></div>
-                      الحساب
-                    </label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">الحساب</label>
                     <select
                       value={accountId}
                       onChange={(e) => setAccountId(e.target.value)}
-                      className="w-full px-3 py-2 md:px-4 md:py-2.2 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none font-black text-[9px] md:text-xs appearance-none"
+                      className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-black uppercase tracking-tight appearance-none cursor-pointer"
                     >
                       {accounts.map(acc => (
                         <option key={acc.id} value={acc.id}>{acc.name}</option>
@@ -373,43 +354,34 @@ const RecurringExpenses = () => {
                     </select>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-1">
-                      <div className="w-1 h-1 bg-primary-500 rounded-full"></div>
-                      تاريخ البدء
-                    </label>
-                    <div className="relative group">
-                      <Calendar className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors size-3" />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">تاريخ البدء</label>
+                    <div className="relative">
+                      <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 size-5" />
                       <input
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full pr-8 md:pr-10 pl-3 md:pl-4 py-2 md:py-2.2 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none font-mono font-black text-[9px] md:text-xs tracking-widest"
+                        className="w-full pr-12 pl-4 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono font-black"
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="md:col-span-2 space-y-1">
-                    <label className="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-1">
-                      <div className="w-1 h-1 bg-primary-500 rounded-full"></div>
-                      ملاحظة (اختياري)
-                    </label>
+                  <div className="md:col-span-2 lg:col-span-1 space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">ملاحظة (اختياري)</label>
                     <input
                       type="text"
                       value={note}
                       onChange={(e) => setNote(e.target.value)}
-                      className="w-full px-3 py-2 md:px-4 md:py-2.2 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none font-bold text-[9px] md:text-xs"
-                      placeholder="مثال: اشتراك نتفليكس، فاتورة الكهرباء..."
+                      className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-black"
+                      placeholder="مثال: اشتراك نتفليكس..."
                     />
                   </div>
 
-                  <div className="md:col-span-3 space-y-2">
-                    <label className="text-[7px] md:text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-1">
-                      <div className="w-1 h-1 bg-primary-500 rounded-full"></div>
-                      طريقة الدفع
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
+                  <div className="md:col-span-3 space-y-4">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">طريقة الدفع</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {[
                         { id: 'cash', label: 'نقدي', icon: Wallet },
                         { id: 'card', label: 'بطاقة', icon: CreditCard },
@@ -420,19 +392,19 @@ const RecurringExpenses = () => {
                           type="button"
                           onClick={() => setPaymentMethod(method.id as PaymentMethod)}
                           className={cn(
-                            "flex items-center gap-2 md:gap-3 p-2 md:p-2 rounded-xl border-2 border-dashed transition-all group",
+                            "flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed transition-all group",
                             paymentMethod === method.id
-                              ? "border-primary-500 bg-primary-500/5 text-primary-600 shadow-md"
+                              ? "border-primary-500 bg-primary-500/5 text-primary-600 shadow-lg shadow-primary-500/5"
                               : "border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-700"
                           )}
                         >
                           <div className={cn(
-                            "w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110",
-                            paymentMethod === method.id ? "bg-primary-500 text-white" : "bg-slate-100 dark:bg-slate-800"
+                            "w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm",
+                            paymentMethod === method.id ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" : "bg-slate-100 dark:bg-slate-800"
                           )}>
-                            <method.icon size={14} />
+                            <method.icon size={20} />
                           </div>
-                          <span className="font-black text-[9px] md:text-[10px] uppercase tracking-widest">{method.label}</span>
+                          <span className="font-black text-[10px] uppercase tracking-widest">{method.label}</span>
                         </button>
                       ))}
                     </div>
@@ -440,12 +412,12 @@ const RecurringExpenses = () => {
                 </div>
 
                 <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
+                  whileHover={{ scale: 1.01, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
                   type="submit"
-                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-black py-2.5 md:py-3 rounded-xl transition-all shadow-xl shadow-primary-500/20 flex items-center justify-center gap-2 active:scale-95 text-xs md:text-sm uppercase tracking-widest"
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-4 text-base transition-all shadow-md shadow-primary-500/20 uppercase tracking-[0.2em]"
                 >
-                  <Repeat size={16} />
+                  <RefreshCcw size={20} />
                   إضافة المصروف المتكرر
                 </motion.button>
               </form>
@@ -457,7 +429,7 @@ const RecurringExpenses = () => {
       <div className="space-y-3 md:space-y-4 px-2">
         <div className="flex items-center gap-2 md:gap-3">
           <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center text-primary-500">
-            <Clock size={14} md:size={16} />
+            <Clock className="size-3.5 md:size-4" />
           </div>
           <div>
             <h3 className="text-xs md:text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase">قائمة المصاريف المتكررة</h3>
@@ -466,100 +438,87 @@ const RecurringExpenses = () => {
         </div>
         
         {recurringExpenses && recurringExpenses.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2 md:gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {recurringExpenses.map(expense => {
               const category = categories.find(c => c.id === expense.categoryId);
+              const daysUntil = Math.ceil((parseISO(expense.nextDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+              const isSoon = daysUntil <= 3 && daysUntil >= 0;
+
               return (
                 <motion.div 
-                  key={expense.id} 
-                  variants={itemVariants}
-                  whileHover={{ y: -1 }}
-                  className="group bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-2.5 md:p-3 rounded-xl border border-white/40 dark:border-slate-800/40 shadow-sm hover:border-primary-500/30 transition-all duration-300"
+                  key={expense.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-6 md:p-8 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm hover:shadow-md transition-all group relative overflow-hidden"
                 >
-                  <div className="flex flex-col lg:flex-row gap-2 md:gap-4 items-start lg:items-center">
-                    {/* Category Info */}
-                    <div className="flex items-center gap-2.5 md:gap-3 min-w-full lg:min-w-[200px]">
-                      <div 
-                        className="w-8 h-8 md:w-10 md:h-10 rounded-lg flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform duration-300" 
-                        style={{ backgroundColor: category?.color || '#ccc' }}
+                  <div className="relative z-10 flex flex-col gap-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:rotate-6 text-white",
+                          category?.color || "bg-primary-500"
+                        )} style={{ backgroundColor: category?.color }}>
+                          {category?.icon ? (
+                            <DynamicIcon name={category.icon} size={28} />
+                          ) : (
+                            <Clock size={28} />
+                          )}
+                        </div>
+                        <div className="space-y-0.5">
+                          <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                            {expense.note || (expense.subcategoryId ? `${category?.name} - ${expense.subcategoryId}` : category?.name)}
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] font-black text-primary-500 uppercase tracking-widest bg-primary-500/10 px-2 py-0.5 rounded-lg">
+                              {intervalLabels[expense.interval]}
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                              {category?.name}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={() => {
+                          // Using a more subtle way to confirm or just deleting for now to comply with "no alert/confirm"
+                          // For now, I'll just delete but in a real app I'd add a custom modal.
+                          deleteRecurringExpense(expense.id);
+                          toast.success('تم حذف المصروف المتكرر');
+                        }}
+                        className="text-slate-300 hover:text-rose-500 p-2 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all active:scale-90"
                       >
-                        {category?.icon ? (
-                          <DynamicIcon name={category.icon} className="size-[16px] md:size-[18px]" />
-                        ) : (
-                          <span className="text-[10px] md:text-xs font-black">{category?.name.charAt(0)}</span>
+                        <Trash className="size-5" />
+                      </button>
+                    </div>
+
+                    <div className="flex items-end justify-between pt-4 border-t border-slate-100 dark:border-slate-800/50">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                          <Calendar size={12} />
+                          <span className="text-[9px] font-bold uppercase tracking-widest">
+                            القادم: {format(parseISO(expense.nextDate), 'dd MMM yyyy', { locale: ar })}
+                          </span>
+                        </div>
+                        {isSoon && (
+                          <div className="flex items-center gap-1.5 text-rose-500 animate-pulse">
+                            <AlertCircle size={12} />
+                            <span className="text-[9px] font-black uppercase tracking-widest">يستحق قريباً</span>
+                          </div>
                         )}
                       </div>
-                      <div className="space-y-0.5">
-                        <h4 className="text-[10px] md:text-xs font-black text-slate-900 dark:text-white tracking-tight truncate max-w-[150px]">
-                          {expense.note || (expense.subcategoryId ? `${category?.name} - ${expense.subcategoryId}` : category?.name)}
-                        </h4>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[6px] md:text-[8px] font-black text-primary-500 uppercase tracking-widest bg-primary-500/10 px-1 py-0.5 rounded-md">
-                            {category?.name}
-                          </span>
-                          <span className="text-[6px] md:text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-                            {expense.paymentMethod === 'cash' ? 'نقدي' : expense.paymentMethod === 'card' ? 'بطاقة' : 'تحويل'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Schedule Info */}
-                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-3 w-full">
-                      <div className="space-y-0.5">
-                        <span className="text-[6px] md:text-[7px] font-black text-slate-400 uppercase tracking-widest block">دورة التكرار</span>
-                        <div className="flex items-center gap-1 text-slate-700 dark:text-slate-200">
-                          <Repeat size={10} className="text-primary-500" />
-                          <span className="text-[9px] md:text-[10px] font-black">{intervalLabels[expense.interval]}</span>
-                        </div>
-                      </div>
                       
-                      <div className="space-y-0.5">
-                        <span className="text-[6px] md:text-[7px] font-black text-slate-400 uppercase tracking-widest block">الدفعة القادمة</span>
-                        <div className="flex items-center gap-1 text-slate-700 dark:text-slate-200">
-                          <Calendar size={10} className="text-primary-500" />
-                          <span className="text-[9px] md:text-[10px] font-black font-mono tracking-tight">
-                            {format(parseISO(expense.nextDate), 'dd MMM yyyy', { locale: ar })}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-0.5 hidden sm:block">
-                        <span className="text-[6px] md:text-[7px] font-black text-slate-400 uppercase tracking-widest block">طريقة الدفع</span>
-                        <div className="flex items-center gap-1 text-slate-700 dark:text-slate-200">
-                          {expense.paymentMethod === 'cash' ? <Wallet size={10} className="text-emerald-500" /> : 
-                           expense.paymentMethod === 'card' ? <CreditCard size={10} className="text-blue-500" /> : 
-                           <ArrowRightLeft size={10} className="text-indigo-500" />}
-                          <span className="text-[9px] md:text-[10px] font-black">
-                            {expense.paymentMethod === 'cash' ? 'نقدي' : expense.paymentMethod === 'card' ? 'بطاقة' : 'تحويل'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Amount & Actions */}
-                    <div className="flex items-center justify-between lg:justify-end w-full lg:w-auto gap-3 md:gap-4 pt-1.5 md:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800">
                       <div className="text-right">
-                        <span className="text-[6px] md:text-[7px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">المبلغ</span>
-                        <span className="text-xs md:text-sm font-black text-slate-900 dark:text-white tracking-tighter font-mono">
+                        <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">
                           {formatCurrency(expense.amount, currency)}
-                        </span>
+                        </p>
                       </div>
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => {
-                          if (window.confirm('هل أنت متأكد من حذف هذا المصروف المتكرر؟')) {
-                            deleteRecurringExpense(expense.id);
-                          }
-                        }}
-                        className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"
-                        title="حذف"
-                      >
-                        <Trash2 size={12} md:size={14} />
-                      </motion.button>
                     </div>
                   </div>
+
+                  {/* Background Decoration */}
+                  <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-primary-500/5 rounded-full blur-[60px] group-hover:bg-primary-500/10 transition-colors duration-700" />
                 </motion.div>
               );
             })}
@@ -571,7 +530,7 @@ const RecurringExpenses = () => {
             className="text-center py-8 md:py-12 bg-white/40 dark:bg-slate-900/20 backdrop-blur-3xl rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800"
           >
             <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center mx-auto mb-3 md:mb-4 text-slate-400">
-              <Repeat size={24} md:size={32} />
+              <RefreshCcw className="size-6 md:size-8" />
             </div>
             <h3 className="text-xs md:text-sm font-black text-slate-900 dark:text-white mb-1 uppercase tracking-tight">لا توجد مصاريف متكررة</h3>
             <p className="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 font-medium max-w-[180px] md:max-w-xs mx-auto">قم بإضافة مصاريفك الثابتة (مثل الإيجار أو الاشتراكات) ليتم تسجيلها تلقائياً</p>

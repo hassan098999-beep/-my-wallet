@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Category } from '../types';
 import { DynamicIcon } from './DynamicIcon';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '../utils';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface CategorySelectProps {
   categories: Category[];
@@ -29,80 +30,109 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({ categories, sele
   }, []);
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
+    <div className={cn("relative", className)} ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none group"
+        className="w-full flex items-center justify-between px-5 py-4 rounded-2xl border-none bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none group shadow-inner"
       >
         {selectedCategory ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <div 
-              className="w-5 h-5 rounded-lg flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110"
-              style={{ backgroundColor: selectedCategory.color }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-110"
+              style={{ 
+                backgroundColor: selectedCategory.color,
+                boxShadow: `0 8px 16px -4px ${selectedCategory.color}40`
+              }}
             >
               {selectedCategory.icon ? (
-                <DynamicIcon name={selectedCategory.icon} size={10} />
+                <DynamicIcon name={selectedCategory.icon} size={20} />
               ) : (
-                <span className="text-[8px] font-black">{selectedCategory.name.charAt(0)}</span>
+                <span className="text-sm font-black">{selectedCategory.name.charAt(0)}</span>
               )}
             </div>
-            <span className="font-black text-[10px] uppercase tracking-tight">{selectedCategory.name}</span>
+            <div className="text-right">
+              <span className="block font-black text-sm uppercase tracking-tight leading-none">{selectedCategory.name}</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">الفئة المختارة</span>
+            </div>
           </div>
         ) : (
-          <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">اختر فئة</span>
+          <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">اختر فئة</span>
         )}
-        <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-primary-500' : ''}`} />
+        <ChevronDown size={20} className={cn("text-slate-400 transition-transform duration-500", isOpen ? 'rotate-180 text-emerald-500' : '')} />
       </button>
 
-      {isOpen && (
-        <div className="absolute z-50 w-full mt-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/40 dark:border-slate-800/40 py-1.5 max-h-64 overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
-          {categories.map(cat => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => {
-                onChange(cat.id);
-                setIsOpen(false);
-              }}
-              className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group ${
-                selectedId === cat.id ? 'bg-primary-50 dark:bg-primary-900/20' : ''
-              }`}
-            >
-              <div 
-                className="w-6 h-6 rounded-lg flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform"
-                style={{ backgroundColor: cat.color }}
-              >
-                {cat.icon ? (
-                  <DynamicIcon name={cat.icon} size={12} />
-                ) : (
-                  <span className="text-[9px] font-black">{cat.name.charAt(0)}</span>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="absolute z-50 w-full mt-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl rounded-2xl shadow-sm border border-white/20 dark:border-slate-800/20 py-3 max-h-80 overflow-y-auto custom-scrollbar overflow-x-hidden"
+          >
+            <div className="px-4 py-2 mb-2 border-b border-slate-100 dark:border-slate-800/50">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">جميع الفئات</span>
+            </div>
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => {
+                  onChange(cat.id);
+                  setIsOpen(false);
+                }}
+                className={cn(
+                  "w-full flex items-center gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group relative",
+                  selectedId === cat.id ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''
                 )}
-              </div>
-              <div className="flex-1 text-right">
-                <div className="flex items-center justify-between">
-                  <span className={`block text-[10px] font-black uppercase tracking-tight ${selectedId === cat.id ? 'text-primary-600 dark:text-primary-400' : 'text-slate-700 dark:text-slate-200'}`}>
-                    {cat.name}
-                  </span>
-                  {cat.type && (
-                    <span className={cn(
-                      "text-[6px] font-black px-1 py-0.5 rounded uppercase tracking-tighter",
-                      cat.type === 'need' ? "bg-indigo-100 text-indigo-600" :
-                      cat.type === 'want' ? "bg-amber-100 text-amber-600" :
-                      "bg-emerald-100 text-emerald-600"
-                    )}>
-                      {cat.type === 'need' ? '50%' : cat.type === 'want' ? '30%' : '20%'}
-                    </span>
+              >
+                <div 
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform shrink-0"
+                  style={{ 
+                    backgroundColor: cat.color,
+                    boxShadow: `0 10px 20px -5px ${cat.color}30`
+                  }}
+                >
+                  {cat.icon ? (
+                    <DynamicIcon name={cat.icon} size={24} />
+                  ) : (
+                    <span className="text-base font-black">{cat.name.charAt(0)}</span>
                   )}
                 </div>
+                <div className="flex-1 text-right">
+                  <div className="flex items-center justify-between">
+                    <span className={cn(
+                      "block text-base font-black uppercase tracking-tight transition-colors",
+                      selectedId === cat.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'
+                    )}>
+                      {cat.name}
+                    </span>
+                    {cat.type && (
+                      <span className={cn(
+                        "text-[8px] font-black px-2 py-1 rounded-lg uppercase tracking-widest",
+                        cat.type === 'need' ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400" :
+                        cat.type === 'want' ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" :
+                        "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                      )}>
+                        {cat.type === 'need' ? 'احتياج' : cat.type === 'want' ? 'رغبة' : 'ادخار'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                    {cat.subcategories?.length || 0} فئات فرعية
+                  </p>
+                </div>
                 {selectedId === cat.id && (
-                  <span className="text-[6px] font-black text-primary-500 uppercase tracking-widest">نشط حالياً</span>
+                  <div className="absolute left-4 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-500/30">
+                    <Check size={14} strokeWidth={4} />
+                  </div>
                 )}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

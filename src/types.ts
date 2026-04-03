@@ -16,6 +16,7 @@ export interface Category {
   icon?: string;
   subcategories?: string[];
   type?: 'need' | 'want' | 'saving';
+  order?: number;
 }
 
 export interface Achievement {
@@ -39,6 +40,8 @@ export interface Goal {
   isLinkedToOverallBudget?: boolean;
 }
 
+export type Mood = 'happy' | 'neutral' | 'sad' | 'stressed' | 'excited';
+
 export interface Expense {
   id: string;
   amount: number;
@@ -47,9 +50,13 @@ export interface Expense {
   accountId?: string;
   goalId?: string;
   date: string; // ISO string
+  parsedDate?: Date; // Pre-parsed date for performance
   note: string;
   paymentMethod: PaymentMethod; // Keeping for backward compatibility
   createdAt: string;
+  mood?: Mood;
+  isTransfer?: boolean;
+  transferId?: string;
 }
 
 export interface RecurringExpense {
@@ -77,8 +84,12 @@ export interface Income {
   source: string;
   amount: number;
   accountId?: string;
+  goalId?: string;
   date: string; // ISO string
+  parsedDate?: Date; // Pre-parsed date for performance
   createdAt: string;
+  isTransfer?: boolean;
+  transferId?: string;
 }
 
 export interface AppNotification {
@@ -88,12 +99,34 @@ export interface AppNotification {
   createdAt: string;
 }
 
+export interface FinancialAdvice {
+  title: string;
+  advice: string;
+  actionItem: string;
+  priority: 'low' | 'medium' | 'high';
+}
+
+export interface FinancialForecast {
+  month: string;
+  predictedBalance: number;
+  confidence: number;
+  reasoning: string;
+}
+
+export interface AIInsights {
+  advice: FinancialAdvice[];
+  forecast: FinancialForecast[];
+  lastUpdated: string; // ISO string
+}
+
 export interface AppState {
   expenses: Expense[];
   recurringExpenses: RecurringExpense[];
   categories: Category[];
   accounts: Account[];
   budget: Budget | null;
+  dailyBudget: number;
+  rollingBudgetEnabled: boolean;
   theme: 'light' | 'dark';
   currency: string;
   achievements: Achievement[];
@@ -101,4 +134,8 @@ export interface AppState {
   income: Income[];
   notifications: AppNotification[];
   hasCompletedOnboarding: boolean;
+  userName?: string;
+  firstDayOfMonth: number;
+  aiInsights?: AIInsights;
+  bestStreak: number;
 }

@@ -12,7 +12,7 @@ export interface BehavioralInsight {
 }
 
 export const useBehavioralEngine = () => {
-  const { expenses, dailyBudget, rollingBudgetEnabled, categories } = useAppContext();
+  const { expenses, dailyBudget, rollingBudgetEnabled, categories, income } = useAppContext();
 
   const insights = useMemo(() => {
     const list: BehavioralInsight[] = [];
@@ -27,7 +27,8 @@ export const useBehavioralEngine = () => {
     };
 
     expenses.forEach(e => {
-      const hour = new Date(e.date).getHours();
+      // استخدم createdAt للوقت الفعلي، وليس date الذي هو تاريخ فقط بدون ساعة
+      const hour = new Date(e.createdAt).getHours();
       if (hour >= 5 && hour < 12) timeSlots.morning += e.amount;
       else if (hour >= 12 && hour < 18) timeSlots.afternoon += e.amount;
       else if (hour >= 18 && hour < 22) timeSlots.evening += e.amount;
@@ -98,22 +99,32 @@ export const useBehavioralEngine = () => {
     const today = startOfDay(new Date());
     const monthStart = startOfMonth(new Date());
     
-    // Calculate total budget for the month so far
-    const daysPassed = Math.floor((today.getTime() - monthStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    // Find the first activity date to avoid accumulating budget for days before the user started using the app
+    const allDates = [
+      ...expenses.map(e => parseISO(e.date).getTime()),
+      ...(income || []).map(i => parseISO(i.date).getTime())
+    ];
+    const firstActivityDate = allDates.length > 0 ? startOfDay(new Date(Math.min(...allDates))) : today;
+    
+    // The accumulation should start from either the start of the month or the first activity date, whichever is later
+    const accumulationStartDate = new Date(Math.max(monthStart.getTime(), firstActivityDate.getTime()));
+    
+    // Calculate total budget for the month so far (from accumulation start date)
+    const daysPassed = Math.floor((today.getTime() - accumulationStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     const totalBudgetSoFar = dailyBudget * daysPassed;
     
     // Calculate total spent this month so far (excluding today)
     const totalSpentThisMonth = expenses
       .filter(e => {
         const d = parseISO(e.date);
-        return isWithinInterval(d, { start: monthStart, end: subDays(today, 1) });
+        return isWithinInterval(d, { start: accumulationStartDate, end: subDays(today, 1) });
       })
       .reduce((sum, e) => sum + e.amount, 0);
 
     // Adjusted budget for today = (Total budget so far) - (Total spent so far)
     // This effectively carries over the remaining balance from previous days
     return Math.max(0, totalBudgetSoFar - totalSpentThisMonth);
-  }, [expenses, dailyBudget, rollingBudgetEnabled]);
+  }, [expenses, income, dailyBudget, rollingBudgetEnabled]);
 
   return { insights, rollingBudget };
 };

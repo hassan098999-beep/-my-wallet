@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Trash, Pencil, Copy, Calendar, Building2, ArrowDown } from 'lucide-react';
+import { Trash, Pencil, Copy, Calendar, Building2, ArrowDown, ArrowRightLeft } from 'lucide-react';
 import { DynamicIcon } from './DynamicIcon';
 import { formatCurrency, cn } from '../utils';
 import { PaymentMethod, Category, Account } from '../types';
@@ -33,12 +33,20 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
   getPaymentLabel,
 }) => {
   const isExpense = transaction.type === 'expense';
-  const category = isExpense ? categories.find(c => c.id === (transaction as any).categoryId) : null;
-  const typeColor = !isExpense ? 'text-emerald-500' : category?.type === 'need' ? 'text-indigo-500' : category?.type === 'want' ? 'text-amber-500' : 'text-rose-500';
-  const bgColor = !isExpense ? '#10b981' : category?.color || '#f43f5e';
+  const isTransfer = transaction.isTransfer;
+  const category = isExpense && !isTransfer ? categories.find(c => c.id === (transaction as any).categoryId) : null;
+  const typeColor = isTransfer ? 'text-indigo-500' : (!isExpense ? 'text-emerald-500' : category?.type === 'need' ? 'text-indigo-500' : category?.type === 'want' ? 'text-amber-500' : 'text-rose-500');
+  const bgColor = isTransfer ? '#6366f1' : (!isExpense ? '#10b981' : category?.color || '#f43f5e');
 
   return (
-    <div className="relative overflow-hidden">
+    <motion.div 
+      layout
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className="relative overflow-hidden"
+    >
       {/* Swipe Background (Delete Button) */}
       <div className="absolute inset-0 bg-rose-500 flex items-center justify-end px-6">
         <div className="flex flex-col items-center gap-1 text-white">
@@ -48,7 +56,6 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
       </div>
 
       <motion.div 
-        layout
         drag="x"
         dragDirectionLock
         dragConstraints={{ left: -100, right: 0 }}
@@ -58,10 +65,6 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
             onDelete(transaction.id, transaction.type);
           }
         }}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ delay: Math.min(index * 0.03, 0.5) }}
         className={cn(
           "relative z-10 p-6 md:p-10 flex flex-col sm:flex-row sm:items-center justify-between gap-8 md:gap-12 transition-all group bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 last:border-0"
         )}
@@ -74,24 +77,26 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
               boxShadow: `0 20px 40px -10px ${bgColor}40`
             }}
           >
-            {!isExpense ? (
+            {isTransfer ? (
+              <ArrowRightLeft className="size-7 md:size-12" />
+            ) : !isExpense ? (
               <ArrowDown className="size-7 md:size-12" />
             ) : category?.icon ? (
               <DynamicIcon name={category.icon} className="size-7 md:size-12" />
             ) : (
-              <span className="text-2xl md:text-4xl font-black">{category?.name.charAt(0)}</span>
+              <span className="text-2xl md:text-4xl font-black">{category?.name?.charAt(0) || '?'}</span>
             )}
           </div>
           <div className="space-y-3 md:space-y-4 flex-1 min-w-0">
             <div className="flex flex-col gap-1">
               <h4 className="font-black text-slate-900 dark:text-white text-lg md:text-3xl leading-tight truncate tracking-tight">
-                {!isExpense ? (transaction as any).source : ((transaction as any).note || ((transaction as any).subcategoryId ? `${category?.name} - ${(transaction as any).subcategoryId}` : category?.name))}
+                {isTransfer ? (isExpense ? (transaction as any).note : (transaction as any).source) : (!isExpense ? (transaction as any).source : ((transaction as any).note || ((transaction as any).subcategoryId ? `${category?.name} - ${(transaction as any).subcategoryId}` : category?.name)))}
               </h4>
               <div className="flex items-center gap-3">
                 <span className={cn("text-[10px] md:text-xs font-black uppercase tracking-[0.2em]", typeColor)}>
-                  {!isExpense ? 'دخل' : category?.type === 'need' ? 'احتياجات' : category?.type === 'want' ? 'رغبات' : 'ادخار'}
+                  {isTransfer ? 'تحويل مالي' : (!isExpense ? 'دخل' : category?.type === 'need' ? 'احتياجات' : category?.type === 'want' ? 'رغبات' : 'ادخار')}
                 </span>
-                {(transaction as any).subcategoryId && (
+                {(transaction as any).subcategoryId && !isTransfer && (
                   <span className="text-[9px] md:text-[11px] font-black uppercase tracking-widest text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
                     {(transaction as any).subcategoryId}
                   </span>
@@ -104,7 +109,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
                 {format(parseISO(transaction.date), 'dd MMM yyyy', { locale: ar })}
               </span>
               <span className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800/30 px-4 md:px-6 py-2 rounded-2xl whitespace-nowrap truncate max-w-[180px] sm:max-w-none border border-slate-200/5 dark:border-slate-700/5">
-                {isExpense ? getPaymentIcon((transaction as any).paymentMethod) : <Building2 size={18} className="shrink-0" />}
+                {isTransfer ? <ArrowRightLeft size={18} className="shrink-0" /> : (isExpense ? getPaymentIcon((transaction as any).paymentMethod) : <Building2 size={18} className="shrink-0" />)}
                 <span className="truncate font-black text-[10px] md:text-sm uppercase tracking-widest">
                   {transaction.accountId ? (
                     accounts.find(a => a.id === transaction.accountId)?.name || 'حساب محذوف'
@@ -125,7 +130,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
           </div>
 
           <div className="flex items-center gap-3 md:gap-6">
-            {isExpense && (
+            {!isTransfer && isExpense && (
               <button 
                 onClick={() => onDuplicate(transaction)}
                 className="p-3 md:p-4 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl md:rounded-3xl transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 shadow-sm"
@@ -135,13 +140,15 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
               </button>
             )}
 
-            <button 
-              onClick={() => onEdit(transaction)}
-              className="p-3 md:p-4 text-slate-300 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-2xl md:rounded-3xl transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 shadow-sm"
-              title="تعديل"
-            >
-              <Pencil className="size-5 md:size-8" />
-            </button>
+            {!isTransfer && (
+              <button 
+                onClick={() => onEdit(transaction)}
+                className="p-3 md:p-4 text-slate-300 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-2xl md:rounded-3xl transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 shadow-sm"
+                title="تعديل"
+              >
+                <Pencil className="size-5 md:size-8" />
+              </button>
+            )}
             
             <button 
               onClick={() => onDelete(transaction.id, transaction.type)}
@@ -153,7 +160,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
           </div>
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 };
 

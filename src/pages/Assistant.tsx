@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Bot, User, Sparkles, Loader2, Settings as SettingsIcon, Trash2, Lightbulb } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Loader2, Settings as SettingsIcon, Trash2, Lightbulb, ImagePlus, X } from 'lucide-react';
 import { GoogleGenAI, ThinkingLevel, Type, FunctionDeclaration } from '@google/genai';
 import { useAppContext } from '../store/AppContext';
 import { cn, hapticFeedback, getBudgetMonth } from '../utils';
@@ -9,17 +9,34 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export default function Assistant() {
-  const { accounts, expenses, budget, currency, categories, addExpense, addIncome, deleteExpense, deleteIncome, setBudget, updateAccount, addGoal, goals, firstDayOfMonth } = useAppContext();
+  const { accounts, expenses, budget, currency, categories, addExpense, addIncome, deleteExpense, deleteIncome, setBudget, updateAccount, addGoal, goals, firstDayOfMonth, transferAccount, addCategory } = useAppContext();
   const [query, setQuery] = useState('');
-  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([
-    { role: 'assistant', content: 'مرحباً! أنا مساعدك المالي الذكي. يمكنني تحليل مصاريفك، تقديم نصائح، أو حتى إضافة وحذف المصاريف والدخول وتعديل الميزانية نيابة عنك. كيف يمكنني مساعدتك اليوم؟' }
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string, image?: string}[]>([
+    { role: 'assistant', content: 'مرحباً! أنا مساعدك المالي الذكي. يمكنني تحليل مصاريفك، قراءة الفواتير، تقديم نصائح، أو حتى إضافة وحذف المصاريف والدخول وتعديل الميزانية نيابة عنك. كيف يمكنني مساعدتك اليوم؟' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [customApiKey, setCustomApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const chatHistoryRef = useRef<any[]>([]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('حجم الصورة يجب أن يكون أقل من 5 ميجابايت');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -53,7 +70,7 @@ export default function Assistant() {
 
   const handleAsk = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim() || isLoading) return;
+    if ((!query.trim() && !selectedImage) || isLoading) return;
 
     const apiKey = localStorage.getItem('gemini_api_key') || process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -62,9 +79,11 @@ export default function Assistant() {
     }
 
     const userQuery = query.trim();
+    const userImage = selectedImage;
     hapticFeedback('medium');
     setQuery('');
-    setMessages(prev => [...prev, { role: 'user', content: userQuery }]);
+    setSelectedImage(null);
+    setMessages(prev => [...prev, { role: 'user', content: userQuery, image: userImage }]);
     setIsLoading(true);
 
     try {
@@ -155,6 +174,37 @@ export default function Assistant() {
         }
       };
 
+      const transferAccountDeclaration: FunctionDeclaration = {
+        name: 'transferAccount',
+        description: 'تحويل مبلغ مالي من حساب إلى آخر',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            fromAccountId: { type: Type.STRING, description: 'معرف الحساب المحول منه (ID)' },
+            toAccountId: { type: Type.STRING, description: 'معرف الحساب المحول إليه (ID)' },
+            amount: { type: Type.NUMBER, description: 'المبلغ المراد تحويله' },
+            date: { type: Type.STRING, description: 'تاريخ التحويل (YYYY-MM-DD)' },
+            note: { type: Type.STRING, description: 'ملاحظة حول التحويل' }
+          },
+          required: ['fromAccountId', 'toAccountId', 'amount']
+        }
+      };
+
+      const addCategoryDeclaration: FunctionDeclaration = {
+        name: 'addCategory',
+        description: 'إضافة فئة جديدة للمصاريف أو الدخل',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            name: { type: Type.STRING, description: 'اسم الفئة' },
+            type: { type: Type.STRING, enum: ['expense', 'income'], description: 'نوع الفئة: مصروف أو دخل' },
+            color: { type: Type.STRING, description: 'لون الفئة (مثال: #FF0000)' },
+            icon: { type: Type.STRING, description: 'اسم الأيقونة (مثال: ShoppingCart)' }
+          },
+          required: ['name', 'type', 'color', 'icon']
+        }
+      };
+
       const context = `
         أنت مساعد مالي ذكي وخبير في إدارة الميزانية الشخصية.
         العملة: ${currency}
@@ -166,14 +216,34 @@ export default function Assistant() {
         - الفئات المتاحة: ${JSON.stringify(categories.map(c => ({ id: c.id, name: c.name, type: c.type })))}
         - الميزانية الشهرية: ${budget?.amount || 'غير محددة'}
         - الأهداف الحالية: ${JSON.stringify(goals.map(g => ({ id: g.id, name: g.name, target: g.targetAmount, current: g.currentAmount })))}
-        - آخر 10 مصاريف: ${JSON.stringify(expenses.slice(0, 10).map(e => ({ id: e.id, amount: e.amount, note: e.note, date: e.date })))}
+        - ملخص مصاريف الشهر الحالي: ${JSON.stringify(
+          expenses
+            .filter(e => e.date.startsWith(new Date().toISOString().split('T')[0].substring(0, 7)))
+            .reduce((acc, e) => {
+              const cat = categories.find(c => c.id === e.categoryId)?.name || 'أخرى';
+              acc[cat] = (acc[cat] || 0) + e.amount;
+              return acc;
+            }, {} as Record<string, number>)
+        )}
         
         لديك القدرة على استدعاء دوال (Tools) لإدارة البيانات نيابة عن المستخدم.
         أجب باللغة العربية بأسلوب احترافي وودود.
       `;
 
       // Append user message to history
-      chatHistoryRef.current.push({ role: 'user', parts: [{ text: userQuery }] });
+      const userParts: any[] = [];
+      if (userQuery) userParts.push({ text: userQuery });
+      if (userImage) {
+        const mimeType = userImage.split(';')[0].split(':')[1];
+        const base64Data = userImage.split(',')[1];
+        userParts.push({
+          inlineData: {
+            data: base64Data,
+            mimeType: mimeType
+          }
+        });
+      }
+      chatHistoryRef.current.push({ role: 'user', parts: userParts });
 
       let response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -183,7 +253,7 @@ export default function Assistant() {
           ...chatHistoryRef.current
         ],
         config: {
-          tools: [{ functionDeclarations: [addExpenseDeclaration, addIncomeDeclaration, deleteExpenseDeclaration, setBudgetDeclaration, updateAccountDeclaration, addGoalDeclaration] }],
+          tools: [{ functionDeclarations: [addExpenseDeclaration, addIncomeDeclaration, deleteExpenseDeclaration, setBudgetDeclaration, updateAccountDeclaration, addGoalDeclaration, transferAccountDeclaration, addCategoryDeclaration] }],
           thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
         }
       });
@@ -235,6 +305,17 @@ export default function Assistant() {
               linkedCategoryId: args.linkedCategoryId
             });
             responseText += '\n\n✅ تم إضافة هدف الادخار بنجاح.';
+          } else if (call.name === 'transferAccount') {
+            transferAccount(args.fromAccountId, args.toAccountId, Number(args.amount), args.date, args.note);
+            responseText += '\n\n✅ تم تحويل المبلغ بنجاح.';
+          } else if (call.name === 'addCategory') {
+            addCategory({
+              name: args.name,
+              type: args.type,
+              color: args.color,
+              icon: args.icon
+            });
+            responseText += '\n\n✅ تم إضافة الفئة بنجاح.';
           }
         }
         
@@ -444,7 +525,17 @@ export default function Assistant() {
                         <ReactMarkdown>{msg.content}</ReactMarkdown>
                       </div>
                     ) : (
-                      <p className="text-sm font-medium leading-relaxed">{msg.content}</p>
+                      <div className="flex flex-col gap-3">
+                        {msg.image && (
+                          <img 
+                            src={msg.image} 
+                            alt="Uploaded" 
+                            className="max-w-full h-auto max-h-48 rounded-xl object-contain bg-black/10"
+                            referrerPolicy="no-referrer"
+                          />
+                        )}
+                        {msg.content && <p className="text-sm font-medium leading-relaxed">{msg.content}</p>}
+                      </div>
                     )}
                     <div className={cn(
                       "text-[8px] font-black uppercase tracking-widest mt-3 opacity-50",
@@ -494,19 +585,54 @@ export default function Assistant() {
             onSubmit={handleAsk}
             className="relative max-w-4xl mx-auto group"
           >
+            {selectedImage && (
+              <div className="absolute bottom-full mb-4 right-0 p-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg">
+                <div className="relative">
+                  <img 
+                    src={selectedImage} 
+                    alt="Preview" 
+                    className="h-32 w-auto rounded-xl object-contain"
+                    referrerPolicy="no-referrer"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setSelectedImage(null)}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-rose-600 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-2xl text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 flex items-center justify-center transition-all disabled:opacity-50"
+              title="إرفاق صورة (فاتورة، إيصال...)"
+            >
+              <ImagePlus size={20} className="md:size-24" />
+            </button>
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="اسأل عن أي شيء يخص ميزانيتك..."
-              className="w-full pl-16 pr-6 py-4 md:pl-20 md:pr-8 md:py-5 rounded-2xl bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-900 dark:text-white text-sm md:text-base outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-sm font-bold"
+              placeholder="اسأل عن أي شيء يخص ميزانيتك أو ارفع صورة فاتورة..."
+              className="w-full pl-16 pr-14 md:pl-20 md:pr-16 py-4 md:py-5 rounded-2xl bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-900 dark:text-white text-sm md:text-base outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-sm font-bold"
               disabled={isLoading}
             />
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="submit"
-              disabled={!query.trim() || isLoading}
+              disabled={(!query.trim() && !selectedImage) || isLoading}
               className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-primary-600 text-white flex items-center justify-center shadow-lg shadow-primary-500/30 disabled:opacity-50 disabled:shadow-none transition-all hover:bg-primary-700 active:scale-90"
             >
               <Send size={20} className="md:size-24 rotate-180" />

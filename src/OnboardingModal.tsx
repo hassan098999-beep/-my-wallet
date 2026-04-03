@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from './store/AppContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { Wallet, Landmark, Coins, CheckCircle2, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
+import { Wallet, Building2, Coins, CircleCheckBig, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
 import { cn } from './utils';
 
 const OnboardingModal: React.FC = () => {
@@ -14,15 +14,6 @@ const OnboardingModal: React.FC = () => {
   });
 
   if (hasCompletedOnboarding) return null;
-
-  const currencies = [
-    { code: 'TND', name: 'دينار تونسي', flag: '🇹🇳' },
-    { code: 'SAR', name: 'ريال سعودي', flag: '🇸🇦' },
-    { code: 'AED', name: 'درهم إماراتي', flag: '🇦🇪' },
-    { code: 'USD', name: 'دولار أمريكي', flag: '🇺🇸' },
-    { code: 'EUR', name: 'يورو', flag: '🇪🇺' },
-    { code: 'EGP', name: 'جنيه مصري', flag: '🇪🇬' },
-  ];
 
   const handleNext = () => {
     if (step < 3) {
@@ -56,7 +47,7 @@ const OnboardingModal: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
+          className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-md overflow-hidden border border-slate-200 dark:border-slate-800"
         >
           <div className="p-8 md:p-12">
             {/* Progress Bar */}
@@ -87,29 +78,45 @@ const OnboardingModal: React.FC = () => {
                     </div>
                     <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">مرحباً بك في <span className="text-primary-500">مصاريفي</span></h2>
                     <p className="text-slate-500 dark:text-slate-400 font-bold">لنقم بإعداد تطبيقك في ثوانٍ معدودة لنبدأ رحلة تنظيم أموالك.</p>
-                  </div>
-
-                  <div className="space-y-4 pt-4">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">اختر عملتك الأساسية</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {currencies.map((c) => (
-                        <button
-                          key={c.code}
-                          onClick={() => setSelectedCurrency(c.code)}
-                          className={cn(
-                            "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-right",
-                            selectedCurrency === c.code
-                              ? "border-primary-500 bg-primary-50 dark:bg-primary-900/10 text-primary-700 dark:text-primary-400"
-                              : "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-700"
-                          )}
-                        >
-                          <span className="text-2xl">{c.flag}</span>
-                          <div className="flex flex-col">
-                            <span className="font-black text-sm">{c.code}</span>
-                            <span className="text-[10px] font-bold opacity-70">{c.name}</span>
-                          </div>
-                        </button>
-                      ))}
+                    
+                    <div className="space-y-3 mt-8">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">اختر عملتك</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { code: 'TND', name: 'دينار تونسي', flag: '🇹🇳' },
+                          { code: 'SAR', name: 'ريال سعودي', flag: '🇸🇦' },
+                          { code: 'USD', name: 'دولار أمريكي', flag: '🇺🇸' },
+                          { code: 'EUR', name: 'يورو', flag: '🇪🇺' },
+                        ].map((curr) => (
+                          <motion.button
+                            key={curr.code}
+                            whileHover={{ scale: 1.02, y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setSelectedCurrency(curr.code)}
+                            className={cn(
+                              "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-right",
+                              selectedCurrency === curr.code
+                                ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+                                : "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50"
+                            )}
+                          >
+                            <span className="text-2xl">{curr.flag}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className={cn(
+                                "text-sm font-black truncate",
+                                selectedCurrency === curr.code ? "text-primary-600 dark:text-primary-400" : "text-slate-900 dark:text-white"
+                              )}>{curr.name}</p>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase">{curr.code}</p>
+                            </div>
+                            {selectedCurrency === curr.code && (
+                              <motion.div
+                                layoutId="activeCurrency"
+                                className="w-2 h-2 rounded-full bg-primary-500"
+                              />
+                            )}
+                          </motion.button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -132,7 +139,10 @@ const OnboardingModal: React.FC = () => {
                   </div>
 
                   <div className="space-y-6 pt-4">
-                    <div className="space-y-3">
+                    <motion.div 
+                      className="space-y-3"
+                      animate={{ scale: initialBalances.cash !== '0' ? 1.02 : 1 }}
+                    >
                       <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-2">
                         <Coins size={14} className="text-emerald-500" />
                         المبلغ النقدي (كاش)
@@ -140,31 +150,48 @@ const OnboardingModal: React.FC = () => {
                       <div className="relative">
                         <input
                           type="number"
+                          inputMode="decimal"
+                          autoComplete="off"
                           value={initialBalances.cash}
                           onChange={(e) => setInitialBalances(prev => ({ ...prev, cash: e.target.value }))}
-                          className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-900 dark:text-white font-black text-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all"
+                          className={cn(
+                            "w-full px-6 py-4 rounded-2xl border-2 bg-slate-50/50 dark:bg-slate-800/30 text-slate-900 dark:text-white font-black text-xl outline-none transition-all",
+                            initialBalances.cash !== '0' 
+                              ? "border-emerald-500 ring-4 ring-emerald-500/10" 
+                              : "border-slate-100 dark:border-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
+                          )}
                           placeholder="0.00"
                         />
                         <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-slate-400">{selectedCurrency}</span>
                       </div>
-                    </div>
+                    </motion.div>
 
-                    <div className="space-y-3">
+                    <motion.div 
+                      className="space-y-3"
+                      animate={{ scale: initialBalances.bank !== '0' ? 1.02 : 1 }}
+                    >
                       <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-2">
-                        <Landmark size={14} className="text-blue-500" />
+                        <Building2 size={14} className="text-blue-500" />
                         الحساب البنكي
                       </label>
                       <div className="relative">
                         <input
                           type="number"
+                          inputMode="decimal"
+                          autoComplete="off"
                           value={initialBalances.bank}
                           onChange={(e) => setInitialBalances(prev => ({ ...prev, bank: e.target.value }))}
-                          className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-900 dark:text-white font-black text-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
+                          className={cn(
+                            "w-full px-6 py-4 rounded-2xl border-2 bg-slate-50/50 dark:bg-slate-800/30 text-slate-900 dark:text-white font-black text-xl outline-none transition-all",
+                            initialBalances.bank !== '0' 
+                              ? "border-blue-500 ring-4 ring-blue-500/10" 
+                              : "border-slate-100 dark:border-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                          )}
                           placeholder="0.00"
                         />
                         <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-slate-400">{selectedCurrency}</span>
                       </div>
-                    </div>
+                    </motion.div>
                   </div>
                 </motion.div>
               )}
@@ -178,9 +205,14 @@ const OnboardingModal: React.FC = () => {
                   className="space-y-6 text-center"
                 >
                   <div className="flex justify-center">
-                    <div className="w-24 h-24 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 mb-6">
-                      <CheckCircle2 size={48} />
-                    </div>
+                    <motion.div 
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                      className="w-24 h-24 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 mb-6"
+                    >
+                      <CircleCheckBig size={48} />
+                    </motion.div>
                   </div>
                   <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">أنت جاهز <span className="text-primary-500">للانطلاق!</span></h2>
                   <p className="text-slate-500 dark:text-slate-400 font-bold max-w-xs mx-auto">لقد تم إعداد حسابك بنجاح. يمكنك الآن البدء في تسجيل مصاريفك ومتابعة أهدافك المالية.</p>
@@ -205,7 +237,7 @@ const OnboardingModal: React.FC = () => {
               )}
               <button
                 onClick={handleNext}
-                className="flex-[2] bg-primary-600 hover:bg-primary-700 text-white py-4 rounded-2xl font-black transition-all shadow-xl shadow-primary-500/20 flex items-center justify-center gap-2 active:scale-95 text-sm uppercase tracking-widest"
+                className="flex-[2] bg-primary-600 hover:bg-primary-700 text-white py-4 rounded-2xl font-black transition-all shadow-md shadow-primary-500/20 flex items-center justify-center gap-2 active:scale-95 text-sm uppercase tracking-widest"
               >
                 {step === 3 ? 'ابدأ الآن' : 'التالي'}
                 <ArrowLeft size={18} className="rotate-180" />

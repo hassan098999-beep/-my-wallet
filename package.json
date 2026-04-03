@@ -11,31 +11,34 @@
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "predeploy": "VITE_GITHUB_PAGES=true npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "vite build && gh-pages -d dist"
   },
   "dependencies": {
+    "@google/genai": "^1.45.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "firebase": "^12.10.0",
+    "json2csv": "^6.0.0-alpha.2",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.6.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.13.1",
     "recharts": "^3.8.0",
     "tailwind-merge": "^3.5.0",
-    "vite": "^6.2.0",
-    "workbox-core": "^7.4.0",
-    "workbox-precaching": "^7.4.0"
+    "vite": "^6.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "autoprefixer": "^10.4.21",
     "gh-pages": "^6.3.0",
     "tailwindcss": "^4.1.14",
-    "terser": "^5.46.1",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vite-plugin-pwa": "^1.2.0"

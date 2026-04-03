@@ -1,26 +1,41 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../store/AppContext';
-import { cn, formatCurrency } from '../utils';
-import { isThisMonth, parseISO, format, startOfMonth, endOfMonth } from 'date-fns';
+import { cn, formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
+import { isThisMonth, parseISO, format, startOfMonth, endOfMonth, differenceInDays } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Save, AlertCircle, TrendingUp, Target, Wallet, Activity, ArrowUpRight, ArrowDownRight, CheckCircle2, Calendar, ChevronDown, Wand2, Loader2 } from 'lucide-react';
+import { 
+  Save, CircleAlert, TrendingUp, Target, Wallet, Activity, 
+  ArrowUpRight, ArrowDownRight, CircleCheckBig, Calendar, 
+  ChevronDown, Wand2, Loader2, Info, Lightbulb, Zap,
+  TrendingDown, PieChart, BarChart3, ShieldCheck
+} from 'lucide-react';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 
 const BudgetPage = () => {
-  const { budget, setBudget, categories, expenses, income, currency } = useAppContext();
+  const { budget, setBudget, categories, expenses, income, currency, firstDayOfMonth, setFirstDayOfMonth } = useAppContext();
 
   const [globalBudget, setGlobalBudget] = useState(budget?.amount.toString() || '');
-  const [selectedMonth, setSelectedMonth] = useState(budget?.month || new Date().toISOString().slice(0, 7));
+  const [selectedMonth, setSelectedMonth] = useState(budget?.month || getBudgetMonth(new Date(), firstDayOfMonth));
   const [isSaved, setIsSaved] = useState(false);
-  const [isGeneratingBudget, setIsGeneratingBudget] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showDayPicker, setShowDayPicker] = useState(false);
   const [categoryBudgets, setCategoryBudgets] = useState<Record<string, string>>(
     budget?.categoryBudgets 
       ? Object.fromEntries(Object.entries(budget.categoryBudgets).map(([k, v]) => [k, v.toString()]))
       : {}
   );
 
+  // Sync state if budget changes externally
+  useEffect(() => {
+    if (budget) {
+      setGlobalBudget(budget.amount.toString());
+      setCategoryBudgets(Object.fromEntries(Object.entries(budget.categoryBudgets).map(([k, v]) => [k, v.toString()])));
+    }
+  }, [budget]);
+
   const handleSave = () => {
+    hapticFeedback('success');
     const parsedGlobal = Number(globalBudget) || 0;
     const parsedCategories: Record<string, number> = {};
     
@@ -45,13 +60,72 @@ const BudgetPage = () => {
     setCategoryBudgets(prev => ({ ...prev, [id]: value }));
   };
 
+  const autoAllocate = () => {
+    setIsGenerating(true);
+    hapticFeedback('medium');
+    
+    setTimeout(() => {
+      const totalBudget = Number(globalBudget) || 0;
+      if (totalBudget <= 0) {
+        setIsGenerating(false);
+        return;
+      }
+
+      const newBudgets: Record<string, string> = {};
+      
+      const needs = categories.filter(c => c.type === 'need' || !c.type);
+      const wants = categories.filter(c => c.type === 'want');
+      const savings = categories.filter(c => c.type === 'saving');
+
+      const needsPool = totalBudget * 0.5;
+      const wantsPool = totalBudget * 0.3;
+      const savingsPool = totalBudget * 0.2;
+
+      if (needs.length > 0) {
+        const perNeed = (needsPool / needs.length).toFixed(0);
+        needs.forEach(c => newBudgets[c.id] = perNeed);
+      }
+      if (wants.length > 0) {
+        const perWant = (wantsPool / wants.length).toFixed(0);
+        wants.forEach(c => newBudgets[c.id] = perWant);
+      }
+      if (savings.length > 0) {
+        const perSaving = (savingsPool / savings.length).toFixed(0);
+        savings.forEach(c => newBudgets[c.id] = perSaving);
+      }
+
+      setCategoryBudgets(newBudgets);
+      setIsGenerating(false);
+    }, 800);
+  };
+
   const currentMonthExpenses = useMemo(() => {
-    return expenses.filter(e => e.date.startsWith(selectedMonth));
-  }, [expenses, selectedMonth]);
+    const { start, end } = getBudgetRange(selectedMonth, firstDayOfMonth);
+    return expenses.filter(e => {
+      if (e.isTransfer) return false;
+      const d = parseISO(e.date);
+      return d >= start && d <= end;
+    });
+  }, [expenses, selectedMonth, firstDayOfMonth]);
 
   const totalSpent = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
   const globalBudgetNum = Number(globalBudget) || 0;
   const overallPercentage = globalBudgetNum > 0 ? (totalSpent / globalBudgetNum) * 100 : 0;
+
+  // Calculate daily limit
+  const { start: rangeStart, end: rangeEnd } = useMemo(() => getBudgetRange(selectedMonth, firstDayOfMonth), [selectedMonth, firstDayOfMonth]);
+  const daysInMonth = useMemo(() => differenceInDays(rangeEnd, rangeStart) + 1, [rangeStart, rangeEnd]);
+
+  const today = new Date();
+  const currentDayInCycle = useMemo(() => {
+    if (today < rangeStart) return 0;
+    if (today > rangeEnd) return daysInMonth;
+    return differenceInDays(today, rangeStart) + 1;
+  }, [today, rangeStart, rangeEnd, daysInMonth]);
+
+  const remainingDays = daysInMonth - currentDayInCycle + 1;
+  const remainingBudget = Math.max(0, globalBudgetNum - totalSpent);
+  const dailyLimit = remainingDays > 0 ? remainingBudget / remainingDays : 0;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -78,155 +152,203 @@ const BudgetPage = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-4 md:space-y-6 pb-20 max-w-5xl mx-auto"
+      className="space-y-8 pb-32 max-w-5xl mx-auto px-4 md:px-6"
     >
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 md:gap-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="space-y-2">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
             إدارة <span className="text-primary-500">الميزانية</span>
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-            خطط لمصاريفك وراقب استهلاكك الشهري بذكاء
+          <p className="text-base text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2">
+            <ShieldCheck size={18} className="text-emerald-500" />
+            خطط لمستقبلك المالي بذكاء ودقة
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          {/* Month Selector Dropdown */}
-          <div className="relative group flex-1 md:flex-none">
-            <div className="absolute -top-2 right-4 px-1.5 bg-slate-50 dark:bg-slate-900 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest z-10 flex items-center gap-1">
-              <Calendar className="size-2.5" />
-              الشهر
-            </div>
-            <div className="relative">
-              <input
-                type="month"
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="w-full appearance-none bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 pr-10 text-sm font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-mono tracking-widest cursor-pointer shadow-sm"
-              />
-              <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-primary-500 transition-colors size-4" />
+          <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 shadow-sm">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">بداية الشهر</span>
+              <select
+                value={firstDayOfMonth}
+                onChange={(e) => setFirstDayOfMonth(Number(e.target.value))}
+                className="bg-transparent text-sm font-black text-slate-900 dark:text-white outline-none cursor-pointer min-w-[40px]"
+              >
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                  <option key={day} value={day}>{day}</option>
+                ))}
+              </select>
             </div>
           </div>
-
+          <div className="relative flex-1 md:flex-none">
+            <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl pl-4 pr-11 py-3 text-sm font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all shadow-sm"
+            />
+          </div>
           <motion.button
-            whileHover={{ scale: 1.02, y: -1 }}
+            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleSave}
             className={cn(
-              "relative flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl font-black text-sm transition-all shadow-lg overflow-hidden group flex-1 md:flex-none",
-              isSaved 
-                ? "bg-emerald-500 text-white shadow-emerald-500/20" 
-                : "bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20"
+              "flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-2xl font-black text-sm transition-all shadow-lg",
+              isSaved ? "bg-emerald-500 text-white" : "bg-primary-600 text-white"
             )}
           >
-            <AnimatePresence mode="wait">
-              {isSaved ? (
-                <motion.div
-                  key="saved"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -20, opacity: 0 }}
-                  className="flex items-center gap-1.5"
-                >
-                  <CheckCircle2 className="size-3.5" />
-                  <span>تم الحفظ</span>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="save"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -20, opacity: 0 }}
-                  className="flex items-center gap-1.5"
-                >
-                  <Save className="size-3.5" />
-                  <span>حفظ التغييرات</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {isSaved ? <CircleCheckBig size={20} /> : <Save size={20} />}
+            {isSaved ? 'تم الحفظ' : 'حفظ'}
           </motion.button>
         </div>
       </div>
 
-      {/* Global Budget Card - Compact */}
-      <motion.div variants={itemVariants} className="bg-slate-900 rounded-3xl p-5 md:p-6 text-white relative overflow-hidden group shadow-xl shadow-slate-900/10">
-        <div className="absolute -right-10 -top-10 w-32 h-32 bg-primary-500/20 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-1000" />
-        <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-1000" />
-        
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-8 items-center">
-          <div className="space-y-3 md:space-y-4">
-            <div className="flex items-center gap-2 opacity-60">
-              <TrendingUp className="size-4 md:size-5" />
-              <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">الميزانية الكلية</span>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-pulse"></div>
-                المبلغ الإجمالي ({currency})
-              </label>
-              <div className="relative group/input">
-                <input
-                  type="number"
-                  value={globalBudget}
-                  onChange={(e) => setGlobalBudget(e.target.value)}
-                  className="w-full bg-white/5 border border-dashed border-white/20 rounded-2xl px-4 py-3 text-2xl md:text-3xl font-black tracking-tighter focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all placeholder:text-white/10 font-mono group-hover/input:border-white/40 shadow-inner"
-                  placeholder="0.00"
-                />
+      {/* Main Budget Dashboard Card */}
+      <motion.div variants={itemVariants} className="relative group">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-indigo-600 rounded-3xl blur-3xl opacity-10 group-hover:opacity-20 transition-opacity" />
+        <div className="relative bg-slate-900 dark:bg-black rounded-3xl p-6 md:p-8 text-white overflow-hidden shadow-md border border-white/5">
+          <div className="absolute -right-20 -top-20 w-96 h-96 bg-primary-500/20 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute -left-20 -bottom-20 w-96 h-96 bg-emerald-500/20 rounded-full blur-[120px] animate-pulse" />
+          
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-16">
+            {/* Left: Input & Main Stat */}
+            <div className="lg:col-span-5 space-y-10">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-primary-400">
+                    <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center">
+                      <Wallet size={20} />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-[0.2em]">الميزانية المستهدفة</span>
+                  </div>
+                  <button 
+                    onClick={autoAllocate}
+                    disabled={isGenerating || !globalBudget}
+                    className="flex items-center gap-2 text-[11px] font-black text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20 disabled:opacity-50"
+                  >
+                    {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+                    توزيع ذكي (50/30/20)
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={globalBudget}
+                    onChange={(e) => setGlobalBudget(e.target.value)}
+                    className="w-full bg-white/5 border-2 border-dashed border-white/10 rounded-2xl px-6 py-6 text-4xl md:text-5xl font-black tracking-tighter focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all text-center font-mono"
+                    placeholder="0.00"
+                  />
+                  <span className="absolute left-8 top-1/2 -translate-y-1/2 text-white/20 text-2xl font-black">{currency}</span>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div className="lg:col-span-2 space-y-4 md:space-y-5">
-            <div className="flex justify-between items-end">
-              <div className="space-y-1.5">
-                <span className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest block">نسبة الاستهلاك</span>
-                <span className="text-2xl md:text-4xl font-black tracking-tighter">{overallPercentage.toFixed(1)}%</span>
-              </div>
-              <div className="text-left space-y-1.5">
-                <span className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest block">المصروف الفعلي</span>
-                <span className="text-xl md:text-3xl font-black tracking-tighter text-emerald-400">
-                  {formatCurrency(totalSpent, currency)}
-                </span>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-white/5 rounded-2xl p-6 border border-white/5 backdrop-blur-sm">
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">المصروف الفعلي</p>
+                  <p className="text-2xl font-black text-emerald-400">{formatCurrency(totalSpent, currency)}</p>
+                </div>
+                <div className="bg-white/5 rounded-2xl p-6 border border-white/5 backdrop-blur-sm">
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">المتبقي</p>
+                  <p className={cn(
+                    "text-2xl font-black",
+                    remainingBudget > 0 ? "text-primary-400" : "text-rose-400"
+                  )}>{formatCurrency(remainingBudget, currency)}</p>
+                </div>
               </div>
             </div>
-            <div className="h-3 md:h-4 bg-white/10 rounded-full overflow-hidden p-0.5 border border-white/5 shadow-inner">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min(overallPercentage, 100)}%` }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-                className={cn(
-                  "h-full rounded-full shadow-[0_0_10px_rgba(59,130,246,0.3)] relative overflow-hidden",
-                  overallPercentage > 90 ? "bg-rose-500" : overallPercentage > 70 ? "bg-amber-500" : "bg-primary-500"
-                )}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-              </motion.div>
-            </div>
-            <div className="flex justify-between items-center text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest">
-              <span>0.00</span>
-              <span className={cn(overallPercentage > 100 && "text-rose-400")}>
-                {overallPercentage > 100 ? 'تجاوزت الميزانية!' : `المتبقي: ${formatCurrency(Math.max(0, globalBudgetNum - totalSpent), currency)}`}
-              </span>
+
+            {/* Right: Progress & Health */}
+            <div className="lg:col-span-7 flex flex-col justify-center space-y-10">
+              <div className="space-y-6">
+                <div className="flex justify-between items-end">
+                  <div className="space-y-2">
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">معدل الاستهلاك</p>
+                    <p className="text-6xl md:text-7xl font-black tracking-tighter">{overallPercentage.toFixed(1)}%</p>
+                  </div>
+                  <div className="text-right space-y-2">
+                    <div className="flex items-center gap-2 text-amber-400 justify-end">
+                      <Zap size={18} />
+                      <span className="text-[11px] font-black uppercase tracking-widest">الحد اليومي المقترح</span>
+                    </div>
+                    <p className="text-3xl md:text-4xl font-black tracking-tighter">{formatCurrency(dailyLimit, currency)}</p>
+                  </div>
+                </div>
+
+                <div className="h-6 bg-white/5 rounded-full p-1.5 border border-white/10 shadow-inner relative overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(overallPercentage, 100)}%` }}
+                    transition={{ duration: 1.5, ease: "circOut" }}
+                    className={cn(
+                      "h-full rounded-full relative overflow-hidden transition-colors duration-500",
+                      overallPercentage > 100 ? "bg-rose-500" : overallPercentage > 85 ? "bg-amber-500" : "bg-gradient-to-r from-primary-500 to-emerald-500"
+                    )}
+                  >
+                    <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:24px_24px] animate-[shimmer_2s_linear_infinite]" />
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Smart Insights Row */}
+              <div className="flex gap-6 overflow-x-auto pb-4 custom-scrollbar no-scrollbar">
+                <div className="shrink-0 bg-white/5 rounded-2xl p-4 border border-white/5 flex items-center gap-4 backdrop-blur-sm">
+                  <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center text-primary-400">
+                    <PieChart size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">الأيام المتبقية</p>
+                    <p className="text-sm font-black">{remainingDays} يوم</p>
+                  </div>
+                </div>
+                <div className="shrink-0 bg-white/5 rounded-2xl p-4 border border-white/5 flex items-center gap-4 backdrop-blur-sm">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <BarChart3 size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">صحة الميزانية</p>
+                    <p className="text-sm font-black">{overallPercentage > 100 ? 'حرجة' : overallPercentage > 80 ? 'تحذير' : 'ممتازة'}</p>
+                  </div>
+                </div>
+                <div className="shrink-0 bg-white/5 rounded-2xl p-4 border border-white/5 flex items-center gap-4 backdrop-blur-sm">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
+                    <Lightbulb size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">نصيحة ذكية</p>
+                    <p className="text-sm font-black">{overallPercentage > 90 ? 'قلل المصاريف' : 'استمر هكذا'}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* Smart Allocation Section */}
-      {/* Category Budgets Grouped */}
-      <div className="space-y-5 md:space-y-8">
-        {groupedCategories.map(group => (
-          <div key={group.id} className="space-y-3 md:space-y-4">
-            <div className="flex items-center gap-3 px-2">
-              <div className={`w-3 h-3 rounded-full ${group.color} shadow-sm animate-pulse`} />
-              <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs md:text-sm">{group.title}</h3>
-              <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-bold px-2 py-1 rounded-xl shadow-sm">{group.items.length} فئات</span>
+
+      {/* Category Breakdown Sections */}
+      <div className="space-y-10">
+        {groupedCategories.map((group, groupIdx) => (
+          <motion.div 
+            key={group.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: groupIdx * 0.1 }}
+            className="space-y-4"
+          >
+            <div className="flex items-center justify-between px-4">
+              <div className="flex items-center gap-4">
+                <div className={cn("w-5 h-5 rounded-full shadow-lg ring-4 ring-white/10", group.color)} />
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{group.title}</h3>
+              </div>
+              <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 mx-6 hidden md:block" />
+              <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">{group.items.length} فئات</span>
             </div>
 
-            {group.items.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                {group.items.map(cat => {
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {group.items.length > 0 ? (
+                group.items.map((cat) => {
                   const spent = currentMonthExpenses
                     .filter(e => e.categoryId === cat.id)
                     .reduce((sum, e) => sum + e.amount, 0);
@@ -234,93 +356,91 @@ const BudgetPage = () => {
                   const catBudgetStr = categoryBudgets[cat.id] || '';
                   const catBudgetNum = Number(catBudgetStr) || 0;
                   const percentage = catBudgetNum > 0 ? (spent / catBudgetNum) * 100 : 0;
-                  const isOverBudget = catBudgetNum > 0 && spent > catBudgetNum;
-                  const remaining = catBudgetNum - spent;
+                  const isOver = catBudgetNum > 0 && spent > catBudgetNum;
 
                   return (
-                    <motion.div 
-                      key={cat.id} 
-                      variants={itemVariants}
+                    <motion.div
+                      key={cat.id}
+                      whileHover={{ y: -6 }}
                       className={cn(
-                        "flex items-center justify-between gap-3 md:gap-4 p-4 md:p-5 rounded-2xl border shadow-sm hover:shadow-md transition-all relative overflow-hidden group",
-                        isOverBudget 
-                          ? "border-rose-500/50 dark:border-rose-500/50 bg-rose-50/80 dark:bg-rose-900/30" 
-                          : "glass-card hover:border-primary-500/30"
+                        "p-6 rounded-3xl border-2 transition-all relative overflow-hidden group shadow-sm",
+                        isOver 
+                          ? "bg-rose-50/50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/50" 
+                          : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-primary-500/30 shadow-sm hover:shadow-md"
                       )}
                     >
-                      {isOverBudget && (
-                        <div className="absolute top-0 right-0 w-1 h-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.4)]" />
-                      )}
-                      {/* Category Info & Progress */}
-                      <div className="flex-1 flex items-center gap-3 md:gap-4 min-w-0">
+                      <div className="flex items-center gap-5 mb-6">
                         <div 
-                          className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0 group-hover:scale-105 transition-transform" 
+                          className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-md group-hover:rotate-6 transition-transform"
                           style={{ backgroundColor: cat.color }}
                         >
-                          {cat.icon ? <DynamicIcon name={cat.icon} className="size-5 md:size-6" /> : <span className="text-base md:text-lg font-black">{cat.name.charAt(0)}</span>}
+                          <DynamicIcon name={cat.icon || 'Circle'} size={28} />
                         </div>
-                        
-                        <div className="flex-1 min-w-0 space-y-2">
-                          <div className="flex justify-between items-center">
-                            <h4 className="text-sm md:text-base font-black text-slate-900 dark:text-white truncate pr-2 md:pr-3">{cat.name}</h4>
-                            <div className="flex items-center gap-2 text-slate-400 shrink-0">
-                              <span className="text-xs md:text-sm font-bold uppercase tracking-widest">
-                                {formatCurrency(spent, currency)}
-                              </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start">
+                            <h4 className="text-lg font-black text-slate-900 dark:text-white truncate">{cat.name}</h4>
+                            <div className="text-right">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">المصروف</p>
+                              <p className="text-base font-black">{formatCurrency(spent, currency)}</p>
                             </div>
                           </div>
-                          
-                          {catBudgetNum > 0 ? (
-                            <div className="flex items-center gap-3 md:gap-4">
-                              <div className="flex-1 h-2 md:h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden shadow-inner">
-                                <motion.div 
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${Math.min(100, percentage)}%` }}
-                                  className={cn(
-                                    "h-full rounded-full relative overflow-hidden",
-                                    isOverBudget ? "bg-rose-500" : percentage > 85 ? "bg-amber-500" : "bg-primary-500"
-                                  )}
-                                >
-                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-                                </motion.div>
-                              </div>
-                              <span className={cn(
-                                "text-xs md:text-sm font-bold shrink-0",
-                                isOverBudget ? "text-rose-500" : "text-slate-400"
-                              )}>
-                                {Math.round(percentage)}%
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full w-full shadow-inner" />
-                          )}
                         </div>
                       </div>
 
-                      {/* Budget Input */}
-                      <div className="w-24 md:w-32 shrink-0">
-                        <div className="relative group/input">
-                          <input
-                            type="number"
-                            value={catBudgetStr}
-                            onChange={(e) => handleCategoryBudgetChange(cat.id, e.target.value)}
-                            className="w-full pl-8 md:pl-10 pr-3 md:pr-4 py-2 md:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-sm md:text-base font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-mono text-left shadow-inner"
-                            placeholder="0"
-                            dir="ltr"
-                          />
-                          <span className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-primary-500 text-xs md:text-sm font-black font-mono">{currency}</span>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1 h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${Math.min(100, percentage)}%` }}
+                              className={cn(
+                                "h-full rounded-full relative",
+                                isOver ? "bg-rose-500" : percentage > 85 ? "bg-amber-500" : "bg-primary-500"
+                              )}
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                            </motion.div>
+                          </div>
+                          <span className={cn(
+                            "text-xs font-black w-12 text-right",
+                            isOver ? "text-rose-500" : "text-slate-400"
+                          )}>{Math.round(percentage)}%</span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-6">
+                          <div className="flex-1 relative">
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              value={catBudgetStr}
+                              onChange={(e) => handleCategoryBudgetChange(cat.id, e.target.value)}
+                              className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-3 text-base font-black text-slate-900 dark:text-white focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all text-center font-mono"
+                              placeholder="حدد الميزانية"
+                            />
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400">{currency}</span>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">المتبقي</p>
+                            <p className={cn(
+                              "text-sm font-black",
+                              (catBudgetNum - spent) > 0 ? "text-emerald-500" : "text-rose-500"
+                            )}>
+                              {formatCurrency(Math.max(0, catBudgetNum - spent), currency)}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
                   );
-                })}
-              </div>
-            ) : (
-              <div className="p-6 md:p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50 shadow-inner">
-                <p className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-widest">لا توجد فئات في هذا القسم</p>
-              </div>
-            )}
-          </div>
+                })
+              ) : (
+                <div className="col-span-full p-8 text-center bg-slate-50 dark:bg-slate-900/50 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                  <p className="text-base font-bold text-slate-400">لا توجد فئات مخصصة لهذا القسم</p>
+                </div>
+              )}
+            </div>
+
+          </motion.div>
         ))}
       </div>
     </motion.div>

@@ -61,8 +61,8 @@ export const getFinancialAdvice = async (
     return JSON.parse(response.text || "[]");
   } catch (error: any) {
     const isQuotaError = error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED');
-    if (isQuotaError) {
-      console.warn("Gemini API Quota Exceeded. Using fallback advice.");
+    if (isQuotaError || error) {
+      console.warn("Gemini API Error or Quota Exceeded. Using fallback advice.");
       // Simple rule-based fallback advice
       return [
         {
@@ -129,8 +129,8 @@ export const getFinancialForecast = async (
     return JSON.parse(response.text || "[]");
   } catch (error: any) {
     const isQuotaError = error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED');
-    if (isQuotaError) {
-      console.warn("Gemini API Quota Exceeded. Using fallback forecast.");
+    if (isQuotaError || error) {
+      console.warn("Gemini API Error or Quota Exceeded. Using fallback forecast.");
       const currentBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
       const avgIncome = income.length > 0 ? income.reduce((sum, i) => sum + i.amount, 0) / income.length : 0;
       const avgExpense = expenses.length > 0 ? expenses.reduce((sum, e) => sum + e.amount, 0) / expenses.length : 0;
