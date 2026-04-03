@@ -90,6 +90,40 @@ export const useBehavioralEngine = () => {
       });
     }
 
+    // 4. Uncategorized / 'Other' Category Alert
+    const otherCategory = categories.find(c => c.name === 'أخرى' || c.name === 'اخرى' || c.name === 'Other');
+    if (otherCategory) {
+      const otherTotal = expenses
+        .filter(e => e.categoryId === otherCategory.id && isWithinInterval(parseISO(e.date), { start: last30Days, end: new Date() }))
+        .reduce((sum, e) => sum + e.amount, 0);
+      
+      if (otherTotal > (dailyBudget * 30 * 0.1)) { // More than 10% of monthly budget
+        list.push({
+          id: 'uncategorized-warning',
+          title: 'مصاريف غير مصنفة',
+          description: `لقد أنفقت ${otherTotal.toFixed(1)} في فئة "أخرى" مؤخراً.`,
+          type: 'warning',
+          impact: 'نقترح إنشاء فئات جديدة لتتبع هذه المصاريف بدقة أكبر.'
+        });
+      }
+    }
+
+    // 5. Large Single Expense Alert
+    const recentExpenses = expenses.filter(e => isWithinInterval(parseISO(e.date), { start: subDays(new Date(), 7), end: new Date() }));
+    if (recentExpenses.length > 0) {
+      const largestExpense = recentExpenses.reduce((max, e) => e.amount > max.amount ? e : max, recentExpenses[0]);
+      if (largestExpense.amount > (dailyBudget * 30 * 0.2)) { // More than 20% of monthly budget
+        const catName = categories.find(c => c.id === largestExpense.categoryId)?.name || 'غير معروف';
+        list.push({
+          id: 'large-expense-warning',
+          title: 'مصروف كبير مؤخراً',
+          description: `قمت بصرف مبلغ كبير (${largestExpense.amount.toFixed(1)}) على ${catName}.`,
+          type: 'warning',
+          impact: 'تأكد من أن هذا المصروف الاستثنائي لا يؤثر على ميزانيتك لبقية الشهر.'
+        });
+      }
+    }
+
     return list;
   }, [expenses, categories, dailyBudget]);
 

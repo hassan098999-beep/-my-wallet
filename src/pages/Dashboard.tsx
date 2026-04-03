@@ -5,7 +5,7 @@ import { formatCurrency, cn, hapticFeedback, getBudgetRange, getBudgetMonth } fr
 import { Skeleton, TransactionSkeleton, CardSkeleton } from '../components/Skeleton';
 import { parseISO, format, isAfter, isBefore, addDays, differenceInDays } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Plus, CircleCheckBig, Wallet, CreditCard, Banknote, Building2, TrendingUp, Activity, CalendarClock, Flame, Zap, Repeat, Clock, Lightbulb, Trash2, ArrowRight, Edit2, RefreshCw, Target, Sparkles, ArrowRightLeft } from 'lucide-react';
+import { Plus, CircleCheckBig, Wallet, CreditCard, Banknote, Building2, TrendingUp, Activity, CalendarClock, Flame, Zap, Repeat, Clock, Lightbulb, Trash2, ArrowRight, Edit2, RefreshCw, Target, Sparkles, ArrowRightLeft, ArrowUp, ArrowDown, PiggyBank } from 'lucide-react';
 import { DynamicIcon } from '../components/DynamicIcon';
 import { AIAdvisor } from '../components/AIAdvisor';
 import { BudgetAlerts } from '../components/BudgetAlerts';
@@ -186,6 +186,60 @@ const Dashboard = () => {
           className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-primary-500/5 blur-[100px]"
         />
       </div>
+
+      {/* Monthly Financial Summary */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+        {/* Income Card */}
+        <div className="premium-card p-6 rounded-3xl relative overflow-hidden group flex flex-col justify-center">
+          <div className="absolute -right-6 -top-6 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-colors duration-500" />
+          <div className="relative z-10 flex items-center gap-5">
+            <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 shadow-inner group-hover:scale-110 transition-transform duration-300">
+              <ArrowUp size={28} strokeWidth={2.5} />
+            </div>
+            <div>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">الدخل الشهري</p>
+              <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tighter">
+                {formatCurrency(totalMonthlyIncome, currency)}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        {/* Expenses Card */}
+        <div className="premium-card p-6 rounded-3xl relative overflow-hidden group flex flex-col justify-center">
+          <div className="absolute -right-6 -top-6 w-32 h-32 bg-rose-500/10 rounded-full blur-3xl group-hover:bg-rose-500/20 transition-colors duration-500" />
+          <div className="relative z-10 flex items-center gap-5">
+            <div className="w-14 h-14 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 shadow-inner group-hover:scale-110 transition-transform duration-300">
+              <ArrowDown size={28} strokeWidth={2.5} />
+            </div>
+            <div>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">المصاريف الشهرية</p>
+              <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tighter">
+                {formatCurrency(totalMonthlyExpense, currency)}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        {/* Net Balance Card */}
+        <div className="premium-card p-6 rounded-3xl relative overflow-hidden group flex flex-col justify-center">
+          <div className="absolute -right-6 -top-6 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-colors duration-500" />
+          <div className="relative z-10 flex items-center gap-5">
+            <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 shadow-inner group-hover:scale-110 transition-transform duration-300">
+              <PiggyBank size={28} strokeWidth={2.5} />
+            </div>
+            <div>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">الصافي (المتبقي)</p>
+              <h3 className={cn(
+                "text-2xl md:text-3xl font-black tracking-tighter",
+                (totalMonthlyIncome - totalMonthlyExpense) >= 0 ? "text-slate-900 dark:text-white" : "text-rose-500"
+              )}>
+                {formatCurrency(totalMonthlyIncome - totalMonthlyExpense, currency)}
+              </h3>
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Financial Overview Dashboard */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
