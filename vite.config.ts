@@ -1,16 +1,12 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { readFileSync } from 'fs';
 import {defineConfig, loadEnv} from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
-  const isGitHubPages = process.env.VITE_GITHUB_PAGES === 'true';
-  const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
-  const repoName = pkg.homepage?.split('/').pop() || '';
-  const basePath = isGitHubPages ? `/${repoName}/` : '/';
+  const basePath = '/-my-wallet/';
 
   return {
     base: basePath,
@@ -31,11 +27,12 @@ export default defineConfig(({mode}) => {
           cleanupOutdatedCaches: true,
           skipWaiting: true,
           clientsClaim: true,
-          navigateFallback: 'index.html',
+          navigateFallback: `${basePath}index.html`,
         },
         manifest: {
-          id: basePath,
-          start_url: basePath,
+          id: `${basePath}`,
+          start_url: `${basePath}`,
+          scope: `${basePath}`,
           name: 'مصاريفي - إدارة المصاريف الشخصية',
           short_name: 'مصاريفي',
           description: 'تطبيق لإدارة المصاريف الشخصية وتتبع الميزانية',
@@ -69,6 +66,7 @@ export default defineConfig(({mode}) => {
     build: {
       minify: 'esbuild',
       target: 'esnext',
+      outDir: 'dist',
     },
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
