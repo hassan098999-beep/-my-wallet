@@ -34,8 +34,8 @@ export default defineConfig(({mode}) => {
           navigateFallback: 'index.html',
         },
         manifest: {
-          id: '/',
-          start_url: '/',
+          id: basePath,
+          start_url: basePath,
           name: 'مصاريفي - إدارة المصاريف الشخصية',
           short_name: 'مصاريفي',
           description: 'تطبيق لإدارة المصاريف الشخصية وتتبع الميزانية',

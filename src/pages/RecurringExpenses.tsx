@@ -5,16 +5,18 @@ import { cn, formatCurrency, hapticFeedback } from '../utils';
 import { Skeleton, TransactionSkeleton } from '../components/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Plus, Trash, RefreshCcw, Calendar, CreditCard, Wallet, ArrowRightLeft, AlertCircle, Clock, X } from 'lucide-react';
+import { Plus, Trash, Pencil, RefreshCcw, Calendar, CreditCard, Wallet, ArrowRightLeft, AlertCircle, Clock, X } from 'lucide-react';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { PaymentMethod, RecurringInterval } from '../types';
+import { PaymentMethod, RecurringInterval, RecurringExpense } from '../types';
 import { CategorySelect } from '../components/CategorySelect';
 import { motion, AnimatePresence } from 'motion/react';
 
 const RecurringExpenses = () => {
-  const { recurringExpenses, categories, accounts, currency, addRecurringExpense, deleteRecurringExpense } = useAppContext();
+  const { recurringExpenses, categories, accounts, currency, addRecurringExpense, updateRecurringExpense, deleteRecurringExpense } = useAppContext();
   
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState(categories[0]?.id || '');
   const [subcategoryId, setSubcategoryId] = useState('');
@@ -86,6 +88,36 @@ const RecurringExpenses = () => {
     return next.toISOString().split('T')[0];
   };
 
+  const handleEdit = (expense: RecurringExpense) => {
+    setEditingId(expense.id);
+    setAmount(expense.amount.toString());
+    setCategoryId(expense.categoryId);
+    setSubcategoryId(expense.subcategoryId || '');
+    setAccountId(expense.accountId || accounts[0]?.id || '');
+    setNote(expense.note);
+    setPaymentMethod(expense.paymentMethod);
+    setInterval(expense.interval);
+    setStartDate(expense.startDate.split('T')[0]);
+    
+    // Try to infer specific interval states from start date
+    const date = new Date(expense.startDate);
+    setSelectedDayOfWeek(date.getDay());
+    setSelectedDayOfMonth(date.getDate());
+    setSelectedMonthOfYear(date.getMonth());
+    setSelectedDayOfYear(date.getDate());
+    
+    setIsAdding(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setAmount('');
+    setNote('');
+    setSubcategoryId('');
+    setIsAdding(false);
+  };
+
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
@@ -98,7 +130,7 @@ const RecurringExpenses = () => {
     const base = new Date(startDate);
     const finalStartDate = calculateNextOccurrence(interval, base);
 
-    addRecurringExpense({
+    const expenseData = {
       amount: Number(amount),
       categoryId: categoryId || categories[0]?.id,
       subcategoryId: subcategoryId || undefined,
@@ -108,13 +140,17 @@ const RecurringExpenses = () => {
       interval,
       startDate: finalStartDate,
       nextDate: finalStartDate,
-    });
+    };
 
-    setAmount('');
-    setNote('');
-    setSubcategoryId('');
-    setIsAdding(false);
-    toast.success('تمت إضافة المصروف المتكرر بنجاح');
+    if (editingId) {
+      updateRecurringExpense(editingId, expenseData);
+      toast.success('تم تحديث المصروف المتكرر بنجاح');
+    } else {
+      addRecurringExpense(expenseData);
+      toast.success('تمت إضافة المصروف المتكرر بنجاح');
+    }
+
+    resetForm();
   };
 
   const containerVariants = {
@@ -150,7 +186,13 @@ const RecurringExpenses = () => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => setIsAdding(!isAdding)}
+          onClick={() => {
+            if (isAdding) {
+              resetForm();
+            } else {
+              setIsAdding(true);
+            }
+          }}
           className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl font-black text-[9px] md:text-xs transition-all shadow-lg",
             isAdding 
@@ -174,10 +216,12 @@ const RecurringExpenses = () => {
             <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-6 md:p-8 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm mb-8">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-500 shadow-inner">
-                  <Plus size={24} />
+                  {editingId ? <Pencil size={24} /> : <Plus size={24} />}
                 </div>
                 <div>
-                  <h2 className="text-base md:text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase">إضافة مصروف دوري جديد</h2>
+                  <h2 className="text-base md:text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase">
+                    {editingId ? 'تعديل المصروف الدوري' : 'إضافة مصروف دوري جديد'}
+                  </h2>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">قم بجدولة مدفوعاتك القادمة بدقة</p>
                 </div>
               </div>
@@ -417,8 +461,8 @@ const RecurringExpenses = () => {
                   type="submit"
                   className="w-full bg-primary-600 hover:bg-primary-700 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-4 text-base transition-all shadow-md shadow-primary-500/20 uppercase tracking-[0.2em]"
                 >
-                  <RefreshCcw size={20} />
-                  إضافة المصروف المتكرر
+                  {editingId ? <Pencil size={20} /> : <RefreshCcw size={20} />}
+                  {editingId ? 'حفظ التعديلات' : 'إضافة المصروف المتكرر'}
                 </motion.button>
               </form>
             </div>
@@ -480,17 +524,25 @@ const RecurringExpenses = () => {
                         </div>
                       </div>
 
-                      <button 
-                        onClick={() => {
-                          // Using a more subtle way to confirm or just deleting for now to comply with "no alert/confirm"
-                          // For now, I'll just delete but in a real app I'd add a custom modal.
-                          deleteRecurringExpense(expense.id);
-                          toast.success('تم حذف المصروف المتكرر');
-                        }}
-                        className="text-slate-300 hover:text-rose-500 p-2 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all active:scale-90"
-                      >
-                        <Trash className="size-5" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => handleEdit(expense)}
+                          className="text-slate-300 hover:text-primary-500 p-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-xl transition-all active:scale-90"
+                        >
+                          <Pencil className="size-5" />
+                        </button>
+                        <button 
+                          onClick={() => {
+                            // Using a more subtle way to confirm or just deleting for now to comply with "no alert/confirm"
+                            // For now, I'll just delete but in a real app I'd add a custom modal.
+                            deleteRecurringExpense(expense.id);
+                            toast.success('تم حذف المصروف المتكرر');
+                          }}
+                          className="text-slate-300 hover:text-rose-500 p-2 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all active:scale-90"
+                        >
+                          <Trash className="size-5" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex items-end justify-between pt-4 border-t border-slate-100 dark:border-slate-800/50">
