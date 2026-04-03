@@ -124,8 +124,11 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
         
         <div className="flex items-center justify-between sm:justify-center gap-8 md:gap-12 sm:w-auto w-full border-t sm:border-t-0 pt-6 md:pt-10 sm:pt-0 border-slate-100 dark:border-slate-800 shrink-0">
           <div className="text-right sm:text-center">
-            <div className={cn("text-2xl md:text-5xl font-black tracking-tighter leading-none", !isExpense ? "text-emerald-500" : "text-slate-900 dark:text-white")}>
-              {!isExpense ? '+' : ''}{formatCurrency(transaction.amount, currency)}
+            <div className={cn(
+              "text-2xl md:text-5xl font-black tracking-tighter leading-none dir-ltr", 
+              isTransfer ? "text-slate-900 dark:text-white" : (!isExpense ? "text-emerald-500" : "text-rose-500")
+            )}>
+              {isTransfer ? '' : (!isExpense ? '+' : '-')} {formatCurrency(transaction.amount, currency)}
             </div>
           </div>
 

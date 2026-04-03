@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { PaymentMethod, Mood, Expense } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Calendar, CreditCard, Banknote, Building2, X, TriangleAlert, CircleAlert, Check, ChevronDown, ChevronUp, ArrowDownCircle, ArrowUpCircle, Smile, Meh, Frown, Heart, AlertCircle, Zap, Sliders } from 'lucide-react';
+import { Plus, Calendar, CreditCard, Banknote, Building2, X, TriangleAlert, CircleAlert, Check, ChevronDown, ChevronUp, ArrowDownCircle, ArrowUpCircle, Smile, Meh, Frown, Heart, AlertCircle, Zap, Sliders, AlignLeft, Layers } from 'lucide-react';
 import { getBudgetRange, getBudgetMonth, formatCurrency, cn } from '../utils';
 import { parseISO } from 'date-fns';
 import { DynamicIcon } from './DynamicIcon';
@@ -354,7 +354,10 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
               
               {/* Amount Display */}
               <div className="flex flex-col items-center justify-center py-2">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">المبلغ</span>
+                <div className="flex items-center gap-2 mb-2 text-slate-400">
+                  <Banknote size={16} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">المبلغ</span>
+                </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-black text-slate-400">{currency}</span>
                   <span className={cn(
@@ -383,8 +386,9 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
               {/* Categories (Expense Only) */}
               {type === 'expense' && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">الفئة</h3>
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Layers size={16} />
+                    <h3 className="text-[10px] font-black uppercase tracking-widest">الفئة</h3>
                   </div>
                   <div className="grid grid-cols-4 gap-3">
                     {categories.map((cat) => (
@@ -399,7 +403,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                             "w-12 h-12 rounded-2xl flex items-center justify-center text-white transition-all duration-300",
                             categoryId === cat.id 
                               ? "shadow-lg scale-110 ring-2 ring-offset-2 dark:ring-offset-slate-900 ring-opacity-20" 
-                              : "opacity-50 grayscale-[0.5] group-hover:opacity-100 group-hover:grayscale-0"
+                              : "opacity-60 hover:opacity-100 hover:scale-105"
                           )}
                           style={{ 
                             backgroundColor: cat.color,
@@ -464,8 +468,9 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
 
               {/* Accounts */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <Building2 size={16} />
+                  <h3 className="text-[10px] font-black uppercase tracking-widest">
                     {type === 'transfer' ? 'من حساب' : 'الحساب'}
                   </h3>
                 </div>
@@ -506,8 +511,9 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
 
               {type === 'transfer' && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">إلى حساب</h3>
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Building2 size={16} />
+                    <h3 className="text-[10px] font-black uppercase tracking-widest">إلى حساب</h3>
                   </div>
                   <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar snap-x">
                     {accounts.map((acc) => (
@@ -610,7 +616,9 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
               {/* Date & Note */}
               <div className="space-y-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3">
-                  <Calendar className="text-slate-400" size={18} />
+                  <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center shadow-sm text-slate-500 shrink-0">
+                    <Calendar size={16} />
+                  </div>
                   <input
                     type="date"
                     value={date}
@@ -620,12 +628,14 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                 </div>
                 <div className="h-px w-full bg-slate-200 dark:bg-slate-700" />
                 <div className="flex items-start gap-3">
-                  <Sliders className="text-slate-400 mt-1" size={18} />
+                  <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center shadow-sm text-slate-500 shrink-0">
+                    <AlignLeft size={16} />
+                  </div>
                   <textarea
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="ملاحظات إضافية..."
-                    className="bg-transparent text-sm font-bold text-slate-700 dark:text-slate-300 outline-none flex-1 resize-none h-10"
+                    className="bg-transparent text-sm font-bold text-slate-700 dark:text-slate-300 outline-none flex-1 resize-none h-20 pt-1.5"
                   />
                 </div>
               </div>

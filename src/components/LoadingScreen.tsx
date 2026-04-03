@@ -125,10 +125,9 @@ const LoadingScreen = () => {
                     scale: [1, 1.2, 1]
                   }}
                   transition={{ 
-                    opacity: { delay: 1 + dot.delay, duration: 0.5 },
+                    opacity: { duration: 1.2, repeat: Infinity, delay: 1 + dot.delay, ease: "easeInOut" },
                     y: { duration: 1.2, repeat: Infinity, delay: 1 + dot.delay, ease: "easeInOut" },
-                    scale: { duration: 1.2, repeat: Infinity, delay: 1 + dot.delay, ease: "easeInOut" },
-                    opacity_repeat: { duration: 1.2, repeat: Infinity, delay: 1 + dot.delay, ease: "easeInOut" }
+                    scale: { duration: 1.2, repeat: Infinity, delay: 1 + dot.delay, ease: "easeInOut" }
                   }}
                   className={`w-2.5 h-2.5 rounded-full ${dot.color}`}
                 />

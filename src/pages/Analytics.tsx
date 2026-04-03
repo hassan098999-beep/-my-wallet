@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../store/AppContext';
 import { cn, formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
-import { Skeleton, CardSkeleton } from '../components/Skeleton';
+import { Skeleton, CardSkeleton, BarChartSkeleton, PieChartSkeleton, AreaChartSkeleton } from '../components/Skeleton';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, startOfYear, endOfYear, eachMonthOfInterval, subDays, isSameDay } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Brush, AreaChart, Area } from 'recharts';
@@ -881,8 +881,8 @@ const Analytics = () => {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl animate-pulse">
-                <Activity className="size-8 text-slate-300 dark:text-slate-700" />
+              <div className="w-full h-full flex items-center justify-center bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl">
+                <BarChartSkeleton />
               </div>
             )}
           </div>
@@ -970,8 +970,8 @@ const Analytics = () => {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl animate-pulse">
-                <TrendingUp className="size-8 text-slate-300 dark:text-slate-700" />
+              <div className="w-full h-full flex items-center justify-center bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl">
+                <BarChartSkeleton />
               </div>
             )}
           </div>
@@ -1027,8 +1027,8 @@ const Analytics = () => {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-slate-50/50 dark:bg-slate-800/20 rounded-full animate-pulse">
-                  <PieChartIcon className="size-8 text-slate-300 dark:text-slate-700" />
+                <div className="w-full h-full flex items-center justify-center bg-slate-50/50 dark:bg-slate-800/20 rounded-full">
+                  <PieChartSkeleton />
                 </div>
               )}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -1113,8 +1113,8 @@ const Analytics = () => {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-slate-50/50 dark:bg-slate-800/20 rounded-full animate-pulse">
-                  <PieChartIcon className="size-8 text-slate-300 dark:text-slate-700" />
+                <div className="w-full h-full flex items-center justify-center bg-slate-50/50 dark:bg-slate-800/20 rounded-full">
+                  <PieChartSkeleton />
                 </div>
               )}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -1218,8 +1218,8 @@ const Analytics = () => {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl animate-pulse">
-                <TrendingUp className="size-8 text-slate-300 dark:text-slate-700" />
+              <div className="w-full h-full flex items-center justify-center bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl">
+                <AreaChartSkeleton />
               </div>
             )}
           </div>

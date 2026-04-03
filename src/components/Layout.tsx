@@ -53,26 +53,32 @@ const Layout = () => {
   }, [location.pathname, location.search, setIsAddModalOpen, navigate, prevPath]);
 
   const variants: Variants = {
-    initial: {
+    initial: (direction: number) => ({
       opacity: 0,
+      x: direction > 0 ? 30 : direction < 0 ? -30 : 0,
+      y: direction === 0 ? 15 : 0,
       scale: 0.98,
-    },
+    }),
     animate: {
       opacity: 1,
+      x: 0,
+      y: 0,
       scale: 1,
       transition: {
-        duration: 0.2,
-        ease: "easeOut",
+        duration: 0.35,
+        ease: [0.25, 0.1, 0.25, 1],
       },
     },
-    exit: {
+    exit: (direction: number) => ({
       opacity: 0,
-      scale: 1.02,
+      x: direction > 0 ? -30 : direction < 0 ? 30 : 0,
+      y: direction === 0 ? -15 : 0,
+      scale: 0.98,
       transition: {
-        duration: 0.15,
-        ease: "easeIn",
+        duration: 0.25,
+        ease: [0.25, 0.1, 0.25, 1],
       },
-    },
+    }),
   };
 
   return (
@@ -85,10 +91,11 @@ const Layout = () => {
       </div>
 
       <Header />
-      <main className="flex-1 overflow-y-auto p-2 md:p-4 lg:p-6 scroll-smooth pb-28 md:pb-32">
-        <AnimatePresence mode="wait">
+      <main className="flex-1 overflow-y-auto p-2 md:p-4 lg:p-6 scroll-smooth pb-28 md:pb-32 overflow-x-hidden">
+        <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={location.pathname}
+            custom={direction}
             variants={variants}
             initial="initial"
             animate="animate"

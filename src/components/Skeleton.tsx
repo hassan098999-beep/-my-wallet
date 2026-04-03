@@ -3,15 +3,17 @@ import { cn } from '../utils';
 
 interface SkeletonProps {
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export const Skeleton: React.FC<SkeletonProps> = ({ className }) => {
+export const Skeleton: React.FC<SkeletonProps> = ({ className, style }) => {
   return (
     <div 
       className={cn(
         "animate-pulse bg-slate-200 dark:bg-slate-800 rounded-md", 
         className
       )} 
+      style={style}
     />
   );
 };
@@ -37,5 +39,34 @@ export const CardSkeleton = ({ className }: { className?: string }) => (
     <Skeleton className="h-4 w-24" />
     <Skeleton className="h-8 w-40" />
     <Skeleton className="h-2 w-full" />
+  </div>
+);
+
+export const BarChartSkeleton = ({ className }: { className?: string }) => (
+  <div className={cn("w-full h-full flex items-end justify-between gap-1.5 md:gap-2 p-2 md:p-4", className)}>
+    {[40, 70, 45, 90, 65, 30, 85, 50, 75, 60, 35, 80].map((height, i) => (
+      <Skeleton key={i} className="w-full rounded-t-md" style={{ height: `${height}%` }} />
+    ))}
+  </div>
+);
+
+export const PieChartSkeleton = ({ className }: { className?: string }) => (
+  <div className={cn("w-full h-full flex items-center justify-center", className)}>
+    <div className="relative w-32 h-32 md:w-48 md:h-48">
+      <Skeleton className="absolute inset-0 rounded-full" />
+      <div className="absolute inset-6 md:inset-8 bg-white dark:bg-slate-900 rounded-full" />
+    </div>
+  </div>
+);
+
+export const AreaChartSkeleton = ({ className }: { className?: string }) => (
+  <div className={cn("w-full h-full relative overflow-hidden rounded-2xl", className)}>
+    <svg className="absolute bottom-0 left-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+      <path 
+        d="M0,100 L0,60 Q15,40 30,60 T60,50 T100,30 L100,100 Z" 
+        className="fill-slate-200 dark:fill-slate-800 animate-pulse" 
+      />
+    </svg>
+    <div className="absolute bottom-0 left-0 w-full h-px bg-slate-200 dark:bg-slate-800" />
   </div>
 );

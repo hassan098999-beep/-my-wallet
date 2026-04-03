@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../store/AppContext';
 import { cn, formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
-import { isThisMonth, parseISO, format, startOfMonth, endOfMonth, differenceInDays } from 'date-fns';
+import { isThisMonth, parseISO, format, startOfMonth, endOfMonth, differenceInDays, startOfDay } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { 
   Save, CircleAlert, TrendingUp, Target, Wallet, Activity, 
@@ -13,7 +13,7 @@ import { DynamicIcon } from '../components/DynamicIcon';
 import { motion } from 'motion/react';
 
 const BudgetPage = () => {
-  const { budget, setBudget, categories, expenses, income, currency, firstDayOfMonth, setFirstDayOfMonth } = useAppContext();
+  const { budget, setBudget, categories, expenses, income, currency, firstDayOfMonth, setFirstDayOfMonth, rollingBudgetEnabled } = useAppContext();
 
   const [globalBudget, setGlobalBudget] = useState(budget?.amount.toString() || '');
   const [selectedMonth, setSelectedMonth] = useState(budget?.month || getBudgetMonth(new Date(), firstDayOfMonth));
@@ -117,15 +117,30 @@ const BudgetPage = () => {
   const daysInMonth = useMemo(() => differenceInDays(rangeEnd, rangeStart) + 1, [rangeStart, rangeEnd]);
 
   const today = new Date();
-  const currentDayInCycle = useMemo(() => {
-    if (today < rangeStart) return 0;
-    if (today > rangeEnd) return daysInMonth;
-    return differenceInDays(today, rangeStart) + 1;
+  
+  const remainingDays = useMemo(() => {
+    const todayStart = startOfDay(today);
+    const end = startOfDay(rangeEnd);
+    const start = startOfDay(rangeStart);
+    
+    if (todayStart > end) return 0;
+    if (todayStart < start) return daysInMonth;
+    return differenceInDays(end, todayStart) + 1; // +1 to include today
   }, [today, rangeStart, rangeEnd, daysInMonth]);
 
-  const remainingDays = daysInMonth - currentDayInCycle + 1;
   const remainingBudget = Math.max(0, globalBudgetNum - totalSpent);
-  const dailyLimit = remainingDays > 0 ? remainingBudget / remainingDays : 0;
+  
+  const dailyLimit = useMemo(() => {
+    const todayStart = startOfDay(today);
+    const end = startOfDay(rangeEnd);
+    
+    if (todayStart > end) return 0; // Past month
+
+    if (!rollingBudgetEnabled) {
+      return globalBudgetNum / daysInMonth;
+    }
+    return remainingDays > 0 ? remainingBudget / remainingDays : 0;
+  }, [rollingBudgetEnabled, globalBudgetNum, daysInMonth, remainingBudget, remainingDays, today, rangeEnd]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -260,19 +275,12 @@ const BudgetPage = () => {
             </div>
 
             {/* Right: Progress & Health */}
-            <div className="lg:col-span-7 flex flex-col justify-center space-y-10">
+            <div className="lg:col-span-7 flex flex-col justify-center space-y-8">
               <div className="space-y-6">
                 <div className="flex justify-between items-end">
                   <div className="space-y-2">
                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest">معدل الاستهلاك</p>
                     <p className="text-6xl md:text-7xl font-black tracking-tighter">{overallPercentage.toFixed(1)}%</p>
-                  </div>
-                  <div className="text-right space-y-2">
-                    <div className="flex items-center gap-2 text-amber-400 justify-end">
-                      <Zap size={18} />
-                      <span className="text-[11px] font-black uppercase tracking-widest">الحد اليومي المقترح</span>
-                    </div>
-                    <p className="text-3xl md:text-4xl font-black tracking-tighter">{formatCurrency(dailyLimit, currency)}</p>
                   </div>
                 </div>
 
@@ -291,34 +299,30 @@ const BudgetPage = () => {
                 </div>
               </div>
 
-              {/* Smart Insights Row */}
-              <div className="flex gap-6 overflow-x-auto pb-4 custom-scrollbar no-scrollbar">
-                <div className="shrink-0 bg-white/5 rounded-2xl p-4 border border-white/5 flex items-center gap-4 backdrop-blur-sm">
-                  <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center text-primary-400">
-                    <PieChart size={20} />
+              {/* Budget Details Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/5 rounded-2xl p-5 border border-white/5 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 mb-3 text-amber-400">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                      <Zap size={16} />
+                    </div>
+                    <span className="text-[11px] font-black uppercase tracking-widest">الميزانية اليومية المقترحة</span>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">الأيام المتبقية</p>
-                    <p className="text-sm font-black">{remainingDays} يوم</p>
-                  </div>
+                  <p className="text-2xl md:text-3xl font-black tracking-tighter">{formatCurrency(dailyLimit, currency)}</p>
+                  <p className="text-[10px] text-slate-400 mt-2 font-bold">
+                    {rollingBudgetEnabled ? "بناءً على المبلغ المتبقي" : "ميزانية يومية ثابتة"}
+                  </p>
                 </div>
-                <div className="shrink-0 bg-white/5 rounded-2xl p-4 border border-white/5 flex items-center gap-4 backdrop-blur-sm">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                    <BarChart3 size={20} />
+
+                <div className="bg-white/5 rounded-2xl p-5 border border-white/5 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 mb-3 text-primary-400">
+                    <div className="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center">
+                      <Calendar size={16} />
+                    </div>
+                    <span className="text-[11px] font-black uppercase tracking-widest">الأيام المتبقية</span>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">صحة الميزانية</p>
-                    <p className="text-sm font-black">{overallPercentage > 100 ? 'حرجة' : overallPercentage > 80 ? 'تحذير' : 'ممتازة'}</p>
-                  </div>
-                </div>
-                <div className="shrink-0 bg-white/5 rounded-2xl p-4 border border-white/5 flex items-center gap-4 backdrop-blur-sm">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
-                    <Lightbulb size={20} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">نصيحة ذكية</p>
-                    <p className="text-sm font-black">{overallPercentage > 90 ? 'قلل المصاريف' : 'استمر هكذا'}</p>
-                  </div>
+                  <p className="text-2xl md:text-3xl font-black tracking-tighter">{remainingDays} <span className="text-sm text-slate-400">يوم</span></p>
+                  <p className="text-[10px] text-slate-400 mt-2 font-bold">حتى نهاية الدورة المالية</p>
                 </div>
               </div>
             </div>
