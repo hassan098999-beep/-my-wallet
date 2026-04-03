@@ -4,7 +4,6 @@ import { formatCurrency, cn, hapticFeedback } from '../../utils';
 import { Skeleton, CardSkeleton } from '../../components/Skeleton';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Trash, Wallet, Calendar, Building2, ArrowDownCircle, TrendingUp } from 'lucide-react';
-import NumericKeypad from '../../components/NumericKeypad';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -16,7 +15,6 @@ const IncomePage = () => {
   const [amount, setAmount] = useState('');
   const [accountId, setAccountId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [showKeypad, setShowKeypad] = useState(false);
 
   const handleAddIncome = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,29 +29,7 @@ const IncomePage = () => {
       setSource('');
       setAmount('');
       setAccountId('');
-      setShowKeypad(false);
     }
-  };
-
-  const handleKeyPress = (val: string) => {
-    if (val === '.') {
-      if (!amount.includes('.')) {
-        setAmount(prev => prev === '' ? '0.' : prev + '.');
-      }
-    } else if (val.startsWith('+')) {
-      const addVal = Number(val.replace('+', ''));
-      setAmount(prev => (Number(prev || 0) + addVal).toString());
-    } else {
-      setAmount(prev => prev + val);
-    }
-  };
-
-  const handleDelete = () => {
-    setAmount(prev => prev.slice(0, -1));
-  };
-
-  const handleClear = () => {
-    setAmount('');
   };
 
   const totalIncome = income.reduce((sum, item) => sum + item.amount, 0);
@@ -153,22 +129,15 @@ const IncomePage = () => {
           <div className="space-y-2 md:space-y-3">
             <label className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest pl-1">المبلغ</label>
             <div className="relative group">
-              <div className={cn(
-                "absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl md:rounded-3xl blur opacity-20 group-hover:opacity-30 transition duration-1000 group-hover:duration-200",
-                showKeypad ? "opacity-40" : "opacity-0"
-              )}></div>
+              <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl md:rounded-3xl blur opacity-20 group-hover:opacity-30 transition duration-1000 group-hover:duration-200"></div>
               <div className="relative">
                 <input
-                  type="text"
-                  inputMode="none"
-                  readOnly
+                  type="number"
+                  step="0.001"
                   value={amount}
-                  onFocus={() => setShowKeypad(true)}
+                  onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
-                  className={cn(
-                    "w-full pl-14 pr-4 py-3 md:px-5 md:py-4 rounded-2xl md:rounded-3xl border-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl text-sm md:text-base font-black text-slate-900 dark:text-white outline-none transition-all font-mono shadow-xl cursor-pointer",
-                    showKeypad ? "border-emerald-500" : "border-slate-200 dark:border-slate-700"
-                  )}
+                  className="w-full pl-14 pr-4 py-3 md:px-5 md:py-4 rounded-2xl md:rounded-3xl border-2 border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl text-sm md:text-base font-black text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-all font-mono shadow-xl"
                   required
                   dir="ltr"
                 />
@@ -205,34 +174,6 @@ const IncomePage = () => {
             />
           </div>
         </div>
-
-        <AnimatePresence>
-          {showKeypad && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-6 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-slate-200 dark:border-slate-700"
-            >
-              <div className="flex justify-between items-center mb-4 px-2">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">لوحة المفاتيح</span>
-                <button 
-                  type="button"
-                  onClick={() => setShowKeypad(false)}
-                  className="text-[10px] font-black text-primary-500 uppercase tracking-widest"
-                >
-                  إغلاق
-                </button>
-              </div>
-              <NumericKeypad 
-                onPress={handleKeyPress}
-                onDelete={handleDelete}
-                onClear={handleClear}
-                type="income"
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
         
         <div className="mt-6 md:mt-8 flex justify-end">
           <motion.button 
