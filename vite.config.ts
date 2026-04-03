@@ -34,6 +34,8 @@ export default defineConfig(({mode}) => {
           navigateFallback: 'index.html',
         },
         manifest: {
+          id: '/',
+          start_url: '/',
           name: 'مصاريفي - إدارة المصاريف الشخصية',
           short_name: 'مصاريفي',
           description: 'تطبيق لإدارة المصاريف الشخصية وتتبع الميزانية',
@@ -46,7 +48,7 @@ export default defineConfig(({mode}) => {
               src: 'icon-192.png',
               sizes: '192x192',
               type: 'image/png',
-              purpose: 'any'
+              purpose: 'any maskable'
             },
             {
               src: 'icon-512.png',
@@ -64,6 +66,10 @@ export default defineConfig(({mode}) => {
         }
       })
     ],
+    build: {
+      minify: 'esbuild',
+      target: 'esnext',
+    },
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.API_KEY': JSON.stringify(env.API_KEY),
