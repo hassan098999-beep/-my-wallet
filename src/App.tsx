@@ -7,10 +7,10 @@ import OnboardingModal from './OnboardingModal';
 import LoadingScreen from './components/LoadingScreen';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 
-import Dashboard from './pages/Dashboard';
-import Transactions from './pages/Transactions';
-import Analytics from './pages/Analytics';
-import Settings from './pages/Settings';
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Transactions = lazy(() => import('./pages/Transactions'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const Settings = lazy(() => import('./pages/Settings'));
 
 const BudgetPage = lazy(() => import('./pages/Budget'));
 const GoalsPage = lazy(() => import('./pages/Goals'));
@@ -43,20 +43,22 @@ export default function App() {
       <PwaInstallPrompt />
       <OnboardingModal />
       <Router>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="transactions" element={<Transactions />} />
-            <Route path="analytics" element={<Analytics />} />
-            <Route path="budget" element={<BudgetPage />} />
-            <Route path="recurring" element={<RecurringExpenses />} />
-            <Route path="goals" element={<GoalsPage />} />
-            <Route path="income" element={<IncomePage />} />
-            <Route path="savings" element={<SavingsPage />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="assistant" element={<Assistant />} />
-          </Route>
-        </Routes>
+        <Suspense fallback={<LoadingScreen />}>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="transactions" element={<Transactions />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="budget" element={<BudgetPage />} />
+              <Route path="recurring" element={<RecurringExpenses />} />
+              <Route path="goals" element={<GoalsPage />} />
+              <Route path="income" element={<IncomePage />} />
+              <Route path="savings" element={<SavingsPage />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="assistant" element={<Assistant />} />
+            </Route>
+          </Routes>
+        </Suspense>
       </Router>
     </AppProvider>
   );

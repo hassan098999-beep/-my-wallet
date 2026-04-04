@@ -30,6 +30,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ onAddClick }) => {
           {/* Central Add Button */}
           <div className="relative -top-8 px-2">
             <motion.button
+              aria-label="إضافة عملية جديدة"
               whileHover={{ scale: 1.05, rotate: 90 }}
               whileTap={{ scale: 0.95 }}
               onClick={onAddClick}
@@ -56,6 +57,7 @@ const springConfig = { type: "spring", stiffness: 300, damping: 25, mass: 0.8 };
 const NavItem = ({ item }: { item: typeof mainNavItems[0] }) => (
   <NavLink
     to={item.path}
+    aria-label={item.name}
     className={({ isActive }) =>
       cn(
         "relative flex flex-col items-center justify-center p-2 w-16 h-14 transition-all duration-300",

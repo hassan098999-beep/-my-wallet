@@ -10,7 +10,7 @@ const NotificationBell = () => {
 
   return (
     <div className="relative">
-      <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 relative">
+      <button aria-label="الإشعارات" onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 relative">
         <Bell size={20} className="text-slate-600 dark:text-slate-400" />
         {notifications.length > 0 && (
           <span className="absolute top-1 right-1 size-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900" />
@@ -27,7 +27,7 @@ const NotificationBell = () => {
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-black text-slate-900 dark:text-white">الإشعارات</h3>
-              <button onClick={() => setIsOpen(false)}><X size={16} /></button>
+              <button aria-label="إغلاق الإشعارات" onClick={() => setIsOpen(false)}><X size={16} /></button>
             </div>
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {notifications.length === 0 ? (

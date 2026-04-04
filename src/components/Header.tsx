@@ -58,6 +58,7 @@ const Header = () => {
       <div className="flex items-center gap-2">
         <div className="relative group">
           <button
+            aria-label={theme === 'dark' ? 'تفعيل الوضع الفاتح' : 'تفعيل الوضع الداكن'}
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="p-2 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
           >
@@ -72,6 +73,7 @@ const Header = () => {
         
         <div className="relative" ref={dropdownRef}>
           <button
+            aria-label="القائمة الإضافية"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="p-2 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
           >
