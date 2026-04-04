@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 export default function PwaInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(
-    typeof window !== 'undefined' ? (window as any).deferredPrompt : null
-  );
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showIOSPrompt, setShowIOSPrompt] = useState(false);
@@ -33,21 +31,17 @@ export default function PwaInstallPrompt() {
 
     // Handle Android/Chrome beforeinstallprompt
     const handleInstallPrompt = () => {
-      setDeferredPrompt(window.deferredPrompt);
+      setDeferredPrompt((window as any).deferredPrompt);
     };
 
     window.addEventListener('pwa-install-prompt', handleInstallPrompt);
-
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault();
-      window.deferredPrompt = e;
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    if ((window as any).deferredPrompt) {
+      setDeferredPrompt((window as any).deferredPrompt);
+    }
 
     return () => {
       window.removeEventListener('pwa-install-prompt', handleInstallPrompt);
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
 

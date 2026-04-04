@@ -506,14 +506,16 @@ const Analytics = () => {
                     dataKey="date" 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }}
-                    interval={4}
+                    tick={{ fontSize: width < 640 ? 7 : 9, fontWeight: 700, fill: '#94a3b8' }}
+                    interval={width < 640 ? 5 : 4}
+                    dy={width < 640 ? 5 : 10}
                   />
                   <YAxis 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fontSize: 9, fontWeight: 700, fill: '#94a3b8' }}
-                    tickFormatter={(val) => `${val}`}
+                    tick={{ fontSize: width < 640 ? 7 : 9, fontWeight: 700, fill: '#94a3b8' }}
+                    tickFormatter={(val) => width < 640 && val >= 1000 ? `${(val / 1000).toFixed(0)}k` : `${val}`}
+                    width={width < 640 ? 30 : 40}
                   />
                   <Tooltip 
                     cursor={{ fill: '#f8fafc', radius: 8 }}
@@ -822,15 +824,16 @@ const Analytics = () => {
                     dataKey="date" 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }}
-                    dy={15}
-                    interval={width < 640 ? 3 : 0}
+                    tick={{ fontSize: width < 640 ? 7 : 10, fontWeight: 700, fill: '#94a3b8' }}
+                    dy={width < 640 ? 10 : 15}
+                    interval={width < 640 ? 5 : 3}
                   />
                   <YAxis 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }}
-                    tickFormatter={(val) => `${val}`}
+                    tick={{ fontSize: width < 640 ? 7 : 10, fontWeight: 700, fill: '#94a3b8' }}
+                    tickFormatter={(val) => width < 640 && val >= 1000 ? `${(val / 1000).toFixed(0)}k` : `${val}`}
+                    width={width < 640 ? 30 : 40}
                   />
                   <Tooltip 
                     cursor={{ fill: '#f8fafc', radius: 12 }}
@@ -912,14 +915,16 @@ const Analytics = () => {
                     dataKey="month" 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fontSize: 7, fontWeight: 700, fill: '#94a3b8' }}
+                    tick={{ fontSize: width < 640 ? 6 : 7, fontWeight: 700, fill: '#94a3b8' }}
                     dy={8}
-                    interval={width < 480 ? 1 : 0}
+                    interval={width < 640 ? 1 : 0}
                   />
                   <YAxis 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fontSize: 7, fontWeight: 700, fill: '#94a3b8' }}
+                    tick={{ fontSize: width < 640 ? 6 : 7, fontWeight: 700, fill: '#94a3b8' }}
+                    tickFormatter={(val) => width < 640 && val >= 1000 ? `${(val / 1000).toFixed(0)}k` : `${val}`}
+                    width={width < 640 ? 25 : 35}
                   />
                   <Tooltip 
                     cursor={{ fill: '#f1f5f9', radius: 6 }}
@@ -1177,14 +1182,16 @@ const Analytics = () => {
                     dataKey="date" 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fontSize: width < 768 ? 7 : 8, fontWeight: 700, fill: '#94a3b8' }}
+                    tick={{ fontSize: width < 640 ? 6 : 8, fontWeight: 700, fill: '#94a3b8' }}
                     dy={8}
-                    interval={width < 640 ? 3 : 0}
+                    interval={width < 640 ? 5 : 3}
                   />
                   <YAxis 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fontSize: width < 768 ? 7 : 8, fontWeight: 700, fill: '#94a3b8' }}
+                    tick={{ fontSize: width < 640 ? 6 : 8, fontWeight: 700, fill: '#94a3b8' }}
+                    tickFormatter={(val) => width < 640 && val >= 1000 ? `${(val / 1000).toFixed(0)}k` : `${val}`}
+                    width={width < 640 ? 25 : 35}
                   />
                   <Tooltip 
                     cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '3 3' }}
