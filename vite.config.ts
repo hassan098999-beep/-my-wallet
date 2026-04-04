@@ -40,6 +40,8 @@ export default defineConfig(({mode}) => {
           background_color: '#ffffff',
           display: 'standalone',
           orientation: 'portrait',
+          lang: 'ar',
+          dir: 'rtl',
           icons: [
             {
               src: 'icon-192.png',
