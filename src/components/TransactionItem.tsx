@@ -1,8 +1,8 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion, useMotionValue, useTransform } from 'motion/react';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Trash, Pencil, Copy, Calendar, Building2, ArrowDown, ArrowRightLeft } from 'lucide-react';
+import { Trash, Pencil, Copy, Calendar, Building2, ArrowDown, ArrowRightLeft, ChevronRight } from 'lucide-react';
 import { DynamicIcon } from './DynamicIcon';
 import { formatCurrency, cn } from '../utils';
 import { PaymentMethod, Category, Account } from '../types';
@@ -38,6 +38,15 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
   const typeColor = isTransfer ? 'text-indigo-500' : (!isExpense ? 'text-emerald-500' : category?.type === 'need' ? 'text-indigo-500' : category?.type === 'want' ? 'text-amber-500' : 'text-rose-500');
   const bgColor = isTransfer ? '#6366f1' : (!isExpense ? '#10b981' : category?.color || '#f43f5e');
 
+  const x = useMotionValue(0);
+  
+  // Dynamic values for buttons based on swipe (swiping right in RTL reveals left side)
+  const opacity = useTransform(x, [0, 100, 180], [0, 0.8, 1]);
+  const scale = useTransform(x, [0, 100, 180], [0.8, 0.9, 1]);
+  const repeatX = useTransform(x, [0, 180], [-60, 0]);
+  const editX = useTransform(x, [0, 180], [-40, 0]);
+  const deleteX = useTransform(x, [0, 180], [-20, 0]);
+
   return (
     <motion.div 
       layout
@@ -47,28 +56,60 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className="relative overflow-hidden"
     >
-      {/* Swipe Background (Delete Button) */}
-      <div className="absolute inset-0 bg-rose-500 flex items-center justify-end px-6">
-        <div className="flex flex-col items-center gap-1 text-white">
-          <Trash size={24} />
-          <span className="text-[10px] font-black uppercase">حذف</span>
-        </div>
+      {/* Swipe Background (Action Buttons) */}
+      <div className="absolute inset-y-0 left-0 flex items-center justify-start pl-6 pr-4 gap-2 md:gap-3 bg-slate-50 dark:bg-slate-800/50 w-full z-0 border-b border-slate-100 dark:border-slate-800">
+        {!isTransfer && isExpense && (
+          <motion.button
+            style={{ opacity, scale, x: repeatX }}
+            onClick={() => { onDuplicate(transaction); x.set(0); }}
+            className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 active:scale-95 transition-transform"
+            title="تكرار"
+          >
+            <Copy size={18} />
+          </motion.button>
+        )}
+        {!isTransfer && (
+          <motion.button
+            style={{ opacity, scale, x: editX }}
+            onClick={() => { onEdit(transaction); x.set(0); }}
+            className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-blue-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20 active:scale-95 transition-transform"
+            title="تعديل"
+          >
+            <Pencil size={18} />
+          </motion.button>
+        )}
+        <motion.button
+          style={{ opacity, scale, x: deleteX }}
+          onClick={() => { onDelete(transaction.id, transaction.type); x.set(0); }}
+          className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-md shadow-rose-500/20 active:scale-95 transition-transform"
+          title="حذف"
+        >
+          <Trash size={18} />
+        </motion.button>
       </div>
 
       <motion.div 
+        style={{ x }}
         drag="x"
         dragDirectionLock
-        dragConstraints={{ left: -100, right: 0 }}
+        dragConstraints={{ left: 0, right: 180 }}
         dragElastic={0.1}
         onDragEnd={(e, info) => {
-          if (info.offset.x < -70) {
-            onDelete(transaction.id, transaction.type);
+          if (info.offset.x > 80) {
+            x.set(180);
+          } else {
+            x.set(0);
           }
         }}
         className={cn(
-          "relative z-10 p-6 md:p-10 flex flex-col sm:flex-row sm:items-center justify-between gap-8 md:gap-12 transition-all group bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 last:border-0"
+          "relative z-10 p-6 md:p-10 flex flex-col sm:flex-row sm:items-center justify-between gap-8 md:gap-12 transition-colors group bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 last:border-0 cursor-grab active:cursor-grabbing"
         )}
       >
+        {/* Swipe Hint Indicator (Mobile only) */}
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center sm:hidden opacity-30 text-slate-400 pointer-events-none">
+          <ChevronRight size={20} />
+        </div>
+
         <div className="flex items-start sm:items-center gap-6 md:gap-10 flex-1 min-w-0">
           <div 
             className={cn("w-14 h-14 md:w-24 md:h-24 rounded-2xl md:rounded-3xl flex items-center justify-center text-white shrink-0 shadow-sm transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 group-hover:shadow-emerald-500/20", typeColor.replace('text-', 'bg-'))}
@@ -132,11 +173,11 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-6">
+          <div className="hidden sm:flex items-center gap-3 md:gap-6">
             {!isTransfer && isExpense && (
               <button 
                 onClick={() => onDuplicate(transaction)}
-                className="p-3 md:p-4 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl md:rounded-3xl transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 shadow-sm"
+                className="p-3 md:p-4 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl md:rounded-3xl transition-all opacity-0 group-hover:opacity-100 shadow-sm"
                 title="تكرار"
               >
                 <Copy className="size-5 md:size-8" />
@@ -146,7 +187,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
             {!isTransfer && (
               <button 
                 onClick={() => onEdit(transaction)}
-                className="p-3 md:p-4 text-slate-300 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-2xl md:rounded-3xl transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 shadow-sm"
+                className="p-3 md:p-4 text-slate-300 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-2xl md:rounded-3xl transition-all opacity-0 group-hover:opacity-100 shadow-sm"
                 title="تعديل"
               >
                 <Pencil className="size-5 md:size-8" />
@@ -155,7 +196,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
             
             <button 
               onClick={() => onDelete(transaction.id, transaction.type)}
-              className="p-3 md:p-4 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl md:rounded-3xl transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 shadow-sm"
+              className="p-3 md:p-4 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl md:rounded-3xl transition-all opacity-0 group-hover:opacity-100 shadow-sm"
               title="حذف"
             >
               <Trash className="size-5 md:size-8" />
