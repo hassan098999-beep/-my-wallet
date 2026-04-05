@@ -3,10 +3,8 @@ import { useLocation, useOutlet, useNavigate } from 'react-router-dom';
 import BottomNav from './BottomNav';
 import Header from './Header';
 import AddExpenseModal from './AddExpenseModal';
-import LoadingScreen from './LoadingScreen';
 import { AnimatePresence, motion, Variants } from 'motion/react';
 import { useAppContext } from '../store/AppContext';
-import { Plus } from 'lucide-react';
 
 const Layout = () => {
   const location = useLocation();
@@ -91,7 +89,7 @@ const Layout = () => {
       </div>
 
       <Header />
-      <main className="flex-1 overflow-y-auto p-2 md:p-4 lg:p-6 scroll-smooth pb-28 md:pb-32 overflow-x-hidden">
+      <main className="flex-1 overflow-y-auto p-2 md:p-4 lg:p-6 scroll-smooth pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-[calc(8rem+env(safe-area-inset-bottom))] overflow-x-hidden">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={location.pathname}

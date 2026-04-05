@@ -300,7 +300,7 @@ const Transactions = () => {
   };
 
   return (
-    <div className="space-y-4 md:space-y-8 pb-12 relative">
+    <div className="space-y-4 md:space-y-8 pb-[calc(1rem+env(safe-area-inset-bottom))] relative pt-[env(safe-area-inset-top)]">
       <motion.div
         className="space-y-4 md:space-y-8"
       >

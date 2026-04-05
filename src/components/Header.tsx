@@ -48,7 +48,7 @@ const Header = () => {
   }, []);
 
   return (
-    <header className="h-14 md:h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between px-4 md:px-6 z-[100] sticky top-0">
+    <header className="h-[calc(3.5rem+env(safe-area-inset-top))] md:h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between px-4 md:px-6 z-[100] sticky top-0">
       <div className="flex items-center gap-4">
         <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter uppercase">
           {getPageName()}

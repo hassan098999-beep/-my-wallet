@@ -204,7 +204,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
           {activeView === 'main' && (
             <div className="flex flex-col h-full">
               {/* Top Section */}
-              <div className={cn("flex flex-col text-white transition-colors duration-300 flex-1 min-h-[45%]", bgColor)}>
+              <div className={cn("flex flex-col text-white transition-colors duration-300 flex-1 min-h-[45%] pt-[env(safe-area-inset-top)]", bgColor)}>
                 {/* Header */}
                 <div className="flex items-center justify-between p-4">
                   <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
@@ -290,7 +290,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
               </div>
 
               {/* Keypad Section */}
-              <div className="flex-1 min-h-[55%] bg-white dark:bg-slate-900">
+              <div className="flex-1 min-h-[55%] bg-white dark:bg-slate-900 pb-[env(safe-area-inset-bottom)]">
                 <CalculatorKeypad 
                   onPress={handleKeyPress}
                   onDelete={handleDelete}
@@ -306,13 +306,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.2 }}
               className="absolute inset-0 bg-white dark:bg-slate-900 z-10 flex flex-col"
             >
-              <div className={cn("flex items-center p-4 text-white shrink-0", bgColor)}>
+              <div className={cn("flex items-center p-4 text-white shrink-0 pt-[env(safe-area-inset-top)]", bgColor)}>
                 <button onClick={() => setActiveView('main')} className="p-2 hover:bg-white/10 rounded-full transition-colors mr-2">
                   <ChevronLeft size={24} />
                 </button>
                 <h2 className="text-lg font-bold">اختر الفئة</h2>
               </div>
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                 {type === 'income' && (
                   <div className="mb-6 space-y-3">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">مصدر الدخل (نص حر)</label>
@@ -361,13 +361,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.2 }}
               className="absolute inset-0 bg-white dark:bg-slate-900 z-10 flex flex-col"
             >
-              <div className={cn("flex items-center p-4 text-white shrink-0", bgColor)}>
+              <div className={cn("flex items-center p-4 text-white shrink-0 pt-[env(safe-area-inset-top)]", bgColor)}>
                 <button onClick={() => setActiveView('main')} className="p-2 hover:bg-white/10 rounded-full transition-colors mr-2">
                   <ChevronLeft size={24} />
                 </button>
                 <h2 className="text-lg font-bold">{activeView === 'account' ? 'اختر الحساب' : 'إلى حساب'}</h2>
               </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                 {accounts.map((acc) => (
                   <button
                     key={acc.id}
@@ -400,13 +400,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.2 }}
               className="absolute inset-0 bg-white dark:bg-slate-900 z-10 flex flex-col"
             >
-              <div className={cn("flex items-center p-4 text-white shrink-0", bgColor)}>
+              <div className={cn("flex items-center p-4 text-white shrink-0 pt-[env(safe-area-inset-top)]", bgColor)}>
                 <button onClick={() => setActiveView('main')} className="p-2 hover:bg-white/10 rounded-full transition-colors mr-2">
                   <ChevronLeft size={24} />
                 </button>
                 <h2 className="text-lg font-bold">التاريخ والملاحظات</h2>
               </div>
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                 <div className="space-y-3">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
                     <Calendar size={16} /> التاريخ

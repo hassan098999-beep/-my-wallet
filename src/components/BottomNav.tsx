@@ -19,7 +19,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ onAddClick }) => {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
       <div className="w-full pointer-events-auto">
-        <nav className="relative flex items-center justify-between px-6 pb-6 pt-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl border-t border-slate-200/50 dark:border-slate-800/50 rounded-t-[2rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)]">
+        <nav className="relative flex items-center justify-between px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl border-t border-slate-200/50 dark:border-slate-800/50 rounded-t-[2rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)]">
           {/* Left Items */}
           <div className="flex items-center gap-1 flex-1 justify-around">
             {mainNavItems.slice(0, 2).map((item) => (
