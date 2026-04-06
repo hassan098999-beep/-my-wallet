@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import toast from 'react-hot-toast';
 import { AppState, Category, Expense, Budget, RecurringExpense, Achievement, Goal, AppNotification, Income, Account } from '../types';
 import { evaluateAchievements } from '../utils/achievements';
-import { getBudgetMonth } from '../utils';
+import { getBudgetMonth, safeStorage } from '../utils';
 import { addDays, addWeeks, addMonths, addYears, parseISO, isBefore, isSameDay, subDays } from 'date-fns';
 import { ACHIEVEMENTS } from '../constants/achievements';
 import { auth, db, signInWithGoogle, logout as firebaseLogout, onAuthStateChanged } from '../firebase';
@@ -134,7 +134,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [state, setState] = useState<AppState>(() => {
-    const saved = localStorage.getItem('masarifi_data');
+    const saved = safeStorage.getItem('masarifi_data');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -402,7 +402,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      localStorage.setItem('masarifi_data', JSON.stringify(state));
+      safeStorage.setItem('masarifi_data', JSON.stringify(state));
     }, 1000);
     return () => clearTimeout(timeoutId);
   }, [state]);

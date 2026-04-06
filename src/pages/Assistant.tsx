@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Send, Bot, User, Sparkles, Loader2, Settings as SettingsIcon, Trash2, Lightbulb, ImagePlus, X } from 'lucide-react';
 import { GoogleGenAI, ThinkingLevel, Type, FunctionDeclaration } from '@google/genai';
 import { useAppContext } from '../store/AppContext';
-import { cn, hapticFeedback, getBudgetMonth } from '../utils';
+import { cn, hapticFeedback, getBudgetMonth, safeStorage } from '../utils';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -19,7 +19,7 @@ export default function Assistant() {
   const [isLoading, setIsLoading] = useState(false);
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [customApiKey, setCustomApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+  const [customApiKey, setCustomApiKey] = useState(safeStorage.getItem('gemini_api_key') || '');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatHistoryRef = useRef<any[]>([]);
@@ -48,7 +48,7 @@ export default function Assistant() {
   }, [messages]);
 
   useEffect(() => {
-    const key = localStorage.getItem('gemini_api_key') || process.env.GEMINI_API_KEY;
+    const key = safeStorage.getItem('gemini_api_key') || process.env.GEMINI_API_KEY;
     if (!key) {
       setApiKeyMissing(true);
     } else {
@@ -58,12 +58,12 @@ export default function Assistant() {
 
   const saveApiKey = () => {
     if (customApiKey.trim()) {
-      localStorage.setItem('gemini_api_key', customApiKey.trim());
+      safeStorage.setItem('gemini_api_key', customApiKey.trim());
       setApiKeyMissing(false);
       setShowSettings(false);
       toast.success('تم حفظ مفتاح API بنجاح');
     } else {
-      localStorage.removeItem('gemini_api_key');
+      safeStorage.removeItem('gemini_api_key');
       setApiKeyMissing(!process.env.GEMINI_API_KEY);
       toast.error('تم مسح مفتاح API');
     }
@@ -73,7 +73,7 @@ export default function Assistant() {
     e.preventDefault();
     if ((!query.trim() && !selectedImage) || isLoading) return;
 
-    const apiKey = localStorage.getItem('gemini_api_key') || process.env.GEMINI_API_KEY;
+    const apiKey = safeStorage.getItem('gemini_api_key') || process.env.GEMINI_API_KEY;
     if (!apiKey) {
       setApiKeyMissing(true);
       return;

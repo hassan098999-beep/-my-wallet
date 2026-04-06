@@ -166,29 +166,25 @@ const Dashboard = () => {
       opacity: 1,
       transition: {
         staggerChildren: 0.1,
-        delayChildren: 0.2
+        delayChildren: 0.1
       }
     }
   };
 
   const itemVariants: Variants = {
-    hidden: { y: 10, opacity: 0 },
+    hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,
       opacity: 1,
       transition: {
-        duration: 0.2
+        duration: 0.4,
+        ease: "easeOut"
       }
     }
   };
 
   return (
-    <motion.div 
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-8 pb-10 relative"
-    >
+    <div className="space-y-8 pb-10 relative">
       {/* Pull to refresh indicator */}
       <motion.div 
         className="absolute top-0 left-0 right-0 flex justify-center items-center h-16 -mt-16 z-50"
@@ -225,9 +221,15 @@ const Dashboard = () => {
       </div>
 
       {/* Monthly Financial Summary */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6"
+      >
         {/* Income Card */}
-        <div className="premium-card p-6 rounded-3xl relative overflow-hidden group flex flex-col justify-center">
+        <motion.div variants={itemVariants} className="premium-card p-6 rounded-3xl relative overflow-hidden group flex flex-col justify-center">
           <div className="absolute -right-6 -top-6 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-colors duration-500" />
           <div className="relative z-10 flex items-center gap-5">
             <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 shadow-inner group-hover:scale-110 transition-transform duration-300">
@@ -240,10 +242,10 @@ const Dashboard = () => {
               </h3>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Expenses Card */}
-        <div className="premium-card p-6 rounded-3xl relative overflow-hidden group flex flex-col justify-center">
+        <motion.div variants={itemVariants} className="premium-card p-6 rounded-3xl relative overflow-hidden group flex flex-col justify-center">
           <div className="absolute -right-6 -top-6 w-32 h-32 bg-rose-500/10 rounded-full blur-3xl group-hover:bg-rose-500/20 transition-colors duration-500" />
           <div className="relative z-10 flex items-center gap-5">
             <div className="w-14 h-14 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 shadow-inner group-hover:scale-110 transition-transform duration-300">
@@ -256,10 +258,10 @@ const Dashboard = () => {
               </h3>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Net Balance Card */}
-        <div className="premium-card p-6 rounded-3xl relative overflow-hidden group flex flex-col justify-center">
+        <motion.div variants={itemVariants} className="premium-card p-6 rounded-3xl relative overflow-hidden group flex flex-col justify-center">
           <div className="absolute -right-6 -top-6 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-colors duration-500" />
           <div className="relative z-10 flex items-center gap-5">
             <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 shadow-inner group-hover:scale-110 transition-transform duration-300">
@@ -275,14 +277,20 @@ const Dashboard = () => {
               </h3>
             </div>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
 
       {/* Financial Overview Dashboard */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+      >
         
         {/* Total Net Worth & Accounts (Takes 2 columns) */}
-        <div className="lg:col-span-2 relative overflow-hidden rounded-3xl bg-slate-950 dark:bg-slate-900 border border-slate-800 p-6 md:p-8 shadow-md flex flex-col justify-between">
+        <motion.div variants={itemVariants} className="lg:col-span-2 relative overflow-hidden rounded-3xl bg-slate-950 dark:bg-slate-900 border border-slate-800 p-6 md:p-8 shadow-md flex flex-col justify-between">
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px]" />
           
           <div className="relative z-10 mb-8">
@@ -321,10 +329,11 @@ const Dashboard = () => {
               </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Daily Budget & Spending (Takes 1 column) */}
         <motion.div 
+          variants={itemVariants}
           whileHover={{ y: -5 }}
           className="relative overflow-hidden rounded-3xl bg-slate-950 dark:bg-slate-900 border border-slate-800 p-6 md:p-8 shadow-2xl flex flex-col justify-between group"
         >
@@ -394,7 +403,13 @@ const Dashboard = () => {
       </motion.div>
 
       {/* Bento Grid Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         {/* Target Budget Card */}
         <motion.div variants={itemVariants} className="premium-card p-5 flex flex-col justify-between min-h-[130px] relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-colors" />
@@ -462,20 +477,34 @@ const Dashboard = () => {
             </h4>
           </div>
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Left Column: AI & Insights (Takes 2 columns on XL) */}
         <div className="xl:col-span-2 space-y-6">
           {/* AI Advisor Section */}
-          <motion.div variants={itemVariants} className="w-full">
-            <AIAdvisor />
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            className="w-full"
+          >
+            <motion.div variants={itemVariants}>
+              <AIAdvisor />
+            </motion.div>
           </motion.div>
 
           {/* Behavioral Insights Section */}
-          <motion.div variants={itemVariants} className="space-y-6">
-            <div className="flex justify-between items-center px-2">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            className="space-y-6"
+          >
+            <motion.div variants={itemVariants} className="flex justify-between items-center px-2">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
                   <Activity size={24} />
@@ -485,12 +514,13 @@ const Dashboard = () => {
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">تحليل ذكي لأنماط صرفك</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {insights.slice(0, 2).map((insight, idx) => (
                 <motion.div
                   key={insight.id || idx}
+                  variants={itemVariants}
                   whileHover={{ y: -4, scale: 1.01 }}
                   className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group flex flex-col justify-between min-h-[180px]"
                 >
@@ -534,7 +564,13 @@ const Dashboard = () => {
         </div>
 
         {/* Right Column: Transactions & Goals */}
-        <div className="space-y-6">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="space-y-6"
+        >
           {/* Transactions Section */}
           <motion.div variants={itemVariants} className="premium-card p-6 rounded-3xl border border-slate-100 dark:border-slate-800/50 shadow-sm dark:shadow-none flex flex-col h-full max-h-[600px]">
             <div className="flex justify-between items-center mb-6">
@@ -599,13 +635,19 @@ const Dashboard = () => {
               </AnimatePresence>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Savings Goals Overview - Bottom Row */}
       {goals.length > 0 && (
-        <motion.div variants={itemVariants} className="space-y-6">
-          <div className="flex justify-between items-center px-2">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="space-y-6"
+        >
+          <motion.div variants={itemVariants} className="flex justify-between items-center px-2">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600">
                 <TrendingUp size={20} />
@@ -613,7 +655,7 @@ const Dashboard = () => {
               <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">أهداف الادخار</h3>
             </div>
             <Link to="/goals" className="text-[11px] font-black text-emerald-600 hover:text-emerald-700 transition-colors bg-emerald-50 dark:bg-emerald-900/20 px-4 py-2 rounded-xl uppercase tracking-widest">إدارة الأهداف</Link>
-          </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {goals.slice(0, 3).map(goal => {
@@ -622,6 +664,7 @@ const Dashboard = () => {
               return (
                 <motion.div 
                   key={goal.id} 
+                  variants={itemVariants}
                   whileHover={{ y: -8, scale: 1.02 }}
                   className="premium-card p-8 group transition-all duration-500 relative overflow-hidden"
                 >
@@ -702,7 +745,7 @@ const Dashboard = () => {
           </div>
         </motion.div>
       )}
-    </motion.div>
+    </div>
   );
 };
 

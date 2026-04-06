@@ -1,9 +1,10 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Expense, Income, Budget, Goal, Account, FinancialAdvice, FinancialForecast } from "../types";
+import { safeStorage } from "../utils";
 
 const getApiKey = () => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('gemini_api_key') || process.env.GEMINI_API_KEY || '';
+    return safeStorage.getItem('gemini_api_key') || process.env.GEMINI_API_KEY || '';
   }
   return process.env.GEMINI_API_KEY || '';
 };

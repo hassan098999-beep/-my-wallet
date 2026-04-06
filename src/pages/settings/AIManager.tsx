@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Key, Save, CircleCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { safeStorage } from '../../utils';
 
 const AIManager = () => {
   const [apiKey, setApiKey] = useState('');
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    const savedKey = localStorage.getItem('gemini_api_key');
+    const savedKey = safeStorage.getItem('gemini_api_key');
     if (savedKey) {
       setApiKey(savedKey);
       setIsSaved(true);
@@ -16,11 +17,11 @@ const AIManager = () => {
 
   const handleSave = () => {
     if (apiKey.trim()) {
-      localStorage.setItem('gemini_api_key', apiKey.trim());
+      safeStorage.setItem('gemini_api_key', apiKey.trim());
       setIsSaved(true);
       toast.success('تم حفظ مفتاح API بنجاح');
     } else {
-      localStorage.removeItem('gemini_api_key');
+      safeStorage.removeItem('gemini_api_key');
       setIsSaved(false);
       toast.success('تم إزالة مفتاح API');
     }
