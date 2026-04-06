@@ -90,7 +90,7 @@ const Layout = () => {
       </div>
 
       <Header />
-      <main className="flex-1 overflow-y-auto p-2 md:p-4 lg:p-6 scroll-smooth pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-[calc(8rem+env(safe-area-inset-bottom))] overflow-x-hidden">
+      <main className="flex-1 overflow-y-auto p-1.5 md:p-3 lg:p-5 scroll-smooth pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-[calc(7rem+env(safe-area-inset-bottom))] overflow-x-hidden">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={location.pathname}

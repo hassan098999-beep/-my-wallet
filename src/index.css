@@ -96,15 +96,15 @@
   }
 
   .btn-primary {
-    @apply bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2;
+    @apply bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2 py-2.5 px-4;
   }
 
   .btn-secondary {
-    @apply bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-black rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2;
+    @apply bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-black rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 py-2.5 px-4;
   }
 
   .input-field {
-    @apply w-full px-4 py-3 rounded-2xl border-none bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white font-bold text-sm focus:ring-4 focus:ring-emerald-500/10 shadow-inner transition-all outline-none;
+    @apply w-full px-3 py-2.5 rounded-xl border-none bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white font-bold text-sm focus:ring-4 focus:ring-emerald-500/10 shadow-inner transition-all outline-none;
   }
 
   .no-scrollbar::-webkit-scrollbar {

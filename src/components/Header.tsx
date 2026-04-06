@@ -48,21 +48,21 @@ const Header = () => {
   }, []);
 
   return (
-    <header className="h-[calc(3.5rem+env(safe-area-inset-top))] md:h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between px-4 md:px-6 z-[100] sticky top-0">
-      <div className="flex items-center gap-4">
-        <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter uppercase">
+    <header className="h-[calc(3rem+env(safe-area-inset-top))] md:h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between px-3 md:px-5 z-[100] sticky top-0">
+      <div className="flex items-center gap-3">
+        <h2 className="text-base md:text-lg font-black text-slate-900 dark:text-white tracking-tighter uppercase">
           {getPageName()}
         </h2>
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <div className="relative group">
           <button
             aria-label={theme === 'dark' ? 'تفعيل الوضع الفاتح' : 'تفعيل الوضع الداكن'}
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="p-2 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
+            className="p-1.5 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
           >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           <div className="absolute top-full right-0 mt-2 w-max px-2 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 whitespace-nowrap">
             {theme === 'dark' ? 'تفعيل الوضع الفاتح' : 'تفعيل الوضع الداكن'}
@@ -75,9 +75,9 @@ const Header = () => {
           <button
             aria-label="القائمة الإضافية"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="p-2 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
+            className="p-1.5 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
           >
-            <Settings2 size={18} className={cn("transition-transform duration-500", isDropdownOpen && "rotate-180")} />
+            <Settings2 size={16} className={cn("transition-transform duration-500", isDropdownOpen && "rotate-180")} />
           </button>
 
           <AnimatePresence>

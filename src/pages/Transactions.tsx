@@ -318,9 +318,9 @@ const Transactions = () => {
   };
 
   return (
-    <div className="space-y-4 md:space-y-8 pb-[calc(1rem+env(safe-area-inset-bottom))] relative pt-[env(safe-area-inset-top)]">
+    <div className="space-y-3 md:space-y-6 pb-[calc(1rem+env(safe-area-inset-bottom))] relative pt-[env(safe-area-inset-top)]">
       <motion.div
-        className="space-y-4 md:space-y-8"
+        className="space-y-3 md:space-y-6"
       >
         {/* Pull to refresh indicator */}
         <motion.div 
@@ -340,12 +340,12 @@ const Transactions = () => {
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="space-y-2"
+          className="space-y-1"
         >
-          <h1 className="text-3xl md:text-6xl font-black tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-2xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
             سجل <span className="text-emerald-600">العمليات</span>
           </h1>
-          <p className="text-sm md:text-lg text-slate-500 dark:text-slate-400 font-medium">
+          <p className="text-xs md:text-base text-slate-500 dark:text-slate-400 font-medium">
             تتبع وإدارة جميع مصاريفك في مكان واحد
           </p>
         </motion.div>
@@ -372,24 +372,24 @@ const Transactions = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="premium-card bg-emerald-600 rounded-3xl p-6 md:p-8 text-white shadow-md shadow-emerald-500/20 relative overflow-hidden group flex-1 flex flex-col justify-between"
+            className="premium-card bg-emerald-600 rounded-3xl p-4 md:p-6 text-white shadow-md shadow-emerald-500/20 relative overflow-hidden group flex-1 flex flex-col justify-between"
           >
             <div className="absolute -right-12 -top-12 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
-            <div className="relative z-10 space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
-                  <ArrowUp className="size-6 text-white" />
+            <div className="relative z-10 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
+                  <ArrowUp className="size-5 text-white" />
                 </div>
-                <span className="text-xs font-black uppercase tracking-[0.2em] opacity-70">إجمالي الدخل</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70">إجمالي الدخل</span>
               </div>
               <div>
-                <div className="text-4xl md:text-5xl font-black tracking-tighter leading-none">
+                <div className="text-3xl md:text-4xl font-black tracking-tighter leading-none">
                   {formatCurrency(totalIncome, currency)}
                 </div>
               </div>
             </div>
-            <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between opacity-60">
-              <span className="text-[10px] font-black uppercase tracking-widest">معدل النمو</span>
+            <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between opacity-60">
+              <span className="text-[9px] font-black uppercase tracking-widest">معدل النمو</span>
               <span className="text-xs font-black">+12.5%</span>
             </div>
           </motion.div>
@@ -398,24 +398,24 @@ const Transactions = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="premium-card bg-rose-600 rounded-3xl p-6 md:p-8 text-white shadow-md shadow-rose-500/20 relative overflow-hidden group flex-1 flex flex-col justify-between"
+            className="premium-card bg-rose-600 rounded-3xl p-4 md:p-6 text-white shadow-md shadow-rose-500/20 relative overflow-hidden group flex-1 flex flex-col justify-between"
           >
             <div className="absolute -right-12 -top-12 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
-            <div className="relative z-10 space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
-                  <ArrowDown className="size-6 text-white" />
+            <div className="relative z-10 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
+                  <ArrowDown className="size-5 text-white" />
                 </div>
-                <span className="text-xs font-black uppercase tracking-[0.2em] opacity-70">إجمالي المصاريف</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70">إجمالي المصاريف</span>
               </div>
               <div>
-                <div className="text-4xl md:text-5xl font-black tracking-tighter leading-none">
+                <div className="text-3xl md:text-4xl font-black tracking-tighter leading-none">
                   {formatCurrency(totalExpenses, currency)}
                 </div>
               </div>
             </div>
-            <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between opacity-60">
-              <span className="text-[10px] font-black uppercase tracking-widest">معدل الإنفاق</span>
+            <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between opacity-60">
+              <span className="text-[9px] font-black uppercase tracking-widest">معدل الإنفاق</span>
               <span className="text-xs font-black">مرتفع</span>
             </div>
           </motion.div>
@@ -426,26 +426,26 @@ const Transactions = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="lg:col-span-3 premium-card p-6 md:p-8 rounded-3xl flex flex-col bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-100 dark:border-slate-800"
+          className="lg:col-span-3 premium-card p-4 md:p-6 rounded-3xl flex flex-col bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-100 dark:border-slate-800"
         >
-          <div className="flex flex-col gap-8 flex-1">
-            <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col gap-4 md:gap-6 flex-1">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
               <div className="relative group flex-1">
-                <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors size-6" />
+                <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors size-5" />
                 <input
                   type="text"
                   placeholder="بحث في العمليات..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="input-field w-full pr-14 pl-6 py-4 rounded-2xl text-base md:text-lg font-black uppercase tracking-tight bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800"
+                  className="input-field w-full pr-12 pl-4 py-3 rounded-xl text-sm md:text-base font-black uppercase tracking-tight bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800"
                 />
               </div>
               
-              <div className="flex gap-4">
+              <div className="flex gap-2 md:gap-3">
                 <select
                   value={transactionType}
                   onChange={(e) => setTransactionType(e.target.value as any)}
-                  className="input-field px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-widest appearance-none min-w-[140px] bg-slate-50 dark:bg-slate-800/50 border-transparent"
+                  className="input-field px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest appearance-none min-w-[100px] bg-slate-50 dark:bg-slate-800/50 border-transparent"
                 >
                   <option value="all">الكل</option>
                   <option value="expense">المصاريف</option>
@@ -455,22 +455,22 @@ const Transactions = () => {
                 <button
                   onClick={() => setShowFilters(!showFilters)}
                   className={cn(
-                    "flex items-center gap-4 px-6 py-4 rounded-2xl border-2 transition-all shadow-sm active:scale-95 text-sm font-black uppercase tracking-widest",
+                    "flex items-center gap-2 px-4 py-3 rounded-xl border-2 transition-all shadow-sm active:scale-95 text-xs font-black uppercase tracking-widest",
                     showFilters 
                       ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400" 
                       : "border-dashed border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
                   )}
                 >
-                  <Filter className="size-6" />
-                  <span className="hidden sm:inline">فلاتر متقدمة</span>
+                  <Filter className="size-5" />
+                  <span className="hidden sm:inline">فلاتر</span>
                 </button>
 
                 <button
                   onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                  className="flex items-center justify-between gap-4 px-6 py-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm active:scale-95 text-sm font-black uppercase tracking-widest"
+                  className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm active:scale-95 text-xs font-black uppercase tracking-widest"
                 >
-                  <div className="flex items-center gap-3">
-                    <ArrowDownUp className="size-6 text-emerald-500" />
+                  <div className="flex items-center gap-2">
+                    <ArrowDownUp className="size-5 text-emerald-500" />
                     <span className="hidden sm:inline">{sortOrder === 'desc' ? 'الأحدث' : 'الأقدم'}</span>
                   </div>
                 </button>

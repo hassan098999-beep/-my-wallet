@@ -23,30 +23,30 @@ const BottomNav: React.FC<BottomNavProps> = ({ onAddClick }) => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none flex justify-center">
-      <div className="w-full max-w-[26rem] pointer-events-auto">
-        <nav className="relative flex items-center justify-between px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl border-t border-x border-slate-200/50 dark:border-slate-800/50 rounded-t-[2rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)]">
+      <div className="w-full max-w-[24rem] pointer-events-auto">
+        <nav className="relative flex items-center justify-between px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl border-t border-x border-slate-200/50 dark:border-slate-800/50 rounded-t-[1.75rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)]">
           {/* Left Items */}
-          <div className="flex items-center gap-1 flex-1 justify-around">
+          <div className="flex items-center gap-0.5 flex-1 justify-around">
             {mainNavItems.slice(0, 2).map((item) => (
               <NavItem key={item.path} item={item} />
             ))}
           </div>
 
           {/* Central Add Button */}
-          <div className="relative -top-6 px-2">
+          <div className="relative -top-5 px-1.5">
             <motion.button
               aria-label="إضافة عملية جديدة"
               whileHover={{ scale: 1.05, rotate: 90 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleAddClick}
-              className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white shadow-xl shadow-emerald-500/40 flex items-center justify-center border-4 border-white dark:border-slate-900 transition-all duration-300"
+              className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white shadow-xl shadow-emerald-500/40 flex items-center justify-center border-4 border-white dark:border-slate-900 transition-all duration-300"
             >
-              <Plus size={28} strokeWidth={3} />
+              <Plus size={24} strokeWidth={3} />
             </motion.button>
           </div>
 
           {/* Right Items */}
-          <div className="flex items-center gap-1 flex-1 justify-around">
+          <div className="flex items-center gap-0.5 flex-1 justify-around">
             {mainNavItems.slice(2).map((item) => (
               <NavItem key={item.path} item={item} />
             ))}
@@ -71,7 +71,7 @@ const NavItem = ({ item }: { item: typeof mainNavItems[0] }) => {
       onClick={handleNavClick}
       className={({ isActive }) =>
         cn(
-          "relative flex flex-col items-center justify-center p-2 w-16 h-14 transition-all duration-300",
+          "relative flex flex-col items-center justify-center p-1.5 w-14 h-12 transition-all duration-300",
           isActive
             ? "text-emerald-600 dark:text-emerald-400"
             : "text-slate-400 hover:text-slate-800 dark:text-slate-500 dark:hover:text-slate-300"

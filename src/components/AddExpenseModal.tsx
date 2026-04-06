@@ -354,18 +354,18 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                       </label>
                       <div className="flex flex-wrap gap-2.5">
                         {['راتب', 'عمل حر', 'مكافأة', 'هدية', 'استثمار', 'أخرى'].map(src => (
-                          <button
-                            key={src}
-                            onClick={() => { hapticFeedback('light'); setSource(src); setCategoryId(''); setActiveView('main'); }}
-                            className={cn(
-                              "px-5 py-2.5 rounded-2xl text-sm font-bold transition-all active:scale-95 border-2",
-                              source === src 
-                                ? "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20" 
-                                : "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-500/30"
-                            )}
-                          >
-                            {src}
-                          </button>
+                      <button 
+                        key={src}
+                        onClick={() => { hapticFeedback('light'); setSource(src); setCategoryId(''); setActiveView('main'); }}
+                        className={cn(
+                          "px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 border-2",
+                          source === src 
+                            ? "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20" 
+                            : "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-500/30"
+                        )}
+                      >
+                        {src}
+                      </button>
                         ))}
                       </div>
                     </div>
@@ -378,12 +378,12 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                         value={source}
                         onChange={(e) => { setSource(e.target.value); setCategoryId(''); }}
                         placeholder="أدخل مصدر الدخل..."
-                        className="w-full px-4 py-3.5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm font-bold outline-none focus:border-emerald-500 transition-colors"
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-xs font-bold outline-none focus:border-emerald-500 transition-colors"
                       />
                       <button 
                         onClick={() => { hapticFeedback('light'); setActiveView('main'); }}
                         disabled={!source.trim()}
-                        className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-bold disabled:opacity-50 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                        className="w-full py-3 bg-emerald-500 text-white rounded-xl font-bold disabled:opacity-50 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all text-sm"
                       >
                         تأكيد المصدر
                       </button>

@@ -651,7 +651,7 @@ export default function Assistant() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 md:p-8 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border-t border-slate-100 dark:border-slate-800/50">
+        <div className="p-3 md:p-6 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border-t border-slate-100 dark:border-slate-800/50">
           <form 
             onSubmit={handleAsk}
             className="relative max-w-4xl mx-auto group"
@@ -662,7 +662,7 @@ export default function Assistant() {
                   <img 
                     src={selectedImage} 
                     alt="Preview" 
-                    className="h-32 w-auto rounded-xl object-contain"
+                    className="h-24 md:h-32 w-auto rounded-xl object-contain"
                     referrerPolicy="no-referrer"
                   />
                   <button
@@ -686,17 +686,17 @@ export default function Assistant() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading}
-              className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-2xl text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 flex items-center justify-center transition-all disabled:opacity-50"
+              className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 w-9 h-9 md:w-11 md:h-11 rounded-xl text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 flex items-center justify-center transition-all disabled:opacity-50"
               title="إرفاق صورة (فاتورة، إيصال...)"
             >
-              <ImagePlus size={20} className="md:size-24" />
+              <ImagePlus size={18} className="md:size-22" />
             </button>
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="اسأل عن أي شيء يخص ميزانيتك أو ارفع صورة فاتورة..."
-              className="w-full pl-16 pr-14 md:pl-20 md:pr-16 py-4 md:py-5 rounded-2xl bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-900 dark:text-white text-sm md:text-base outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-sm font-bold"
+              className="w-full pl-14 pr-12 md:pl-16 md:pr-14 py-3 md:py-4 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-900 dark:text-white text-xs md:text-sm outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-sm font-bold"
               disabled={isLoading}
             />
             <motion.button
@@ -704,12 +704,12 @@ export default function Assistant() {
               whileTap={{ scale: 0.95 }}
               type="submit"
               disabled={(!query.trim() && !selectedImage) || isLoading}
-              className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-primary-600 text-white flex items-center justify-center shadow-lg shadow-primary-500/30 disabled:opacity-50 disabled:shadow-none transition-all hover:bg-primary-700 active:scale-90"
+              className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 w-9 h-9 md:w-11 md:h-11 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-lg shadow-primary-500/30 disabled:opacity-50 disabled:shadow-none transition-all hover:bg-primary-700 active:scale-90"
             >
-              <Send size={20} className="md:size-24 rotate-180" />
+              <Send size={18} className="md:size-22 rotate-180" />
             </motion.button>
           </form>
-          <p className="text-center text-[9px] font-bold text-slate-400 mt-4 uppercase tracking-widest">
+          <p className="text-center text-[8px] font-bold text-slate-400 mt-3 uppercase tracking-widest">
             قد يخطئ الذكاء الاصطناعي أحياناً، يرجى مراجعة النصائح المالية الهامة.
           </p>
         </div>

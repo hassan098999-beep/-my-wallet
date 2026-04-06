@@ -355,42 +355,42 @@ const Analytics = () => {
       </div>
 
       {/* 1. Top Level Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
         <motion.div variants={itemVariants} className={cn(
-          "rounded-3xl p-6 md:p-8 text-white shadow-md relative overflow-hidden group",
+          "rounded-3xl p-4 md:p-6 text-white shadow-md relative overflow-hidden group",
           netBalance >= 0 ? "bg-slate-900 dark:bg-black border border-slate-800" : "bg-gradient-to-br from-rose-500 to-red-700"
         )}>
           {netBalance >= 0 && (
             <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 via-transparent to-transparent opacity-50" />
           )}
           <div className="absolute -right-10 -top-10 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
-          <div className="relative z-10 space-y-4 flex flex-col items-center justify-center text-center">
-            <div className="flex items-center gap-3 opacity-60">
-              <Target className="size-5" />
-              <span className="text-xs font-black uppercase tracking-widest">الصافي (التوفير المحتمل)</span>
+          <div className="relative z-10 space-y-3 flex flex-col items-center justify-center text-center">
+            <div className="flex items-center gap-2 opacity-60">
+              <Target className="size-4" />
+              <span className="text-[10px] font-black uppercase tracking-widest">الصافي (التوفير المحتمل)</span>
             </div>
-            <div className="text-4xl md:text-5xl font-black tracking-tighter">
+            <div className="text-3xl md:text-4xl font-black tracking-tighter">
               {formatCurrency(Math.abs(netBalance), currency)}
             </div>
-            <div className="flex items-center gap-2 text-[10px] font-black bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full uppercase tracking-widest">
-              <Activity className="size-3.5" />
+            <div className="flex items-center gap-2 text-[9px] font-black bg-white/10 backdrop-blur-md px-3 py-1 rounded-full uppercase tracking-widest">
+              <Activity className="size-3" />
               <span>{netBalance >= 0 ? 'فائض مالي ممتاز' : 'عجز مالي يحتاج انتباه'}</span>
             </div>
           </div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+        <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 rounded-3xl p-4 md:p-6 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
           <div className="absolute -right-10 -top-10 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
-          <div className="relative z-10 space-y-4 flex flex-col items-center justify-center text-center">
-            <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500">
-              <ArrowDownRight className="size-5 text-emerald-500" />
-              <span className="text-xs font-black uppercase tracking-widest">إجمالي الدخل</span>
+          <div className="relative z-10 space-y-3 flex flex-col items-center justify-center text-center">
+            <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+              <ArrowDownRight className="size-4 text-emerald-500" />
+              <span className="text-[10px] font-black uppercase tracking-widest">إجمالي الدخل</span>
             </div>
-            <div className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-white">
+            <div className="text-3xl md:text-4xl font-black tracking-tighter text-slate-900 dark:text-white">
               {formatCurrency(totalMonthlyIncome, currency)}
             </div>
-            <div className="flex items-center gap-2 text-[10px] font-black bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 px-4 py-1.5 rounded-full uppercase tracking-widest border border-emerald-100 dark:border-emerald-800/50">
-              <TrendingUp className="size-3.5" />
+            <div className="flex items-center gap-2 text-[9px] font-black bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full uppercase tracking-widest border border-emerald-100 dark:border-emerald-800/50">
+              <TrendingUp className="size-3" />
               <span>{filteredIncome.length} مصادر</span>
               {prevMonthIncome > 0 && (
                 <span className="mr-1 font-black">
