@@ -279,11 +279,6 @@ const Analytics = () => {
       initial="hidden"
       animate="visible"
       className="space-y-6 md:space-y-10 pb-20 relative"
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={0.2}
-      onDragEnd={handleDragEnd}
-      style={{ y }}
     >
       {/* Pull to refresh indicator */}
       <motion.div 

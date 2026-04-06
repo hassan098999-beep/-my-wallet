@@ -188,11 +188,6 @@ const Dashboard = () => {
       initial="hidden"
       animate="visible"
       className="space-y-8 pb-10 relative"
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={0.2}
-      onDragEnd={handleDragEnd}
-      style={{ y }}
     >
       {/* Pull to refresh indicator */}
       <motion.div 

@@ -321,11 +321,6 @@ const Transactions = () => {
     <div className="space-y-4 md:space-y-8 pb-[calc(1rem+env(safe-area-inset-bottom))] relative pt-[env(safe-area-inset-top)]">
       <motion.div
         className="space-y-4 md:space-y-8"
-        drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={0.2}
-        onDragEnd={handleDragEnd}
-        style={{ y }}
       >
         {/* Pull to refresh indicator */}
         <motion.div 

@@ -63,11 +63,6 @@ const Settings = () => {
       initial="hidden"
       animate="visible"
       className="max-w-6xl mx-auto pb-12 px-2 md:px-4 relative"
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={0.2}
-      onDragEnd={handleDragEnd}
-      style={{ y }}
     >
       {/* Pull to refresh indicator */}
       <motion.div 
