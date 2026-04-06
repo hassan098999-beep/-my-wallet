@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { formatCurrency, cn, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
@@ -10,7 +10,7 @@ import { DynamicIcon } from '../components/DynamicIcon';
 import { AIAdvisor } from '../components/AIAdvisor';
 import { BudgetAlerts } from '../components/BudgetAlerts';
 import { PaymentMethod, Expense, Category } from '../types';
-import { motion, Variants, AnimatePresence, useMotionValue, useTransform } from 'motion/react';
+import { motion, Variants, AnimatePresence, useMotionValue, useTransform, useAnimation } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { useBehavioralEngine } from '../hooks/useBehavioralEngine';
 
@@ -37,6 +37,30 @@ const Dashboard = () => {
     setInitialGoalId
   } = useAppContext();
   const { insights, rollingBudget } = useBehavioralEngine();
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const controls = useAnimation();
+  const y = useMotionValue(0);
+  const refreshOpacity = useTransform(y, [0, 100], [0, 1]);
+  const refreshRotate = useTransform(y, [0, 100], [0, 360]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    hapticFeedback('medium');
+    // Simulate data refresh
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsRefreshing(false);
+    controls.start({ y: 0 });
+    hapticFeedback('success');
+  };
+
+  const handleDragEnd = (e: any, info: any) => {
+    if (info.offset.y > 100) {
+      handleRefresh();
+    } else {
+      controls.start({ y: 0 });
+    }
+  };
 
   const handleEdit = (expense: Expense) => {
     setEditingExpense(expense);
@@ -164,7 +188,25 @@ const Dashboard = () => {
       initial="hidden"
       animate="visible"
       className="space-y-8 pb-10 relative"
+      drag="y"
+      dragConstraints={{ top: 0, bottom: 0 }}
+      dragElastic={0.2}
+      onDragEnd={handleDragEnd}
+      style={{ y }}
     >
+      {/* Pull to refresh indicator */}
+      <motion.div 
+        className="absolute top-0 left-0 right-0 flex justify-center items-center h-16 -mt-16 z-50"
+        style={{ opacity: refreshOpacity }}
+      >
+        <motion.div
+          style={{ rotate: refreshRotate }}
+          className="bg-white dark:bg-slate-800 rounded-full p-2 shadow-lg"
+        >
+          <RefreshCw size={24} className={cn("text-emerald-500", isRefreshing && "animate-spin")} />
+        </motion.div>
+      </motion.div>
+
       {/* Atmospheric Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         <motion.div 

@@ -1,14 +1,14 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { cn, formatCurrency, hapticFeedback } from '../utils';
 import { Skeleton, TransactionSkeleton, CardSkeleton } from '../components/Skeleton';
 import { format, parseISO, isBefore, isSameDay } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Search, Filter, Trash, DownloadCloud, ArrowDownUp, ArrowUp, ArrowDown, Calendar, FileText, ChartPie, CreditCard, Banknote, Building2, Pencil, X, CircleAlert, Wallet, Copy, RefreshCcw } from 'lucide-react';
+import { Search, Filter, Trash, DownloadCloud, ArrowDownUp, ArrowUp, ArrowDown, Calendar, FileText, ChartPie, CreditCard, Banknote, Building2, Pencil, X, CircleAlert, Wallet, Copy, RefreshCw, RefreshCcw } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
+import { motion, AnimatePresence, useScroll, useTransform, useAnimation, useMotionValue } from 'motion/react';
 import { CategorySelect } from '../components/CategorySelect';
 import { PaymentMethod } from '../types';
 
@@ -20,10 +20,28 @@ const Transactions = () => {
   const { width } = useWindowSize();
   const [displayLimit, setDisplayLimit] = useState(20);
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const controls = useAnimation();
+  const y = useMotionValue(0);
+  const refreshOpacity = useTransform(y, [0, 100], [0, 1]);
+  const refreshRotate = useTransform(y, [0, 100], [0, 360]);
+
   const handleRefresh = async () => {
+    setIsRefreshing(true);
     hapticFeedback('medium');
     // Simulate data refresh
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsRefreshing(false);
+    controls.start({ y: 0 });
+    hapticFeedback('success');
+  };
+
+  const handleDragEnd = (e: any, info: any) => {
+    if (info.offset.y > 100) {
+      handleRefresh();
+    } else {
+      controls.start({ y: 0 });
+    }
   };
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -303,7 +321,25 @@ const Transactions = () => {
     <div className="space-y-4 md:space-y-8 pb-[calc(1rem+env(safe-area-inset-bottom))] relative pt-[env(safe-area-inset-top)]">
       <motion.div
         className="space-y-4 md:space-y-8"
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={0.2}
+        onDragEnd={handleDragEnd}
+        style={{ y }}
       >
+        {/* Pull to refresh indicator */}
+        <motion.div 
+          className="absolute top-0 left-0 right-0 flex justify-center items-center h-16 -mt-16 z-50"
+          style={{ opacity: refreshOpacity }}
+        >
+          <motion.div
+            style={{ rotate: refreshRotate }}
+            className="bg-white dark:bg-slate-800 rounded-full p-2 shadow-lg"
+          >
+            <RefreshCw size={24} className={cn("text-emerald-500", isRefreshing && "animate-spin")} />
+          </motion.div>
+        </motion.div>
+
         {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 md:gap-8">
         <motion.div 

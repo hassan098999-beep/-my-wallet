@@ -4,7 +4,7 @@ import { useAppContext } from '../store/AppContext';
 import { PaymentMethod, Expense } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Check, ChevronLeft, Calendar, AlignLeft, Layers, Building2 } from 'lucide-react';
-import { formatCurrency, cn } from '../utils';
+import { formatCurrency, cn, hapticFeedback } from '../utils';
 import { DynamicIcon } from './DynamicIcon';
 import CalculatorKeypad from './CalculatorKeypad';
 
@@ -102,6 +102,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   };
 
   const handleSubmit = async () => {
+    hapticFeedback('medium');
     const finalAmount = evaluateExpression(expression);
     
     if (finalAmount <= 0) {
@@ -132,6 +133,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
 
         await transferAccount(accountId, toAccountId, finalAmount, date, note);
         toast.success('تم التحويل بنجاح');
+        hapticFeedback('success');
       } else if (type === 'expense') {
         if (!accountId || !categoryId) {
           toast.error('الرجاء استكمال البيانات');
@@ -152,9 +154,11 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
         if (editExpenseData) {
           await updateExpense(editExpenseData.id, expenseData);
           toast.success('تم تحديث المصروف بنجاح');
+          hapticFeedback('success');
         } else {
           await addExpense(expenseData);
           toast.success('تمت إضافة المصروف بنجاح');
+          hapticFeedback('success');
         }
       } else {
         if (!source.trim() && !categoryId) {
@@ -174,15 +178,18 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
         if (editExpenseData) {
           await updateIncome(editExpenseData.id, incomeData);
           toast.success('تم تحديث الدخل بنجاح');
+          hapticFeedback('success');
         } else {
           await addIncome(incomeData);
           toast.success('تمت إضافة الدخل بنجاح');
+          hapticFeedback('success');
         }
       }
       onClose();
     } catch (error) {
       console.error('Error saving:', error);
       toast.error('حدث خطأ أثناء الحفظ');
+      hapticFeedback('error');
     } finally {
       setLoading(false);
     }
@@ -207,7 +214,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
               <div className={cn("flex flex-col text-white transition-colors duration-300 flex-1 min-h-[45%] pt-[env(safe-area-inset-top)]", bgColor)}>
                 {/* Header */}
                 <div className="flex items-center justify-between p-4">
-                  <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                  <button onClick={() => { hapticFeedback('light'); onClose(); }} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                     <X size={24} />
                   </button>
                   <button onClick={handleSubmit} disabled={loading} className="p-2 hover:bg-white/10 rounded-full transition-colors">
@@ -218,19 +225,19 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                 {/* Tabs */}
                 <div className="flex w-full px-4 mb-6">
                   <button
-                    onClick={() => setType('income')}
+                    onClick={() => { hapticFeedback('light'); setType('income'); }}
                     className={cn("flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors rounded-r-lg", type === 'income' ? activeTabColor : "bg-black/10 hover:bg-black/20")}
                   >
                     دخل
                   </button>
                   <button
-                    onClick={() => setType('expense')}
+                    onClick={() => { hapticFeedback('light'); setType('expense'); }}
                     className={cn("flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors", type === 'expense' ? activeTabColor : "bg-black/10 hover:bg-black/20")}
                   >
                     مصروف
                   </button>
                   <button
-                    onClick={() => setType('transfer')}
+                    onClick={() => { hapticFeedback('light'); setType('transfer'); }}
                     className={cn("flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors rounded-l-lg", type === 'transfer' ? activeTabColor : "bg-black/10 hover:bg-black/20")}
                   >
                     تحويل
@@ -253,7 +260,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                 {/* Selectors */}
                 <div className="grid grid-cols-2 gap-px bg-black/10 mt-auto">
                   <button 
-                    onClick={() => setActiveView('account')}
+                    onClick={() => { hapticFeedback('light'); setActiveView('account'); }}
                     className="flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors"
                   >
                     <span className="text-[10px] uppercase tracking-widest opacity-70 mb-1">الحساب</span>
@@ -262,7 +269,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                   
                   {type === 'transfer' ? (
                     <button 
-                      onClick={() => setActiveView('toAccount')}
+                      onClick={() => { hapticFeedback('light'); setActiveView('toAccount'); }}
                       className="flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors"
                     >
                       <span className="text-[10px] uppercase tracking-widest opacity-70 mb-1">إلى حساب</span>
@@ -270,18 +277,18 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                     </button>
                   ) : (
                     <button 
-                      onClick={() => setActiveView('category')}
+                      onClick={() => { hapticFeedback('light'); setActiveView('category'); }}
                       className="flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors"
                     >
-                      <span className="text-[10px] uppercase tracking-widest opacity-70 mb-1">الفئة</span>
-                      <span className="text-sm font-bold truncate w-full text-center">{selectedCategory?.name || (type === 'income' && source ? source : 'اختر الفئة')}</span>
+                      <span className="text-[10px] uppercase tracking-widest opacity-70 mb-1">{type === 'income' ? 'المصدر' : 'الفئة'}</span>
+                      <span className="text-sm font-bold truncate w-full text-center">{type === 'income' ? (source || 'اختر المصدر') : (selectedCategory?.name || 'اختر الفئة')}</span>
                     </button>
                   )}
                 </div>
                 
                 {/* Details Bar */}
                 <button 
-                  onClick={() => setActiveView('details')}
+                  onClick={() => { hapticFeedback('light'); setActiveView('details'); }}
                   className="w-full py-3 bg-black/20 hover:bg-black/30 transition-colors text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
                 >
                   <Calendar size={14} />
@@ -307,50 +314,77 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
               className="absolute inset-0 bg-white dark:bg-slate-900 z-10 flex flex-col"
             >
               <div className={cn("flex items-center p-4 text-white shrink-0 pt-[env(safe-area-inset-top)]", bgColor)}>
-                <button onClick={() => setActiveView('main')} className="p-2 hover:bg-white/10 rounded-full transition-colors mr-2">
+                <button onClick={() => { hapticFeedback('light'); setActiveView('main'); }} className="p-2 hover:bg-white/10 rounded-full transition-colors mr-2">
                   <ChevronLeft size={24} />
                 </button>
-                <h2 className="text-lg font-bold">اختر الفئة</h2>
+                <h2 className="text-lg font-bold">{type === 'income' ? 'اختر المصدر' : 'اختر الفئة'}</h2>
               </div>
               <div className="flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-                {type === 'income' && (
-                  <div className="mb-6 space-y-3">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">مصدر الدخل (نص حر)</label>
-                    <input
-                      type="text"
-                      value={source}
-                      onChange={(e) => setSource(e.target.value)}
-                      placeholder="مثال: راتب، عمل حر..."
-                      className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm font-bold outline-none focus:border-emerald-500"
-                    />
-                    <button 
-                      onClick={() => setActiveView('main')}
-                      className="w-full py-3 bg-emerald-500 text-white rounded-xl font-bold"
-                    >
-                      تأكيد المصدر
-                    </button>
+                {type === 'income' ? (
+                  <div className="space-y-8">
+                    <div className="space-y-4">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                        <Layers size={16} /> مصادر شائعة
+                      </label>
+                      <div className="flex flex-wrap gap-2.5">
+                        {['راتب', 'عمل حر', 'مكافأة', 'هدية', 'استثمار', 'أخرى'].map(src => (
+                          <button
+                            key={src}
+                            onClick={() => { hapticFeedback('light'); setSource(src); setCategoryId(''); setActiveView('main'); }}
+                            className={cn(
+                              "px-5 py-2.5 rounded-2xl text-sm font-bold transition-all active:scale-95 border-2",
+                              source === src 
+                                ? "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20" 
+                                : "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-500/30"
+                            )}
+                          >
+                            {src}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                        <AlignLeft size={16} /> مصدر مخصص
+                      </label>
+                      <input
+                        type="text"
+                        value={source}
+                        onChange={(e) => { setSource(e.target.value); setCategoryId(''); }}
+                        placeholder="أدخل مصدر الدخل..."
+                        className="w-full px-4 py-3.5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm font-bold outline-none focus:border-emerald-500 transition-colors"
+                      />
+                      <button 
+                        onClick={() => { hapticFeedback('light'); setActiveView('main'); }}
+                        disabled={!source.trim()}
+                        className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-bold disabled:opacity-50 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                      >
+                        تأكيد المصدر
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-4 gap-4">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => { hapticFeedback('light'); setCategoryId(cat.id); setSubcategoryId(''); setActiveView('main'); }}
+                        className="flex flex-col items-center gap-2 group"
+                      >
+                        <div 
+                          className={cn(
+                            "w-14 h-14 rounded-2xl flex items-center justify-center text-white transition-all",
+                            categoryId === cat.id ? "ring-4 ring-offset-2 ring-opacity-50 scale-110" : "opacity-80 group-hover:opacity-100"
+                          )}
+                          style={{ backgroundColor: cat.color, '--tw-ring-color': cat.color } as any}
+                        >
+                          <DynamicIcon name={cat.icon || 'Circle'} size={24} />
+                        </div>
+                        <span className="text-[10px] font-bold text-center text-slate-700 dark:text-slate-300">{cat.name}</span>
+                      </button>
+                    ))}
                   </div>
                 )}
-                <div className="grid grid-cols-4 gap-4">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => { setCategoryId(cat.id); setSubcategoryId(''); setActiveView('main'); }}
-                      className="flex flex-col items-center gap-2 group"
-                    >
-                      <div 
-                        className={cn(
-                          "w-14 h-14 rounded-2xl flex items-center justify-center text-white transition-all",
-                          categoryId === cat.id ? "ring-4 ring-offset-2 ring-opacity-50 scale-110" : "opacity-80 group-hover:opacity-100"
-                        )}
-                        style={{ backgroundColor: cat.color, '--tw-ring-color': cat.color } as any}
-                      >
-                        <DynamicIcon name={cat.icon || 'Circle'} size={24} />
-                      </div>
-                      <span className="text-[10px] font-bold text-center text-slate-700 dark:text-slate-300">{cat.name}</span>
-                    </button>
-                  ))}
-                </div>
               </div>
             </motion.div>
           )}
@@ -362,7 +396,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
               className="absolute inset-0 bg-white dark:bg-slate-900 z-10 flex flex-col"
             >
               <div className={cn("flex items-center p-4 text-white shrink-0 pt-[env(safe-area-inset-top)]", bgColor)}>
-                <button onClick={() => setActiveView('main')} className="p-2 hover:bg-white/10 rounded-full transition-colors mr-2">
+                <button onClick={() => { hapticFeedback('light'); setActiveView('main'); }} className="p-2 hover:bg-white/10 rounded-full transition-colors mr-2">
                   <ChevronLeft size={24} />
                 </button>
                 <h2 className="text-lg font-bold">{activeView === 'account' ? 'اختر الحساب' : 'إلى حساب'}</h2>
@@ -372,6 +406,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                   <button
                     key={acc.id}
                     onClick={() => { 
+                      hapticFeedback('light');
                       if (activeView === 'account') setAccountId(acc.id);
                       else setToAccountId(acc.id);
                       setActiveView('main'); 
@@ -401,7 +436,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
               className="absolute inset-0 bg-white dark:bg-slate-900 z-10 flex flex-col"
             >
               <div className={cn("flex items-center p-4 text-white shrink-0 pt-[env(safe-area-inset-top)]", bgColor)}>
-                <button onClick={() => setActiveView('main')} className="p-2 hover:bg-white/10 rounded-full transition-colors mr-2">
+                <button onClick={() => { hapticFeedback('light'); setActiveView('main'); }} className="p-2 hover:bg-white/10 rounded-full transition-colors mr-2">
                   <ChevronLeft size={24} />
                 </button>
                 <h2 className="text-lg font-bold">التاريخ والملاحظات</h2>
@@ -430,7 +465,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                   />
                 </div>
                 <button 
-                  onClick={() => setActiveView('main')}
+                  onClick={() => { hapticFeedback('light'); setActiveView('main'); }}
                   className={cn("w-full py-4 rounded-xl font-bold text-white shadow-lg", bgColor)}
                 >
                   حفظ والعودة

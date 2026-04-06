@@ -4,7 +4,7 @@ import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Trash, Pencil, Copy, Calendar, Building2, ArrowDown, ArrowRightLeft, ChevronRight } from 'lucide-react';
 import { DynamicIcon } from './DynamicIcon';
-import { formatCurrency, cn } from '../utils';
+import { formatCurrency, cn, hapticFeedback } from '../utils';
 import { PaymentMethod, Category, Account } from '../types';
 
 interface TransactionItemProps {
@@ -47,6 +47,24 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
   const editX = useTransform(x, [0, 180], [-40, 0]);
   const deleteX = useTransform(x, [0, 180], [-20, 0]);
 
+  const handleDuplicate = () => {
+    hapticFeedback('medium');
+    onDuplicate(transaction);
+    x.set(0);
+  };
+
+  const handleEdit = () => {
+    hapticFeedback('medium');
+    onEdit(transaction);
+    x.set(0);
+  };
+
+  const handleDelete = () => {
+    hapticFeedback('heavy');
+    onDelete(transaction.id, transaction.type);
+    x.set(0);
+  };
+
   return (
     <motion.div 
       layout
@@ -61,7 +79,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
         {!isTransfer && isExpense && (
           <motion.button
             style={{ opacity, scale, x: repeatX }}
-            onClick={() => { onDuplicate(transaction); x.set(0); }}
+            onClick={handleDuplicate}
             className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 active:scale-95 transition-transform"
             title="تكرار"
           >
@@ -71,7 +89,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
         {!isTransfer && (
           <motion.button
             style={{ opacity, scale, x: editX }}
-            onClick={() => { onEdit(transaction); x.set(0); }}
+            onClick={handleEdit}
             className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-blue-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20 active:scale-95 transition-transform"
             title="تعديل"
           >
@@ -80,7 +98,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
         )}
         <motion.button
           style={{ opacity, scale, x: deleteX }}
-          onClick={() => { onDelete(transaction.id, transaction.type); x.set(0); }}
+          onClick={handleDelete}
           className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-md shadow-rose-500/20 active:scale-95 transition-transform"
           title="حذف"
         >
@@ -96,6 +114,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
         dragElastic={0.1}
         onDragEnd={(e, info) => {
           if (info.offset.x > 80) {
+            hapticFeedback('medium');
             x.set(180);
           } else {
             x.set(0);
@@ -176,7 +195,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
           <div className="hidden sm:flex items-center gap-3 md:gap-6">
             {!isTransfer && isExpense && (
               <button 
-                onClick={() => onDuplicate(transaction)}
+                onClick={() => { hapticFeedback('light'); onDuplicate(transaction); }}
                 className="p-3 md:p-4 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl md:rounded-3xl transition-all opacity-0 group-hover:opacity-100 shadow-sm"
                 title="تكرار"
               >
@@ -186,7 +205,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
 
             {!isTransfer && (
               <button 
-                onClick={() => onEdit(transaction)}
+                onClick={() => { hapticFeedback('light'); onEdit(transaction); }}
                 className="p-3 md:p-4 text-slate-300 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-2xl md:rounded-3xl transition-all opacity-0 group-hover:opacity-100 shadow-sm"
                 title="تعديل"
               >
@@ -195,7 +214,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
             )}
             
             <button 
-              onClick={() => onDelete(transaction.id, transaction.type)}
+              onClick={() => { hapticFeedback('medium'); onDelete(transaction.id, transaction.type); }}
               className="p-3 md:p-4 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl md:rounded-3xl transition-all opacity-0 group-hover:opacity-100 shadow-sm"
               title="حذف"
             >

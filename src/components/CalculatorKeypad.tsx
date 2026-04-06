@@ -1,6 +1,6 @@
 import React from 'react';
 import { Delete } from 'lucide-react';
-import { cn } from '../utils';
+import { cn, hapticFeedback } from '../utils';
 
 interface CalculatorKeypadProps {
   onPress: (key: string) => void;
@@ -15,6 +15,21 @@ const CalculatorKeypad: React.FC<CalculatorKeypadProps> = ({ onPress, onDelete, 
     ['1', '2', '3', '-'],
   ];
 
+  const handlePress = (key: string) => {
+    hapticFeedback('light');
+    onPress(key);
+  };
+
+  const handleDelete = () => {
+    hapticFeedback('light');
+    onDelete();
+  };
+
+  const handleCalculate = () => {
+    hapticFeedback('medium');
+    onCalculate();
+  };
+
   return (
     <div className="w-full bg-white dark:bg-slate-900 grid grid-cols-4 grid-rows-5 h-full">
       {/* Top 3 rows */}
@@ -24,7 +39,7 @@ const CalculatorKeypad: React.FC<CalculatorKeypadProps> = ({ onPress, onDelete, 
             <button
               key={key}
               type="button"
-              onClick={() => onPress(key)}
+              onClick={() => handlePress(key)}
               className={cn(
                 "flex items-center justify-center text-3xl font-light active:bg-slate-100 dark:active:bg-slate-800 transition-colors",
                 ['/', '*', '-', '+'].includes(key) ? "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300" : "text-slate-800 dark:text-slate-200"
@@ -37,15 +52,15 @@ const CalculatorKeypad: React.FC<CalculatorKeypadProps> = ({ onPress, onDelete, 
       ))}
       
       {/* 4th row: ., 0, delete, + */}
-      <button type="button" onClick={() => onPress('.')} className="flex items-center justify-center text-3xl font-light text-slate-800 dark:text-slate-200 active:bg-slate-100 dark:active:bg-slate-800 transition-colors">.</button>
-      <button type="button" onClick={() => onPress('0')} className="flex items-center justify-center text-3xl font-light text-slate-800 dark:text-slate-200 active:bg-slate-100 dark:active:bg-slate-800 transition-colors">0</button>
-      <button type="button" onClick={onDelete} className="flex items-center justify-center text-slate-500 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"><Delete size={28} strokeWidth={1.5} /></button>
-      <button type="button" onClick={() => onPress('+')} className="flex items-center justify-center text-3xl font-light bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-800 transition-colors">+</button>
+      <button type="button" onClick={() => handlePress('.')} className="flex items-center justify-center text-3xl font-light text-slate-800 dark:text-slate-200 active:bg-slate-100 dark:active:bg-slate-800 transition-colors">.</button>
+      <button type="button" onClick={() => handlePress('0')} className="flex items-center justify-center text-3xl font-light text-slate-800 dark:text-slate-200 active:bg-slate-100 dark:active:bg-slate-800 transition-colors">0</button>
+      <button type="button" onClick={handleDelete} className="flex items-center justify-center text-slate-500 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"><Delete size={28} strokeWidth={1.5} /></button>
+      <button type="button" onClick={() => handlePress('+')} className="flex items-center justify-center text-3xl font-light bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-800 transition-colors">+</button>
 
       {/* 5th row: = spans all 4 columns */}
       <button
         type="button"
-        onClick={onCalculate}
+        onClick={handleCalculate}
         className="col-span-4 flex items-center justify-center text-4xl font-light bg-emerald-500 text-white active:bg-emerald-600 transition-colors"
       >
         =
