@@ -1,0 +1,1 @@
+import{r as i}from"./index-DO79B3_W.js";function w(){const[n,t]=i.useState({width:typeof window<"u"?window.innerWidth:0,height:typeof window<"u"?window.innerHeight:0});return i.useEffect(()=>{function e(){t({width:window.innerWidth,height:window.innerHeight})}return window.addEventListener("resize",e),e(),()=>window.removeEventListener("resize",e)},[]),n}export{w as u};
