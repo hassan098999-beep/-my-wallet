@@ -443,6 +443,100 @@ const Analytics = () => {
         ))}
       </div>
 
+      {/* Budget vs Expenses Comparison */}
+      {budget && rangeType === 'monthly' && selectedMonth === budget.month && (
+        <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-3 bg-primary-500/10 rounded-2xl text-primary-600">
+              <Target size={24} />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">مقارنة الميزانية</h3>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">المصاريف الفعلية مقابل الميزانية المحددة</p>
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            {/* Overall Budget */}
+            <div>
+              <div className="flex justify-between items-end mb-3">
+                <div>
+                  <span className="text-sm font-black text-slate-900 dark:text-white">الميزانية الكلية</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-black text-slate-900 dark:text-white">{formatCurrency(totalMonthlyExpense, currency)}</span>
+                  <span className="text-xs font-bold text-slate-400 mx-1">/</span>
+                  <span className="text-sm font-bold text-slate-500">{formatCurrency(budget.amount, currency)}</span>
+                </div>
+              </div>
+              <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(100, (totalMonthlyExpense / budget.amount) * 100)}%` }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className={cn(
+                    "h-full rounded-full",
+                    totalMonthlyExpense > budget.amount ? "bg-rose-500" : 
+                    totalMonthlyExpense > budget.amount * 0.8 ? "bg-amber-500" : "bg-emerald-500"
+                  )}
+                />
+              </div>
+              {totalMonthlyExpense > budget.amount && (
+                <p className="text-xs font-bold text-rose-500 mt-2 flex items-center gap-1">
+                  <TriangleAlert size={12} />
+                  لقد تجاوزت الميزانية المحددة بمقدار {formatCurrency(totalMonthlyExpense - budget.amount, currency)}
+                </p>
+              )}
+            </div>
+
+            {/* Category Budgets */}
+            {budget.categoryBudgets && Object.keys(budget.categoryBudgets).length > 0 && (
+              <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
+                <h4 className="text-sm font-black text-slate-900 dark:text-white mb-6">تفصيل الميزانية حسب الفئة</h4>
+                <div className="space-y-5">
+                  {Object.entries(budget.categoryBudgets).map(([categoryId, amount]) => {
+                    const category = categories.find(c => c.id === categoryId);
+                    if (!category) return null;
+                    const spent = categoryData.find(d => d.id === categoryId)?.value || 0;
+                    const percentage = amount > 0 ? (spent / amount) * 100 : 0;
+                    
+                    return (
+                      <div key={categoryId}>
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: category.color }}>
+                              <DynamicIcon name={category.icon || 'Circle'} size={12} />
+                            </div>
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{category.name}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm font-black text-slate-900 dark:text-white">{formatCurrency(spent, currency)}</span>
+                            <span className="text-[10px] font-bold text-slate-400 mx-1">/</span>
+                            <span className="text-xs font-bold text-slate-500">{formatCurrency(amount, currency)}</span>
+                          </div>
+                        </div>
+                        <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min(100, percentage)}%` }}
+                            transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
+                            className={cn(
+                              "h-full rounded-full",
+                              percentage > 100 ? "bg-rose-500" : 
+                              percentage > 80 ? "bg-amber-500" : "bg-emerald-500"
+                            )}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
+
       {/* 3. Smart Tips / Behavioral Insights */}
       {insights.length > 0 && (
         <div className="space-y-6">

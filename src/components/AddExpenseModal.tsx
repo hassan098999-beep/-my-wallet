@@ -318,6 +318,40 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                   </div>
                 </div>
 
+                {/* Quick Note Input */}
+                <div className="px-6 pb-4">
+                  <div className="flex items-center bg-black/10 rounded-2xl px-4 py-3 focus-within:bg-black/20 transition-colors">
+                    <AlignLeft size={18} className="opacity-50 ml-3 shrink-0" />
+                    <input
+                      type="text"
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder="أضف ملاحظة (اختياري)..."
+                      className="bg-transparent border-none outline-none text-sm text-white placeholder:text-white/50 w-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Subcategories (if applicable) */}
+                {type === 'expense' && selectedCategory?.subcategories && selectedCategory.subcategories.length > 0 && (
+                  <div className="px-6 pb-4 flex gap-2 overflow-x-auto custom-scrollbar">
+                    {selectedCategory.subcategories.map(sub => (
+                      <button
+                        key={sub}
+                        onClick={() => { hapticFeedback('light'); setSubcategoryId(subcategoryId === sub ? '' : sub); }}
+                        className={cn(
+                          "px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors border border-transparent shrink-0",
+                          subcategoryId === sub 
+                            ? "bg-white text-rose-600 shadow-sm" 
+                            : "bg-black/10 text-white hover:bg-black/20"
+                        )}
+                      >
+                        {sub}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* Selectors */}
                 <div className="grid grid-cols-2 gap-px bg-black/10 mt-auto">
                   <button 
@@ -353,7 +387,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                   className="w-full py-3 bg-black/20 hover:bg-black/30 transition-colors text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
                 >
                   <Calendar size={14} />
-                  <span>التاريخ والملاحظات</span>
+                  <span>تغيير التاريخ</span>
                 </button>
               </div>
 
@@ -490,7 +524,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
             </motion.div>
           )}
 
-          {/* Details Modal (Date & Note) */}
+          {/* Details Modal (Date) */}
           {activeView === 'details' && (
             <motion.div 
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.2 }}
@@ -500,7 +534,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                 <button onClick={() => { hapticFeedback('light'); setActiveView('main'); }} className="p-2 hover:bg-white/10 rounded-full transition-colors mr-2">
                   <ChevronLeft size={24} />
                 </button>
-                <h2 className="text-lg font-bold">التاريخ والملاحظات</h2>
+                <h2 className="text-lg font-bold">تغيير التاريخ</h2>
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-6 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                 <div className="space-y-3">
@@ -512,17 +546,6 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm font-bold outline-none focus:border-indigo-500"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                    <AlignLeft size={16} /> ملاحظات
-                  </label>
-                  <textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="أضف ملاحظاتك هنا..."
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm font-bold outline-none focus:border-indigo-500 resize-none h-32"
                   />
                 </div>
                 <button 
