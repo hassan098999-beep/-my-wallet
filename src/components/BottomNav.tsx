@@ -83,32 +83,31 @@ const NavItem = ({ item }: { item: typeof mainNavItems[0] }) => {
           {isActive && (
             <motion.div
               layoutId="activeNavBg"
-              className="absolute inset-0 bg-gradient-to-b from-emerald-50/90 to-emerald-100/50 dark:from-emerald-500/15 dark:to-emerald-500/5 rounded-2xl -z-10 shadow-[0_4px_15px_-3px_rgba(16,185,129,0.15)] dark:shadow-[0_4px_15px_-3px_rgba(16,185,129,0.25)] border border-emerald-100/50 dark:border-emerald-500/20"
+              className="absolute inset-0 bg-emerald-50/90 dark:bg-emerald-500/15 rounded-2xl -z-10 border border-emerald-100/50 dark:border-emerald-500/20"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1,
+                boxShadow: "0 4px 20px -2px rgba(16, 185, 129, 0.4)"
+              }}
               transition={springConfig}
             />
           )}
           <motion.div
             initial={false}
-            animate={isActive ? { scale: 1.15, y: -3 } : { scale: 1, y: 0 }}
+            animate={isActive ? { scale: 1.15, y: -4 } : { scale: 1, y: 0 }}
             whileTap={{ scale: 0.9 }}
             transition={springConfig}
             className="flex flex-col items-center justify-center gap-1"
           >
             <div className={cn(
               "transition-all duration-300 relative flex items-center justify-center",
-              isActive ? "text-emerald-600 dark:text-emerald-400 drop-shadow-[0_2px_8px_rgba(16,185,129,0.4)]" : "text-slate-400 dark:text-slate-500"
+              isActive ? "text-emerald-600 dark:text-emerald-400 drop-shadow-[0_2px_8px_rgba(16,185,129,0.5)]" : "text-slate-400 dark:text-slate-500"
             )}>
               <item.icon size={isActive ? 24 : 22} strokeWidth={isActive ? 2.5 : 2} className="transition-all duration-300" />
-              {isActive && (
-                <motion.div 
-                  layoutId="activeIndicator"
-                  className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-emerald-500 dark:bg-emerald-400 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.8)]"
-                  transition={springConfig}
-                />
-              )}
             </div>
             <span className={cn(
-              "text-[9px] font-bold uppercase tracking-tight transition-all duration-300",
+              "text-[10px] font-bold uppercase tracking-tight transition-all duration-300",
               isActive ? "opacity-100 text-emerald-700 dark:text-emerald-300 mt-0.5" : "opacity-70"
             )}>
               {item.name}

@@ -1,13 +1,20 @@
 import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Download, X, Share, PlusSquare } from 'lucide-react';
 
 export default function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
-  const [showIOSPrompt, setShowIOSPrompt] = useState(false);
-
   const [isDismissed, setIsDismissed] = useState(false);
   const [inIframe, setInIframe] = useState(false);
+
+  const [installProgress, setInstallProgress] = useState(() => {
+    return sessionStorage.getItem('hasSeenInstallProgress') ? 100 : 0;
+  });
+  const [isReadyToInstall, setIsReadyToInstall] = useState(() => {
+    return !!sessionStorage.getItem('hasSeenInstallProgress');
+  });
 
   useEffect(() => {
     // Check if in iframe
@@ -22,12 +29,6 @@ export default function PwaInstallPrompt() {
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
     setIsIOS(isIOSDevice);
-
-    // If iOS and not standalone and NOT in iframe, show the manual instruction prompt after 3 seconds
-    if (isIOSDevice && !isAppStandalone && !isIframe) {
-      const timer = setTimeout(() => setShowIOSPrompt(true), 3000);
-      return () => clearTimeout(timer);
-    }
 
     // Handle Android/Chrome beforeinstallprompt
     const handleInstallPrompt = () => {
@@ -45,68 +46,123 @@ export default function PwaInstallPrompt() {
     };
   }, []);
 
-  if (isStandalone || isDismissed) return null;
+  // Progress simulation
+  useEffect(() => {
+    if (isStandalone || isDismissed || inIframe || isReadyToInstall) return;
+    
+    // Only start progress if we can actually install (have prompt or is iOS)
+    if (!deferredPrompt && !isIOS) return;
 
-  if (deferredPrompt) {
-    return (
-      <div className="fixed bottom-20 left-4 right-4 z-[100] md:left-auto md:right-4 md:w-80 animate-in slide-in-from-bottom-5 fade-in duration-500">
-        <div className="bg-emerald-500 text-white p-4 rounded-2xl shadow-xl flex items-center justify-between relative">
-          <button 
-            onClick={() => setIsDismissed(true)}
-            className="absolute -top-2 -right-2 bg-white text-emerald-600 rounded-full p-1 shadow-md hover:bg-gray-100"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-xl">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-black">تثبيت التطبيق</p>
-              <p className="text-[10px] opacity-80">ثبت التطبيق للوصول السريع</p>
-            </div>
-          </div>
-          <button 
-            onClick={async () => {
-              deferredPrompt.prompt();
-              const { outcome } = await deferredPrompt.userChoice;
-              if (outcome === 'accepted') {
-                setDeferredPrompt(null);
-                window.deferredPrompt = null;
-              }
-            }}
-            className="bg-white text-emerald-600 px-4 py-2 rounded-xl text-xs font-black hover:bg-emerald-50 shadow-sm transition-colors mr-2"
-          >
-            تثبيت
-          </button>
-        </div>
-      </div>
-    );
-  }
+    const interval = setInterval(() => {
+      setInstallProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsReadyToInstall(true);
+          sessionStorage.setItem('hasSeenInstallProgress', 'true');
+          return 100;
+        }
+        return prev + 2; // Fills in 5 seconds (50 * 100ms)
+      });
+    }, 100);
 
-  if (isIOS && showIOSPrompt) {
-    return (
-      <div className="fixed bottom-20 left-4 right-4 z-[100] md:left-auto md:right-4 md:w-80">
-        <div className="bg-gray-900 text-white p-4 rounded-2xl shadow-xl relative">
-          <button 
-            onClick={() => setShowIOSPrompt(false)}
-            className="absolute top-2 left-2 text-gray-400 hover:text-white"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-          </button>
-          <div className="flex flex-col gap-2 pt-2">
-            <p className="text-sm font-bold text-center">لتثبيت التطبيق على iPhone</p>
-            <div className="text-xs text-gray-300 text-center flex flex-col items-center gap-2">
-              <span>1. اضغط على زر المشاركة <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> في الأسفل</span>
-              <span>2. اختر "إضافة إلى الشاشة الرئيسية"</span>
+    return () => clearInterval(interval);
+  }, [isStandalone, isDismissed, inIframe, deferredPrompt, isIOS, isReadyToInstall]);
+
+  if (isStandalone || isDismissed || inIframe) return null;
+  if (!deferredPrompt && !isIOS) return null;
+
+  return (
+    <AnimatePresence>
+      {!isReadyToInstall ? (
+        <motion.div 
+          key="progress"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          className="fixed bottom-20 left-4 right-4 z-[100] md:left-auto md:right-4 md:w-80"
+        >
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl shadow-xl flex flex-col gap-3">
+            <div className="flex justify-between items-center">
+               <span className="text-xs font-bold text-slate-500 dark:text-slate-400">جاري تجهيز التطبيق للتثبيت...</span>
+               <span className="text-xs font-black text-primary-500">{installProgress}%</span>
+            </div>
+            <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary-500 transition-all duration-100 ease-linear rounded-full"
+                style={{ width: `${installProgress}%` }}
+              />
             </div>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
+        </motion.div>
+      ) : (
+        <motion.div 
+          key="prompt"
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          className="fixed bottom-20 left-4 right-4 z-[100] md:left-auto md:right-4 md:w-80"
+        >
+          {deferredPrompt ? (
+            <div className="bg-emerald-500 text-white p-4 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <button 
+                onClick={() => setIsDismissed(true)}
+                className="absolute -top-2 -right-2 bg-white text-emerald-600 rounded-full p-1 shadow-md hover:bg-gray-100 z-10"
+              >
+                <X size={14} strokeWidth={3} />
+              </button>
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="bg-white/20 p-2 rounded-xl">
+                  <Download size={24} />
+                </div>
+                <div>
+                  <p className="text-sm font-black">تثبيت التطبيق</p>
+                  <p className="text-[10px] opacity-90 font-medium">ثبت التطبيق للوصول السريع</p>
+                </div>
+              </div>
+              <button 
+                onClick={async () => {
+                  deferredPrompt.prompt();
+                  const { outcome } = await deferredPrompt.userChoice;
+                  if (outcome === 'accepted') {
+                    setDeferredPrompt(null);
+                    window.deferredPrompt = null;
+                  }
+                }}
+                className="relative z-10 bg-white text-emerald-600 px-4 py-2 rounded-xl text-xs font-black hover:bg-emerald-50 shadow-sm transition-colors mr-2 active:scale-95"
+              >
+                تثبيت
+              </button>
+            </div>
+          ) : isIOS ? (
+            <div className="bg-slate-900 text-white p-4 rounded-2xl shadow-xl relative border border-slate-800">
+              <button 
+                onClick={() => setIsDismissed(true)}
+                className="absolute top-3 left-3 text-slate-400 hover:text-white transition-colors"
+              >
+                <X size={16} />
+              </button>
+              <div className="flex flex-col gap-3 pt-1">
+                <div className="flex items-center gap-2">
+                  <div className="bg-white/10 p-1.5 rounded-lg">
+                    <Download size={16} className="text-primary-400" />
+                  </div>
+                  <p className="text-sm font-bold">تثبيت التطبيق على iPhone</p>
+                </div>
+                <div className="text-xs text-slate-300 flex flex-col gap-2.5 bg-white/5 p-3 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-black/30 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold">1</span>
+                    <span>اضغط على زر المشاركة <Share size={14} className="inline mx-1 text-blue-400" /> في الأسفل</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-black/30 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold">2</span>
+                    <span>اختر "إضافة إلى الشاشة الرئيسية" <PlusSquare size={14} className="inline mx-1 text-slate-400" /></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 }

@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { PaymentMethod, Expense } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Check, ChevronLeft, Calendar, AlignLeft, Layers, Building2, Camera, Loader2 } from 'lucide-react';
+import { X, Check, ChevronLeft, Calendar, Layers, Building2 } from 'lucide-react';
 import { formatCurrency, cn, hapticFeedback } from '../utils';
 import { DynamicIcon } from './DynamicIcon';
 import CalculatorKeypad from './CalculatorKeypad';
-import { scanReceipt } from '../services/geminiService';
+import { format, parseISO } from 'date-fns';
+import { ar } from 'date-fns/locale';
 
 interface AddExpenseModalProps {
   isOpen: boolean;
@@ -26,15 +27,12 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   const [accountId, setAccountId] = useState('');
   const [toAccountId, setToAccountId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [note, setNote] = useState('');
   const [source, setSource] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [loading, setLoading] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sub-modals state
-  const [activeView, setActiveView] = useState<'main' | 'category' | 'account' | 'toAccount' | 'details'>('main');
+  const [activeView, setActiveView] = useState<'main' | 'category' | 'account' | 'toAccount'>('main');
 
   const selectedCategory = categories.find(c => c.id === categoryId);
   const selectedAccount = accounts.find(a => a.id === accountId);
@@ -49,7 +47,6 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
         setSubcategoryId(editExpenseData.subcategoryId || '');
         setAccountId(editExpenseData.accountId || '');
         setDate(editExpenseData.date);
-        setNote(editExpenseData.note || '');
         setPaymentMethod(editExpenseData.paymentMethod || 'cash');
       } else {
         setType('expense');
@@ -59,46 +56,12 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
         setAccountId(accounts[0]?.id || '');
         setToAccountId(accounts.length > 1 ? accounts[1].id : '');
         setDate(new Date().toISOString().split('T')[0]);
-        setNote('');
         setSource('');
         setPaymentMethod('cash');
       }
       setActiveView('main');
     }
   }, [isOpen, categories, accounts, editExpenseData]);
-
-  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('حجم الصورة يجب أن يكون أقل من 5 ميجابايت');
-      return;
-    }
-
-    setIsScanning(true);
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      try {
-        const base64Data = (reader.result as string).split(',')[1];
-        const mimeType = file.type;
-        const result = await scanReceipt(base64Data, mimeType);
-        
-        if (result.amount) setExpression(result.amount.toString());
-        if (result.note) setNote(result.note);
-        if (result.date) setDate(result.date);
-        
-        toast.success('تم استخراج البيانات بنجاح');
-        hapticFeedback('success');
-      } catch (error) {
-        toast.error('فشل استخراج البيانات من الفاتورة');
-        hapticFeedback('error');
-      } finally {
-        setIsScanning(false);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
 
   const evaluateExpression = (expr: string): number => {
     try {
@@ -167,7 +130,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
           return;
         }
 
-        await transferAccount(accountId, toAccountId, finalAmount, date, note);
+        await transferAccount(accountId, toAccountId, finalAmount, date, '');
         toast.success('تم التحويل بنجاح');
         hapticFeedback('success');
       } else if (type === 'expense') {
@@ -183,7 +146,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
           subcategoryId: subcategoryId || undefined,
           accountId,
           date,
-          note,
+          note: '',
           paymentMethod,
         };
 
@@ -208,7 +171,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
           amount: finalAmount,
           accountId: accountId || undefined,
           date,
-          note,
+          note: '',
         };
 
         if (editExpenseData) {
@@ -254,28 +217,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                     <X size={24} />
                   </button>
                   
-                  {/* Scan Receipt Button */}
-                  <div className="flex-1 flex justify-center">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="hidden"
-                      ref={fileInputRef}
-                      onChange={handleReceiptUpload}
-                    />
-                    <button
-                      onClick={() => { hapticFeedback('light'); fileInputRef.current?.click(); }}
-                      disabled={isScanning}
-                      className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-sm font-bold transition-colors disabled:opacity-50"
-                    >
-                      {isScanning ? (
-                        <Loader2 size={18} className="animate-spin" />
-                      ) : (
-                        <Camera size={18} />
-                      )}
-                      <span>{isScanning ? 'جاري المسح...' : 'مسح فاتورة'}</span>
-                    </button>
+                  <div className="text-sm font-bold opacity-80">
+                    {type === 'expense' ? 'إضافة مصروف' : type === 'income' ? 'إضافة دخل' : 'تحويل رصيد'}
                   </div>
 
                   <button onClick={handleSubmit} disabled={loading} className="p-2 hover:bg-white/10 rounded-full transition-colors">
@@ -318,20 +261,6 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                   </div>
                 </div>
 
-                {/* Quick Note Input */}
-                <div className="px-6 pb-4">
-                  <div className="flex items-center bg-black/10 rounded-2xl px-4 py-3 focus-within:bg-black/20 transition-colors">
-                    <AlignLeft size={18} className="opacity-50 ml-3 shrink-0" />
-                    <input
-                      type="text"
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      placeholder="أضف ملاحظة (اختياري)..."
-                      className="bg-transparent border-none outline-none text-sm text-white placeholder:text-white/50 w-full"
-                    />
-                  </div>
-                </div>
-
                 {/* Subcategories (if applicable) */}
                 {type === 'expense' && selectedCategory?.subcategories && selectedCategory.subcategories.length > 0 && (
                   <div className="px-6 pb-4 flex gap-2 overflow-x-auto custom-scrollbar">
@@ -353,7 +282,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                 )}
 
                 {/* Selectors */}
-                <div className="grid grid-cols-2 gap-px bg-black/10 mt-auto">
+                <div className="grid grid-cols-3 gap-px bg-black/10 mt-auto">
                   <button 
                     onClick={() => { hapticFeedback('light'); setActiveView('account'); }}
                     className="flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors"
@@ -379,16 +308,18 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                       <span className="text-sm font-bold truncate w-full text-center">{type === 'income' ? (source || 'اختر المصدر') : (selectedCategory?.name || 'اختر الفئة')}</span>
                     </button>
                   )}
+
+                  <div className="relative flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors cursor-pointer overflow-hidden">
+                    <span className="text-[10px] uppercase tracking-widest opacity-70 mb-1">التاريخ</span>
+                    <span className="text-sm font-bold truncate w-full text-center">{format(parseISO(date), 'dd MMM', { locale: ar })}</span>
+                    <input 
+                      type="date" 
+                      value={date} 
+                      onChange={(e) => setDate(e.target.value)} 
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                  </div>
                 </div>
-                
-                {/* Details Bar */}
-                <button 
-                  onClick={() => { hapticFeedback('light'); setActiveView('details'); }}
-                  className="w-full py-3 bg-black/20 hover:bg-black/30 transition-colors text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
-                >
-                  <Calendar size={14} />
-                  <span>تغيير التاريخ</span>
-                </button>
               </div>
 
               {/* Keypad Section */}
