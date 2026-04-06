@@ -153,3 +153,90 @@ export const getFinancialForecast = async (
     throw error;
   }
 };
+
+export const chatWithFinancialAdvisor = async (
+  message: string,
+  history: { role: 'user' | 'model', parts: { text: string }[] }[],
+  contextData: any
+): Promise<string> => {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('Gemini API key is missing');
+  const ai = new GoogleGenAI({ apiKey });
+
+  const systemInstruction = `
+    أنت مساعد مالي شخصي ذكي وودود. مهمتك هي مساعدة المستخدم في إدارة أمواله والإجابة على أسئلته بناءً على بياناته المالية.
+    تحدث باللغة العربية بأسلوب احترافي ومبسط.
+    
+    البيانات المالية الحالية للمستخدم:
+    ${JSON.stringify(contextData)}
+    
+    أجب على سؤال المستخدم بدقة بناءً على هذه البيانات. إذا سأل عن شيء غير موجود في البيانات، أخبره بذلك بلطف.
+    قدم نصائح عملية عند الاقتضاء.
+  `;
+
+  try {
+    const chat = ai.chats.create({
+      model: "gemini-3-flash-preview",
+      config: {
+        systemInstruction,
+        temperature: 0.7,
+      }
+    });
+
+    // Send history first if any
+    for (const msg of history) {
+      await chat.sendMessage({ message: msg.parts[0].text });
+    }
+
+    const response = await chat.sendMessage({ message });
+    return response.text || "عذراً، لم أتمكن من معالجة طلبك.";
+  } catch (error) {
+    console.error("Chat error:", error);
+    throw error;
+  }
+};
+
+export const scanReceipt = async (
+  base64Image: string,
+  mimeType: string
+): Promise<{ amount: number, note: string, date: string }> => {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('Gemini API key is missing');
+  const ai = new GoogleGenAI({ apiKey });
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              data: base64Image,
+              mimeType: mimeType,
+            },
+          },
+          {
+            text: "استخرج المعلومات التالية من هذا الإيصال: المبلغ الإجمالي (amount)، ملاحظة قصيرة تصف المشتريات (note)، والتاريخ بصيغة YYYY-MM-DD (date).",
+          },
+        ],
+      },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            amount: { type: Type.NUMBER, description: "المبلغ الإجمالي في الإيصال" },
+            note: { type: Type.STRING, description: "وصف قصير للمشتريات أو اسم المتجر" },
+            date: { type: Type.STRING, description: "تاريخ الإيصال بصيغة YYYY-MM-DD" },
+          },
+          required: ["amount", "note", "date"]
+        }
+      }
+    });
+
+    return JSON.parse(response.text || "{}");
+  } catch (error) {
+    console.error("Receipt scan error:", error);
+    throw error;
+  }
+};

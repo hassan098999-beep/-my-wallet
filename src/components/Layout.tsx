@@ -1,10 +1,11 @@
 import React, { useEffect, Suspense } from 'react';
-import { useLocation, useOutlet, useNavigate } from 'react-router-dom';
+import { useLocation, useOutlet, useNavigate, Link } from 'react-router-dom';
 import BottomNav from './BottomNav';
 import Header from './Header';
 import AddExpenseModal from './AddExpenseModal';
 import { AnimatePresence, motion, Variants } from 'motion/react';
 import { useAppContext } from '../store/AppContext';
+import { Sparkles } from 'lucide-react';
 
 const Layout = () => {
   const location = useLocation();
@@ -13,7 +14,7 @@ const Layout = () => {
   const { isAddModalOpen, setIsAddModalOpen, editingExpense, setEditingExpense, initialGoalId, setInitialGoalId } = useAppContext();
 
   // Determine transition direction based on route index
-  const routeOrder = ['/', '/analytics', '/transactions', '/settings'];
+  const routeOrder = ['/', '/analytics', '/transactions', '/settings', '/assistant'];
   const [prevPath, setPrevPath] = React.useState(location.pathname);
   const [direction, setDirection] = React.useState(0);
   const [isNavigating, setIsNavigating] = React.useState(false);
@@ -110,6 +111,25 @@ const Layout = () => {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* Floating AI Assistant Button */}
+      {location.pathname !== '/assistant' && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-4 md:left-8 z-40"
+        >
+          <Link to="/assistant">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-14 h-14 rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 flex items-center justify-center border-2 border-white dark:border-slate-800"
+            >
+              <Sparkles size={24} />
+            </motion.button>
+          </Link>
+        </motion.div>
+      )}
 
       <BottomNav onAddClick={() => setIsAddModalOpen(true)} />
       <AddExpenseModal 

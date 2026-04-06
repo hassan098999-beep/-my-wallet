@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { PaymentMethod, Expense } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Check, ChevronLeft, Calendar, AlignLeft, Layers, Building2 } from 'lucide-react';
+import { X, Check, ChevronLeft, Calendar, AlignLeft, Layers, Building2, Camera, Loader2 } from 'lucide-react';
 import { formatCurrency, cn, hapticFeedback } from '../utils';
 import { DynamicIcon } from './DynamicIcon';
 import CalculatorKeypad from './CalculatorKeypad';
+import { scanReceipt } from '../services/geminiService';
 
 interface AddExpenseModalProps {
   isOpen: boolean;
@@ -29,6 +30,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   const [source, setSource] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [loading, setLoading] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sub-modals state
   const [activeView, setActiveView] = useState<'main' | 'category' | 'account' | 'toAccount' | 'details'>('main');
@@ -63,6 +66,39 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
       setActiveView('main');
     }
   }, [isOpen, categories, accounts, editExpenseData]);
+
+  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('حجم الصورة يجب أن يكون أقل من 5 ميجابايت');
+      return;
+    }
+
+    setIsScanning(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const base64Data = (reader.result as string).split(',')[1];
+        const mimeType = file.type;
+        const result = await scanReceipt(base64Data, mimeType);
+        
+        if (result.amount) setExpression(result.amount.toString());
+        if (result.note) setNote(result.note);
+        if (result.date) setDate(result.date);
+        
+        toast.success('تم استخراج البيانات بنجاح');
+        hapticFeedback('success');
+      } catch (error) {
+        toast.error('فشل استخراج البيانات من الفاتورة');
+        hapticFeedback('error');
+      } finally {
+        setIsScanning(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const evaluateExpression = (expr: string): number => {
     try {
@@ -217,6 +253,31 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                   <button onClick={() => { hapticFeedback('light'); onClose(); }} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                     <X size={24} />
                   </button>
+                  
+                  {/* Scan Receipt Button */}
+                  <div className="flex-1 flex justify-center">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      ref={fileInputRef}
+                      onChange={handleReceiptUpload}
+                    />
+                    <button
+                      onClick={() => { hapticFeedback('light'); fileInputRef.current?.click(); }}
+                      disabled={isScanning}
+                      className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-sm font-bold transition-colors disabled:opacity-50"
+                    >
+                      {isScanning ? (
+                        <Loader2 size={18} className="animate-spin" />
+                      ) : (
+                        <Camera size={18} />
+                      )}
+                      <span>{isScanning ? 'جاري المسح...' : 'مسح فاتورة'}</span>
+                    </button>
+                  </div>
+
                   <button onClick={handleSubmit} disabled={loading} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                     {loading ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={28} strokeWidth={3} />}
                   </button>

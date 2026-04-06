@@ -7,13 +7,14 @@ import { cn, hapticFeedback, getBudgetMonth } from '../utils';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export default function Assistant() {
   const { accounts, expenses, budget, currency, categories, addExpense, addIncome, deleteExpense, deleteIncome, setBudget, updateAccount, addGoal, goals, firstDayOfMonth, transferAccount, addCategory } = useAppContext();
   const [query, setQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string, image?: string}[]>([
-    { role: 'assistant', content: 'مرحباً! أنا مساعدك المالي الذكي. يمكنني تحليل مصاريفك، قراءة الفواتير، تقديم نصائح، أو حتى إضافة وحذف المصاريف والدخول وتعديل الميزانية نيابة عنك. كيف يمكنني مساعدتك اليوم؟' }
+  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string, image?: string, chart?: { type: string, title: string, data: any[] }}[]>([
+    { role: 'assistant', content: 'مرحباً! أنا مساعدك المالي الذكي. يمكنني تحليل مصاريفك، قراءة الفواتير، تقديم نصائح، إنشاء رسوم بيانية، أو حتى إضافة وحذف المصاريف والدخول وتعديل الميزانية نيابة عنك. كيف يمكنني مساعدتك اليوم؟' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
@@ -205,6 +206,31 @@ export default function Assistant() {
         }
       };
 
+      const generateChartDeclaration: FunctionDeclaration = {
+        name: 'generateChart',
+        description: 'إنشاء رسم بياني لعرض البيانات المالية للمستخدم (مثل: المصاريف حسب الفئة، الدخل مقابل المنصرف، تطور الرصيد، إلخ)',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            type: { type: Type.STRING, enum: ['pie', 'bar', 'line'], description: 'نوع الرسم البياني' },
+            title: { type: Type.STRING, description: 'عنوان الرسم البياني' },
+            data: {
+              type: Type.ARRAY,
+              description: 'بيانات الرسم البياني. يجب أن تحتوي على name و value.',
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING, description: 'الاسم أو التسمية (مثال: اسم الفئة، الشهر)' },
+                  value: { type: Type.NUMBER, description: 'القيمة الرقمية' }
+                },
+                required: ['name', 'value']
+              }
+            }
+          },
+          required: ['type', 'title', 'data']
+        }
+      };
+
       const context = `
         أنت مساعد مالي ذكي وخبير في إدارة الميزانية الشخصية.
         العملة: ${currency}
@@ -253,7 +279,7 @@ export default function Assistant() {
           ...chatHistoryRef.current
         ],
         config: {
-          tools: [{ functionDeclarations: [addExpenseDeclaration, addIncomeDeclaration, deleteExpenseDeclaration, setBudgetDeclaration, updateAccountDeclaration, addGoalDeclaration, transferAccountDeclaration, addCategoryDeclaration] }],
+          tools: [{ functionDeclarations: [addExpenseDeclaration, addIncomeDeclaration, deleteExpenseDeclaration, setBudgetDeclaration, updateAccountDeclaration, addGoalDeclaration, transferAccountDeclaration, addCategoryDeclaration, generateChartDeclaration] }],
           thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
         }
       });
@@ -263,6 +289,8 @@ export default function Assistant() {
       // Handle function calls
       if (response.functionCalls && response.functionCalls.length > 0) {
         hapticFeedback('success');
+        let chartData: any = undefined;
+        
         for (const call of response.functionCalls) {
           const args = call.args as any;
           if (call.name === 'addExpense') {
@@ -316,6 +344,13 @@ export default function Assistant() {
               icon: args.icon
             });
             responseText += '\n\n✅ تم إضافة الفئة بنجاح.';
+          } else if (call.name === 'generateChart') {
+            chartData = {
+              type: args.type,
+              title: args.title,
+              data: args.data
+            };
+            responseText += '\n\n✅ تم إنشاء الرسم البياني.';
           }
         }
         
@@ -323,12 +358,13 @@ export default function Assistant() {
         chatHistoryRef.current.push({ role: 'model', parts: [{ functionCall: response.functionCalls[0] }] });
         // Append function response to history
         chatHistoryRef.current.push({ role: 'user', parts: [{ functionResponse: { name: response.functionCalls[0].name, response: { success: true } } }] });
+        
+        setMessages(prev => [...prev, { role: 'assistant', content: responseText || 'تم تنفيذ العملية.', chart: chartData }]);
       } else {
         // Append normal text response to history
         chatHistoryRef.current.push({ role: 'model', parts: [{ text: responseText }] });
+        setMessages(prev => [...prev, { role: 'assistant', content: responseText || 'تم تنفيذ العملية.' }]);
       }
-
-      setMessages(prev => [...prev, { role: 'assistant', content: responseText || 'تم تنفيذ العملية.' }]);
     } catch (error: any) {
       console.error('Error calling Gemini:', error);
       let errorMessage = 'عذراً، حدث خطأ أثناء الاتصال بالمساعد الذكي. يرجى التأكد من صحة مفتاح API والمحاولة مرة أخرى.';
@@ -523,6 +559,40 @@ export default function Assistant() {
                     {msg.role === 'assistant' ? (
                       <div className="prose prose-sm dark:prose-invert max-w-none font-medium leading-relaxed">
                         <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        {msg.chart && (
+                          <div className="mt-6 w-full h-64 bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 shadow-inner border border-slate-200 dark:border-slate-700 overflow-hidden">
+                            <h4 className="text-sm font-bold text-center mb-4 text-slate-700 dark:text-slate-300">{msg.chart.title}</h4>
+                            <ResponsiveContainer width="100%" height="100%">
+                              {msg.chart.type === 'pie' ? (
+                                <PieChart>
+                                  <Pie data={msg.chart.data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} label>
+                                    {msg.chart.data.map((entry, index) => (
+                                      <Cell key={`cell-${index}`} fill={['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'][index % 5]} />
+                                    ))}
+                                  </Pie>
+                                  <Tooltip formatter={(value) => formatCurrency(value as number, currency)} />
+                                  <Legend />
+                                </PieChart>
+                              ) : msg.chart.type === 'bar' ? (
+                                <BarChart data={msg.chart.data}>
+                                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                                  <XAxis dataKey="name" tick={{fontSize: 12}} />
+                                  <YAxis tick={{fontSize: 12}} />
+                                  <Tooltip formatter={(value) => formatCurrency(value as number, currency)} />
+                                  <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                              ) : (
+                                <LineChart data={msg.chart.data}>
+                                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                                  <XAxis dataKey="name" tick={{fontSize: 12}} />
+                                  <YAxis tick={{fontSize: 12}} />
+                                  <Tooltip formatter={(value) => formatCurrency(value as number, currency)} />
+                                  <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={3} />
+                                </LineChart>
+                              )}
+                            </ResponsiveContainer>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="flex flex-col gap-3">

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, TrendingUp, CircleAlert, CircleCheckBig, ChevronRight, Loader2, RefreshCcw, Lightbulb } from 'lucide-react';
+import { Sparkles, TrendingUp, CircleAlert, CircleCheckBig, ChevronRight, Loader2, RefreshCcw, Lightbulb, MessageSquare } from 'lucide-react';
 import { useAppContext } from '../store/AppContext';
 import { getFinancialAdvice, getFinancialForecast } from '../services/geminiService';
 import { FinancialAdvice, FinancialForecast } from '../types';
 import { formatCurrency, cn } from '../utils';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { Link } from 'react-router-dom';
 
 import { isSameDay } from 'date-fns';
 
@@ -121,13 +122,23 @@ export const AIAdvisor: React.FC = () => {
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">تحليل مخصص لبياناتك المالية</p>
           </div>
         </div>
-        <button
-          onClick={() => fetchInsights(true)}
-          disabled={isLoading}
-          className="w-12 h-12 flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 rounded-2xl transition-all disabled:opacity-50 shadow-sm active:scale-90"
-        >
-          <RefreshCcw className={cn("size-6", isLoading ? 'animate-spin' : '')} />
-        </button>
+        <div className="flex items-center gap-2">
+          <Link to="/assistant">
+            <button
+              className="px-4 h-12 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl transition-all shadow-sm active:scale-95"
+            >
+              <MessageSquare size={18} />
+              <span className="hidden sm:inline">تحدث مع المستشار</span>
+            </button>
+          </Link>
+          <button
+            onClick={() => fetchInsights(true)}
+            disabled={isLoading}
+            className="w-12 h-12 flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 rounded-2xl transition-all disabled:opacity-50 shadow-sm active:scale-90"
+          >
+            <RefreshCcw className={cn("size-6", isLoading ? 'animate-spin' : '')} />
+          </button>
+        </div>
       </div>
 
       {warning && (
