@@ -59,8 +59,8 @@ export function formatCurrency(amount: number, currency: string = 'TND') {
     currencyFormatters[currency] = new Intl.NumberFormat('ar-TN', {
       style: 'currency',
       currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 3,
+      minimumFractionDigits: currency === 'TND' ? 3 : 0,
+      maximumFractionDigits: currency === 'TND' ? 3 : 2,
     });
   }
   

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Send, Bot, User, Sparkles, Loader2, Settings as SettingsIcon, Trash2, Lightbulb, ImagePlus, X } from 'lucide-react';
 import { GoogleGenAI, ThinkingLevel, Type, FunctionDeclaration } from '@google/genai';
 import { useAppContext } from '../store/AppContext';
-import { cn, hapticFeedback, getBudgetMonth, safeStorage } from '../utils';
+import { cn, hapticFeedback, getBudgetMonth, safeStorage, formatCurrency } from '../utils';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -232,8 +232,9 @@ export default function Assistant() {
       };
 
       const context = `
-        أنت مساعد مالي ذكي وخبير في إدارة الميزانية الشخصية.
-        العملة: ${currency}
+        أنت مساعد مالي ذكي وخبير في إدارة الميزانية الشخصية في تونس.
+        العملة: ${currency} (الدينار التونسي).
+        تذكر دائماً أن 1 دينار = 1000 مليم، لذا يجب عرض المبالغ بـ 3 أرقام بعد الفاصلة (مثلاً: 10.500 د.ت).
         تاريخ اليوم: ${new Date().toISOString().split('T')[0]}
         
         بيانات المستخدم الحالية:

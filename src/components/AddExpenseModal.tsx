@@ -32,7 +32,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   const [loading, setLoading] = useState(false);
 
   // Sub-modals state
-  const [activeView, setActiveView] = useState<'main' | 'category' | 'account' | 'toAccount'>('main');
+  const [activeView, setActiveView] = useState<'main' | 'category' | 'account' | 'toAccount' | 'details'>('main');
 
   const selectedCategory = categories.find(c => c.id === categoryId);
   const selectedAccount = accounts.find(a => a.id === accountId);

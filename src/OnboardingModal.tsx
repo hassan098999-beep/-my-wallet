@@ -79,43 +79,11 @@ const OnboardingModal: React.FC = () => {
                     <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">مرحباً بك في <span className="text-primary-500">مصاريفي</span></h2>
                     <p className="text-slate-500 dark:text-slate-400 font-bold">لنقم بإعداد تطبيقك في ثوانٍ معدودة لنبدأ رحلة تنظيم أموالك.</p>
                     
-                    <div className="space-y-3 mt-8">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">اختر عملتك</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        {[
-                          { code: 'TND', name: 'دينار تونسي', flag: '🇹🇳' },
-                          { code: 'SAR', name: 'ريال سعودي', flag: '🇸🇦' },
-                          { code: 'USD', name: 'دولار أمريكي', flag: '🇺🇸' },
-                          { code: 'EUR', name: 'يورو', flag: '🇪🇺' },
-                        ].map((curr) => (
-                          <motion.button
-                            key={curr.code}
-                            whileHover={{ scale: 1.02, y: -2 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => setSelectedCurrency(curr.code)}
-                            className={cn(
-                              "flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-right",
-                              selectedCurrency === curr.code
-                                ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
-                                : "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50"
-                            )}
-                          >
-                            <span className="text-2xl">{curr.flag}</span>
-                            <div className="flex-1 min-w-0">
-                              <p className={cn(
-                                "text-sm font-black truncate",
-                                selectedCurrency === curr.code ? "text-primary-600 dark:text-primary-400" : "text-slate-900 dark:text-white"
-                              )}>{curr.name}</p>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase">{curr.code}</p>
-                            </div>
-                            {selectedCurrency === curr.code && (
-                              <motion.div
-                                layoutId="activeCurrency"
-                                className="w-2 h-2 rounded-full bg-primary-500"
-                              />
-                            )}
-                          </motion.button>
-                        ))}
+                    <div className="space-y-3 mt-8 p-6 rounded-3xl bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500 flex items-center gap-4">
+                      <span className="text-4xl">🇹🇳</span>
+                      <div>
+                        <p className="text-lg font-black text-primary-600 dark:text-primary-400">الدينار التونسي</p>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">TND (المليم)</p>
                       </div>
                     </div>
                   </div>
