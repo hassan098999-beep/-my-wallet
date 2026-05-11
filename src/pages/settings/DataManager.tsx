@@ -1,16 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../../store/AppContext';
-import { DownloadCloud, UploadCloud, Smartphone, Trash, TriangleAlert, X } from 'lucide-react';
+import { DownloadCloud, UploadCloud, Smartphone, Trash, TriangleAlert, X, Save, Clock, Cloud, Database, WifiOff } from 'lucide-react';
 import { cn, hapticFeedback } from '../../utils';
 import { motion, AnimatePresence } from 'motion/react';
+import { getBackupsFromDB, saveBackupToDB, deleteBackupFromDB } from '../../utils/indexedDB';
+import { collection, doc, setDoc, deleteDoc, getDocs } from 'firebase/firestore';
+import { db } from '../../firebase';
+import { BackupRecord } from '../../types';
+import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
 
 const DataManager = () => {
-  const { exportData, importData, resetData } = useAppContext();
-  const [deferredPrompt, setDeferredPrompt] = React.useState<any>(window.deferredPrompt || null);
-  const [showResetConfirm, setShowResetConfirm] = React.useState(false);
+  const { 
+    exportData, importData, resetData, user,
+    expenses, recurringExpenses, categories, accounts, budget,
+    dailyBudget, rollingBudgetEnabled, theme, currency, achievements,
+    goals, income, notifications, hasCompletedOnboarding, userName,
+    firstDayOfMonth, bestStreak, offlineMode, toggleOfflineMode
+  } = useAppContext();
+  
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(window.deferredPrompt || null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [backups, setBackups] = useState<BackupRecord[]>([]);
+  const [isCreatingBackup, setIsCreatingBackup] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleInstallPrompt = () => {
       setDeferredPrompt(window.deferredPrompt);
     };
@@ -28,6 +43,87 @@ const DataManager = () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
+
+  const loadBackups = async () => {
+    try {
+      let localList = await getBackupsFromDB();
+      if (user) {
+        try {
+          const snap = await getDocs(collection(db, 'users', user.uid, 'backups'));
+          const cloudList = snap.docs.map(doc => doc.data() as BackupRecord);
+          const mergedMap = new Map();
+          localList.forEach(b => mergedMap.set(b.id, b));
+          cloudList.forEach(b => mergedMap.set(b.id, b));
+          localList = Array.from(mergedMap.values()).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
+        } catch(err) {
+          console.error("Failed to load cloud backups", err);
+        }
+      }
+      setBackups(localList);
+    } catch(err) {
+      console.error("Failed to load local backups", err);
+    }
+  };
+
+  useEffect(() => {
+    loadBackups();
+  }, [user]);
+
+  const handleCreateBackup = async () => {
+    setIsCreatingBackup(true);
+    hapticFeedback('medium');
+    const currentData = {
+      expenses, recurringExpenses, categories, accounts, budget,
+      dailyBudget, rollingBudgetEnabled, theme, currency, achievements,
+      goals, income, notifications, hasCompletedOnboarding, userName,
+      firstDayOfMonth, bestStreak
+    };
+    
+    const newBackup: BackupRecord = {
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      name: `نسخة ${format(new Date(), 'd MMMM yyyy HH:mm', { locale: ar })}`,
+      version: '1.0',
+      data: JSON.stringify(currentData),
+    };
+    
+    try {
+      await saveBackupToDB(newBackup);
+      if (user) {
+        await setDoc(doc(db, 'users', user.uid, 'backups', newBackup.id), newBackup);
+      }
+      toast.success('تم إنشاء نسخة احتياطية بنجاح');
+      loadBackups();
+    } catch(error) {
+      toast.error('حدث خطأ أثناء حفظ النسخة الاحتياطية');
+    } finally {
+      setIsCreatingBackup(false);
+    }
+  };
+
+  const handleRestoreBackup = (backup: BackupRecord) => {
+    hapticFeedback('medium');
+    if(window.confirm('هل أنت متأكد من استعادة هذه النسخة؟ سيتم استبدال البيانات الحالية.')) {
+      importData(backup.data);
+    }
+  };
+
+  const handleDeleteBackup = async (id: string) => {
+    hapticFeedback('light');
+    if(window.confirm('هل أنت متأكد من حذف هذه النسخة الاحتياطية نهائياً؟')) {
+      try {
+        await deleteBackupFromDB(id);
+        if (user) {
+          await deleteDoc(doc(db, 'users', user.uid, 'backups', id));
+        }
+        toast.success('تم حذف النسخة الاحتياطية');
+        loadBackups();
+      } catch(err) {
+        toast.error('حدث خطأ أثناء الحذف');
+      }
+    }
+  };
+
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
@@ -119,6 +215,63 @@ const DataManager = () => {
 
         <div className="mt-6 pt-6 md:mt-8 md:pt-8 border-t border-slate-100 dark:border-slate-800">
           <div className="flex justify-between items-center mb-4 md:mb-6">
+            <h3 className="text-[10px] md:text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+              <Database className="w-4 h-4 text-emerald-500" />
+              النسخ الاحتياطية
+            </h3>
+            <button 
+              onClick={handleCreateBackup}
+              disabled={isCreatingBackup}
+              className="px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] uppercase font-black tracking-widest rounded-xl transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+              <Save size={14} />
+              {isCreatingBackup ? 'جاري الحفظ...' : 'حفظ نسخة جديدة'}
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {backups.length === 0 ? (
+              <div className="text-center py-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-xs font-bold text-slate-400">لا توجد نسخ احتياطية محفوظة حالياً</p>
+              </div>
+            ) : (
+              backups.map(backup => (
+                <div key={backup.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl shadow-sm gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500">
+                      <Clock size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-900 dark:text-white">{backup.name}</h4>
+                      <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-bold">
+                        {user ? <Cloud size={10} className="text-indigo-400" /> : <Database size={10} className="text-slate-400" />}
+                        {format(new Date(backup.createdAt), 'dd MMM yyyy, HH:mm')} - {(new Blob([backup.data]).size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => handleRestoreBackup(backup)}
+                      className="px-4 py-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:bg-primary-200 dark:hover:bg-primary-900/50 flex-1 sm:flex-none text-center"
+                    >
+                      استعادة
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteBackup(backup.id)}
+                      className="p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-lg transition-all hover:bg-rose-100 dark:hover:bg-rose-900/40"
+                    >
+                      <Trash size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="mt-6 pt-6 md:mt-8 md:pt-8 border-t border-slate-100 dark:border-slate-800">
+
+          <div className="flex justify-between items-center mb-4 md:mb-6">
             <h3 className="text-[10px] md:text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">تثبيت التطبيق</h3>
             <button onClick={checkPwaStatus} className="text-[10px] text-slate-500 underline">فحص حالة التثبيت</button>
           </div>
@@ -156,6 +309,39 @@ const DataManager = () => {
           <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-bold leading-relaxed uppercase tracking-widest">
             يتم حفظ بياناتك محلياً في متصفحك. ننصح بأخذ نسخة احتياطية بشكل دوري لضمان عدم فقدان بياناتك.
           </p>
+        </div>
+
+        <div className="mt-6 pt-6 md:mt-8 md:pt-8 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                <WifiOff size={20} />
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">وضع عدم الاتصال</h3>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[200px]">
+                  إيقاف المزامنة السحابية والعمل محلياً بالكامل.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                hapticFeedback('medium');
+                toggleOfflineMode(!offlineMode);
+              }}
+              className={cn(
+                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2",
+                offlineMode ? "bg-primary-600" : "bg-slate-300 dark:bg-slate-700"
+              )}
+            >
+              <span
+                className={cn(
+                  "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                  offlineMode ? "translate-x-6" : "translate-x-1"
+                )}
+              />
+            </button>
+          </div>
         </div>
 
         <div className="mt-8 pt-8 border-t border-rose-100 dark:border-rose-900/30">

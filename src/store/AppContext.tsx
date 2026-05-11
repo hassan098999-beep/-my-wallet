@@ -19,7 +19,9 @@ import {
   writeBatch,
   query,
   where,
-  orderBy
+  orderBy,
+  disableNetwork,
+  enableNetwork
 } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 
@@ -55,6 +57,7 @@ const INITIAL_STATE: AppState = {
   userName: '',
   firstDayOfMonth: 1,
   bestStreak: 0,
+  offlineMode: false,
 };
 
 interface AppContextProps extends AppState {
@@ -68,6 +71,7 @@ interface AppContextProps extends AppState {
   setEditingExpense: (expense: Expense | null) => void;
   initialGoalId: string | null;
   setInitialGoalId: (id: string | null) => void;
+  toggleOfflineMode: (enabled: boolean) => void;
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => void;
   updateExpense: (id: string, expense: Partial<Expense>) => void;
   deleteExpense: (id: string) => void;
@@ -1398,6 +1402,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const toggleOfflineMode = async (enabled: boolean) => {
+    setState(prev => ({ ...prev, offlineMode: enabled }));
+    try {
+      if (enabled) {
+        await disableNetwork(db);
+        toast.success('تم تفعيل وضع عدم الاتصال');
+      } else {
+        await enableNetwork(db);
+        toast.success('تم تفعيل وضع الاتصال');
+      }
+    } catch (error) {
+      console.error('Failed to toggle network state', error);
+      toast.error('حدث خطأ أثناء تغيير حالة الاتصال');
+    }
+  };
+
   const setUserName = async (userName: string) => {
     if (user) {
       try {
@@ -1535,6 +1555,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setFirstDayOfMonth,
     updateAIInsights,
     resetData,
+    toggleOfflineMode,
   }), [
     state,
     user,

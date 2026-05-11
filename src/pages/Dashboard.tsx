@@ -9,8 +9,9 @@ import { Plus, CircleCheckBig, Wallet, CreditCard, Banknote, Building2, Trending
 import { DynamicIcon } from '../components/DynamicIcon';
 import { AIAdvisor } from '../components/AIAdvisor';
 import { BudgetAlerts } from '../components/BudgetAlerts';
+import { AnimatedNumber } from '../components/AnimatedNumber';
 import { PaymentMethod, Expense, Category } from '../types';
-import { motion, Variants, AnimatePresence, useMotionValue, useTransform, useAnimation } from 'motion/react';
+import { motion, Variants, AnimatePresence, useMotionValue, useTransform } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { useBehavioralEngine } from '../hooks/useBehavioralEngine';
 
@@ -37,30 +38,6 @@ const Dashboard = () => {
     setInitialGoalId
   } = useAppContext();
   const { insights, rollingBudget } = useBehavioralEngine();
-
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const controls = useAnimation();
-  const y = useMotionValue(0);
-  const refreshOpacity = useTransform(y, [0, 100], [0, 1]);
-  const refreshRotate = useTransform(y, [0, 100], [0, 360]);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    hapticFeedback('medium');
-    // Simulate data refresh
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsRefreshing(false);
-    controls.start({ y: 0 });
-    hapticFeedback('success');
-  };
-
-  const handleDragEnd = (e: any, info: any) => {
-    if (info.offset.y > 100) {
-      handleRefresh();
-    } else {
-      controls.start({ y: 0 });
-    }
-  };
 
   const handleEdit = (expense: Expense) => {
     setEditingExpense(expense);
@@ -184,300 +161,174 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6 md:space-y-8 pb-10 relative">
-      {/* Pull to refresh indicator */}
+    <div className="space-y-6 pb-10 relative mt-4">
+      {/* Greeting Header */}
       <motion.div 
-        className="absolute top-0 left-0 right-0 flex justify-center items-center h-16 -mt-16 z-50"
-        style={{ opacity: refreshOpacity }}
+        variants={itemVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex items-center justify-between px-2"
       >
-        <motion.div
-          style={{ rotate: refreshRotate }}
-          className="bg-white dark:bg-slate-800 rounded-full p-2 shadow-lg"
-        >
-          <RefreshCw size={24} className={cn("text-emerald-500", isRefreshing && "animate-spin")} />
-        </motion.div>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full border-2 border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+            <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix&backgroundColor=e2e8f0" alt="avatar" className="w-full h-full object-cover" />
+          </div>
+          <div>
+            <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none mb-1">
+              {format(new Date(), 'EEEE, d MMMM', { locale: ar })}
+            </p>
+            <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white leading-none">
+              مرحباً، {userName || 'صديقي'} 👋
+            </h1>
+          </div>
+        </div>
+        <Link to="/settings" className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors">
+          <Target size={20} />
+        </Link>
       </motion.div>
 
-      {/* Atmospheric Background Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-        <motion.div 
-          animate={{ 
-            x: [0, 50, 0],
-            y: [0, 30, 0],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-500/5 blur-[120px]"
-        />
-        <motion.div 
-          animate={{ 
-            x: [0, -40, 0],
-            y: [0, 60, 0],
-            scale: [1, 1.05, 1],
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-primary-500/5 blur-[100px]"
-        />
-      </div>
-
-      {/* Monthly Financial Summary */}
+      {/* Main Balance & Overview Card */}
       <motion.div 
         variants={containerVariants}
         initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6"
+        animate="visible"
+        className="relative overflow-hidden rounded-[2.5rem] bg-slate-950 dark:bg-slate-900 border border-slate-800 p-6 md:p-8 shadow-2xl flex flex-col gap-6"
       >
-        {/* Income Card */}
-        <motion.div variants={itemVariants} className="premium-card p-4 md:p-6 rounded-3xl relative overflow-hidden group flex flex-col justify-center">
-          <div className="absolute -right-6 -top-6 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-colors duration-500" />
-          <div className="relative z-10 flex items-center gap-4 md:gap-5">
-            <div className="w-12 h-12 md:w-14 md:h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 shadow-inner group-hover:scale-110 transition-transform duration-300">
-              <ArrowUp size={24} strokeWidth={2.5} />
-            </div>
-            <div>
-              <p className="text-[10px] md:text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">الدخل الشهري</p>
-              <h3 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tighter">
-                {formatCurrency(totalMonthlyIncome, currency)}
-              </h3>
-            </div>
-          </div>
-        </motion.div>
+        {/* Decorative Background */}
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-emerald-500/20 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-primary-500/10 rounded-full blur-[80px] pointer-events-none" />
 
-        {/* Expenses Card */}
-        <motion.div variants={itemVariants} className="premium-card p-4 md:p-6 rounded-3xl relative overflow-hidden group flex flex-col justify-center">
-          <div className="absolute -right-6 -top-6 w-32 h-32 bg-rose-500/10 rounded-full blur-3xl group-hover:bg-rose-500/20 transition-colors duration-500" />
-          <div className="relative z-10 flex items-center gap-4 md:gap-5">
-            <div className="w-12 h-12 md:w-14 md:h-14 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 shadow-inner group-hover:scale-110 transition-transform duration-300">
-              <ArrowDown size={24} strokeWidth={2.5} />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Wallet size={16} className="text-emerald-500" />
+              <span className="text-xs font-black text-slate-400 uppercase tracking-widest">إجمالي الرصيد المتاح</span>
             </div>
-            <div>
-              <p className="text-[10px] md:text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">المصاريف الشهرية</p>
-              <h3 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tighter">
-                {formatCurrency(totalMonthlyExpense, currency)}
-              </h3>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Net Balance Card */}
-        <motion.div variants={itemVariants} className="premium-card p-4 md:p-6 rounded-3xl relative overflow-hidden group flex flex-col justify-center">
-          <div className="absolute -right-6 -top-6 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-colors duration-500" />
-          <div className="relative z-10 flex items-center gap-4 md:gap-5">
-            <div className="w-12 h-12 md:w-14 md:h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 shadow-inner group-hover:scale-110 transition-transform duration-300">
-              <PiggyBank size={24} strokeWidth={2.5} />
-            </div>
-            <div>
-              <p className="text-[10px] md:text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">الصافي (المتبقي)</p>
-              <h3 className={cn(
-                "text-xl md:text-3xl font-black tracking-tighter",
-                (totalMonthlyIncome - totalMonthlyExpense) >= 0 ? "text-slate-900 dark:text-white" : "text-rose-500"
-              )}>
-                {formatCurrency(totalMonthlyIncome - totalMonthlyExpense, currency)}
-              </h3>
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-
-      {/* Financial Overview Dashboard */}
-      <motion.div 
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
-      >
-        
-        {/* Total Net Worth & Accounts (Takes 2 columns) */}
-        <motion.div variants={itemVariants} className="lg:col-span-2 relative overflow-hidden rounded-3xl bg-slate-950 dark:bg-slate-900 border border-slate-800 p-6 md:p-8 shadow-md flex flex-col justify-between">
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px]" />
-          
-          <div className="relative z-10 mb-8">
-            <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] opacity-80">إجمالي الرصيد</span>
-            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter mt-2">
-              {formatCurrency(totalNetWorth, currency)}
+            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-xl">
+              <AnimatedNumber value={totalNetWorth} currency={currency} />
             </h2>
           </div>
-
-          <div className="relative z-10 flex gap-4 overflow-x-auto pb-4 snap-x custom-scrollbar">
-            {accounts.map((acc, idx) => (
-              <motion.div 
-                key={acc.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + idx * 0.1 }}
-                whileHover={{ y: -5, scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="snap-start shrink-0 w-44 p-5 rounded-2xl bg-white/5 dark:bg-white/10 border border-white/10 backdrop-blur-md flex flex-col gap-4 shadow-xl cursor-pointer group/acc"
-              >
-                <div className="flex items-center gap-3">
-                  <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg transition-transform group-hover/acc:rotate-12"
-                    style={{ backgroundColor: acc.color }}
-                  >
-                    <DynamicIcon name={acc.icon || 'Wallet'} size={20} />
-                  </div>
-                  <span className="text-xs font-black text-slate-300 truncate uppercase tracking-widest">{acc.name}</span>
-                </div>
-                <div>
-                  <p className="text-xl font-black text-white tracking-tighter">
-                    {formatCurrency(acc.balance, currency)}
-                  </p>
-                </div>
-                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover/acc:opacity-100 transition-opacity" />
-              </motion.div>
-            ))}
+          
+          {/* Quick Stats Grid inside Hero */}
+          <div className="grid grid-cols-2 gap-4 rtl:md:border-r border-slate-800 md:pr-6">
+            <div>
+              <div className="flex items-center gap-1.5 mb-1 text-emerald-500">
+                <ArrowDown size={14} />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">الدخل (الشهر)</span>
+              </div>
+              <p className="text-lg font-black text-white tracking-tight">{formatCurrency(totalMonthlyIncome, currency)}</p>
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 mb-1 text-rose-500">
+                <ArrowUp size={14} />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">المصاريف (الشهر)</span>
+              </div>
+              <p className="text-lg font-black text-white tracking-tight">{formatCurrency(totalMonthlyExpense, currency)}</p>
+            </div>
           </div>
-        </motion.div>
+        </div>
+
+        {/* Quick Actions inside the hero card */}
+        <div className="relative z-10 grid grid-cols-4 gap-2 md:gap-4 pt-6 border-t border-white/10">
+          {[
+            { icon: Plus, label: 'إضافة', color: 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white', action: () => setIsAddModalOpen(true) },
+            { icon: ArrowRightLeft, label: 'تحويل', color: 'bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500 hover:text-white', action: () => { setEditingExpense({ isTransfer: true } as any); setIsAddModalOpen(true); } },
+            { icon: Target, label: 'أهداف', color: 'bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white', link: '/goals' },
+            { icon: Sparkles, label: 'الذكاء', color: 'bg-purple-500/10 text-purple-500 hover:bg-purple-500 hover:text-white', link: '/assistant' },
+          ].map((item, idx) => (
+            <motion.div key={idx} whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }}>
+              {item.link ? (
+                <Link to={item.link} className={cn("w-full py-3 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all duration-300", item.color)}>
+                  <item.icon size={20} />
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">{item.label}</span>
+                </Link>
+              ) : (
+                <button onClick={item.action} className={cn("w-full py-3 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all duration-300", item.color)}>
+                  <item.icon size={20} />
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">{item.label}</span>
+                </button>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
 
         {/* Daily Budget & Spending (Takes 1 column) */}
         <motion.div 
           variants={itemVariants}
           whileHover={{ y: -5 }}
-          className="relative overflow-hidden rounded-3xl bg-slate-950 dark:bg-slate-900 border border-slate-800 p-6 md:p-8 shadow-2xl flex flex-col justify-between group"
+          className="relative overflow-hidden rounded-[2.5rem] bg-slate-950 dark:bg-slate-900 border border-slate-800 p-6 md:p-10 shadow-2xl flex flex-col justify-between group"
         >
           <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] group-hover:bg-indigo-500/20 transition-colors duration-700" />
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-48 h-48 bg-emerald-500/5 rounded-full blur-[60px] group-hover:bg-emerald-500/10 transition-colors duration-700" />
           
-          <div className="relative z-10 mb-8 flex flex-col items-start gap-4">
+          <div className="relative z-10 mb-10 flex flex-col items-start gap-6">
             <div className="w-full flex justify-between items-start">
               <div>
-                <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] opacity-80">إنفاق اليوم</span>
+                <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] opacity-80">إنفاق اليوم</span>
                 <h2 className={cn(
-                  "text-4xl md:text-5xl font-black tracking-tighter mt-2 transition-all duration-500",
-                  budgetStatus === 'red' ? "text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.3)]" : budgetStatus === 'orange' ? "text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]" : "text-emerald-500 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                  "text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter mt-2 transition-all duration-700",
+                  budgetStatus === 'red' ? "text-rose-500 drop-shadow-[0_0_20px_rgba(244,63,94,0.4)]" : budgetStatus === 'orange' ? "text-amber-500 drop-shadow-[0_0_20px_rgba(245,158,11,0.4)]" : "text-emerald-500 drop-shadow-[0_0_20px_rgba(16,185,129,0.4)]"
                 )}>
-                  {formatCurrency(todaySpending, currency)}
+                  <AnimatedNumber value={todaySpending} currency={currency} />
                 </h2>
               </div>
-              <div className="p-3 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
-                <Zap size={20} className={cn(
+              <motion.div 
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="p-4 bg-white/5 rounded-[1.5rem] border border-white/10 backdrop-blur-md"
+              >
+                <Zap size={24} className={cn(
                   "transition-colors",
                   budgetStatus === 'red' ? "text-rose-500" : "text-emerald-500"
                 )} />
-              </div>
+              </motion.div>
             </div>
-            <div className="text-right w-full">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">الميزانية اليومية</span>
-              <p className="text-xl font-black text-white mt-1 tracking-tight">{formatCurrency(dailyBudget, currency)}</p>
+            <div className="w-full bg-white/5 p-4 rounded-2xl border border-white/5">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">الميزانية اليومية المحددة</span>
+              <p className="text-2xl font-black text-white mt-1 tracking-tight">{formatCurrency(dailyBudget, currency)}</p>
             </div>
           </div>
 
-          <div className="relative z-10 w-full space-y-5">
+          <div className="relative z-10 w-full space-y-6">
             <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-slate-400">
               <span className="flex items-center gap-2">
-                <Clock size={12} /> المتبقي لليوم
+                <Clock size={14} className="text-primary-500" /> المتبقي لليوم
               </span>
               <span className={cn(
-                "font-black text-sm",
+                "font-black text-lg",
                 budgetStatus === 'red' ? "text-rose-500" : "text-emerald-500"
-              )}>{formatCurrency(remainingDailyBudget, currency)}</span>
+              )}><AnimatedNumber value={remainingDailyBudget} currency={currency} /></span>
             </div>
-            <div className="h-5 w-full bg-slate-800/50 rounded-full overflow-hidden border border-slate-700/30 p-1 relative">
+            <div className="h-6 w-full bg-slate-800/50 rounded-full overflow-hidden border border-slate-700/30 p-1.5 relative shadow-inner">
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min(100, (todaySpending / rollingBudget) * 100)}%` }}
-                transition={{ duration: 1, ease: "circOut" }}
+                transition={{ duration: 1.5, ease: "circOut" }}
                 className={cn(
-                  "h-full rounded-full transition-all duration-500 relative overflow-hidden",
-                  budgetStatus === 'red' ? "bg-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.5)]" : budgetStatus === 'orange' ? "bg-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.5)]" : "bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]"
+                  "h-full rounded-full transition-all duration-700 relative overflow-hidden",
+                  budgetStatus === 'red' ? "bg-gradient-to-r from-rose-600 to-rose-400 shadow-[0_0_25px_rgba(244,63,94,0.6)]" : budgetStatus === 'orange' ? "bg-gradient-to-r from-amber-600 to-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.6)]" : "bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.6)]"
                 )}
               >
                 <motion.div 
                   animate={{ x: ['-100%', '100%'] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
                 />
               </motion.div>
             </div>
             
             {rollingBudgetEnabled && (
-              <div className="flex justify-between items-center pt-4 border-t border-slate-800/50 mt-4">
-                <span className="text-[10px] font-black text-emerald-500/70 uppercase tracking-widest">المتوفر فعلياً (تراكمي)</span>
-                <span className="text-base font-black text-emerald-400 tracking-tight">{formatCurrency(rollingBudget, currency)}</span>
+              <div className="flex justify-between items-center pt-5 border-t border-white/5 mt-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="text-[10px] font-black text-emerald-500/80 uppercase tracking-widest">المتوفر فعلياً (تراكمي)</span>
+                </div>
+                <span className="text-xl font-black text-emerald-400 tracking-tight">{formatCurrency(rollingBudget, currency)}</span>
               </div>
             )}
           </div>
         </motion.div>
-      </motion.div>
-
-      {/* Bento Grid Stats */}
-      <motion.div 
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-      >
-        {/* Target Budget Card */}
-        <motion.div variants={itemVariants} className="premium-card p-5 flex flex-col justify-between min-h-[130px] relative overflow-hidden group">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-colors" />
-          <div className="relative z-10 flex items-center justify-between mb-2">
-            <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600 shadow-inner">
-              <Target size={20} />
-            </div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-lg">الهدف</span>
-          </div>
-          <div className="relative z-10 space-y-1">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">الميزانية المستهدفة</p>
-            <h4 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tighter">
-              {formatCurrency(dailyBudget, currency)}
-            </h4>
-          </div>
-        </motion.div>
-
-        {/* Daily Average Card */}
-        <motion.div variants={itemVariants} className="premium-card p-5 flex flex-col justify-between min-h-[130px] relative overflow-hidden group">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-colors" />
-          <div className="relative z-10 flex items-center justify-between mb-2">
-            <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-600 shadow-inner">
-              <Activity size={20} />
-            </div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-lg">معدل</span>
-          </div>
-          <div className="relative z-10 space-y-1">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">معدل الإنفاق اليومي</p>
-            <h4 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tighter">
-              {formatCurrency(dailyAverage, currency)}
-            </h4>
-          </div>
-        </motion.div>
-
-        {/* Weekly Total Card */}
-        <motion.div variants={itemVariants} className="premium-card p-5 flex flex-col justify-between min-h-[130px] relative overflow-hidden group">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-colors" />
-          <div className="relative z-10 flex items-center justify-between mb-2">
-            <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-600 shadow-inner">
-              <TrendingUp size={20} />
-            </div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-lg">أسبوعي</span>
-          </div>
-          <div className="relative z-10 space-y-1">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">إجمالي الأسبوع</p>
-            <h4 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tighter">
-              {formatCurrency(weeklyTotal, currency)}
-            </h4>
-          </div>
-        </motion.div>
-
-        {/* No-Spend Streak Card */}
-        <motion.div variants={itemVariants} className="premium-card p-5 flex flex-col justify-between min-h-[130px] relative overflow-hidden group">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-colors" />
-          <div className="relative z-10 flex items-center justify-between mb-2">
-            <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-600 shadow-inner">
-              <Flame size={20} />
-            </div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-lg">إنجاز</span>
-          </div>
-          <div className="relative z-10 space-y-1">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">سلسلة توفير</p>
-            <h4 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tighter">
-              {bestStreak} أيام
-            </h4>
-          </div>
-        </motion.div>
-      </motion.div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -602,7 +453,7 @@ const Dashboard = () => {
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ delay: idx * 0.05 }}
                     >
-                      <SwipeableTransactionItem 
+                      <MemoizedSwipeableTransactionItem 
                         expense={expense} 
                         category={categories.find(c => c.id === expense.categoryId)}
                         currency={currency}
@@ -648,16 +499,19 @@ const Dashboard = () => {
           className="space-y-6"
         >
           <motion.div variants={itemVariants} className="flex justify-between items-center px-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600">
-                <TrendingUp size={20} />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 shadow-inner">
+                <TrendingUp size={24} />
               </div>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">أهداف الادخار</h3>
+              <div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">أهداف الادخار</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">خطط لمستقبلك المالي</p>
+              </div>
             </div>
-            <Link to="/goals" className="text-[11px] font-black text-emerald-600 hover:text-emerald-700 transition-colors bg-emerald-50 dark:bg-emerald-900/20 px-4 py-2 rounded-xl uppercase tracking-widest">إدارة الأهداف</Link>
+            <Link to="/goals" className="text-[10px] font-black text-emerald-600 hover:text-emerald-700 transition-all bg-emerald-50 dark:bg-emerald-900/20 px-4 py-2 rounded-xl uppercase tracking-widest border border-emerald-100 dark:border-emerald-800/50 hover:scale-105 active:scale-95">إدارة الأهداف</Link>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {goals.slice(0, 3).map(goal => {
               const percentage = goal.targetAmount > 0 ? Math.min(100, (goal.currentAmount / goal.targetAmount) * 100) : 0;
               const isCompleted = percentage >= 100;
@@ -666,7 +520,7 @@ const Dashboard = () => {
                   key={goal.id} 
                   variants={itemVariants}
                   whileHover={{ y: -8, scale: 1.02 }}
-                  className="premium-card p-8 group transition-all duration-500 relative overflow-hidden"
+                  className="premium-card p-6 md:p-8 group transition-all duration-500 relative overflow-hidden border-slate-100 dark:border-slate-800/50"
                 >
                   {isCompleted && (
                     <div className="absolute top-0 right-0 p-4">
@@ -683,8 +537,8 @@ const Dashboard = () => {
                     <div className="space-y-2">
                       <h4 className="text-xl font-black text-slate-900 dark:text-white truncate max-w-[180px] tracking-tight">{goal.name}</h4>
                       <div className="flex items-center gap-2 text-slate-400">
-                        <CalendarClock size={14} />
-                        <p className="text-[10px] font-bold uppercase tracking-widest">{goal.deadline}</p>
+                        <CalendarClock size={14} className="text-primary-500" />
+                        <p className="text-[9px] font-black uppercase tracking-widest">{goal.deadline}</p>
                       </div>
                     </div>
                     <div className="flex flex-col items-end">
@@ -697,7 +551,7 @@ const Dashboard = () => {
                   </div>
                   
                   <div className="space-y-6">
-                    <div className="w-full bg-slate-100 dark:bg-slate-800/50 h-5 rounded-full overflow-hidden p-1.5 shadow-inner border border-slate-200/5 dark:border-slate-700/5 relative">
+                    <div className="w-full bg-slate-100 dark:bg-slate-800/50 h-5 rounded-full overflow-hidden p-1 shadow-inner border border-slate-200/5 dark:border-slate-700/5 relative">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${percentage}%` }}
@@ -730,10 +584,10 @@ const Dashboard = () => {
                         setIsAddModalOpen(true);
                       }}
                       className={cn(
-                        "w-full py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm",
+                        "w-full py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border",
                         isCompleted 
-                          ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20" 
-                          : "bg-primary-500/10 text-primary-600 hover:bg-primary-500/20"
+                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-200/50 hover:bg-emerald-500/20" 
+                          : "bg-primary-500/10 text-primary-600 border-primary-200/50 hover:bg-primary-500/20"
                       )}
                     >
                       إضافة مساهمة
@@ -866,5 +720,18 @@ const SwipeableTransactionItem: React.FC<SwipeableTransactionItemProps> = ({
     </div>
   );
 };
+
+const MemoizedSwipeableTransactionItem = React.memo(SwipeableTransactionItem, (prevProps, nextProps) => {
+  return (
+    prevProps.expense.id === nextProps.expense.id &&
+    prevProps.expense.amount === nextProps.expense.amount &&
+    prevProps.expense.date === nextProps.expense.date &&
+    prevProps.expense.categoryId === nextProps.expense.categoryId &&
+    prevProps.expense.note === nextProps.expense.note &&
+    prevProps.currency === nextProps.currency &&
+    prevProps.accountName === nextProps.accountName &&
+    prevProps.category?.id === nextProps.category?.id
+  );
+});
 
 export default Dashboard;

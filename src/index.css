@@ -50,6 +50,7 @@
   html {
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
   body {
     font-family: var(--font-tajawal);
@@ -57,6 +58,10 @@
     color: #0f172a;
     overflow-x: hidden;
     @apply dark:bg-slate-950 dark:text-slate-50;
+  }
+
+  button, a, input, select, textarea {
+    touch-action: manipulation;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -84,7 +89,7 @@
   }
 
   .premium-card {
-    @apply bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300;
+    @apply bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:shadow-slate-200/20 dark:hover:shadow-black/20 transition-all duration-500;
   }
 
   .text-gradient-primary {

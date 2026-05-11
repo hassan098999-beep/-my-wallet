@@ -2,6 +2,7 @@ import React, { useEffect, Suspense } from 'react';
 import { useLocation, useOutlet, useNavigate, Link } from 'react-router-dom';
 import BottomNav from './BottomNav';
 import Header from './Header';
+import Sidebar from './Sidebar';
 import AddExpenseModal from './AddExpenseModal';
 import { AnimatePresence, motion, Variants } from 'motion/react';
 import { useAppContext } from '../store/AppContext';
@@ -56,82 +57,89 @@ const Layout = () => {
       opacity: 0,
       x: direction > 0 ? 30 : direction < 0 ? -30 : 0,
       y: direction === 0 ? 15 : 0,
-      scale: 0.98,
     }),
     animate: {
       opacity: 1,
       x: 0,
       y: 0,
-      scale: 1,
       transition: {
-        duration: 0.35,
+        duration: 0.15,
         ease: [0.25, 0.1, 0.25, 1],
       },
     },
     exit: (direction: number) => ({
       opacity: 0,
-      x: direction > 0 ? -30 : direction < 0 ? 30 : 0,
-      y: direction === 0 ? -15 : 0,
-      scale: 0.98,
+      x: direction > 0 ? -15 : direction < 0 ? 15 : 0,
+      y: direction === 0 ? -10 : 0,
       transition: {
-        duration: 0.25,
+        duration: 0.1,
         ease: [0.25, 0.1, 0.25, 1],
       },
     }),
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden relative z-0 bg-slate-50 dark:bg-slate-950 font-tajawal">
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden relative z-0 bg-slate-50 dark:bg-slate-950 font-tajawal">
       {/* Atmospheric Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[120px] animate-pulse-soft" />
-        <div className="absolute top-[20%] -right-[5%] w-[30%] h-[30%] rounded-full bg-teal-500/10 blur-[100px] animate-float" />
+        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] rounded-full bg-primary-500/10 blur-[100px] animate-pulse-soft" />
         <div className="absolute -bottom-[10%] left-[20%] w-[35%] h-[35%] rounded-full bg-emerald-500/10 blur-[110px] animate-pulse-soft" />
       </div>
 
-      <Header />
-      <main className="flex-1 overflow-y-auto p-1.5 md:p-3 lg:p-5 scroll-smooth pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-[calc(7rem+env(safe-area-inset-bottom))] overflow-x-hidden">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={location.pathname}
-            custom={direction}
-            variants={variants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            className="min-h-full"
-          >
-            <Suspense fallback={
-              <div className="flex items-center justify-center min-h-[50vh]">
-                <div className="w-8 h-8 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
-              </div>
-            }>
-              {currentOutlet}
-            </Suspense>
-          </motion.div>
-        </AnimatePresence>
-      </main>
+      <Sidebar onAddClick={() => setIsAddModalOpen(true)} />
 
-      {/* Floating AI Assistant Button */}
-      {location.pathname !== '/assistant' && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-4 md:left-8 z-40"
-        >
-          <Link to="/assistant">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-14 h-14 rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 flex items-center justify-center border-2 border-white dark:border-slate-800"
+      <div className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
+        <div className="md:hidden">
+          <Header />
+        </div>
+        
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8 scroll-smooth pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-6 overflow-x-hidden relative custom-scrollbar">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={location.pathname}
+              custom={direction}
+              variants={variants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="min-h-full w-full flex flex-col"
             >
-              <Sparkles size={24} />
-            </motion.button>
-          </Link>
-        </motion.div>
-      )}
+              <Suspense fallback={
+                <div className="flex items-center justify-center min-h-[50vh]">
+                  <div className="w-8 h-8 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+                </div>
+              }>
+                {currentOutlet}
+              </Suspense>
+            </motion.div>
+          </AnimatePresence>
+        </main>
 
-      <BottomNav onAddClick={() => setIsAddModalOpen(true)} />
+        {/* Floating AI Assistant Button (Mobile Only) */}
+        {location.pathname !== '/assistant' && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="md:hidden fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-4 z-40"
+          >
+            <Link to="/assistant">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-14 h-14 rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 flex items-center justify-center border-2 border-white dark:border-slate-800"
+              >
+                <Sparkles size={24} />
+              </motion.button>
+            </Link>
+          </motion.div>
+        )}
+
+        <div className="md:hidden">
+          <BottomNav onAddClick={() => setIsAddModalOpen(true)} />
+        </div>
+      </div>
+
       <AddExpenseModal 
         isOpen={isAddModalOpen} 
         onClose={() => {

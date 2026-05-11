@@ -167,7 +167,7 @@ export const AIAdvisor: React.FC = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center py-24 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800/50 shadow-sm"
+                className="flex flex-col items-center justify-center py-24 premium-card shadow-sm"
               >
                 <div className="relative">
                   <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-20 animate-pulse" />
@@ -185,7 +185,7 @@ export const AIAdvisor: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-rose-100 dark:border-rose-900/30 text-center px-10 shadow-sm"
+                className="flex flex-col items-center justify-center py-20 premium-card border-rose-100 dark:border-rose-900/30 text-center px-10 shadow-sm"
               >
                 <div className="w-20 h-20 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex items-center justify-center text-rose-500 mb-6">
                   <CircleAlert size={40} />
@@ -206,7 +206,7 @@ export const AIAdvisor: React.FC = () => {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/50 hover:shadow-md transition-all group"
+                    className="p-6 premium-card hover:shadow-md transition-all group"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-tight">{item.title}</h4>
@@ -241,7 +241,7 @@ export const AIAdvisor: React.FC = () => {
             </div>
             <h3 className="text-lg font-black text-slate-800 dark:text-slate-200 tracking-tight">التوقعات المالية</h3>
           </div>
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800/50 shadow-sm flex flex-col h-[500px]">
+          <div className="premium-card p-8 shadow-sm flex flex-col h-[500px]">
             {isLoading ? (
               <div className="h-full flex flex-col items-center justify-center">
                 <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-6" />

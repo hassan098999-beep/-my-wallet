@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Category } from '../types';
 import { DynamicIcon } from './DynamicIcon';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, Search } from 'lucide-react';
 import { cn } from '../utils';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -14,6 +14,7 @@ interface CategorySelectProps {
 
 export const CategorySelect: React.FC<CategorySelectProps> = ({ categories, selectedId, onChange, className = '' }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const selectedCategory = categories.find(c => c.id === selectedId) || categories[0];
@@ -28,6 +29,10 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({ categories, sele
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const filteredCategories = categories.filter(cat => 
+    cat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className={cn("relative", className)} ref={dropdownRef}>
@@ -69,12 +74,25 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({ categories, sele
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="absolute z-50 w-full mt-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl rounded-2xl shadow-sm border border-white/20 dark:border-slate-800/20 py-3 max-h-80 overflow-y-auto custom-scrollbar overflow-x-hidden"
+            className="absolute z-50 w-full mt-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl rounded-2xl shadow-sm border border-white/20 dark:border-slate-800/20 py-3 max-h-80 flex flex-col"
           >
-            <div className="px-4 py-2 mb-2 border-b border-slate-100 dark:border-slate-800/50">
+            <div className="px-4 mb-2 shrink-0">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="ابحث عن فئة..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-3 pr-9 py-2.5 rounded-xl border-2 border-transparent bg-slate-100 dark:bg-slate-800 text-sm font-bold outline-none focus:border-emerald-500 transition-colors"
+                />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              </div>
+            </div>
+            <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800/50 shrink-0">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">جميع الفئات</span>
             </div>
-            {categories.map(cat => (
+            <div className="overflow-y-auto custom-scrollbar overflow-x-hidden flex-1">
+            {filteredCategories.map(cat => (
               <button
                 key={cat.id}
                 type="button"
@@ -130,6 +148,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({ categories, sele
                 )}
               </button>
             ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

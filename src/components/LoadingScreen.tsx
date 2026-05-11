@@ -1,19 +1,59 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Wallet, Sparkles, TrendingUp, PieChart } from 'lucide-react';
+import { cn } from '../utils';
 
 const LoadingScreen = () => {
   return (
     <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center z-[9999] overflow-hidden">
       {/* Background atmospheric effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Animated grid background */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]">
+          <div className="absolute inset-0 bg-slate-50 dark:bg-slate-950 [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,transparent_20%,#000_100%)]"></div>
+        </div>
+
+        {/* Floating background particles */}
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={`particle-${i}`}
+            initial={{
+              x: Math.random() * window.innerWidth,
+              y: Math.random() * window.innerHeight,
+              opacity: Math.random() * 0.5 + 0.1,
+              scale: Math.random() * 0.5 + 0.5,
+            }}
+            animate={{
+              y: [null, Math.random() * window.innerHeight * 0.2 - window.innerHeight * 0.1],
+              x: [null, Math.random() * window.innerWidth * 0.2 - window.innerWidth * 0.1],
+              opacity: [null, Math.random() * 0.5 + 0.1, Math.random() * 0.2],
+            }}
+            transition={{
+              duration: Math.random() * 10 + 10,
+              repeat: Infinity,
+              repeatType: 'reverse',
+              ease: 'linear',
+            }}
+            className={cn(
+              "absolute rounded-full filter blur-[1px]",
+              i % 3 === 0 ? "bg-emerald-500/20 w-3 h-3" : 
+              i % 3 === 1 ? "bg-blue-500/20 w-4 h-4" : 
+              "bg-purple-500/20 w-2 h-2"
+            )}
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`
+            }}
+          />
+        ))}
+
         <motion.div 
           animate={{ 
             scale: [1, 1.2, 1],
             opacity: [0.15, 0.3, 0.15],
           }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/4 -left-1/4 w-96 h-96 bg-emerald-500/30 rounded-full blur-[100px]" 
+          className="absolute top-1/4 -left-1/4 w-[40rem] h-[40rem] bg-emerald-500/20 rounded-full blur-[100px]" 
         />
         <motion.div 
           animate={{ 
@@ -21,7 +61,7 @@ const LoadingScreen = () => {
             opacity: [0.15, 0.3, 0.15],
           }}
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-blue-500/30 rounded-full blur-[100px]" 
+          className="absolute bottom-1/4 -right-1/4 w-[40rem] h-[40rem] bg-blue-500/20 rounded-full blur-[100px]" 
         />
         <motion.div 
           animate={{ 
@@ -29,7 +69,7 @@ const LoadingScreen = () => {
             opacity: [0.1, 0.25, 0.1],
           }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px]" 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-purple-500/10 rounded-full blur-[120px]" 
         />
       </div>
 
@@ -45,8 +85,18 @@ const LoadingScreen = () => {
           
           <motion.div
             initial={{ y: 30, opacity: 0, scale: 0.8 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, type: "spring", damping: 15, stiffness: 150 }}
+            animate={{ 
+              y: [0, -8, 0], 
+              opacity: 1, 
+              scale: 1,
+              rotate: [0, 5, -5, 0]
+            }}
+            transition={{ 
+              y: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+              rotate: { duration: 6, repeat: Infinity, ease: "easeInOut" },
+              opacity: { delay: 0.3, duration: 0.5 },
+              scale: { delay: 0.3, type: "spring", damping: 15, stiffness: 150 }
+            }}
             className="relative bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 z-20 overflow-hidden group"
           >
             <motion.div
@@ -56,7 +106,7 @@ const LoadingScreen = () => {
               transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
               className="absolute inset-0 opacity-10 bg-[length:200%_200%] bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-500"
             />
-            <Wallet className="size-12 text-emerald-500 relative z-10" />
+            <Wallet className="size-12 text-emerald-500 relative z-10 drop-shadow-md" />
           </motion.div>
 
           {/* Orbiting elements */}
@@ -65,19 +115,31 @@ const LoadingScreen = () => {
             animate={{ opacity: 1, rotate: 360 }}
             transition={{ 
               opacity: { delay: 0.6, duration: 1 },
-              rotate: { duration: 10, repeat: Infinity, ease: "linear" } 
+              rotate: { duration: 12, repeat: Infinity, ease: "linear" } 
             }}
             className="absolute inset-0 z-10"
           >
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-lg border border-slate-100 dark:border-slate-700">
-              <Sparkles className="size-4 text-purple-500" />
-            </div>
-            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-lg border border-slate-100 dark:border-slate-700">
-              <TrendingUp className="size-4 text-emerald-500" />
-            </div>
-            <div className="absolute top-1/2 -right-3 -translate-y-1/2 bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-lg border border-slate-100 dark:border-slate-700">
-              <PieChart className="size-4 text-blue-500" />
-            </div>
+            <motion.div 
+              animate={{ rotate: -360 }}
+              transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+              className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 p-2 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700"
+            >
+              <Sparkles className="size-5 text-purple-500 drop-shadow-sm" />
+            </motion.div>
+            <motion.div 
+              animate={{ rotate: -360 }}
+              transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+              className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 p-2 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700"
+            >
+              <TrendingUp className="size-5 text-emerald-500 drop-shadow-sm" />
+            </motion.div>
+            <motion.div 
+              animate={{ rotate: -360 }}
+              transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+              className="absolute top-1/2 -right-3 -translate-y-1/2 bg-white dark:bg-slate-800 p-2 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700"
+            >
+              <PieChart className="size-5 text-blue-500 drop-shadow-sm" />
+            </motion.div>
           </motion.div>
         </div>
         

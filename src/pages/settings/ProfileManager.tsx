@@ -1,6 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../store/AppContext';
-import { UserCircle, Save, Trophy, Medal, Target, Flame, Layers, PlusCircle, ShieldCheck, PenTool, CircleCheckBig } from 'lucide-react';
+import { 
+  UserCircle, 
+  Save, 
+  Trophy, 
+  Medal, 
+  Target, 
+  Flame, 
+  Layers, 
+  PlusCircle, 
+  ShieldCheck, 
+  PenTool, 
+  CircleCheckBig,
+  CheckCircle2,
+  LayoutGrid,
+  Zap,
+  CalendarClock
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion } from 'motion/react';
 import { hapticFeedback, cn } from '../../utils';
@@ -13,6 +29,11 @@ const iconMap: Record<string, any> = {
   Layers,
   CircleCheckBig,
   Flame,
+  CheckCircle2,
+  LayoutGrid,
+  Zap,
+  CalendarClock,
+  Trophy,
 };
 
 const ProfileManager = () => {
@@ -154,35 +175,60 @@ const ProfileManager = () => {
           {achievements.map((achievement) => {
             const Icon = iconMap[achievement.icon] || Medal;
             const isUnlocked = !!achievement.earnedAt || achievement.progress >= achievement.target;
+            const percentage = Math.min(100, (achievement.progress / (achievement.target || 1)) * 100);
+            
             return (
-              <motion.div
-                key={achievement.id}
-                whileHover={{ scale: 1.02 }}
-                className={cn(
-                  "p-3 rounded-2xl border transition-all duration-500",
-                  isUnlocked 
-                    ? "bg-white dark:bg-slate-800 border-amber-200 dark:border-amber-900/50 shadow-sm" 
-                    : "bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 opacity-60 grayscale"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center",
-                    isUnlocked ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" : "bg-slate-200 dark:bg-slate-800 text-slate-400"
-                  )}>
-                    <Icon className="size-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xs font-black text-slate-900 dark:text-white truncate">{achievement.title}</h3>
-                    <p className="text-[9px] text-slate-500 dark:text-slate-400 truncate">{achievement.description}</p>
-                  </div>
-                  {isUnlocked && (
-                    <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-white">
-                      <ShieldCheck className="size-3" />
-                    </div>
-                  )}
-                </div>
-              </motion.div>
+               <motion.div
+                 key={achievement.id}
+                 whileHover={{ scale: 1.02 }}
+                 className={cn(
+                   "p-4 rounded-2xl border transition-all duration-500 relative overflow-hidden",
+                   isUnlocked 
+                     ? "bg-white dark:bg-slate-800 border-amber-200 dark:border-amber-900/50 shadow-md" 
+                     : "bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 opacity-80"
+                 )}
+               >
+                 <div className="flex items-center gap-3 relative z-10">
+                   <div className={cn(
+                     "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors shadow-inner",
+                     isUnlocked 
+                       ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" 
+                       : "bg-slate-200 dark:bg-slate-800 text-slate-400"
+                   )}>
+                     <Icon className={cn("size-6", !isUnlocked && "grayscale")} />
+                   </div>
+                   <div className="flex-1 min-w-0">
+                     <h3 className={cn(
+                       "text-xs md:text-sm font-black tracking-tight truncate",
+                       isUnlocked ? "text-slate-900 dark:text-white" : "text-slate-500"
+                     )}>
+                       {achievement.title}
+                     </h3>
+                     <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-medium">
+                       {achievement.description}
+                     </p>
+                   </div>
+                   {isUnlocked ? (
+                     <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg animate-pulse">
+                       <ShieldCheck className="size-3" />
+                     </div>
+                   ) : (
+                     <span className="text-[10px] font-black text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">
+                       {achievement.progress}/{achievement.target}
+                     </span>
+                   )}
+                 </div>
+                 
+                 {!isUnlocked && (
+                   <div className="mt-3 h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                     <motion.div 
+                       initial={{ width: 0 }}
+                       animate={{ width: `${percentage}%` }}
+                       className="h-full bg-amber-500 rounded-full"
+                     />
+                   </div>
+                 )}
+               </motion.div>
             );
           })}
         </div>

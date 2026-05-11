@@ -17,30 +17,6 @@ const Analytics = () => {
   const { insights } = useBehavioralEngine();
   const [isReady, setIsReady] = useState(true);
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const controls = useAnimation();
-  const y = useMotionValue(0);
-  const refreshOpacity = useTransform(y, [0, 100], [0, 1]);
-  const refreshRotate = useTransform(y, [0, 100], [0, 360]);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    hapticFeedback('medium');
-    // Simulate data refresh
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsRefreshing(false);
-    controls.start({ y: 0 });
-    hapticFeedback('success');
-  };
-
-  const handleDragEnd = (e: any, info: any) => {
-    if (info.offset.y > 100) {
-      handleRefresh();
-    } else {
-      controls.start({ y: 0 });
-    }
-  };
-
   const [rangeType, setRangeType] = useState<'monthly' | 'custom'>('monthly');
   const [selectedMonth, setSelectedMonth] = useState(getBudgetMonth(new Date(), firstDayOfMonth)); // YYYY-MM
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -280,19 +256,6 @@ const Analytics = () => {
       animate="visible"
       className="space-y-6 md:space-y-10 pb-20 relative"
     >
-      {/* Pull to refresh indicator */}
-      <motion.div 
-        className="absolute top-0 left-0 right-0 flex justify-center items-center h-16 -mt-16 z-50"
-        style={{ opacity: refreshOpacity }}
-      >
-        <motion.div
-          style={{ rotate: refreshRotate }}
-          className="bg-white dark:bg-slate-800 rounded-full p-2 shadow-lg"
-        >
-          <RefreshCw size={24} className={cn("text-emerald-500", isRefreshing && "animate-spin")} />
-        </motion.div>
-      </motion.div>
-
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-1">
           <h1 className="text-2xl md:text-4xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">

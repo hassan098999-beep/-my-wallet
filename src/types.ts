@@ -119,6 +119,14 @@ export interface AIInsights {
   lastUpdated: string; // ISO string
 }
 
+export interface BackupRecord {
+  id: string;
+  createdAt: string;
+  name: string;
+  version: string;
+  data: string;
+}
+
 export interface AppState {
   expenses: Expense[];
   recurringExpenses: RecurringExpense[];
@@ -138,4 +146,5 @@ export interface AppState {
   firstDayOfMonth: number;
   aiInsights?: AIInsights;
   bestStreak: number;
+  offlineMode: boolean;
 }

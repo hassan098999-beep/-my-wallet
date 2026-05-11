@@ -227,4 +227,14 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
   );
 };
 
-export const TransactionItem = React.memo(TransactionItemComponent);
+export const TransactionItem = React.memo(TransactionItemComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.transaction.id === nextProps.transaction.id &&
+    prevProps.transaction.amount === nextProps.transaction.amount &&
+    prevProps.transaction.date === nextProps.transaction.date &&
+    prevProps.transaction.categoryId === nextProps.transaction.categoryId &&
+    prevProps.transaction.note === nextProps.transaction.note &&
+    prevProps.transaction.accountId === nextProps.transaction.accountId &&
+    prevProps.currency === nextProps.currency
+  );
+});

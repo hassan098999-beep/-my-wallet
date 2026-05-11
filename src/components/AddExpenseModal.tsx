@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { PaymentMethod, Expense } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Check, ChevronLeft, Calendar, Layers, Building2, AlignLeft } from 'lucide-react';
+import { X, Check, ChevronLeft, Calendar, Layers, Building2, AlignLeft, Search } from 'lucide-react';
 import { formatCurrency, cn, hapticFeedback } from '../utils';
 import { DynamicIcon } from './DynamicIcon';
 import CalculatorKeypad from './CalculatorKeypad';
@@ -30,6 +30,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   const [source, setSource] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [loading, setLoading] = useState(false);
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
 
   // Sub-modals state
   const [activeView, setActiveView] = useState<'main' | 'category' | 'account' | 'toAccount' | 'details'>('main');
@@ -390,10 +391,21 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-4 gap-4">
-                    {categories.map((cat) => (
-                      <button
-                        key={cat.id}
+                  <div className="flex flex-col h-full space-y-4">
+                    <div className="relative shrink-0">
+                      <input
+                        type="text"
+                        placeholder="ابحث عن فئة..."
+                        value={categorySearchQuery}
+                        onChange={(e) => setCategorySearchQuery(e.target.value)}
+                        className="w-full pl-3 pr-10 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm font-bold outline-none focus:border-rose-500 transition-colors"
+                      />
+                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    </div>
+                    <div className="grid grid-cols-4 gap-4 overflow-y-auto custom-scrollbar pb-2">
+                      {categories.filter(cat => cat.name.toLowerCase().includes(categorySearchQuery.toLowerCase())).map((cat) => (
+                        <button
+                          key={cat.id}
                         onClick={() => { hapticFeedback('light'); setCategoryId(cat.id); setSubcategoryId(''); setActiveView('main'); }}
                         className="flex flex-col items-center gap-2 group"
                       >
@@ -410,6 +422,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                       </button>
                     ))}
                   </div>
+                 </div>
                 )}
               </div>
             </motion.div>

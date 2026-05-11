@@ -8,7 +8,7 @@ import { ar } from 'date-fns/locale';
 import { Search, Filter, Trash, DownloadCloud, ArrowDownUp, ArrowUp, ArrowDown, Calendar, FileText, ChartPie, CreditCard, Banknote, Building2, Pencil, X, CircleAlert, Wallet, Copy, RefreshCw, RefreshCcw } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { motion, AnimatePresence, useScroll, useTransform, useAnimation, useMotionValue } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { CategorySelect } from '../components/CategorySelect';
 import { PaymentMethod } from '../types';
 
@@ -19,30 +19,6 @@ import { TransactionItem } from '../components/TransactionItem';
 const Transactions = () => {
   const { width } = useWindowSize();
   const [displayLimit, setDisplayLimit] = useState(20);
-
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const controls = useAnimation();
-  const y = useMotionValue(0);
-  const refreshOpacity = useTransform(y, [0, 100], [0, 1]);
-  const refreshRotate = useTransform(y, [0, 100], [0, 360]);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    hapticFeedback('medium');
-    // Simulate data refresh
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsRefreshing(false);
-    controls.start({ y: 0 });
-    hapticFeedback('success');
-  };
-
-  const handleDragEnd = (e: any, info: any) => {
-    if (info.offset.y > 100) {
-      handleRefresh();
-    } else {
-      controls.start({ y: 0 });
-    }
-  };
   
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -322,19 +298,6 @@ const Transactions = () => {
       <motion.div
         className="space-y-3 md:space-y-6"
       >
-        {/* Pull to refresh indicator */}
-        <motion.div 
-          className="absolute top-0 left-0 right-0 flex justify-center items-center h-16 -mt-16 z-50"
-          style={{ opacity: refreshOpacity }}
-        >
-          <motion.div
-            style={{ rotate: refreshRotate }}
-            className="bg-white dark:bg-slate-800 rounded-full p-2 shadow-lg"
-          >
-            <RefreshCw size={24} className={cn("text-emerald-500", isRefreshing && "animate-spin")} />
-          </motion.div>
-        </motion.div>
-
         {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 md:gap-8">
         <motion.div 
@@ -651,12 +614,6 @@ const Transactions = () => {
             </div>
             <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-sm md:text-2xl">قائمة العمليات</h3>
           </div>
-          <button 
-            onClick={handleRefresh}
-            className="p-2 md:p-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-          >
-            <RefreshCcw size={20} className="text-slate-400 md:size-6" />
-          </button>
         </div>
 
         {filteredTransactions.length > 0 ? (

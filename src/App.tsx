@@ -7,17 +7,17 @@ import OnboardingModal from './OnboardingModal';
 import LoadingScreen from './components/LoadingScreen';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Transactions = lazy(() => import('./pages/Transactions'));
-const Analytics = lazy(() => import('./pages/Analytics'));
-const Settings = lazy(() => import('./pages/Settings'));
+import Dashboard from './pages/Dashboard';
+import Transactions from './pages/Transactions';
+import Analytics from './pages/Analytics';
+import Settings from './pages/Settings';
+import Assistant from './pages/Assistant';
 
 const BudgetPage = lazy(() => import('./pages/Budget'));
 const GoalsPage = lazy(() => import('./pages/Goals'));
 const IncomePage = lazy(() => import('./pages/settings/Income'));
 const RecurringExpenses = lazy(() => import('./pages/RecurringExpenses'));
 const SavingsPage = lazy(() => import('./pages/Savings'));
-const Assistant = lazy(() => import('./pages/Assistant'));
 
 export default function App() {
   useEffect(() => {

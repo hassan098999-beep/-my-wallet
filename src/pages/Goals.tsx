@@ -7,6 +7,7 @@ import { motion } from 'motion/react';
 import { Target, Plus, Trash, Calendar, TrendingUp, Sparkles, Trophy, ArrowUpRight, ArrowDownRight, History } from 'lucide-react';
 import NumericKeypad from '../components/NumericKeypad';
 import { AnimatePresence } from 'motion/react';
+import toast from 'react-hot-toast';
 
 const GoalsPage = () => {
   const { goals, addGoal, deleteGoal, updateGoal, currency, expenses, income, categories, budget, firstDayOfMonth, addIncome, addExpense, accounts, setIsAddModalOpen, setInitialGoalId } = useAppContext();
@@ -32,6 +33,15 @@ const GoalsPage = () => {
         linkedCategoryId: linkedCategoryId || undefined,
         isLinkedToOverallBudget: isLinkedToOverallBudget,
       });
+      
+      toast.success(
+        <div className="flex flex-col gap-1">
+          <span className="font-bold text-sm">تم تحديد الهدف بنجاح! 🎯</span>
+          <span className="text-xs opacity-90">رحلة الألف ميل تبدأ بخطوة. نتمنى لك التوفيق!</span>
+        </div>,
+        { duration: 4000 }
+      );
+      
       setName('');
       setTargetAmount('');
       setCurrentAmount('');
@@ -122,6 +132,13 @@ const GoalsPage = () => {
       updateGoal(goal.id, {
         currentAmount: goal.currentAmount + surplus
       });
+      toast.success(
+        <div className="flex flex-col gap-1">
+          <span className="font-bold text-sm">عمل رائع! 🚀</span>
+          <span className="text-xs opacity-90">لقد ساهمت في هدفك المالي بمبلغ {formatCurrency(surplus, currency)}</span>
+        </div>,
+        { duration: 4000 }
+      );
     }
   };
 
@@ -137,6 +154,14 @@ const GoalsPage = () => {
       accountId: accounts[0]?.id, // Default to first account
       date: new Date().toISOString().split('T')[0],
     });
+    
+    toast.success(
+      <div className="flex flex-col gap-1">
+        <span className="font-bold text-sm">خطوة ممتازة نحو هدفك! 🌱</span>
+        <span className="text-xs opacity-90">تمت إضافة {formatCurrency(Number(quickAddAmount), currency)} للاستثمار في مستقبلك</span>
+      </div>,
+      { duration: 4000 }
+    );
     
     setQuickAddAmount('');
     setShowQuickAdd(null);
@@ -449,7 +474,7 @@ const GoalsPage = () => {
                   </div>
 
                   {/* Progress Section */}
-                  <div className="space-y-8 mb-10 text-center flex flex-col items-center">
+                  <div className="space-y-8 mb-6 text-center flex flex-col items-center">
                     <div className="space-y-3">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">التقدم الحالي</p>
                       <p className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
@@ -463,13 +488,36 @@ const GoalsPage = () => {
                         </p>
                       )}
                     </div>
-                    <div className="text-center">
+                    <div className="text-center space-y-4">
                       <span className={cn(
-                        "text-5xl md:text-7xl font-black tracking-tighter",
+                        "text-5xl md:text-7xl font-black tracking-tighter block",
                         isCompleted ? "text-emerald-500" : "text-primary-600"
                       )}>
                         {Math.round(percentage)}%
                       </span>
+                      <p className={cn(
+                        "text-sm font-black uppercase tracking-widest px-4 py-2 rounded-xl inline-block",
+                        isCompleted 
+                          ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20" 
+                          : percentage >= 75 
+                            ? "bg-amber-50 text-amber-600 dark:bg-amber-900/20"
+                            : percentage >= 50
+                              ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20"
+                              : percentage > 0
+                                ? "bg-primary-50 text-primary-600 dark:bg-primary-900/20"
+                                : "bg-slate-50 text-slate-500 dark:bg-slate-800"
+                      )}>
+                        {isCompleted 
+                          ? "تهانينا! لقد حققت هدفك المالي 🎯" 
+                          : percentage >= 75 
+                            ? "أنت تقترب بشدة! واصل تفوقك 🔥"
+                            : percentage >= 50
+                              ? "لقد تجاوزت منتصف الطريق! أحسنت 🚀"
+                              : percentage > 0
+                                ? "بداية ممتازة، خطوة بخطوة ستصل للهدف 🌱"
+                                : "ابدأ الآن، كل مبلغ صغير يصنع فرقاً 💡"
+                        }
+                      </p>
                     </div>
                   </div>
                     

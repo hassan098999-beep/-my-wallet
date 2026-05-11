@@ -33,30 +33,6 @@ type TabId = typeof TABS[number]['id'];
 const Settings = () => {
   const [activeTab, setActiveTab] = useState<TabId>('profile');
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const controls = useAnimation();
-  const y = useMotionValue(0);
-  const refreshOpacity = useTransform(y, [0, 100], [0, 1]);
-  const refreshRotate = useTransform(y, [0, 100], [0, 360]);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    hapticFeedback('medium');
-    // Simulate data refresh
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsRefreshing(false);
-    controls.start({ y: 0 });
-    hapticFeedback('success');
-  };
-
-  const handleDragEnd = (e: any, info: any) => {
-    if (info.offset.y > 100) {
-      handleRefresh();
-    } else {
-      controls.start({ y: 0 });
-    }
-  };
-
   return (
     <motion.div 
       variants={containerVariants}
@@ -64,19 +40,6 @@ const Settings = () => {
       animate="visible"
       className="max-w-6xl mx-auto pb-12 px-2 md:px-4 relative"
     >
-      {/* Pull to refresh indicator */}
-      <motion.div 
-        className="absolute top-0 left-0 right-0 flex justify-center items-center h-16 -mt-16 z-50"
-        style={{ opacity: refreshOpacity }}
-      >
-        <motion.div
-          style={{ rotate: refreshRotate }}
-          className="bg-white dark:bg-slate-800 rounded-full p-2 shadow-lg"
-        >
-          <RefreshCw size={24} className={cn("text-emerald-500", isRefreshing && "animate-spin")} />
-        </motion.div>
-      </motion.div>
-
       <div className="mb-6 md:mb-8 px-2 md:px-0">
         <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
           الإعدادات <span className="text-primary-500">والتخصيص</span>
