@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useAppContext } from '../store/AppContext';
 import { cn, formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
 import { Skeleton, CardSkeleton, BarChartSkeleton, PieChartSkeleton, AreaChartSkeleton } from '../components/Skeleton';
@@ -15,12 +15,19 @@ const Analytics = () => {
   const { expenses, income = [], categories, currency, budget, dailyBudget, firstDayOfMonth } = useAppContext();
   const { width } = useWindowSize();
   const { insights } = useBehavioralEngine();
-  const [isReady, setIsReady] = useState(true);
-
   const [rangeType, setRangeType] = useState<'monthly' | 'custom'>('monthly');
   const [selectedMonth, setSelectedMonth] = useState(getBudgetMonth(new Date(), firstDayOfMonth)); // YYYY-MM
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    setIsReady(false);
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 600); // Small delay to show smooth animations
+    return () => clearTimeout(timer);
+  }, [rangeType, selectedMonth, startDate, endDate, expenses.length, income.length]);
 
   const dateRange = useMemo(() => {
     if (rangeType === 'monthly') {

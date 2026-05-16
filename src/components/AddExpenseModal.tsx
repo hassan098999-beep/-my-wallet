@@ -202,10 +202,10 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0, y: '100%' }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: '100%' }}
-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+          initial={{ opacity: 0, y: '100%', scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: '100%', scale: 0.95 }}
+          transition={{ duration: 0.4, type: 'spring', bounce: 0.25 }}
           className="fixed inset-0 z-[150] bg-white dark:bg-slate-900 flex flex-col overflow-hidden"
         >
           {activeView === 'main' && (
@@ -337,7 +337,10 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
           {/* Category Selection Modal */}
           {activeView === 'category' && (
             <motion.div 
-              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.2 }}
+              initial={{ x: '100%', opacity: 0.5 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              exit={{ x: '100%', opacity: 0.5 }} 
+              transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
               className="absolute inset-0 bg-white dark:bg-slate-900 z-10 flex flex-col"
             >
               <div className={cn("flex items-center p-4 text-white shrink-0 pt-[env(safe-area-inset-top)]", bgColor)}>
@@ -431,7 +434,10 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
           {/* Account Selection Modal */}
           {(activeView === 'account' || activeView === 'toAccount') && (
             <motion.div 
-              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.2 }}
+              initial={{ x: '100%', opacity: 0.5 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              exit={{ x: '100%', opacity: 0.5 }} 
+              transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
               className="absolute inset-0 bg-white dark:bg-slate-900 z-10 flex flex-col"
             >
               <div className={cn("flex items-center p-4 text-white shrink-0 pt-[env(safe-area-inset-top)]", bgColor)}>
@@ -471,7 +477,10 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
           {/* Details Modal (Date) */}
           {activeView === 'details' && (
             <motion.div 
-              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.2 }}
+              initial={{ x: '100%', opacity: 0.5 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              exit={{ x: '100%', opacity: 0.5 }} 
+              transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
               className="absolute inset-0 bg-white dark:bg-slate-900 z-10 flex flex-col"
             >
               <div className={cn("flex items-center p-4 text-white shrink-0 pt-[env(safe-area-inset-top)]", bgColor)}>

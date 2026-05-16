@@ -7,7 +7,6 @@ import { parseISO, format, isAfter, isBefore, addDays, differenceInDays } from '
 import { ar } from 'date-fns/locale';
 import { Plus, CircleCheckBig, Wallet, CreditCard, Banknote, Building2, TrendingUp, Activity, CalendarClock, Flame, Zap, Repeat, Clock, Lightbulb, Trash2, ArrowRight, Edit2, RefreshCw, Target, Sparkles, ArrowRightLeft, ArrowUp, ArrowDown, PiggyBank } from 'lucide-react';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { AIAdvisor } from '../components/AIAdvisor';
 import { BudgetAlerts } from '../components/BudgetAlerts';
 import { AnimatedNumber } from '../components/AnimatedNumber';
 import { PaymentMethod, Expense, Category } from '../types';
@@ -331,161 +330,70 @@ const Dashboard = () => {
         </motion.div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left Column: AI & Insights (Takes 2 columns on XL) */}
-        <div className="xl:col-span-2 space-y-6">
-          {/* AI Advisor Section */}
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            className="w-full"
-          >
-            <motion.div variants={itemVariants}>
-              <AIAdvisor />
-            </motion.div>
-          </motion.div>
-
-          {/* Behavioral Insights Section */}
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            className="space-y-6"
-          >
-            <motion.div variants={itemVariants} className="flex justify-between items-center px-2">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
-                  <Activity size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">رؤى سلوكية</h3>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">تحليل ذكي لأنماط صرفك</p>
-                </div>
+      <div className="grid grid-cols-1 gap-6">
+        {/* Transactions Section */}
+        <motion.div variants={itemVariants} className="premium-card p-6 rounded-3xl border border-slate-100 dark:border-slate-800/50 shadow-sm dark:shadow-none flex flex-col h-[500px]">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
+                <Clock size={24} />
               </div>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {insights.slice(0, 2).map((insight, idx) => (
-                <motion.div
-                  key={insight.id || idx}
-                  variants={itemVariants}
-                  whileHover={{ y: -4, scale: 1.01 }}
-                  className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group flex flex-col justify-between min-h-[180px]"
-                >
-                  <div className={cn(
-                    "absolute -right-10 -top-10 w-32 h-32 rounded-full blur-3xl opacity-5 group-hover:opacity-10 transition-opacity",
-                    insight.type === 'warning' ? 'bg-rose-500' : 
-                    insight.type === 'positive' ? 'bg-emerald-500' : 'bg-indigo-500'
-                  )} />
-                  
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className={cn(
-                        "w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transition-transform group-hover:rotate-6",
-                        insight.type === 'warning' ? 'bg-rose-500 text-white shadow-rose-500/20' : 
-                        insight.type === 'positive' ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-indigo-500 text-white shadow-indigo-500/20'
-                      )}>
-                        {insight.type === 'warning' ? <Activity size={24} /> : <Zap size={24} />}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-tight">{insight.title}</h4>
-                      </div>
-                    </div>
-                    
-                    <p className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed">
-                      {insight.description}
-                    </p>
-                  </div>
-
-                  {insight.impact && (
-                    <div className="relative z-10 mt-4 pt-4 border-t border-slate-50 dark:border-slate-800/50">
-                      <div className="flex items-center gap-2 text-indigo-500">
-                        <TrendingUp size={14} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{insight.impact}</span>
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Right Column: Transactions & Goals */}
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
-          className="space-y-6"
-        >
-          {/* Transactions Section */}
-          <motion.div variants={itemVariants} className="premium-card p-6 rounded-3xl border border-slate-100 dark:border-slate-800/50 shadow-sm dark:shadow-none flex flex-col h-full max-h-[600px]">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
-                  <Clock size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">آخر العمليات</h3>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">أحدث 5 عمليات</p>
-                </div>
+              <div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">آخر العمليات</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">أحدث العمليات التي قمت بها</p>
               </div>
-              <Link 
-                to="/transactions" 
-                className="w-10 h-10 flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all group"
-              >
-                <ArrowRight size={18} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
-              </Link>
             </div>
+            <Link 
+              to="/transactions" 
+              className="w-10 h-10 flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all group"
+            >
+              <ArrowRight size={18} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
+            </Link>
+          </div>
 
-            <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-1">
-              <AnimatePresence mode="popLayout">
-                {recentTransactions.length > 0 ? (
-                  recentTransactions.map((expense, idx) => (
-                    <motion.div
-                      key={expense.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ delay: idx * 0.05 }}
-                    >
-                      <MemoizedSwipeableTransactionItem 
-                        expense={expense} 
-                        category={categories.find(c => c.id === expense.categoryId)}
-                        currency={currency}
-                        accountName={accounts.find(a => a.id === expense.accountId)?.name}
-                        onDelete={() => {
-                          hapticFeedback('medium');
-                          deleteExpense(expense.id);
-                          toast.success('تم حذف العملية');
-                        }}
-                        onRepeat={() => {
-                          hapticFeedback('medium');
-                          repeatExpense(expense.id);
-                          toast.success('تم تكرار العملية');
-                        }}
-                        onEdit={() => {
-                          hapticFeedback('medium');
-                          handleEdit(expense);
-                        }}
-                      />
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full py-10 text-center">
-                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center text-slate-200 mb-4 animate-pulse">
-                      <Activity size={32} />
-                    </div>
-                    <p className="text-slate-400 font-black text-sm uppercase tracking-widest">لا توجد عمليات مسجلة حالياً</p>
+          <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-1">
+            <AnimatePresence mode="popLayout">
+              {recentTransactions.length > 0 ? (
+                recentTransactions.map((expense, idx) => (
+                  <motion.div
+                    key={expense.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: idx * 0.05 }}
+                  >
+                    <MemoizedSwipeableTransactionItem 
+                      expense={expense} 
+                      category={categories.find(c => c.id === expense.categoryId)}
+                      currency={currency}
+                      accountName={accounts.find(a => a.id === expense.accountId)?.name}
+                      onDelete={() => {
+                        hapticFeedback('medium');
+                        deleteExpense(expense.id);
+                        toast.success('تم حذف العملية');
+                      }}
+                      onRepeat={() => {
+                        hapticFeedback('medium');
+                        repeatExpense(expense.id);
+                        toast.success('تم تكرار العملية');
+                      }}
+                      onEdit={() => {
+                        hapticFeedback('medium');
+                        handleEdit(expense);
+                      }}
+                    />
+                  </motion.div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full py-10 text-center">
+                  <div className="w-16 h-16 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center text-slate-200 mb-4 animate-pulse">
+                    <Activity size={32} />
                   </div>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
+                  <p className="text-slate-400 font-black text-sm uppercase tracking-widest">لا توجد عمليات مسجلة حالياً</p>
+                </div>
+              )}
+            </AnimatePresence>
+          </div>
         </motion.div>
       </div>
 

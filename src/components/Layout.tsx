@@ -55,25 +55,28 @@ const Layout = () => {
   const variants: Variants = {
     initial: (direction: number) => ({
       opacity: 0,
+      scale: 0.98,
       x: direction > 0 ? 30 : direction < 0 ? -30 : 0,
       y: direction === 0 ? 15 : 0,
     }),
     animate: {
       opacity: 1,
+      scale: 1,
       x: 0,
       y: 0,
       transition: {
-        duration: 0.15,
-        ease: [0.25, 0.1, 0.25, 1],
+        duration: 0.3,
+        ease: [0.16, 1, 0.3, 1], // Custom spring-like easing
       },
     },
     exit: (direction: number) => ({
       opacity: 0,
-      x: direction > 0 ? -15 : direction < 0 ? 15 : 0,
+      scale: 0.98,
+      x: direction > 0 ? -20 : direction < 0 ? 20 : 0,
       y: direction === 0 ? -10 : 0,
       transition: {
-        duration: 0.1,
-        ease: [0.25, 0.1, 0.25, 1],
+        duration: 0.2,
+        ease: [0.16, 1, 0.3, 1],
       },
     }),
   };
