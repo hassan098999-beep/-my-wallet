@@ -32,7 +32,7 @@ const CalculatorKeypad: React.FC<CalculatorKeypadProps> = ({ onPress, onDelete, 
   };
 
   return (
-    <div className="w-full bg-white dark:bg-slate-900 grid grid-cols-4 grid-rows-5 h-full">
+    <div className="w-full h-full bg-slate-50 dark:bg-slate-900/50 p-4 grid grid-cols-4 grid-rows-5 gap-2">
       {/* Top 3 rows */}
       {rows.map((row, rowIndex) => (
         <React.Fragment key={rowIndex}>
@@ -40,11 +40,11 @@ const CalculatorKeypad: React.FC<CalculatorKeypadProps> = ({ onPress, onDelete, 
             <motion.button
               key={key}
               type="button"
-              whileTap={{ scale: 0.9, backgroundColor: 'rgba(0,0,0,0.05)' }}
+              whileTap={{ scale: 0.9 }}
               onClick={() => handlePress(key)}
               className={cn(
-                "flex items-center justify-center text-3xl font-light active:bg-slate-100 dark:active:bg-slate-800 transition-colors",
-                ['/', '*', '-', '+'].includes(key) ? "bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300" : "text-slate-800 dark:text-slate-200"
+                "flex items-center justify-center text-2xl font-semibold rounded-2xl shadow-sm transition-all",
+                ['/', '*', '-', '+'].includes(key) ? "bg-white dark:bg-slate-800 text-indigo-500" : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
               )}
             >
               {key === '*' ? '×' : key === '/' ? '÷' : key}
@@ -54,17 +54,17 @@ const CalculatorKeypad: React.FC<CalculatorKeypadProps> = ({ onPress, onDelete, 
       ))}
       
       {/* 4th row: ., 0, delete, + */}
-      <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={() => handlePress('.')} className="flex items-center justify-center text-3xl font-light text-slate-800 dark:text-slate-200 active:bg-slate-100 dark:active:bg-slate-800 transition-colors">.</motion.button>
-      <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={() => handlePress('0')} className="flex items-center justify-center text-3xl font-light text-slate-800 dark:text-slate-200 active:bg-slate-100 dark:active:bg-slate-800 transition-colors">0</motion.button>
-      <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={handleDelete} className="flex items-center justify-center text-slate-500 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"><Delete size={28} strokeWidth={1.5} /></motion.button>
-      <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={() => handlePress('+')} className="flex items-center justify-center text-3xl font-light bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-800 transition-colors">+</motion.button>
+      <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={() => handlePress('.')} className="flex items-center justify-center text-2xl font-semibold rounded-2xl shadow-sm transition-all bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">.</motion.button>
+      <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={() => handlePress('0')} className="flex items-center justify-center text-2xl font-semibold rounded-2xl shadow-sm transition-all bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">0</motion.button>
+      <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={handleDelete} className="flex items-center justify-center text-rose-500 rounded-2xl shadow-sm transition-all bg-white dark:bg-slate-800"><Delete size={28} strokeWidth={2} /></motion.button>
+      <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={() => handlePress('+')} className="flex items-center justify-center text-2xl font-semibold rounded-2xl shadow-sm transition-all bg-white dark:bg-slate-800 text-indigo-500">+</motion.button>
 
       {/* 5th row: = spans all 4 columns */}
       <motion.button
         type="button"
         whileTap={{ scale: 0.98 }}
         onClick={handleCalculate}
-        className="col-span-4 flex items-center justify-center text-4xl font-light bg-emerald-500 text-white active:bg-emerald-600 transition-colors"
+        className="col-span-4 flex items-center justify-center text-3xl font-semibold bg-indigo-500 text-white rounded-2xl shadow-md transition-all shadow-indigo-500/20"
       >
         =
       </motion.button>

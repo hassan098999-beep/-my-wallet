@@ -28,6 +28,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   const [toAccountId, setToAccountId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [source, setSource] = useState('');
+  const [note, setNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [loading, setLoading] = useState(false);
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
@@ -48,6 +49,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
         setSubcategoryId(editExpenseData.subcategoryId || '');
         setAccountId(editExpenseData.accountId || '');
         setDate(editExpenseData.date);
+        setNote(editExpenseData.note || '');
         setPaymentMethod(editExpenseData.paymentMethod || 'cash');
       } else {
         setType('expense');
@@ -58,6 +60,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
         setToAccountId(accounts.length > 1 ? accounts[1].id : '');
         setDate(new Date().toISOString().split('T')[0]);
         setSource('');
+        setNote('');
         setPaymentMethod('cash');
       }
       setActiveView('main');
@@ -131,7 +134,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
           return;
         }
 
-        await transferAccount(accountId, toAccountId, finalAmount, date, '');
+        await transferAccount(accountId, toAccountId, finalAmount, date, note.trim());
         toast.success('تم التحويل بنجاح');
         hapticFeedback('success');
       } else if (type === 'expense') {
@@ -147,7 +150,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
           subcategoryId: subcategoryId || undefined,
           accountId,
           date,
-          note: '',
+          note: note.trim(),
           paymentMethod,
         };
 
@@ -172,7 +175,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
           amount: finalAmount,
           accountId: accountId || undefined,
           date,
-          note: '',
+          note: note.trim(),
         };
 
         if (editExpenseData) {
@@ -195,8 +198,19 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
     }
   };
 
-  const bgColor = type === 'expense' ? 'bg-rose-600' : type === 'income' ? 'bg-emerald-600' : 'bg-indigo-600';
-  const activeTabColor = type === 'expense' ? 'bg-rose-700' : type === 'income' ? 'bg-emerald-700' : 'bg-indigo-700';
+  const bgColors = {
+    expense: 'bg-gradient-to-br from-rose-500 to-rose-700',
+    income: 'bg-gradient-to-br from-emerald-500 to-emerald-700',
+    transfer: 'bg-gradient-to-br from-indigo-500 to-indigo-700'
+  };
+  const activeTabColors = {
+    expense: 'bg-white/20 shadow-inner backdrop-blur-md',
+    income: 'bg-white/20 shadow-inner backdrop-blur-md',
+    transfer: 'bg-white/20 shadow-inner backdrop-blur-md'
+  };
+
+  const bgColor = bgColors[type];
+  const activeTabColor = activeTabColors[type];
 
   return (
     <AnimatePresence>
@@ -211,7 +225,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
           {activeView === 'main' && (
             <div className="flex flex-col h-full">
               {/* Top Section */}
-              <div className={cn("flex flex-col text-white transition-colors duration-300 flex-1 min-h-[45%] pt-[env(safe-area-inset-top)]", bgColor)}>
+              <div className={cn("flex flex-col text-white transition-colors duration-300 flex-1 pt-[env(safe-area-inset-top)]", bgColor)}>
                 {/* Header */}
                 <div className="flex items-center justify-between p-4">
                   <button onClick={() => { hapticFeedback('light'); onClose(); }} className="p-2 hover:bg-white/10 rounded-full transition-colors">
@@ -228,38 +242,51 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                 </div>
 
                 {/* Tabs */}
-                <div className="flex w-full px-4 mb-6">
-                  <button
-                    onClick={() => { hapticFeedback('light'); setType('income'); }}
-                    className={cn("flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors rounded-r-lg", type === 'income' ? activeTabColor : "bg-black/10 hover:bg-black/20")}
-                  >
-                    دخل
-                  </button>
-                  <button
-                    onClick={() => { hapticFeedback('light'); setType('expense'); }}
-                    className={cn("flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors", type === 'expense' ? activeTabColor : "bg-black/10 hover:bg-black/20")}
-                  >
-                    مصروف
-                  </button>
-                  <button
-                    onClick={() => { hapticFeedback('light'); setType('transfer'); }}
-                    className={cn("flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors rounded-l-lg", type === 'transfer' ? activeTabColor : "bg-black/10 hover:bg-black/20")}
-                  >
-                    تحويل
-                  </button>
+                <div className="flex w-full px-4 mb-2 mt-4">
+                  <div className="flex w-full bg-black/20 p-1 rounded-2xl backdrop-blur-md">
+                    <button
+                      onClick={() => { hapticFeedback('light'); setType('income'); }}
+                      className={cn("flex-1 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all rounded-xl", type === 'income' ? activeTabColor : "text-white/70 hover:text-white")}
+                    >
+                      دخل
+                    </button>
+                    <button
+                      onClick={() => { hapticFeedback('light'); setType('expense'); }}
+                      className={cn("flex-1 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all rounded-xl", type === 'expense' ? activeTabColor : "text-white/70 hover:text-white")}
+                    >
+                      مصروف
+                    </button>
+                    <button
+                      onClick={() => { hapticFeedback('light'); setType('transfer'); }}
+                      className={cn("flex-1 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all rounded-xl", type === 'transfer' ? activeTabColor : "text-white/70 hover:text-white")}
+                    >
+                      تحويل
+                    </button>
+                  </div>
                 </div>
 
                 {/* Amount Display */}
-                <div className="flex-1 flex items-center justify-center px-6">
-                  <div className="flex items-baseline gap-2 w-full justify-center overflow-hidden">
-                    <span className="text-4xl font-light opacity-80 shrink-0">
+                <div className="flex-1 flex flex-col items-center justify-center px-6 py-4">
+                  <div className="flex items-baseline gap-2 w-full justify-center overflow-hidden drop-shadow-sm">
+                    <span className="text-4xl sm:text-5xl font-light opacity-80 shrink-0">
                       {type === 'expense' ? '-' : type === 'income' ? '+' : ''}
                     </span>
-                    <span className="text-6xl sm:text-8xl font-light tracking-tighter truncate dir-ltr">
+                    <span 
+                      className={cn(
+                        "font-light tracking-tighter truncate dir-ltr transition-all duration-200", 
+                        expression.length > 8 ? "text-5xl sm:text-6xl" : "text-7xl sm:text-8xl"
+                      )}
+                    >
                       {expression}
                     </span>
-                    <span className="text-2xl font-light opacity-80 shrink-0">{currency}</span>
+                    <span className="text-2xl sm:text-3xl font-light opacity-80 shrink-0">{currency}</span>
                   </div>
+                  {/* Subtle info if expression has operators */}
+                  {/[+\-*/]/.test(expression) && (
+                    <div className="text-sm font-bold bg-white/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm animate-pulse">
+                      ={formatCurrency(evaluateExpression(expression), currency)}
+                    </div>
+                  )}
                 </div>
 
                 {/* Subcategories (if applicable) */}
@@ -310,21 +337,19 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                     </button>
                   )}
 
-                  <div className="relative flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors cursor-pointer overflow-hidden">
-                    <span className="text-[10px] uppercase tracking-widest opacity-70 mb-1">التاريخ</span>
+                  <button 
+                    onClick={() => { hapticFeedback('light'); setActiveView('details'); }}
+                    className="flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors relative"
+                  >
+                    <span className="text-[10px] uppercase tracking-widest opacity-70 mb-1">تفاصيل</span>
                     <span className="text-sm font-bold truncate w-full text-center">{format(parseISO(date), 'dd MMM', { locale: ar })}</span>
-                    <input 
-                      type="date" 
-                      value={date} 
-                      onChange={(e) => setDate(e.target.value)} 
-                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                    />
-                  </div>
+                    {note && <div className="absolute top-3 right-3 w-2 h-2 bg-emerald-400 rounded-full" />}
+                  </button>
                 </div>
               </div>
 
               {/* Keypad Section */}
-              <div className="flex-1 min-h-[55%] bg-white dark:bg-slate-900 pb-[env(safe-area-inset-bottom)]">
+              <div className="flex-1 bg-slate-50 dark:bg-slate-900 pb-[env(safe-area-inset-bottom)]">
                 <CalculatorKeypad 
                   onPress={handleKeyPress}
                   onDelete={handleDelete}
@@ -474,7 +499,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
             </motion.div>
           )}
 
-          {/* Details Modal (Date) */}
+          {/* Details Modal */}
           {activeView === 'details' && (
             <motion.div 
               initial={{ x: '100%', opacity: 0.5 }} 
@@ -487,9 +512,10 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                 <button onClick={() => { hapticFeedback('light'); setActiveView('main'); }} className="p-2 hover:bg-white/10 rounded-full transition-colors mr-2">
                   <ChevronLeft size={24} />
                 </button>
-                <h2 className="text-lg font-bold">تغيير التاريخ</h2>
+                <h2 className="text-lg font-bold">تفاصيل إضافية</h2>
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-6 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+                {/* Date */}
                 <div className="space-y-3">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
                     <Calendar size={16} /> التاريخ
@@ -501,6 +527,46 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                     className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm font-bold outline-none focus:border-indigo-500"
                   />
                 </div>
+
+                {/* Note */}
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <AlignLeft size={16} /> ملاحظة
+                  </label>
+                  <textarea
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="ملاحظات إضافية..."
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm font-bold outline-none focus:border-indigo-500 min-h-[100px] resize-none"
+                  />
+                </div>
+
+                {/* Payment Method (only for expense) */}
+                {type === 'expense' && (
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <Layers size={16} /> طريقة الدفع
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['cash', 'card', 'transfer'] as PaymentMethod[]).map(method => (
+                        <button
+                          key={method}
+                          type="button"
+                          onClick={() => setPaymentMethod(method)}
+                          className={cn(
+                            "py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all",
+                            paymentMethod === method
+                              ? "bg-rose-500 text-white shadow-md shadow-rose-500/20"
+                              : "bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-500 hover:border-rose-500/30"
+                          )}
+                        >
+                          {method === 'cash' ? 'كاش' : method === 'card' ? 'بطاقة' : 'تحويل'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <button 
                   onClick={() => { hapticFeedback('light'); setActiveView('main'); }}
                   className={cn("w-full py-4 rounded-xl font-bold text-white shadow-lg", bgColor)}
