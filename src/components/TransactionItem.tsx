@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, useMotionValue, useTransform } from 'motion/react';
+import { motion, useMotionValue, useTransform, AnimatePresence } from 'motion/react';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Trash, Pencil, Copy, Calendar, Building2, ArrowDown, ArrowRightLeft, ChevronRight } from 'lucide-react';
@@ -38,6 +38,8 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
   const typeColor = isTransfer ? 'text-indigo-500' : (!isExpense ? 'text-emerald-500' : category?.type === 'need' ? 'text-indigo-500' : category?.type === 'want' ? 'text-amber-500' : 'text-rose-500');
   const bgColor = isTransfer ? '#6366f1' : (!isExpense ? '#10b981' : category?.color || '#f43f5e');
 
+  const [showConfirmDelete, setShowConfirmDelete] = React.useState(false);
+  
   const x = useMotionValue(0);
   
   // Dynamic values for buttons based on swipe (swiping right in RTL reveals left side)
@@ -59,10 +61,16 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
     x.set(0);
   };
 
-  const handleDelete = () => {
+  const handleDeleteClick = () => {
+    hapticFeedback('medium');
+    setShowConfirmDelete(true);
+    x.set(0);
+  };
+
+  const confirmDelete = () => {
     hapticFeedback('heavy');
     onDelete(transaction.id, transaction.type);
-    x.set(0);
+    setShowConfirmDelete(false);
   };
 
   return (
@@ -79,6 +87,35 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
       }}
       className="relative overflow-hidden"
     >
+      <AnimatePresence>
+        {showConfirmDelete && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-center justify-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm p-6"
+          >
+            <div className="flex flex-col items-center justify-center gap-4 text-center">
+              <p className="text-sm md:text-lg font-bold text-slate-900 dark:text-white">هل أنت متأكد من حذف هذه المعاملة؟</p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowConfirmDelete(false)} 
+                  className="px-4 py-2 md:px-6 md:py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs md:text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                  إلغاء
+                </button>
+                <button 
+                  onClick={confirmDelete} 
+                  className="px-4 py-2 md:px-6 md:py-2.5 rounded-xl bg-rose-500 text-white font-bold text-xs md:text-sm shadow-md shadow-rose-500/20 active:scale-95 transition-all outline outline-2 outline-rose-500/0 hover:outline-rose-500 hover:bg-white hover:text-rose-500 dark:hover:bg-slate-900"
+                >
+                  تأكيد الحذف
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Swipe Background (Action Buttons) */}
       <div className="absolute inset-y-0 left-0 flex items-center justify-start pl-6 pr-4 gap-2 md:gap-3 bg-slate-50 dark:bg-slate-800/50 w-full z-0 border-b border-slate-100 dark:border-slate-800">
         {!isTransfer && isExpense && (
@@ -103,7 +140,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
         )}
         <motion.button
           style={{ opacity, scale, x: deleteX }}
-          onClick={handleDelete}
+          onClick={handleDeleteClick}
           className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-md shadow-rose-500/20 active:scale-95 transition-transform"
           title="حذف"
         >
@@ -219,7 +256,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
             )}
             
             <button 
-              onClick={() => { hapticFeedback('medium'); onDelete(transaction.id, transaction.type); }}
+              onClick={handleDeleteClick}
               className="p-3 md:p-4 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl md:rounded-3xl transition-all opacity-0 group-hover:opacity-100 shadow-sm"
               title="حذف"
             >

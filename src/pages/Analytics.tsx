@@ -8,11 +8,12 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { DynamicIcon } from '../components/DynamicIcon';
 import { motion, useAnimation, useMotionValue, useTransform } from 'motion/react';
 import { Calendar, TrendingUp, ChartPie as PieChartIcon, ChartColumn as BarChart3, ArrowUpRight, ArrowDownRight, Activity, Target, ShieldCheck, TriangleAlert, Lightbulb, Sparkles, RefreshCw } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useWindowSize } from '../hooks/useWindowSize';
 import { useBehavioralEngine } from '../hooks/useBehavioralEngine';
 
 const Analytics = () => {
-  const { expenses, income = [], categories, currency, budget, dailyBudget, firstDayOfMonth } = useAppContext();
+  const { expenses, income = [], categories, currency, budget, dailyBudget, firstDayOfMonth, aiInsights } = useAppContext();
   const { width } = useWindowSize();
   const { insights } = useBehavioralEngine();
   const [rangeType, setRangeType] = useState<'monthly' | 'custom'>('monthly');
@@ -61,6 +62,36 @@ const Analytics = () => {
   const totalMonthlyExpense = useMemo(() => filteredExpenses.reduce((sum, e) => sum + e.amount, 0), [filteredExpenses]);
   const totalMonthlyIncome = useMemo(() => filteredIncome.reduce((sum, i) => sum + i.amount, 0), [filteredIncome]);
   const netBalance = useMemo(() => totalMonthlyIncome - totalMonthlyExpense, [totalMonthlyIncome, totalMonthlyExpense]);
+
+  const budgetStrategy = useMemo(() => {
+    const targetNeeds = totalMonthlyIncome * 0.5;
+    const targetWants = totalMonthlyIncome * 0.3;
+    const targetSavings = totalMonthlyIncome * 0.2;
+
+    let actualNeeds = 0;
+    let actualWants = 0;
+    let actualSavings = 0;
+
+    filteredExpenses.forEach(exp => {
+      const cat = categories.find(c => c.id === exp.categoryId);
+      const type = cat?.type || 'need';
+      if (type === 'want') actualWants += exp.amount;
+      else if (type === 'saving') actualSavings += exp.amount;
+      else actualNeeds += exp.amount; // need
+    });
+
+    if (netBalance > 0) {
+      actualSavings += netBalance;
+    }
+
+    const totalForPercentage = totalMonthlyIncome > 0 ? totalMonthlyIncome : 1; 
+
+    return {
+      needs: { actual: actualNeeds, target: targetNeeds, percentage: (actualNeeds / totalForPercentage) * 100 },
+      wants: { actual: actualWants, target: targetWants, percentage: (actualWants / totalForPercentage) * 100 },
+      savings: { actual: actualSavings, target: targetSavings, percentage: (actualSavings / totalForPercentage) * 100 }
+    };
+  }, [filteredExpenses, totalMonthlyIncome, netBalance, categories]);
 
   const categoryData = useMemo(() => {
     const categorySums = filteredExpenses.reduce((acc, e) => {
@@ -561,7 +592,226 @@ const Analytics = () => {
         </div>
       )}
 
+      {/* AI Advisor Tips Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-500">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">نصائح المستشار الذكي</h2>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">تحليل مدعوم بالذكاء الاصطناعي (AI)</p>
+            </div>
+          </div>
+          <Link to="/assistant" className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all focus:ring-2 focus:ring-indigo-500/50">
+            الذهاب للمساعد
+          </Link>
+        </div>
+
+        {aiInsights?.advice && aiInsights.advice.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {aiInsights.advice.slice(0, 3).map((item, index) => (
+              <motion.div
+                key={index}
+                variants={itemVariants}
+                className={cn(
+                  "p-6 rounded-3xl border shadow-sm relative overflow-hidden group transition-all duration-300 hover:shadow-md",
+                  item.priority === 'high' ? 'bg-rose-50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-500/20' : 
+                  item.priority === 'medium' ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-500/20' : 
+                  'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-500/20'
+                )}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <h4 className="text-base font-black text-slate-900 dark:text-white tracking-tight leading-tight">{item.title}</h4>
+                  <span className={cn(
+                    "px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shrink-0",
+                    item.priority === 'high' ? 'text-rose-500 bg-rose-100/50 border-rose-200 dark:bg-rose-900/30' : 
+                    item.priority === 'medium' ? 'text-amber-500 bg-amber-100/50 border-amber-200 dark:bg-amber-900/30' : 
+                    'text-emerald-500 bg-emerald-100/50 border-emerald-200 dark:bg-emerald-900/30'
+                  )}>
+                    {item.priority === 'high' ? 'أولوية قصوى' : item.priority === 'medium' ? 'متوسط' : 'منخفض'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed mb-4 line-clamp-3">
+                  {item.advice}
+                </p>
+                <div className="flex items-center gap-2 p-3 bg-white/50 dark:bg-black/20 rounded-xl outline outline-1 outline-black/5 dark:outline-white/5 mt-auto">
+                  <ShieldCheck className={cn(
+                    "w-4 h-4 shrink-0",
+                    item.priority === 'high' ? 'text-rose-500' : 
+                    item.priority === 'medium' ? 'text-amber-500' : 
+                    'text-emerald-500'
+                  )} />
+                  <span className="text-[10px] font-black uppercase tracking-tight text-slate-700 dark:text-slate-300 truncate">{item.actionItem}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <motion.div variants={itemVariants} className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-8 border border-slate-100 dark:border-slate-800 text-center flex flex-col items-center justify-center shadow-sm">
+            <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-500 rounded-2xl flex items-center justify-center mb-4">
+              <Sparkles size={32} />
+            </div>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">استشر الذكاء الاصطناعي</h3>
+            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-6 max-w-sm mx-auto">
+              لم تقم بتوليد أي نصائح مالية مدعومة بالذكاء الاصطناعي حتى الآن. انتقل إلى المستشار للحصول على تحليل مخصص لحالتك.
+            </p>
+            <Link to="/assistant" className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-sm">
+              بدء التحليل الذكي
+            </Link>
+          </motion.div>
+        )}
+      </div>
+
       {/* 4. 50/30/20 Budgeting Strategy */}
+      <motion.div
+        variants={itemVariants}
+        className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group"
+      >
+        <div className="absolute -left-20 -top-20 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000" />
+        
+        <div className="relative z-10 space-y-8">
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+            <div className="space-y-3">
+              <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase flex items-center gap-3">
+                <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-500">
+                  <PieChartIcon className="w-5 h-5" />
+                </div>
+                استراتيجية 50/30/20
+              </h2>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl">
+                هذه القاعدة توصي بتخصيص <span className="text-rose-500 bg-rose-50 dark:bg-rose-500/10 px-1 rounded">50% للاحتياجات</span> الأساسية، <span className="text-amber-500 bg-amber-50 dark:bg-amber-500/10 px-1 rounded">30% للرغبات</span>، و <span className="text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-1 rounded">20% للادخار</span> أو سداد الديون.
+              </p>
+            </div>
+            
+            <div className="bg-slate-50 dark:bg-slate-800/50 px-5 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 text-center shrink-0">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">الأساس المحسوب (الدخل)</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white">{formatCurrency(totalMonthlyIncome, currency)}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+            {/* Needs */}
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-3xl border border-slate-100 dark:border-slate-700/50 relative overflow-hidden transition-all hover:border-rose-500/30">
+                <div className="absolute right-0 top-0 w-1.5 h-full bg-rose-500 rounded-r-3xl" />
+                <div className="flex justify-between items-center mb-5 pl-2 pr-4">
+                  <div className="flex items-center gap-2 text-rose-500">
+                    <Activity className="size-4" />
+                    <span className="font-black text-sm tracking-tight uppercase">الاحتياجات <span className="opacity-60 text-xs">(50%)</span></span>
+                  </div>
+                  <span className="font-black text-xs text-slate-500 bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg shadow-sm">{budgetStrategy.needs.percentage.toFixed(1)}%</span>
+                </div>
+                
+                <div className="space-y-4 pr-4">
+                  <div>
+                    <div className="flex justify-between items-baseline mb-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">المنصرف الفعلي</span>
+                      <span className={cn("font-black", budgetStrategy.needs.actual > budgetStrategy.needs.target ? "text-rose-500" : "text-slate-900 dark:text-white")}>{formatCurrency(budgetStrategy.needs.actual, currency)}</span>
+                    </div>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">الهدف المتوقع</span>
+                      <span className="font-bold text-slate-400">{formatCurrency(budgetStrategy.needs.target, currency)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="w-full bg-slate-200 dark:bg-slate-700/50 rounded-full h-2.5 overflow-hidden shadow-inner">
+                    <div className={cn("h-full transition-all duration-1000", budgetStrategy.needs.percentage > 50 ? "bg-rose-500" : "bg-rose-400")} style={{ width: `${Math.min(100, budgetStrategy.needs.percentage)}%` }} />
+                  </div>
+
+                  {budgetStrategy.needs.percentage > 50 && (
+                    <p className="text-[10px] font-bold text-rose-500 flex items-center gap-1.5 mt-2 bg-rose-50 dark:bg-rose-500/10 p-2 rounded-xl">
+                      <TriangleAlert className="size-3 shrink-0" />
+                      تجاوزت الحد الموصى به للاحتياجات
+                    </p>
+                  )}
+                </div>
+            </div>
+
+            {/* Wants */}
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-3xl border border-slate-100 dark:border-slate-700/50 relative overflow-hidden transition-all hover:border-amber-500/30">
+                <div className="absolute right-0 top-0 w-1.5 h-full bg-amber-500 rounded-r-3xl" />
+                <div className="flex justify-between items-center mb-5 pl-2 pr-4">
+                  <div className="flex items-center gap-2 text-amber-500">
+                    <Sparkles className="size-4" />
+                    <span className="font-black text-sm tracking-tight uppercase">الرغبات <span className="opacity-60 text-xs">(30%)</span></span>
+                  </div>
+                  <span className="font-black text-xs text-slate-500 bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg shadow-sm">{budgetStrategy.wants.percentage.toFixed(1)}%</span>
+                </div>
+                
+                <div className="space-y-4 pr-4">
+                  <div>
+                    <div className="flex justify-between items-baseline mb-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">المنصرف الفعلي</span>
+                      <span className={cn("font-black", budgetStrategy.wants.actual > budgetStrategy.wants.target ? "text-amber-500" : "text-slate-900 dark:text-white")}>{formatCurrency(budgetStrategy.wants.actual, currency)}</span>
+                    </div>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">الهدف المتوقع</span>
+                      <span className="font-bold text-slate-400">{formatCurrency(budgetStrategy.wants.target, currency)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="w-full bg-slate-200 dark:bg-slate-700/50 rounded-full h-2.5 overflow-hidden shadow-inner">
+                    <div className={cn("h-full transition-all duration-1000", budgetStrategy.wants.percentage > 30 ? "bg-amber-500" : "bg-amber-400")} style={{ width: `${Math.min(100, budgetStrategy.wants.percentage)}%` }} />
+                  </div>
+
+                  {budgetStrategy.wants.percentage > 30 && (
+                    <p className="text-[10px] font-bold text-amber-500 flex items-center gap-1.5 mt-2 bg-amber-50 dark:bg-amber-500/10 p-2 rounded-xl">
+                      <TriangleAlert className="size-3 shrink-0" />
+                      تجاوزت الحد الموصى به للرغبات
+                    </p>
+                  )}
+                </div>
+            </div>
+
+            {/* Savings */}
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-3xl border border-slate-100 dark:border-slate-700/50 relative overflow-hidden transition-all hover:border-emerald-500/30">
+                <div className="absolute right-0 top-0 w-1.5 h-full bg-emerald-500 rounded-r-3xl" />
+                <div className="flex justify-between items-center mb-5 pl-2 pr-4">
+                  <div className="flex items-center gap-2 text-emerald-500">
+                    <Target className="size-4" />
+                    <span className="font-black text-sm tracking-tight uppercase">الادخار <span className="opacity-60 text-xs">(20%)</span></span>
+                  </div>
+                  <span className="font-black text-xs text-slate-500 bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg shadow-sm">{budgetStrategy.savings.percentage.toFixed(1)}%</span>
+                </div>
+                
+                <div className="space-y-4 pr-4">
+                  <div>
+                    <div className="flex justify-between items-baseline mb-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">المُدخر الفعلي</span>
+                      <span className={cn("font-black", budgetStrategy.savings.actual < budgetStrategy.savings.target ? "text-emerald-500/70" : "text-emerald-500")}>{formatCurrency(budgetStrategy.savings.actual, currency)}</span>
+                    </div>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">الهدف المتوقع</span>
+                      <span className="font-bold text-slate-400">{formatCurrency(budgetStrategy.savings.target, currency)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="w-full bg-slate-200 dark:bg-slate-700/50 rounded-full h-2.5 overflow-hidden shadow-inner">
+                    <div className="h-full bg-emerald-500 transition-all duration-1000 relative" style={{ width: `${Math.min(100, budgetStrategy.savings.percentage)}%` }}>
+                      {budgetStrategy.savings.percentage >= 100 && (
+                        <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                      )}
+                    </div>
+                  </div>
+
+                  {budgetStrategy.savings.percentage >= 20 ? (
+                    <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 mt-2 bg-emerald-50 dark:bg-emerald-500/10 p-2 rounded-xl">
+                      <ShieldCheck className="size-3 shrink-0" />
+                      أحسنت! حققت هدف الادخار لهذا الشهر
+                    </p>
+                  ) : (
+                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-2">
+                       تحتاج لادخار <span className="text-slate-900 dark:text-white">{formatCurrency(budgetStrategy.savings.target - budgetStrategy.savings.actual, currency)}</span> للوصول للهدف
+                    </p>
+                  )}
+                </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* 5. Daily Budget Performance */}
       <div className="space-y-6">
         {/* Daily Budget Performance Section */}
         <motion.div
