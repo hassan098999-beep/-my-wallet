@@ -215,13 +215,30 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: '100%', scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: '100%', scale: 0.95 }}
-          transition={{ duration: 0.4, type: 'spring', bounce: 0.25 }}
-          className="fixed inset-0 z-[150] bg-white dark:bg-slate-900 flex flex-col overflow-hidden"
-        >
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-0 sm:p-6 md:p-10 overflow-hidden">
+          {/* Backdrop Blur Overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => { hapticFeedback('light'); onClose(); }}
+            className="absolute inset-0 bg-slate-950/40 dark:bg-slate-950/60 backdrop-blur-sm cursor-pointer"
+          />
+
+          {/* Main Modal Card */}
+          <motion.div
+            initial={{ opacity: 0, y: '50%', scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: '100%', scale: 0.95 }}
+            transition={{ 
+              type: 'spring',
+              damping: 26,
+              stiffness: 280,
+              mass: 0.9
+            }}
+            className="w-full h-full sm:h-[85vh] sm:max-h-[850px] sm:max-w-lg bg-white dark:bg-slate-900 flex flex-col overflow-hidden sm:rounded-3xl sm:shadow-2xl z-20 relative border-0 sm:border border-slate-100 dark:border-slate-800"
+          >
           {activeView === 'main' && (
             <div className="flex flex-col h-full">
               {/* Top Section */}
@@ -577,7 +594,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
             </motion.div>
           )}
 
-        </motion.div>
+          </motion.div>
+        </div>
       )}
     </AnimatePresence>
   );

@@ -76,14 +76,15 @@ const OnboardingModal: React.FC = () => {
                     <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center text-primary-600 dark:text-primary-400 mb-4">
                       <Sparkles size={24} />
                     </div>
-                    <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">مرحباً بك في <span className="text-primary-500">مصاريفي</span></h2>
-                    <p className="text-slate-500 dark:text-slate-400 font-bold">لنقم بإعداد تطبيقك في ثوانٍ معدودة لنبدأ رحلة تنظيم أموالك.</p>
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">مرحباً بك في <span className="text-primary-500">مصاريفي العائلية</span></h2>
+                    <p className="text-slate-500 dark:text-slate-400 font-bold">المستشار المالي الذكي للعائلات التونسية الشابة (أب، أم، ورضيع).</p>
+                    <p className="text-xs text-slate-400 mt-1 font-bold">مصمم لمساعدتكم في موازنة قفة الشهر، حفاظات وحليب الرضيع، صحة طفلكم، وفواتير السكن (STEG/SONEDE) بكل يسر.</p>
                     
-                    <div className="space-y-3 mt-8 p-6 rounded-3xl bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500 flex items-center gap-4">
+                    <div className="space-y-3 mt-8 p-6 rounded-3xl bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500 flex items-center gap-4 text-right">
                       <span className="text-4xl">🇹🇳</span>
                       <div>
                         <p className="text-lg font-black text-primary-600 dark:text-primary-400">الدينار التونسي</p>
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">TND (المليم)</p>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">TND (1 دينار = 1000 مليم)</p>
                       </div>
                     </div>
                   </div>

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { cn, formatCurrency, hapticFeedback } from '../utils';
 import { Skeleton, TransactionSkeleton } from '../components/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Plus, Trash, Pencil, RefreshCcw, Calendar, CreditCard, Wallet, ArrowRightLeft, AlertCircle, Clock, X } from 'lucide-react';
+import { Plus, Trash, Pencil, RefreshCcw, Calendar, CreditCard, Wallet, ArrowRightLeft, AlertCircle, Clock, X, BarChart3, Receipt } from 'lucide-react';
 import { DynamicIcon } from '../components/DynamicIcon';
 import { PaymentMethod, RecurringInterval, RecurringExpense } from '../types';
 import { CategorySelect } from '../components/CategorySelect';
@@ -31,6 +31,35 @@ const RecurringExpenses = () => {
   const [selectedDayOfMonth, setSelectedDayOfMonth] = useState(1);
   const [selectedMonthOfYear, setSelectedMonthOfYear] = useState(0); // 0 = January
   const [selectedDayOfYear, setSelectedDayOfYear] = useState(1);
+
+  const summaryStats = useMemo(() => {
+    let totalMonthlyCommitted = 0;
+    (recurringExpenses || []).forEach(exp => {
+      if (exp.interval === 'daily') {
+        totalMonthlyCommitted += exp.amount * 30;
+      } else if (exp.interval === 'weekly') {
+        totalMonthlyCommitted += exp.amount * 4.33;
+      } else if (exp.interval === 'monthly') {
+        totalMonthlyCommitted += exp.amount;
+      } else if (exp.interval === 'yearly') {
+        totalMonthlyCommitted += exp.amount / 12;
+      }
+    });
+
+    let soonestExpense: RecurringExpense | null = null;
+    if (recurringExpenses && recurringExpenses.length > 0) {
+      const sortedByNextDate = [...recurringExpenses].sort(
+        (a, b) => parseISO(a.nextDate).getTime() - parseISO(b.nextDate).getTime()
+      );
+      soonestExpense = sortedByNextDate[0];
+    }
+
+    return {
+      activeCount: recurringExpenses ? recurringExpenses.length : 0,
+      monthlyBurden: totalMonthlyCommitted,
+      soonest: soonestExpense
+    };
+  }, [recurringExpenses]);
 
   const intervalLabels: Record<RecurringInterval, string> = {
     daily: 'يومياً',
@@ -204,6 +233,61 @@ const RecurringExpenses = () => {
           <span>{isAdding ? 'إلغاء' : 'إضافة مصروف متكرر'}</span>
         </motion.button>
       </div>
+
+      {/* Commitment Metric Dashboard */}
+      <motion.div 
+        variants={itemVariants} 
+        className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 px-2"
+      >
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-5 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm relative overflow-hidden group">
+          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-colors" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-500 flex items-center justify-center">
+              <Receipt size={22} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">العبء المالي الشهري</p>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none mt-1">
+                {formatCurrency(summaryStats.monthlyBurden, currency)}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-5 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm relative overflow-hidden group">
+          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 flex items-center justify-center">
+              <BarChart3 size={22} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">الالتزامات النشطة</p>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none mt-1">
+                {summaryStats.activeCount} {summaryStats.activeCount === 1 ? 'التزام' : summaryStats.activeCount >= 3 && summaryStats.activeCount <= 10 ? 'التزامات' : 'التزاماً'}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-5 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm relative overflow-hidden group">
+          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-colors" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/40 text-amber-500 flex items-center justify-center">
+              <Calendar size={22} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">أقرب دفعة قادمة</p>
+              <h3 className="text-sm md:text-base font-black text-slate-900 dark:text-white leading-none mt-2 truncate max-w-[180px]">
+                {summaryStats.soonest ? (
+                  format(parseISO(summaryStats.soonest.nextDate), 'dd MMMM yyyy', { locale: ar })
+                ) : (
+                  'لا توجد مدفوعات'
+                )}
+              </h3>
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
       <AnimatePresence>
         {isAdding && (

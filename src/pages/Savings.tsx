@@ -7,12 +7,29 @@ import { Skeleton } from '../components/Skeleton';
 import { motion } from 'motion/react';
 import { PiggyBank, Target, ArrowRight, TrendingUp, Percent, Sparkles, Link as LinkIcon } from 'lucide-react';
 import { Goal } from '../types';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 const SavingsPage = () => {
   const { income, expenses, goals, updateGoal, currency, budget, categories, firstDayOfMonth } = useAppContext();
 
   const [savingsPercentage, setSavingsPercentage] = useState(10);
   const [customAllocations, setCustomAllocations] = useState<Record<string, number>>({});
+
+  const pieData = useMemo(() => {
+    return (goals || [])
+      .map((g, idx) => {
+        const colors = [
+          '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', 
+          '#06b6d4', '#14b8a6', '#f43f5e', '#a855f7', '#64748b'
+        ];
+        return {
+          name: g.name,
+          value: g.currentAmount || 0,
+          color: colors[idx % colors.length]
+        };
+      })
+      .filter(item => item.value > 0);
+  }, [goals]);
 
   const currentMonth = useMemo(() => getBudgetMonth(new Date(), firstDayOfMonth), [firstDayOfMonth]);
   const { start: monthStart, end: monthEnd } = useMemo(() => getBudgetRange(currentMonth, firstDayOfMonth), [currentMonth, firstDayOfMonth]);
@@ -203,6 +220,68 @@ const SavingsPage = () => {
             />
           </div>
         </div>
+
+        {/* Target Allocation Visual Breakdown */}
+        {pieData.length > 0 && (
+          <motion.div 
+            variants={itemVariants}
+            className="p-5 rounded-3xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 shadow-sm mt-6"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-500">
+                <Target size={18} />
+              </div>
+              <div>
+                <h3 className="text-xs md:text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">تحليل حصة الأهداف</h3>
+                <p className="text-[10px] text-slate-400 font-bold">نسبة كل هدف من إجمالي المبالغ الادخارية المتراكمة</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+              <div className="w-full lg:w-1/2 h-44 md:h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="55%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={70}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: any) => [formatCurrency(value, currency), 'المدخرات']} 
+                      contentStyle={{ borderRadius: '1rem', background: '#1e293b', border: 'none', color: '#fff', fontSize: '11px', fontWeight: 'bold' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="w-full lg:w-1/2 grid grid-cols-2 gap-3">
+                {pieData.map((item, index) => {
+                  const totalCalculated = pieData.reduce((sum, item) => sum + item.value, 0);
+                  const percent = totalCalculated > 0 ? ((item.value / totalCalculated) * 100).toFixed(0) : 0;
+                  return (
+                    <div key={index} className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                      <div className="w-3.5 h-3.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] sm:text-xs font-black text-slate-700 dark:text-slate-300 truncate leading-none mb-1">{item.name}</p>
+                        <p className="text-[9px] font-bold text-slate-400">
+                          {percent}% ({formatCurrency(item.value, currency)})
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         <div className="mt-6 md:mt-8 pt-6 md:pt-8 border-t border-slate-100 dark:border-slate-800">
           <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-4 md:p-6 rounded-2xl md:rounded-3xl text-white shadow-md shadow-emerald-500/20 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">

@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn, hapticFeedback } from '../../utils';
 
 const CategoryManager = () => {
-  const { categories, addCategory, updateCategory, deleteCategory, reorderCategories } = useAppContext();
+  const { categories, addCategory, updateCategory, deleteCategory, reorderCategories, applyTunisianFamilyTemplate } = useAppContext();
   const [localCategories, setLocalCategories] = useState(categories);
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState('#3b82f6');
@@ -182,10 +182,22 @@ const CategoryManager = () => {
           <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
             <button 
               onClick={handleSyncSubcategories}
-              className="px-4 py-2 rounded-xl border-2 border-dashed border-primary-500/30 text-primary-600 dark:text-primary-400 font-black text-[10px] uppercase tracking-widest hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all flex items-center justify-center gap-2"
+              className="px-4 py-2 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
             >
               <Sparkles size={14} />
               تحديث المقترحات
+            </button>
+            <button 
+              onClick={async () => {
+                hapticFeedback('heavy');
+                const loadingToast = toast.loading('جاري تطبيق قالب ميزانية العائلة التونسية...');
+                await applyTunisianFamilyTemplate();
+                toast.dismiss(loadingToast);
+              }}
+              className="px-4 py-2 rounded-xl border-2 border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-400 font-black text-[10px] uppercase tracking-widest hover:bg-primary-500 hover:text-white transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span className="text-xs">🇹🇳</span>
+              تطبيق قالب العائلة التونسية
             </button>
             <div className="relative group w-full md:w-56">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 size-3.5" />

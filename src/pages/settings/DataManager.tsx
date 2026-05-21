@@ -24,6 +24,8 @@ const DataManager = () => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [backups, setBackups] = useState<BackupRecord[]>([]);
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
+  const [backupToRestore, setBackupToRestore] = useState<BackupRecord | null>(null);
+  const [backupToDelete, setBackupToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const handleInstallPrompt = () => {
@@ -103,23 +105,34 @@ const DataManager = () => {
 
   const handleRestoreBackup = (backup: BackupRecord) => {
     hapticFeedback('medium');
-    if(window.confirm('هل أنت متأكد من استعادة هذه النسخة؟ سيتم استبدال البيانات الحالية.')) {
-      importData(backup.data);
+    setBackupToRestore(backup);
+  };
+
+  const confirmRestoreBackup = () => {
+    if (backupToRestore) {
+      importData(backupToRestore.data);
+      setBackupToRestore(null);
     }
   };
 
-  const handleDeleteBackup = async (id: string) => {
+  const handleDeleteBackup = (id: string) => {
     hapticFeedback('light');
-    if(window.confirm('هل أنت متأكد من حذف هذه النسخة الاحتياطية نهائياً؟')) {
+    setBackupToDelete(id);
+  };
+
+  const confirmDeleteBackup = async () => {
+    if (backupToDelete) {
       try {
-        await deleteBackupFromDB(id);
+        await deleteBackupFromDB(backupToDelete);
         if (user) {
-          await deleteDoc(doc(db, 'users', user.uid, 'backups', id));
+          await deleteDoc(doc(db, 'users', user.uid, 'backups', backupToDelete));
         }
         toast.success('تم حذف النسخة الاحتياطية');
         loadBackups();
       } catch(err) {
         toast.error('حدث خطأ أثناء الحذف');
+      } finally {
+        setBackupToDelete(null);
       }
     }
   };
@@ -358,7 +371,7 @@ const DataManager = () => {
 
       <AnimatePresence>
         {showResetConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -391,6 +404,86 @@ const DataManager = () => {
                   className="py-4 rounded-2xl font-black bg-rose-600 text-white shadow-lg shadow-rose-600/20 hover:bg-rose-700 transition-all text-sm uppercase tracking-widest"
                 >
                   نعم، احذف الكل
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {backupToRestore && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-6 md:p-8 shadow-md border border-slate-100 dark:border-slate-800"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <Clock size={24} />
+                </div>
+                <button onClick={() => setBackupToRestore(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">تأكيد استعادة النسخة</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-bold mb-8 leading-relaxed">
+                هل أنت متأكد من استعادة النسخة الاحتياطية "{backupToRestore.name}"؟ سيؤدي ذلك إلى استبدال كافة بياناتك المتوفرة حالياً.
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={() => setBackupToRestore(null)}
+                  className="py-4 rounded-2xl font-black text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm uppercase tracking-widest"
+                >
+                  إلغاء
+                </button>
+                <button 
+                  onClick={confirmRestoreBackup}
+                  className="py-4 rounded-2xl font-black bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all text-sm uppercase tracking-widest"
+                >
+                  تأكيد الاستعادة
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {backupToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-6 md:p-8 shadow-md border border-slate-100 dark:border-slate-800"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                  <TriangleAlert size={24} />
+                </div>
+                <button onClick={() => setBackupToDelete(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">حذف نسخة احتياطية</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-bold mb-8 leading-relaxed">
+                هل أنت متأكد من حذف هذه النسخة الاحتياطية نهائياً؟ ستختفي البيانات ولن تتمكن من استعادتها مرة أخرى.
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={() => setBackupToDelete(null)}
+                  className="py-4 rounded-2xl font-black text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm uppercase tracking-widest"
+                >
+                  إلغاء
+                </button>
+                <button 
+                  onClick={confirmDeleteBackup}
+                  className="py-4 rounded-2xl font-black bg-rose-600 text-white shadow-lg shadow-rose-600/20 hover:bg-rose-700 transition-all text-sm uppercase tracking-widest"
+                >
+                  حذف نهائي
                 </button>
               </div>
             </motion.div>

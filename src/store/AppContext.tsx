@@ -26,12 +26,12 @@ import {
 import { User } from 'firebase/auth';
 
 const DEFAULT_CATEGORIES: Category[] = [
-  { id: '1', name: 'طعام', color: '#ef4444', icon: 'UtensilsCrossed', type: 'need', subcategories: ['بقالة', 'مطاعم', 'وجبات سريعة'] },
-  { id: '2', name: 'قهوة', color: '#f97316', icon: 'Coffee', type: 'want', subcategories: ['مقهى', 'عمل', 'منزل'] },
-  { id: '3', name: 'نقل', color: '#3b82f6', icon: 'BusFront', type: 'need', subcategories: ['تاكسي', 'نقل عمومي', 'وقود', 'صيانة'] },
-  { id: '4', name: 'بيت', color: '#10b981', icon: 'House', type: 'need', subcategories: ['إيجار', 'كهرباء', 'ماء', 'إنترنت'] },
-  { id: '5', name: 'شخصي', color: '#8b5cf6', icon: 'User', type: 'want', subcategories: ['ملابس', 'صحة', 'رياضة'] },
-  { id: '6', name: 'أخرى', color: '#64748b', icon: 'LayoutGrid', type: 'want' },
+  { id: '1', name: 'قضية السوق والقفة', color: '#ef4444', icon: 'UtensilsCrossed', type: 'need', subcategories: ['قضية السوق (خضار وغلال)', 'العطار وعزيزة والمغازات', 'خبز وحليب الصباح', 'لحوم وأسماك'] },
+  { id: '2', name: 'لوازم ومصروف الرضيع', color: '#06b6d4', icon: 'Baby', type: 'need', subcategories: ['حفاضات وحليب الرضع', 'روضة ومحضنة', 'ألعاب ومستلزمات البيبي', 'ملابس الرضيع'] },
+  { id: '3', name: 'البيت والفواتير', color: '#10b981', icon: 'House', type: 'need', subcategories: ['إيجار المنزل', 'فاتورة الستاغ (STEG)', 'فاتورة الصوناد (SONEDE)', 'إنترنت واشتراك هاتف'] },
+  { id: '4', name: 'نقل وتنقل', color: '#3b82f6', icon: 'BusFront', type: 'need', subcategories: ['وقود وبنزين السيارة', 'تاكسي ولوواج ونقل عمومي', 'تصليح وصيانة السيارة', 'تأمين ومعلوم جولان'] },
+  { id: '5', name: 'صحة وطبيب الأطفال', color: '#ec4899', icon: 'HeartPulse', type: 'need', subcategories: ['فيزيتا طبيب الأطفال', 'تلاقيح وأدوية الصيدلية', 'تحاليل وصور طبية', 'كشف وعلاج العائلة'] },
+  { id: '6', name: 'ترفيه ومقهى ومواسم', color: '#f59e0b', icon: 'Coffee', type: 'want', subcategories: ['مقهى وشاي', 'خرجة عائلية ومنزه', 'أعياد ومناسبات', 'أخرى وطارئة'] },
 ];
 
 const DEFAULT_ACCOUNTS: Account[] = [
@@ -45,7 +45,7 @@ const INITIAL_STATE: AppState = {
   categories: DEFAULT_CATEGORIES,
   accounts: DEFAULT_ACCOUNTS,
   budget: null,
-  dailyBudget: 14,
+  dailyBudget: 25, // default daily budget in Dinars is around 25 TND for a Tunisian family
   rollingBudgetEnabled: true,
   theme: 'light',
   currency: 'TND',
@@ -58,6 +58,43 @@ const INITIAL_STATE: AppState = {
   firstDayOfMonth: 1,
   bestStreak: 0,
   offlineMode: false,
+  aiInsights: {
+    advice: [
+      {
+        title: 'استراتيجية شراء مستلزمات الرضيع',
+        advice: 'شراء الحفاضات (الكوش) وحليب الأطفال بالعلب الكبيرة ومن مغازات الجملة يوفر ما بين 15% إلى 20% مقارنة بالصيدليات أو محلات العطارة الصغيرة.',
+        actionItem: 'قم بجدولة كميات شهرية واشترِ من فضاءات البيع بالجملة الكبرى.',
+        priority: 'high'
+      },
+      {
+        title: 'ترشيد استهلاك الكهرباء (STEG)',
+        advice: 'فواتير الشركة التونسية للكهرباء والغاز ترتفع بسرعة عند تجاوز الشريحة الاقتصادية. افصل الأجهزة ومكيفات الهواء في الغرف غير المستخدمة لتجنب فاتورة الستاغ التقديرية المرتفعة.',
+        actionItem: 'تثبيت استهلاك الطاقة واحرص على تسجيل قراءة العداد بانتظام.',
+        priority: 'medium'
+      },
+      {
+        title: 'صندوق طوارئ لرعاية الرضيع والصحة',
+        advice: 'بوجود رضيع صغير، تعتبر مصاريف طبيب الأطفال والأدوية والصيدلية أساسية ومفاجئة. ننصح بتخصيص 10% إلى 15% من الدخل كصندوق طوارئ صحي غير قابل للمس.',
+        actionItem: 'افتح حساب توفير فرعي باسم "الرضيع والصحة" وضع فيه مبلغاً ثابتاً شهرياً.',
+        priority: 'high'
+      },
+      {
+        title: 'التخطيط لقفة العائلة الأسبوعية',
+        advice: 'التسوق من "سوق السبت والأحد" للخضار والغلال واللحوم بدلاً من المغازات الكبرى يوفر مبالغ قيمة جداً في تونس وينشط الاقتصاد المحلي.',
+        actionItem: 'حدد يوماً أسبوعياً للتسوق من السوق الأسبوعي الشعبي بقرية قريبة أو حيكم.',
+        priority: 'medium'
+      }
+    ],
+    forecast: [
+      {
+        month: 'المستقبل القريب',
+        predictedBalance: 120,
+        confidence: 85,
+        reasoning: 'بالالتزام بحدود الإنفاق الموصى بها لمصاريف الرضيع والقفة، ستتمكن العائلة التونسية من تحقيق توازن مالي وادخار إيجابي شهرياً.'
+      }
+    ],
+    lastUpdated: new Date().toISOString()
+  }
 };
 
 interface AppContextProps extends AppState {
@@ -108,6 +145,7 @@ interface AppContextProps extends AppState {
   setUserName: (name: string) => void;
   setFirstDayOfMonth: (day: number) => void;
   updateAIInsights: (insights: { advice: any[], forecast: any[] }) => void;
+  applyTunisianFamilyTemplate: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -1507,6 +1545,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const applyTunisianFamilyTemplate = async () => {
+    if (user) {
+      try {
+        const batch = writeBatch(db);
+        
+        // Update user profile doc
+        const userDocRef = doc(db, 'users', user.uid);
+        batch.update(userDocRef, {
+          currency: 'TND',
+          dailyBudget: 25,
+        });
+
+        // First, let's clear existing categories collection in Firestore
+        const existingCatQ = query(collection(db, 'users', user.uid, 'categories'));
+        const existingCatSnapshot = await getDocs(existingCatQ);
+        existingCatSnapshot.docs.forEach(d => batch.delete(d.ref));
+
+        // Add default categories to Firestore
+        DEFAULT_CATEGORIES.forEach((cat, index) => {
+          const catRef = doc(collection(db, 'users', user.uid, 'categories'), cat.id);
+          batch.set(catRef, { ...cat, order: index, uid: user.uid });
+        });
+
+        await batch.commit();
+        
+        // Also update local React state so it switches instantly
+        setState(prev => ({
+          ...prev,
+          currency: 'TND',
+          dailyBudget: 25,
+          categories: DEFAULT_CATEGORIES,
+          aiInsights: INITIAL_STATE.aiInsights
+        }));
+        
+        toast.success('تم تطبيق قالب العائلة التونسية بنجاح ومزامنته!');
+      } catch (error) {
+        console.error('Failed to apply template in Firestore', error);
+        toast.error('حدث خطأ أثناء تطبيق القالب في السحاب');
+      }
+    } else {
+      setState(prev => ({
+        ...prev,
+        currency: 'TND',
+        dailyBudget: 25,
+        categories: DEFAULT_CATEGORIES,
+        aiInsights: INITIAL_STATE.aiInsights
+      }));
+      toast.success('تم تطبيق قالب ميزانية العائلة التونسية بنجاح!');
+    }
+  };
+
   const contextValue = useMemo(() => ({
     ...state,
     user,
@@ -1556,6 +1645,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateAIInsights,
     resetData,
     toggleOfflineMode,
+    applyTunisianFamilyTemplate,
   }), [
     state,
     user,
