@@ -53,32 +53,29 @@ const Layout = () => {
   }, [location.pathname, location.search, setIsAddModalOpen, navigate, prevPath]);
 
   const variants: Variants = {
-    initial: (direction: number) => ({
+    initial: {
       opacity: 0,
-      scale: 0.98,
-      x: direction > 0 ? 30 : direction < 0 ? -30 : 0,
-      y: direction === 0 ? 15 : 0,
-    }),
+      scale: 0.99,
+      y: 8,
+    },
     animate: {
       opacity: 1,
       scale: 1,
-      x: 0,
       y: 0,
       transition: {
-        duration: 0.3,
-        ease: [0.16, 1, 0.3, 1], // Custom spring-like easing
-      },
-    },
-    exit: (direction: number) => ({
-      opacity: 0,
-      scale: 0.98,
-      x: direction > 0 ? -20 : direction < 0 ? 20 : 0,
-      y: direction === 0 ? -10 : 0,
-      transition: {
-        duration: 0.2,
+        duration: 0.25,
         ease: [0.16, 1, 0.3, 1],
       },
-    }),
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.99,
+      y: -6,
+      transition: {
+        duration: 0.15,
+        ease: "easeInOut",
+      },
+    },
   };
 
   return (

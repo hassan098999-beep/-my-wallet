@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, ChartPie, History, Settings, Plus, Sparkles, Wallet, RefreshCcw, Target, PiggyBank, SlidersHorizontal } from 'lucide-react';
+import { Home, ChartPie, History, Settings, Plus, Sparkles, Wallet, RefreshCcw, Target, PiggyBank, SlidersHorizontal, Percent } from 'lucide-react';
 import { cn, hapticFeedback } from '../utils';
 import { motion } from 'motion/react';
 import { useAppContext } from '../store/AppContext';
@@ -18,6 +18,7 @@ const subNavItems = [
   { path: '/recurring', name: 'المصاريف المتكررة', icon: RefreshCcw },
   { path: '/goals', name: 'الأهداف المالية', icon: Target },
   { path: '/savings', name: 'الادخار', icon: PiggyBank },
+  { path: '/savings-indicators', name: 'مؤشرات التوفير', icon: Percent },
   { path: '/settings', name: 'الإعدادات', icon: SlidersHorizontal },
 ];
 

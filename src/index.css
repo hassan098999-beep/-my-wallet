@@ -57,6 +57,7 @@
     background-color: var(--color-bg-light);
     color: #0f172a;
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
     @apply dark:bg-slate-950 dark:text-slate-50;
   }
 
@@ -64,6 +65,9 @@
     touch-action: manipulation;
   }
 
+  .custom-scrollbar {
+    -webkit-overflow-scrolling: touch;
+  }
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
   }

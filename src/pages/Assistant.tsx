@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Send, Bot, User, Sparkles, Loader2, Settings as SettingsIcon, Trash2, Lightbulb, ImagePlus, X } from 'lucide-react';
 import { GoogleGenAI, ThinkingLevel, Type, FunctionDeclaration } from '@google/genai';
 import { useAppContext } from '../store/AppContext';
@@ -273,7 +273,7 @@ export default function Assistant() {
       chatHistoryRef.current.push({ role: 'user', parts: userParts });
 
       let response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.5-flash',
         contents: [
           { role: 'user', parts: [{ text: context }] },
           { role: 'model', parts: [{ text: 'فهمت السياق والتعليمات. أنا مستعد للمساعدة.' }] },
@@ -519,10 +519,10 @@ export default function Assistant() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl px-4">
                 {[
-                  "حلل نمط إنفاقي لهذا الشهر",
-                  "كيف يمكنني توفير 500 ريال إضافية؟",
-                  "هل ميزانيتي في وضع آمن؟",
-                  "اقترح خطة لسداد ديوني"
+                  "حلل قفة السوق والمصاريف الحالية للمنزل",
+                  "كيف يمكنني التوفير في لوازم وحفاظات البيبي؟",
+                  "هل نسبة الادخار وعيش عائلتي سليمة؟",
+                  "كيفية تقليص نفقات فواتير STEG والصوناد"
                 ].map((suggestion, idx) => (
                   <motion.button
                     key={idx}

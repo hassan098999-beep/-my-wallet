@@ -18,6 +18,7 @@ const GoalsPage = lazy(() => import('./pages/Goals'));
 const IncomePage = lazy(() => import('./pages/settings/Income'));
 const RecurringExpenses = lazy(() => import('./pages/RecurringExpenses'));
 const SavingsPage = lazy(() => import('./pages/Savings'));
+const SavingsIndicatorsPage = lazy(() => import('./pages/SavingsIndicators'));
 
 export default function App() {
   useEffect(() => {
@@ -54,6 +55,7 @@ export default function App() {
               <Route path="goals" element={<GoalsPage />} />
               <Route path="income" element={<IncomePage />} />
               <Route path="savings" element={<SavingsPage />} />
+              <Route path="savings-indicators" element={<SavingsIndicatorsPage />} />
               <Route path="settings" element={<Settings />} />
               <Route path="assistant" element={<Assistant />} />
             </Route>
