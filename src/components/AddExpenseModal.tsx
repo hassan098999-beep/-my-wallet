@@ -18,7 +18,7 @@ interface AddExpenseModalProps {
 }
 
 const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, editExpenseData, initialGoalId }) => {
-  const { categories, accounts, expenses, income, addExpense, addIncome, updateExpense, updateIncome, transferAccount, currency } = useAppContext();
+  const { categories, accounts, expenses, income, goals, addExpense, addIncome, updateExpense, updateIncome, transferAccount, currency } = useAppContext();
 
   const [type, setType] = useState<'expense' | 'income' | 'transfer'>('expense');
   const [expression, setExpression] = useState('0');
@@ -32,6 +32,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [loading, setLoading] = useState(false);
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const [goalId, setGoalId] = useState('');
 
   // Sub-modals state
   const [activeView, setActiveView] = useState<'main' | 'category' | 'account' | 'toAccount' | 'details'>('main');
@@ -51,8 +52,9 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
         setDate(editExpenseData.date);
         setNote(editExpenseData.note || '');
         setPaymentMethod(editExpenseData.paymentMethod || 'cash');
+        setGoalId('');
       } else {
-        setType('expense');
+        setType(initialGoalId ? 'income' : 'expense');
         setExpression('0');
         setCategoryId(categories[0]?.id || '');
         setSubcategoryId('');
@@ -62,10 +64,11 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
         setSource('');
         setNote('');
         setPaymentMethod('cash');
+        setGoalId(initialGoalId || '');
       }
       setActiveView('main');
     }
-  }, [isOpen, categories, accounts, editExpenseData]);
+  }, [isOpen, categories, accounts, editExpenseData, initialGoalId]);
 
   const evaluateExpression = (expr: string): number => {
     try {
@@ -174,6 +177,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
           source: source || (selectedCategory?.name ?? 'دخل'),
           amount: finalAmount,
           accountId: accountId || undefined,
+          goalId: goalId || undefined,
           date,
           note: note.trim(),
         };
@@ -544,6 +548,25 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                     className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm font-bold outline-none focus:border-indigo-500"
                   />
                 </div>
+
+                {/* Link to goal (only for income) */}
+                {type === 'income' && goals && goals.length > 0 && (
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <Check size={16} className="text-emerald-500" /> ربط بهدف مالي (اختياري)
+                    </label>
+                    <select
+                      value={goalId}
+                      onChange={(e) => setGoalId(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm font-bold outline-none focus:border-indigo-500 cursor-pointer text-slate-700 dark:text-slate-300"
+                    >
+                      <option value="">-- اختر هدفاً لتخصيص هذا الدخل له --</option>
+                      {goals.map(g => (
+                        <option key={g.id} value={g.id}>{g.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 {/* Note */}
                 <div className="space-y-3">

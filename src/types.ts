@@ -38,6 +38,7 @@ export interface Goal {
   createdAt: string;
   linkedCategoryId?: string;
   isLinkedToOverallBudget?: boolean;
+  monthlySavingsTarget?: number;
 }
 
 export type Mood = 'happy' | 'neutral' | 'sad' | 'stressed' | 'excited';
