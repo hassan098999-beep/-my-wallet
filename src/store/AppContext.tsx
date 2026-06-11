@@ -2,8 +2,8 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import toast from 'react-hot-toast';
 import { AppState, Category, Expense, Budget, RecurringExpense, Achievement, Goal, AppNotification, Income, Account } from '../types';
 import { evaluateAchievements } from '../utils/achievements';
-import { getBudgetMonth, safeStorage } from '../utils';
-import { addDays, addWeeks, addMonths, addYears, parseISO, isBefore, isSameDay, subDays } from 'date-fns';
+import { getBudgetMonth, safeStorage, safeParseISO } from '../utils';
+import { addDays, addWeeks, addMonths, addYears, isBefore, isSameDay, subDays } from 'date-fns';
 import { ACHIEVEMENTS } from '../constants/achievements';
 import { auth, db, signInWithGoogle, logout as firebaseLogout, onAuthStateChanged } from '../firebase';
 import { 
@@ -180,8 +180,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        const expenses = (parsed.expenses || []).map((e: any) => ({ ...e, parsedDate: parseISO(e.date) }));
-        const income = (parsed.income || []).map((i: any) => ({ ...i, parsedDate: parseISO(i.date) }));
+        const expenses = (parsed.expenses || []).map((e: any) => ({ ...e, parsedDate: safeParseISO(e.date) }));
+        const income = (parsed.income || []).map((i: any) => ({ ...i, parsedDate: safeParseISO(i.date) }));
         return { ...INITIAL_STATE, ...parsed, expenses, income, recurringExpenses: parsed.recurringExpenses || [] };
       } catch (e) {
         console.error('Failed to parse saved data', e);
@@ -239,8 +239,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Subscriptions for collections
     const collections = [
-      { name: 'expenses', setter: (data: any[]) => setState(prev => ({ ...prev, expenses: data.map(e => ({ ...e, parsedDate: parseISO(e.date) })) })) },
-      { name: 'income', setter: (data: any[]) => setState(prev => ({ ...prev, income: data.map(i => ({ ...i, parsedDate: parseISO(i.date) })) })) },
+      { name: 'expenses', setter: (data: any[]) => setState(prev => ({ ...prev, expenses: data.map(e => ({ ...e, parsedDate: safeParseISO(e.date) })) })) },
+      { name: 'income', setter: (data: any[]) => setState(prev => ({ ...prev, income: data.map(i => ({ ...i, parsedDate: safeParseISO(i.date) })) })) },
       { name: 'categories', setter: (data: any[]) => setState(prev => ({ ...prev, categories: data.length > 0 ? data.sort((a, b) => (a.order || 0) - (b.order || 0)) : DEFAULT_CATEGORIES })) },
       { name: 'accounts', setter: (data: any[]) => setState(prev => ({ ...prev, accounts: data.length > 0 ? data : DEFAULT_ACCOUNTS })) },
       { name: 'goals', setter: (data: any[]) => setState(prev => ({ ...prev, goals: data })) },
@@ -515,7 +515,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...expense,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
-      parsedDate: parseISO(expense.date),
+      parsedDate: safeParseISO(expense.date),
     };
 
     if (user) {
@@ -702,7 +702,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const oldExpense = prev.expenses.find(e => e.id === id);
         if (!oldExpense) return prev;
         
-        const newExpense = { ...oldExpense, ...updates, parsedDate: updates.date ? parseISO(updates.date) : oldExpense.parsedDate };
+        const newExpense = { ...oldExpense, ...updates, parsedDate: updates.date ? safeParseISO(updates.date) : oldExpense.parsedDate };
         let newAccounts = [...(prev.accounts || [])];
         
         if (oldExpense.accountId !== newExpense.accountId) {
@@ -981,8 +981,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return {
           ...prev,
           accounts: newAccounts,
-          expenses: [{ ...expenseEntry, parsedDate: parseISO(expenseEntry.date) }, ...prev.expenses],
-          income: [{ ...incomeEntry, parsedDate: parseISO(incomeEntry.date) }, ...prev.income]
+          expenses: [{ ...expenseEntry, parsedDate: safeParseISO(expenseEntry.date) }, ...prev.expenses],
+          income: [{ ...incomeEntry, parsedDate: safeParseISO(incomeEntry.date) }, ...prev.income]
         };
       });
     }
@@ -1040,7 +1040,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...income,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
-      parsedDate: parseISO(income.date),
+      parsedDate: safeParseISO(income.date),
     };
 
     if (user) {
@@ -1145,7 +1145,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const oldIncome = (prev.income || []).find(i => i.id === id);
         if (!oldIncome) return prev;
         
-        const newIncome = { ...oldIncome, ...updates, parsedDate: updates.date ? parseISO(updates.date) : oldIncome.parsedDate };
+        const newIncome = { ...oldIncome, ...updates, parsedDate: updates.date ? safeParseISO(updates.date) : oldIncome.parsedDate };
         let newAccounts = [...(prev.accounts || [])];
         
         if (oldIncome.accountId !== newIncome.accountId) {

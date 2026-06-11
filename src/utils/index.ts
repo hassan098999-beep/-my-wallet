@@ -7,6 +7,22 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function safeParseISO(dateStr: any): Date {
+  if (!dateStr || typeof dateStr !== 'string') {
+    return new Date();
+  }
+  try {
+    const parsed = parseISO(dateStr);
+    if (isNaN(parsed.getTime())) {
+      return new Date();
+    }
+    return parsed;
+  } catch (err) {
+    console.error('safeParseISO failed:', dateStr, err);
+    return new Date();
+  }
+}
+
 export function getBudgetRange(monthStr: string, firstDay: number = 1) {
   const [year, month] = monthStr.split('-').map(Number);
   const budgetMonthDate = new Date(year, month - 1, 1);

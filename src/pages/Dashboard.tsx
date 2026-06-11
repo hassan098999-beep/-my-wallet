@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
-import { formatCurrency, cn, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
+import { formatCurrency, cn, hapticFeedback, getBudgetRange, getBudgetMonth, safeStorage, safeParseISO } from '../utils';
 import { Skeleton, TransactionSkeleton } from '../components/Skeleton';
 import { parseISO, format, isAfter, isBefore, addDays, differenceInDays } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -46,6 +46,7 @@ import { Expense, Category } from '../types';
 import { motion, AnimatePresence, useMotionValue, useTransform, Variants } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { useBehavioralEngine } from '../hooks/useBehavioralEngine';
+import DailySimpleView from '../components/DailySimpleView';
 
 const Dashboard = () => {
   const { 
@@ -100,11 +101,61 @@ const Dashboard = () => {
     return expenses
       .filter(e => {
         if (e.isTransfer) return false;
-        const d = parseISO(e.date);
+        const d = safeParseISO(e.date);
         return d >= startOfWeek && d <= now;
       })
       .reduce((sum, e) => sum + e.amount, 0);
   }, [expenses]);
+
+  // View Mode switcher ('daily' = simple mode, 'pro' = advanced mode)
+  const [viewMode, setViewMode] = useState<'daily' | 'pro'>(() => {
+    return (safeStorage.getItem('dashboard_view_mode') as 'daily' | 'pro') || 'daily';
+  });
+
+  const handleViewChange = (mode: 'daily' | 'pro') => {
+    hapticFeedback('medium');
+    setViewMode(mode);
+    safeStorage.setItem('dashboard_view_mode', mode);
+  };
+
+  const handleQuickPresetClick = async (preset: { label: string; amount: string; desc: string; categoryName: string; }) => {
+    const amountNum = parseFloat(preset.amount);
+    const targetAccountId = accounts[0]?.id || 'cash';
+    
+    if (!targetAccountId) {
+      toast.error('الرجاء إعداد حساب مالي أولاً من صفحة الإعدادات');
+      return;
+    }
+
+    const matchingCat = categories.find(c => c.name.includes(preset.categoryName)) || categories[0];
+    if (!matchingCat) {
+      toast.error('الرجاء تعيين الفئات أولاً من صفحة الإعدادات');
+      return;
+    }
+
+    hapticFeedback('heavy');
+    const loadingToast = toast.loading(`جاري تسجيل ${preset.label} فوراً...`);
+
+    try {
+      await addExpense({
+        amount: amountNum,
+        categoryId: matchingCat.id,
+        accountId: targetAccountId,
+        date: new Date().toISOString().split('T')[0],
+        note: preset.label,
+        subcategoryId: preset.desc || '',
+        paymentMethod: 'cash',
+        isTransfer: false
+      });
+      
+      toast.dismiss(loadingToast);
+      toast.success(`تم تسجيل ${preset.label} (${amountNum.toFixed(3)} د.ت) بنجاح! 🇹🇳✨`);
+    } catch(err) {
+      toast.dismiss(loadingToast);
+      console.error(err);
+      toast.error('حدث خطأ أثناء التسجيل السريع');
+    }
+  };
 
   // Tab Control for Hero Card
   const [heroTab, setHeroTab] = useState<'wallet' | 'anatomy' | 'savings'>('wallet');
@@ -199,7 +250,7 @@ const Dashboard = () => {
   const monthlyExpenses = useMemo(() => 
     expenses.filter(e => {
       if (e.isTransfer) return false;
-      const d = parseISO(e.date);
+      const d = safeParseISO(e.date);
       return d >= rangeStart && d <= rangeEnd;
     }),
   [expenses, rangeStart, rangeEnd]);
@@ -227,7 +278,7 @@ const Dashboard = () => {
   const totalMonthlyIncome = useMemo(() => 
     income.filter(i => {
       if (i.isTransfer) return false;
-      const d = parseISO(i.date);
+      const d = safeParseISO(i.date);
       return d >= rangeStart && d <= rangeEnd;
     }).reduce((sum, i) => sum + i.amount, 0),
   [income, rangeStart, rangeEnd]);
@@ -428,13 +479,83 @@ const Dashboard = () => {
         </motion.div>
       </motion.div>
 
-      {/* Promo banner for Savings Indicators */}
-      <motion.div
+      {/* 2. Cozy View Mode Switcher */}
+      <motion.div 
         variants={itemVariants}
         initial="hidden"
         animate="visible"
-        className="bg-emerald-500/10 dark:bg-emerald-500/5 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/10 border-2 border-emerald-500/20 rounded-3xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
+        className="flex justify-center"
       >
+        <div className="bg-slate-100 dark:bg-slate-800/85 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-200/20 w-full max-w-md">
+          <button
+            type="button"
+            onClick={() => handleViewChange('daily')}
+            className={cn(
+              "flex-1 py-3 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer",
+              viewMode === 'daily'
+                ? "bg-white dark:bg-slate-700 text-slate-950 dark:text-white shadow-md border border-slate-200/5"
+                : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+            )}
+          >
+            <Zap size={14} className={cn(viewMode === 'daily' ? "text-amber-500 fill-amber-500 animate-pulse" : "text-slate-400")} />
+            <span>الاستخدام اليومي المبسط ⚡</span>
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => handleViewChange('pro')}
+            className={cn(
+              "flex-1 py-3 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer",
+              viewMode === 'pro'
+                ? "bg-white dark:bg-slate-700 text-slate-950 dark:text-white shadow-md border border-slate-200/5"
+                : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+            )}
+          >
+            <Activity size={14} className={cn(viewMode === 'pro' ? "text-emerald-500" : "text-slate-400")} />
+            <span>لوحة التحكم الشاملة 📊</span>
+          </button>
+        </div>
+      </motion.div>
+
+      {/* Conditional Rendering of Dashboard Mode */}
+      {viewMode === 'daily' ? (
+        <DailySimpleView
+          categories={categories}
+          accounts={accounts}
+          expenses={expenses}
+          goals={goals}
+          currency={currency}
+          remainingDailyBudget={remainingDailyBudget}
+          todaySpending={todaySpending}
+          dailyBudget={dailyBudget}
+          rollingBudget={rollingBudget}
+          totalNetWorth={totalNetWorth}
+          totalMonthlyExpense={totalMonthlyExpense}
+          dailyAverage={dailyAverage}
+          recentTransactions={recentTransactions}
+          budgetStatus={budgetStatus}
+          handleQuickPresetClick={handleQuickPresetClick}
+          handleQuickAddSubmit={handleQuickAddSubmit}
+          quickAmount={quickAmount}
+          setQuickAmount={setQuickAmount}
+          quickDescription={quickDescription}
+          setQuickDescription={setQuickDescription}
+          quickCategoryId={quickCategoryId}
+          setQuickCategoryId={setQuickCategoryId}
+          setIsAddModalOpen={setIsAddModalOpen}
+          handleEdit={handleEdit}
+          deleteExpense={deleteExpense}
+          repeatExpense={repeatExpense}
+        />
+      ) : (
+        <div className="space-y-6">
+          {/* Promo banner for Savings Indicators */}
+          <motion.div
+            variants={itemVariants}
+            initial="hidden"
+            animate="visible"
+            className="bg-emerald-505/10 bg-emerald-500/10 dark:bg-emerald-500/5 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/10 border-2 border-emerald-500/20 rounded-3xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
+          >
         <div className="flex items-start sm:items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
             <Percent size={18} />
@@ -1245,6 +1366,8 @@ const Dashboard = () => {
           </Link>
         </div>
       </motion.div>
+        </div>
+      )}
 
     </div>
   );
@@ -1270,6 +1393,19 @@ const SwipeableTransactionItem: React.FC<SwipeableTransactionItemProps> = ({
   onEdit
 }) => {
   const x = useMotionValue(0);
+  
+  const formatExpenseDate = (dateString?: string) => {
+    if (!dateString) return 'تاريخ غير محدد';
+    try {
+      const parsed = parseISO(dateString);
+      if (!isNaN(parsed.getTime())) {
+        return format(parsed, 'dd MMM', { locale: ar });
+      }
+    } catch (err) {
+      console.error('Invalid date format:', dateString, err);
+    }
+    return dateString || 'تاريخ غير محدد';
+  };
   
   // Dynamic action values based on drag gesture
   const opacity = useTransform(x, [-160, -120, 0], [1, 0.8, 0]);
@@ -1362,7 +1498,7 @@ const SwipeableTransactionItem: React.FC<SwipeableTransactionItemProps> = ({
             {formatCurrency(expense.amount, currency)}
           </span>
           <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">
-            {format(parseISO(expense.date), 'dd MMM', { locale: ar })}
+            {formatExpenseDate(expense.date)}
           </span>
         </div>
       </motion.div>

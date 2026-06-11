@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
 import { useAppContext } from '../store/AppContext';
-import { formatCurrency, cn, getBudgetRange, getBudgetMonth } from '../utils';
+import { formatCurrency, cn, getBudgetRange, getBudgetMonth, safeParseISO } from '../utils';
 import { TriangleAlert, CircleAlert, TrendingUp, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { parseISO } from 'date-fns';
 
 export const BudgetAlerts = () => {
   const { expenses, budget, currency, removeNotification, notifications = [], firstDayOfMonth } = useAppContext();
@@ -15,7 +14,7 @@ export const BudgetAlerts = () => {
   const totalMonthlyExpense = useMemo(() => 
     expenses
       .filter(e => {
-        const d = parseISO(e.date);
+        const d = safeParseISO(e.date);
         return d >= rangeStart && d <= rangeEnd;
       })
       .reduce((sum, e) => sum + e.amount, 0),
