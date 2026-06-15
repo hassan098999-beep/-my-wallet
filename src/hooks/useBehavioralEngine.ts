@@ -16,7 +16,33 @@ export const useBehavioralEngine = () => {
 
   const insights = useMemo(() => {
     const list: BehavioralInsight[] = [];
-    if (expenses.length === 0) return list;
+
+    // Default high-quality Tunisian financial advisor tips when there is no data
+    const defaultInsights: BehavioralInsight[] = [
+      {
+        id: 'childbirth-saving',
+        title: 'شراء الكوش وحليب الرضيع 👶',
+        description: 'اقتناء حفاظات الرضع والمستلزمات الأساسية بالعلب الكبيرة ومن مغازات الجملة أو الصيدليات المركزية يوفر ما بين 15% إلى 20% شهرياً.',
+        type: 'positive',
+        impact: 'توفير مقدر بـ 30 د.ت شهرياً.'
+      },
+      {
+        id: 'weekly-market',
+        title: 'قانون قفة السوق الأسبوعي 🛒',
+        description: 'التسوق الأسبوعي المخطط له من الأسواق الشعبية للخضراء واللحوم أفضل بكثير من الشراء الفردي اليومي من المغازات الكبرى.',
+        type: 'pattern',
+        impact: 'تخفيض تكلفة القفة بنسبة 35%.'
+      },
+      {
+        id: 'steg-optimization',
+        title: 'ترشيد استهلاك طاقة الستاغ (STEG) ⚡',
+        description: 'مراقبة استهلاك الكهرباء وتسجيل قراءة العداد بانتظام يضمن بقاء استهلاكك في شريحة الدعم الاقتصادية وتجنب فاتورة STEG المرتفعة.',
+        type: 'warning',
+        impact: 'تفادي الفواتير التقديرية المفاجئة.'
+      }
+    ];
+
+    if (expenses.length === 0) return defaultInsights;
 
     // 1. Time-based analysis
     const timeSlots = {

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings2, Target, RefreshCcw, Trophy, Flag, LogOut, UserCircle, PlusCircle, PiggyBank, Moon, Sun, Wallet, SlidersHorizontal, ChartPie } from 'lucide-react';
+import { Settings2, Target, RefreshCcw, Trophy, Flag, LogOut, LogIn, UserCircle, PlusCircle, PiggyBank, Moon, Sun, Wallet, SlidersHorizontal, ChartPie } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { motion, AnimatePresence } from 'motion/react';
@@ -18,7 +18,7 @@ const dropdownItems = [
 const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { theme, setTheme } = useAppContext();
+  const { theme, setTheme, user, login, logout } = useAppContext();
   const location = useLocation();
 
   const getPageName = () => {
@@ -96,7 +96,7 @@ const Header = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-black text-slate-900 dark:text-white truncate tracking-tight">حسابي</p>
-                      <p className="text-[10px] font-bold text-slate-500 truncate">hassan098999@gmail.com</p>
+                      <p className="text-[10px] font-bold text-slate-500 truncate">{user ? user.email : 'حساب محلي (غير متصل)'}</p>
                     </div>
                   </div>
                 </div>
@@ -127,10 +127,23 @@ const Header = () => {
                 </div>
                 
                 <div className="p-2 border-t border-slate-100/50 dark:border-slate-700/50">
-                  <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all w-full text-right uppercase tracking-widest">
-                    <LogOut size={18} />
-                    تسجيل الخروج
-                  </button>
+                  {user ? (
+                    <button 
+                      onClick={() => { setIsDropdownOpen(false); logout(); }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all w-full text-right uppercase tracking-widest cursor-pointer"
+                    >
+                      <LogOut size={18} />
+                      تسجيل الخروج
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => { setIsDropdownOpen(false); login(); }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all w-full text-right uppercase tracking-widest cursor-pointer"
+                    >
+                      <LogIn size={18} />
+                      تسجيل الدخول (Google)
+                    </button>
+                  )}
                 </div>
               </motion.div>
             )}
