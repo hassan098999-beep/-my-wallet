@@ -2,27 +2,63 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import toast from 'react-hot-toast';
 import { AppState, Category, Expense, Budget, RecurringExpense, Achievement, Goal, AppNotification, Income, Account } from '../types';
 import { evaluateAchievements } from '../utils/achievements';
-import { getBudgetMonth, safeStorage, safeParseISO } from '../utils';
+import { getBudgetMonth, safeStorage, safeParseISO, removeUndefinedFields, hashPin } from '../utils';
 import { addDays, addWeeks, addMonths, addYears, isBefore, isSameDay, subDays } from 'date-fns';
 import { ACHIEVEMENTS } from '../constants/achievements';
 import { auth, db, signInWithGoogle, logout as firebaseLogout, onAuthStateChanged } from '../firebase';
 import { 
   collection, 
   doc, 
-  setDoc, 
   getDoc, 
   getDocs, 
   onSnapshot, 
-  updateDoc, 
   deleteDoc, 
-  addDoc,
-  writeBatch,
   query,
   where,
   orderBy,
   disableNetwork,
-  enableNetwork
+  enableNetwork,
+  setDoc as fsSetDoc,
+  updateDoc as fsUpdateDoc,
+  addDoc as fsAddDoc,
+  writeBatch as fsWriteBatch
 } from 'firebase/firestore';
+
+// Wrapped safe database writes that filter undefined fields and prevent silent write failures
+const setDoc = (ref: any, data: any, options?: any) => {
+  return fsSetDoc(ref, removeUndefinedFields(data), options);
+};
+
+const addDoc = (ref: any, data: any) => {
+  return fsAddDoc(ref, removeUndefinedFields(data));
+};
+
+const updateDoc = (ref: any, data: any) => {
+  return fsUpdateDoc(ref, removeUndefinedFields(data));
+};
+
+const writeBatch = (firestoreInstance: any) => {
+  const batch = fsWriteBatch(firestoreInstance);
+  const wrappedBatch = {
+    set(ref: any, data: any, options?: any) {
+      batch.set(ref, removeUndefinedFields(data), options);
+      return wrappedBatch;
+    },
+    update(ref: any, data: any) {
+      batch.update(ref, removeUndefinedFields(data));
+      return wrappedBatch;
+    },
+    delete(ref: any) {
+      batch.delete(ref);
+      return wrappedBatch;
+    },
+    commit() {
+      return batch.commit();
+    }
+  };
+  return wrappedBatch as any;
+};
+
 import { User } from 'firebase/auth';
 
 const DEFAULT_CATEGORIES: Category[] = [
@@ -146,6 +182,11 @@ interface AppContextProps extends AppState {
   setFirstDayOfMonth: (day: number) => void;
   updateAIInsights: (insights: { advice: any[], forecast: any[] }) => void;
   applyTunisianFamilyTemplate: () => Promise<void>;
+  isPinSet: boolean;
+  isLocked: boolean;
+  setIsLocked: (locked: boolean) => void;
+  setAppPin: (pin: string | null) => Promise<boolean>;
+  verifyAppPin: (pin: string) => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -175,6 +216,62 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [initialGoalId, setInitialGoalId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isLocked, setIsLocked] = useState<boolean>(() => {
+    const hasPin = !!safeStorage.getItem('masarifi_pin_hash');
+    return hasPin;
+  });
+
+  const [isPinSet, setIsPinSet] = useState<boolean>(() => {
+    return !!safeStorage.getItem('masarifi_pin_hash');
+  });
+
+  const setAppPin = useCallback(async (pin: string | null): Promise<boolean> => {
+    if (pin === null) {
+      safeStorage.removeItem('masarifi_pin_hash');
+      setIsPinSet(false);
+      setIsLocked(false);
+      return true;
+    }
+    if (pin.length !== 4) {
+      toast.error('رمز PIN يجب أن يتكون من 4 أرقام');
+      return false;
+    }
+    const hashed = await hashPin(pin);
+    safeStorage.setItem('masarifi_pin_hash', hashed);
+    setIsPinSet(true);
+    setIsLocked(false);
+    return true;
+  }, []);
+
+  const verifyAppPin = useCallback(async (pin: string): Promise<boolean> => {
+    const savedHash = safeStorage.getItem('masarifi_pin_hash');
+    if (!savedHash) {
+      setIsLocked(false);
+      return true;
+    }
+    const hashed = await hashPin(pin);
+    if (hashed === savedHash) {
+      setIsLocked(false);
+      return true;
+    }
+    return false;
+  }, []);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const hasPin = !!safeStorage.getItem('masarifi_pin_hash');
+        if (hasPin) {
+          setIsLocked(true);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   const [state, setState] = useState<AppState>(() => {
     const saved = safeStorage.getItem('masarifi_data');
     if (saved) {
@@ -867,6 +964,157 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }));
     }
   };
+
+  const processDueRecurringExpenses = useCallback(async () => {
+    if (state.recurringExpenses.length === 0) return;
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayDate = new Date(todayStr);
+
+    const dueItems = state.recurringExpenses.filter(re => {
+      try {
+        const nextDateParts = re.nextDate.split('-');
+        const nextDate = new Date(Number(nextDateParts[0]), Number(nextDateParts[1]) - 1, Number(nextDateParts[2]));
+        return nextDate <= todayDate;
+      } catch (e) {
+        return false;
+      }
+    });
+
+    if (dueItems.length === 0) return;
+
+    const updatedRecurring = [...state.recurringExpenses];
+    const newExpensesToCreate: Expense[] = [];
+
+    for (const re of dueItems) {
+      const newExpenseId = crypto.randomUUID();
+      const newExpense: Expense = {
+        id: newExpenseId,
+        amount: re.amount,
+        categoryId: re.categoryId,
+        subcategoryId: re.subcategoryId,
+        accountId: re.accountId || 'cash',
+        note: re.note || 'مصروف متكرر مجدول',
+        paymentMethod: re.paymentMethod || 'cash',
+        date: re.nextDate,
+        createdAt: new Date().toISOString()
+      };
+      
+      newExpensesToCreate.push(newExpense);
+
+      const currentNextDate = new Date(re.nextDate);
+      let updatedNextDate: Date;
+      switch (re.interval) {
+        case 'daily':
+          updatedNextDate = addDays(currentNextDate, 1);
+          break;
+        case 'weekly':
+          updatedNextDate = addWeeks(currentNextDate, 1);
+          break;
+        case 'monthly':
+          updatedNextDate = addMonths(currentNextDate, 1);
+          break;
+        case 'yearly':
+          updatedNextDate = addYears(currentNextDate, 1);
+          break;
+        default:
+          updatedNextDate = addMonths(currentNextDate, 1);
+      }
+      const updatedNextDateStr = updatedNextDate.toISOString().split('T')[0];
+
+      const idx = updatedRecurring.findIndex(item => item.id === re.id);
+      if (idx !== -1) {
+        updatedRecurring[idx] = {
+          ...updatedRecurring[idx],
+          nextDate: updatedNextDateStr
+        };
+      }
+    }
+
+    // Is it idempotent? Let's check duplicates
+    const sanitizedNewExpenses = newExpensesToCreate.filter(ne => {
+      return !state.expenses.some(e => e.date === ne.date && e.amount === ne.amount && e.categoryId === ne.categoryId && e.note === ne.note);
+    });
+
+    if (sanitizedNewExpenses.length === 0 && dueItems.every((re, idx) => re.nextDate === updatedRecurring[idx].nextDate)) {
+      return;
+    }
+
+    try {
+      if (user) {
+        const batch = writeBatch(db);
+        
+        sanitizedNewExpenses.forEach(exp => {
+          const ref = doc(db, 'users', user.uid, 'expenses', exp.id);
+          batch.set(ref, { ...exp, uid: user.uid });
+          
+          const accRef = doc(db, 'users', user.uid, 'accounts', exp.accountId);
+          const accountObj = state.accounts.find(a => a.id === exp.accountId);
+          if (accountObj) {
+            batch.update(accRef, { balance: accountObj.balance - exp.amount });
+          }
+        });
+        
+        dueItems.forEach(re => {
+          const itemCopy = updatedRecurring.find(item => item.id === re.id);
+          if (itemCopy) {
+            const ref = doc(db, 'users', user.uid, 'recurringExpenses', re.id);
+            batch.update(ref, { nextDate: itemCopy.nextDate });
+          }
+        });
+        
+        await batch.commit();
+        toast.success('تمت جدولة وتحديث المصاريف المتكررة المستحقة');
+      } else {
+        setState(prev => {
+          const localExpenses = [...prev.expenses];
+          const localAccounts = [...prev.accounts];
+          
+          sanitizedNewExpenses.forEach(exp => {
+            localExpenses.push({ ...exp, parsedDate: safeParseISO(exp.date) });
+            const accIdx = localAccounts.findIndex(a => a.id === exp.accountId);
+            if (accIdx !== -1) {
+              localAccounts[accIdx] = {
+                ...localAccounts[accIdx],
+                balance: localAccounts[accIdx].balance - exp.amount
+              };
+            }
+          });
+
+          const newRecurringList = prev.recurringExpenses.map(re => {
+            const updated = updatedRecurring.find(item => item.id === re.id);
+            return updated ? updated : re;
+          });
+
+          const newState = {
+            ...prev,
+            expenses: localExpenses,
+            accounts: localAccounts,
+            recurringExpenses: newRecurringList
+          };
+          
+          safeStorage.setItem('masarifi_data', JSON.stringify({
+            ...newState,
+            expenses: newState.expenses.map(({ parsedDate, ...rest }: any) => rest)
+          }));
+
+          return newState;
+        });
+        
+        if (sanitizedNewExpenses.length > 0) {
+          toast.success('تمت جدولة وتحديث المصاريف المتكررة المستحقة (محلياً)');
+        }
+      }
+    } catch (err) {
+      console.error('Error processing due recurring expenses:', err);
+    }
+  }, [state.recurringExpenses, state.expenses, state.accounts, user]);
+
+  useEffect(() => {
+    if (!isAuthReady) return;
+    if (state.recurringExpenses.length === 0) return;
+    processDueRecurringExpenses();
+  }, [isAuthReady, state.recurringExpenses, processDueRecurringExpenses]);
 
   const addCategory = async (category: Omit<Category, 'id'>) => {
     const newCategory: Category = {
@@ -1646,6 +1894,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     resetData,
     toggleOfflineMode,
     applyTunisianFamilyTemplate,
+    isPinSet,
+    isLocked,
+    setIsLocked,
+    setAppPin,
+    verifyAppPin,
   }), [
     state,
     user,

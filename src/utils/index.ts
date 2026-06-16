@@ -112,3 +112,30 @@ export const safeStorage = {
     }
   }
 };
+
+export function removeUndefinedFields<T extends Record<string, any>>(obj: T): Partial<T> {
+  if (!obj || typeof obj !== 'object') return obj;
+  const newObj: any = Array.isArray(obj) ? [] : {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const val = obj[key];
+      if (val !== undefined) {
+        if (val !== null && typeof val === 'object' && !((val as any) instanceof Date)) {
+          newObj[key] = removeUndefinedFields(val);
+        } else {
+          newObj[key] = val;
+        }
+      }
+    }
+  }
+  return newObj;
+}
+
+export async function hashPin(pin: string): Promise<string> {
+  const msgUint8 = new TextEncoder().encode(pin);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+

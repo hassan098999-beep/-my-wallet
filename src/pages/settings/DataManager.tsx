@@ -2,11 +2,17 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../../store/AppContext';
 import { DownloadCloud, UploadCloud, Smartphone, Trash, TriangleAlert, X, Save, Clock, Cloud, Database, WifiOff } from 'lucide-react';
-import { cn, hapticFeedback } from '../../utils';
+import { cn, hapticFeedback, removeUndefinedFields } from '../../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { getBackupsFromDB, saveBackupToDB, deleteBackupFromDB } from '../../utils/indexedDB';
-import { collection, doc, setDoc, deleteDoc, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { collection, doc, setDoc as fsSetDoc, deleteDoc, getDocs } from 'firebase/firestore';
+import { db, auth } from '../../firebase';
+import { deleteUser } from 'firebase/auth';
+
+const setDoc = (ref: any, data: any, options?: any) => {
+  return fsSetDoc(ref, removeUndefinedFields(data), options);
+};
+
 import { BackupRecord } from '../../types';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -17,7 +23,8 @@ const DataManager = () => {
     expenses, recurringExpenses, categories, accounts, budget,
     dailyBudget, rollingBudgetEnabled, theme, currency, achievements,
     goals, income, notifications, hasCompletedOnboarding, userName,
-    firstDayOfMonth, bestStreak, offlineMode, toggleOfflineMode
+    firstDayOfMonth, bestStreak, offlineMode, toggleOfflineMode,
+    isPinSet, setAppPin
   } = useAppContext();
   
   const [deferredPrompt, setDeferredPrompt] = useState<any>(window.deferredPrompt || null);
@@ -26,6 +33,14 @@ const DataManager = () => {
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
   const [backupToRestore, setBackupToRestore] = useState<BackupRecord | null>(null);
   const [backupToDelete, setBackupToDelete] = useState<string | null>(null);
+  
+  const [showPinSetupModal, setShowPinSetupModal] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinConfirmInput, setPinConfirmInput] = useState('');
+
+  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   useEffect(() => {
     const handleInstallPrompt = () => {
@@ -94,54 +109,53 @@ const DataManager = () => {
       if (user) {
         await setDoc(doc(db, 'users', user.uid, 'backups', newBackup.id), newBackup);
       }
-      toast.success('تم إنشاء نسخة احتياطية بنجاح');
-      loadBackups();
-    } catch(error) {
-      toast.error('حدث خطأ أثناء حفظ النسخة الاحتياطية');
+      toast.success('تم إنشاء نسخة احتياطية بنجاح!');
+      await loadBackups();
+    } catch(err) {
+      console.error(err);
+      toast.error('حدث عطل في حفظ النسخة الاحتياطية');
     } finally {
       setIsCreatingBackup(false);
     }
   };
 
-  const handleRestoreBackup = (backup: BackupRecord) => {
-    hapticFeedback('medium');
-    setBackupToRestore(backup);
+  const handleRestoreBackup = (record: BackupRecord) => {
+    setBackupToRestore(record);
   };
 
   const confirmRestoreBackup = () => {
     if (backupToRestore) {
+      hapticFeedback('success');
       importData(backupToRestore.data);
       setBackupToRestore(null);
+      toast.success('تمت استعادة البيانات بنجاح!');
     }
   };
 
   const handleDeleteBackup = (id: string) => {
-    hapticFeedback('light');
     setBackupToDelete(id);
   };
 
   const confirmDeleteBackup = async () => {
     if (backupToDelete) {
+      hapticFeedback('medium');
       try {
         await deleteBackupFromDB(backupToDelete);
         if (user) {
           await deleteDoc(doc(db, 'users', user.uid, 'backups', backupToDelete));
         }
         toast.success('تم حذف النسخة الاحتياطية');
-        loadBackups();
+        await loadBackups();
       } catch(err) {
-        toast.error('حدث خطأ أثناء الحذف');
+        toast.error('لم نتمكن من حذف النسخة');
       } finally {
         setBackupToDelete(null);
       }
     }
   };
 
-
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      hapticFeedback('warning');
-      toast.error('التطبيق مثبت بالفعل أو أن المتصفح لا يدعم التثبيت حالياً. (مستخدمي iPhone يجب عليهم استخدام زر المشاركة)');
       return;
     }
     hapticFeedback('medium');
@@ -175,11 +189,9 @@ const DataManager = () => {
     hapticFeedback('light');
     let status = 'حالة PWA:\n';
     
-    // Check Standalone
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
     status += `- وضع Standalone: ${isStandalone ? 'نعم' : 'لا'}\n`;
     
-    // Check Service Worker
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       status += `- Service Worker: ${registrations.length > 0 ? 'مسجل' : 'غير مسجل'}\n`;
@@ -187,10 +199,8 @@ const DataManager = () => {
       status += `- Service Worker: غير مدعوم\n`;
     }
     
-    // Check deferredPrompt
     status += `- حدث التثبيت (deferredPrompt): ${window.deferredPrompt ? 'متاح' : 'غير متاح'}\n`;
     
-    // Check iframe
     const inIframe = window.self !== window.top;
     status += `- داخل إطار (iframe): ${inIframe ? 'نعم' : 'لا'}\n`;
 
@@ -201,6 +211,70 @@ const DataManager = () => {
     hapticFeedback('error');
     resetData();
     setShowResetConfirm(false);
+  };
+
+  const handleDeleteAccountPermanently = async () => {
+    if (deleteConfirmText !== "حذف") {
+      toast.error("يرجى كتابة كلمة 'حذف' بشكل صحيح لتأكيد الإجراء");
+      return;
+    }
+
+    if (!user) {
+      toast.error("لم يتم العثور على مستخدم مسجّل");
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    hapticFeedback('error');
+
+    try {
+      const uid = user.uid;
+      const subcollections = [
+        'expenses', 'income', 'categories', 'accounts',
+        'goals', 'recurringExpenses', 'budgets', 'achievements', 'backups'
+      ];
+
+      // 1. Delete all subcollection documents
+      for (const colName of subcollections) {
+        const snap = await getDocs(collection(db, 'users', uid, colName));
+        if (snap.docs.length > 0) {
+          for (const docSnap of snap.docs) {
+            await deleteDoc(doc(db, 'users', uid, colName, docSnap.id));
+          }
+        }
+      }
+
+      // 2. Delete the main user doc
+      await deleteDoc(doc(db, 'users', uid));
+
+      // 3. Delete the Auth user
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        try {
+          await deleteUser(currentUser);
+          toast.success("تم حذف حسابك وجميع بياناتك نهائياً وبنجاح!");
+        } catch (authError: any) {
+          console.error("Auth user deletion failed", authError);
+          if (authError.code === "auth/requires-recent-login") {
+            toast.error("يرجى إعادة تسجيل الدخول أولاً ثم المحاولة مرة أخرى لأسباب أمنية.");
+            await auth.signOut();
+            return;
+          } else {
+            toast.error(`حدث خطأ أثناء حذف الحساب: ${authError.message}`);
+          }
+        }
+      } else {
+        toast.success("تم تصفير البيانات وحذف الملف الشخصي");
+      }
+
+      setShowDeleteAccountConfirm(false);
+      setDeleteConfirmText('');
+    } catch (err: any) {
+      console.error("Failed to delete account", err);
+      toast.error(`فشلت عملية الحذف: ${err.message}`);
+    } finally {
+      setIsDeletingAccount(false);
+    }
   };
 
   const inIframe = window.self !== window.top;
@@ -256,9 +330,9 @@ const DataManager = () => {
                     </div>
                     <div>
                       <h4 className="text-xs font-black text-slate-900 dark:text-white">{backup.name}</h4>
-                      <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-bold">
-                        {user ? <Cloud size={10} className="text-indigo-400" /> : <Database size={10} className="text-slate-400" />}
-                        {format(new Date(backup.createdAt), 'dd MMM yyyy, HH:mm')} - {(new Blob([backup.data]).size / 1024).toFixed(1)} KB
+                      <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-bold text-right">
+                        {user ? <Cloud size={10} className="text-indigo-400 inline" /> : <Database size={10} className="text-slate-400 inline" />}
+                        {' '}{format(new Date(backup.createdAt), 'dd MMM yyyy, HH:mm')} - {(new Blob([backup.data]).size / 1024).toFixed(1)} KB
                       </p>
                     </div>
                   </div>
@@ -357,15 +431,78 @@ const DataManager = () => {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-rose-100 dark:border-rose-900/30">
+        {/* PIN Lock Management Card */}
+        <div className="mt-6 pt-6 md:mt-8 md:pt-8 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3 text-right">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isPinSet ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400' : 'bg-slate-200 text-slate-500 dark:bg-slate-750 dark:text-slate-400'}`}>
+                <Smartphone size={20} />
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">حماية التطبيق برمز PIN</h3>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[200px]">
+                  تأمين البيانات وعرض شاشة قفل قبل الولوج للحساب المالي.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {isPinSet ? (
+                <button
+                  type="button"
+                  id="btn_disable_pin"
+                  onClick={async () => {
+                    hapticFeedback('medium');
+                    if (window.confirm('هل أنت متأكد من إلغاء قفل PIN السري؟')) {
+                      await setAppPin(null);
+                      toast.success('تم إلغاء تفعيل رمز PIN');
+                    }
+                  }}
+                  className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 text-[10px] font-black rounded-xl transition-all border border-rose-100 dark:border-rose-905/40 cursor-pointer"
+                >
+                  تعطيل رمز PIN
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  id="btn_enable_pin"
+                  onClick={() => {
+                    hapticFeedback('medium');
+                    setShowPinSetupModal(true);
+                  }}
+                  className="px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 text-[10px] font-black rounded-xl transition-all border border-emerald-100 dark:border-emerald-905/40 cursor-pointer"
+                >
+                  تفعيل رمز PIN
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 pt-8 border-t border-rose-100 dark:border-rose-900/30 space-y-3">
           <h3 className="text-[10px] md:text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest mb-4">منطقة الخطر</h3>
           <button 
+            type="button"
             onClick={() => setShowResetConfirm(true)}
-            className="w-full flex items-center justify-center gap-2 md:gap-3 px-4 py-4 md:px-6 md:py-6 rounded-xl md:rounded-2xl font-black transition-all border border-rose-200 dark:border-rose-900/30 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm md:text-base uppercase tracking-widest shadow-sm hover:bg-rose-100 dark:hover:bg-rose-900/40"
+            className="w-full flex items-center justify-center gap-2 md:gap-3 px-4 py-4 md:px-6 md:py-6 rounded-xl md:rounded-2xl font-black transition-all border border-rose-200 dark:border-rose-909/30 bg-rose-50 dark:bg-rose-909/20 text-rose-600 dark:text-rose-400 text-sm md:text-base uppercase tracking-widest shadow-sm hover:bg-rose-100 dark:hover:bg-rose-909/40 cursor-pointer"
           >
             <Trash className="size-5 md:size-6" />
-            تصفير جميع البيانات
+            تصفير جميع البيانات (محلياً)
           </button>
+
+          {user && (
+            <button 
+              type="button"
+              onClick={() => {
+                hapticFeedback('error');
+                setShowDeleteAccountConfirm(true);
+              }}
+              className="w-full flex items-center justify-center gap-2 md:gap-3 px-4 py-4 md:px-6 md:py-6 rounded-xl md:rounded-2xl font-black transition-all bg-rose-600 hover:bg-rose-700 text-white text-sm md:text-base uppercase tracking-widest shadow-lg shadow-rose-600/20 cursor-pointer"
+            >
+              <Trash className="size-5 md:size-6" />
+              حذف الحساب والبيانات السحابية نهائياً
+            </button>
+          )}
         </div>
       </div>
 
@@ -484,6 +621,155 @@ const DataManager = () => {
                   className="py-4 rounded-2xl font-black bg-rose-600 text-white shadow-lg shadow-rose-600/20 hover:bg-rose-700 transition-all text-sm uppercase tracking-widest"
                 >
                   حذف نهائي
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {showPinSetupModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 md:p-8 shadow-md border border-slate-100 dark:border-slate-800 text-right z-50"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <Smartphone size={24} />
+                </div>
+                <button onClick={() => { setShowPinSetupModal(false); setPinInput(''); setPinConfirmInput(''); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">ضبط رمز PIN السري</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-bold mb-6 leading-relaxed">
+                رمز PIN يتكون من 4 أرقام لمنع أي شخص ممسك بهاتفك من معاينة معاملاتك المالية.
+              </p>
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-xs font-black text-slate-500 dark:text-slate-400 mb-2">رمز PIN الجديد:</label>
+                  <input 
+                    type="password" 
+                    maxLength={4}
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                    value={pinInput}
+                    onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
+                    placeholder="••••"
+                    className="w-full text-center text-2xl font-black tracking-widest py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-black text-slate-500 dark:text-slate-400 mb-2">تأكيد رمز PIN الجديد:</label>
+                  <input 
+                    type="password" 
+                    maxLength={4}
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                    value={pinConfirmInput}
+                    onChange={(e) => setPinConfirmInput(e.target.value.replace(/\D/g, ''))}
+                    placeholder="••••"
+                    className="w-full text-center text-2xl font-black tracking-widest py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={() => { setShowPinSetupModal(false); setPinInput(''); setPinConfirmInput(''); }}
+                  className="py-3 rounded-xl font-black text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-xs cursor-pointer"
+                >
+                  إلغاء
+                </button>
+                <button 
+                  onClick={async () => {
+                    hapticFeedback('medium');
+                    if (pinInput.length !== 4) {
+                      toast.error('يجب أن يتكون رمز PIN من 4 أرقام بالضبط');
+                      return;
+                    }
+                    if (pinInput !== pinConfirmInput) {
+                      toast.error('الرمزين غير متطابقين، يرجى التحقق');
+                      return;
+                    }
+                    const ok = await setAppPin(pinInput);
+                    if (ok) {
+                      toast.success('تم تفعيل رمز PIN الجديد بنجاح!');
+                      setShowPinSetupModal(false);
+                      setPinInput('');
+                      setPinConfirmInput('');
+                    }
+                  }}
+                  className="py-3 rounded-xl font-black bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all text-xs cursor-pointer"
+                >
+                  حفظ الرمز السري
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {showDeleteAccountConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in text-right">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 md:p-8 shadow-md border border-slate-100 dark:border-slate-800 z-50"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-905/30 flex items-center justify-center text-rose-600 dark:text-rose-450">
+                  <TriangleAlert size={24} />
+                </div>
+                <button 
+                  onClick={() => { setShowDeleteAccountConfirm(false); setDeleteConfirmText(''); }} 
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <h3 className="text-xl font-black text-rose-600 dark:text-rose-400 mb-2">حذف الحساب نهائياً؟</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-bold mb-6 leading-relaxed">
+                سيتم مسح كافة سجلات المصاريف والمستندات المحفوظة سحابياً، وحذف وثيقة حسابك بالكامل من مزود الخدمة. هذا الإجراء غير قابل للتراجع.
+              </p>
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-[10px] font-black text-rose-500 dark:text-rose-400 mb-2 uppercase tracking-wider">
+                    اكتب كلمة "<span className="underline font-black">حذف</span>" لتأكيد رغبتك:
+                  </label>
+                  <input 
+                    type="text" 
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="حذف"
+                    className="w-full text-center text-lg font-black py-2.5 px-4 rounded-xl border border-rose-200 dark:border-rose-909/30 bg-rose-50/30 dark:bg-rose-950/10 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  type="button"
+                  onClick={() => { setShowDeleteAccountConfirm(false); setDeleteConfirmText(''); }}
+                  className="py-3 rounded-xl font-black text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-xs cursor-pointer"
+                  disabled={isDeletingAccount}
+                >
+                  إلغاء
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleDeleteAccountPermanently}
+                  disabled={isDeletingAccount || deleteConfirmText !== 'حذف'}
+                  className="py-3 rounded-xl font-black bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/20 transition-all text-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isDeletingAccount ? "جاري الحذف..." : "حذف نهائي"}
                 </button>
               </div>
             </motion.div>
