@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
@@ -478,9 +479,19 @@ const SavingsPage = () => {
           </div>
           
           {goals.length === 0 && (
-            <p className="text-center text-[10px] md:text-xs font-black text-rose-500 mt-4 md:mt-6">
-              لا توجد أهداف ادخارية مسجلة. قم بإضافة أهداف أولاً.
-            </p>
+            <div className="mt-8 text-center p-6 md:p-8 bg-white/40 dark:bg-slate-900/20 rounded-card border-2 border-dashed border-slate-100 dark:border-slate-800 space-y-4">
+              <p className="text-sm font-black text-slate-500 dark:text-slate-400">
+                لا توجد أهداف ادخارية مسجلة حالياً.
+              </p>
+              <Link
+                to="/goals"
+                onClick={() => hapticFeedback('medium')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-button bg-primary-600 hover:bg-primary-700 text-white font-black text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Target size={14} />
+                <span>إنشاء وتحديد هدف ادخاري الآن</span>
+              </Link>
+            </div>
           )}
 
           {goals.length > 0 && (

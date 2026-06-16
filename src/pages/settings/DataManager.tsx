@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../../store/AppContext';
-import { DownloadCloud, UploadCloud, Smartphone, Trash, TriangleAlert, X, Save, Clock, Cloud, Database, WifiOff } from 'lucide-react';
+import { DownloadCloud, UploadCloud, Smartphone, Trash, TriangleAlert, X, Save, Clock, Cloud, Database, WifiOff, FileText } from 'lucide-react';
 import { cn, hapticFeedback, removeUndefinedFields } from '../../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { getBackupsFromDB, saveBackupToDB, deleteBackupFromDB } from '../../utils/indexedDB';
@@ -19,7 +19,7 @@ import { ar } from 'date-fns/locale';
 
 const DataManager = () => {
   const { 
-    exportData, importData, resetData, user,
+    exportData, exportToPDF, importData, resetData, user,
     expenses, recurringExpenses, categories, accounts, budget,
     dailyBudget, rollingBudgetEnabled, theme, currency, achievements,
     goals, income, notifications, hasCompletedOnboarding, userName,
@@ -185,6 +185,11 @@ const DataManager = () => {
     exportData(format);
   };
 
+  const handleExportPDF = () => {
+    hapticFeedback('medium');
+    exportToPDF();
+  };
+
   const checkPwaStatus = async () => {
     hapticFeedback('light');
     let status = 'حالة PWA:\n';
@@ -282,15 +287,20 @@ const DataManager = () => {
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-          <button onClick={() => handleExport('json')} className="flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-4 rounded-xl font-black transition-all border border-slate-100 dark:border-slate-800 text-xs uppercase tracking-widest shadow-sm hover:shadow-md hover:scale-[1.02]">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 md:gap-4">
+          <button onClick={() => handleExport('json')} className="flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-4 rounded-xl font-black transition-all border border-slate-100 dark:border-slate-800 text-xs uppercase tracking-widest shadow-sm hover:shadow-md hover:scale-[1.02] cursor-pointer">
             <DownloadCloud className="text-primary-500 size-5" />
             تصدير JSON
           </button>
 
-          <button onClick={() => handleExport('csv')} className="flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-4 rounded-xl font-black transition-all border border-slate-100 dark:border-slate-800 text-xs uppercase tracking-widest shadow-sm hover:shadow-md hover:scale-[1.02]">
+          <button onClick={() => handleExport('csv')} className="flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-4 rounded-xl font-black transition-all border border-slate-100 dark:border-slate-800 text-xs uppercase tracking-widest shadow-sm hover:shadow-md hover:scale-[1.02] cursor-pointer">
             <DownloadCloud className="text-emerald-500 size-5" />
             تصدير CSV
+          </button>
+
+          <button onClick={handleExportPDF} className="flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-4 rounded-xl font-black transition-all border border-slate-100 dark:border-slate-800 text-xs uppercase tracking-widest shadow-sm hover:shadow-md hover:scale-[1.02] cursor-pointer">
+            <FileText className="text-rose-500 size-5" />
+            تصدير PDF
           </button>
           
           <label className="flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-4 rounded-xl font-black transition-all border border-slate-100 dark:border-slate-800 text-xs uppercase tracking-widest shadow-sm hover:shadow-md hover:scale-[1.02] cursor-pointer">

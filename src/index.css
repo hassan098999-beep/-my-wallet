@@ -5,6 +5,17 @@
 @theme {
   --font-tajawal: "Tajawal", ui-sans-serif, system-ui, sans-serif;
   
+  /* Layout & Custom Borders */
+  --radius-card: 1.5rem;
+  --radius-button: 0.75rem;
+  --radius-pill: 9999px;
+
+  /* Semantic Color Tokens */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+  
   /* Premium Fintech Palette - Deep Slate & Vibrant Emerald */
   --color-primary-50: #f0fdf4;
   --color-primary-100: #dcfce7;

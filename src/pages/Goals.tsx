@@ -690,9 +690,19 @@ const GoalsPage = () => {
               </motion.div>
             </div>
             <h3 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-6 uppercase tracking-tight">ابدأ رحلة الادخار</h3>
-            <p className="text-slate-500 dark:text-slate-400 font-medium max-w-lg mx-auto text-base md:text-2xl leading-relaxed">
+            <p className="text-slate-500 dark:text-slate-400 font-medium max-w-lg mx-auto text-base md:text-2xl leading-relaxed mb-6">
               لم تقم بإضافة أي أهداف بعد. حدد ما تطمح إليه ماليًا وابدأ في توفير الفائض لتحقيقه.
             </p>
+            <button
+              onClick={() => {
+                hapticFeedback('medium');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-button bg-primary-600 hover:bg-primary-700 text-white font-black text-sm shadow-md shadow-primary-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            >
+              <Plus size={16} />
+              <span>أضف أول هدف ادخار</span>
+            </button>
           </motion.div>
         )}
       </div>

@@ -663,13 +663,23 @@ const RecurringExpenses = () => {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-8 md:py-12 bg-white/40 dark:bg-slate-900/20 backdrop-blur-3xl rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800"
+            className="text-center py-8 md:py-12 bg-white/40 dark:bg-slate-900/20 backdrop-blur-3xl rounded-card border-2 border-dashed border-slate-100 dark:border-slate-800"
           >
-            <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center mx-auto mb-3 md:mb-4 text-slate-400">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-100 dark:bg-slate-800 rounded-button flex items-center justify-center mx-auto mb-3 md:mb-4 text-slate-400">
               <RefreshCcw className="size-6 md:size-8" />
             </div>
             <h3 className="text-xs md:text-sm font-black text-slate-900 dark:text-white mb-1 uppercase tracking-tight">لا توجد مصاريف متكررة</h3>
-            <p className="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 font-medium max-w-[180px] md:max-w-xs mx-auto">قم بإضافة مصاريفك الثابتة (مثل الإيجار أو الاشتراكات) ليتم تسجيلها تلقائياً</p>
+            <p className="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 font-medium max-w-[180px] md:max-w-xs mx-auto mb-4">قم بإضافة مصاريفك الثابتة (مثل الإيجار أو الاشتراكات) ليتم تسجيلها تلقائياً</p>
+            <button
+              onClick={() => {
+                hapticFeedback('medium');
+                setIsAdding(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-button bg-primary-600 hover:bg-primary-700 text-white font-black text-xs shadow-md shadow-primary-500/10 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            >
+              <Plus size={14} />
+              <span>إضافة أول مصروف متكرر</span>
+            </button>
           </motion.div>
         )}
       </div>

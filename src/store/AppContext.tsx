@@ -171,6 +171,7 @@ interface AppContextProps extends AppState {
   setTheme: (theme: 'light' | 'dark') => void;
   repeatExpense: (id: string) => Promise<void>;
   exportData: (format?: 'json' | 'csv') => void;
+  exportToPDF: () => Promise<void>;
   importData: (data: string) => void;
   updateAchievement: (id: string, progress: number) => void;
   addNotification: (message: string, type: 'budget' | 'unusual_expense') => void;
@@ -1641,6 +1642,257 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const exportToPDF = async () => {
+    const loadingToast = toast.loading('جاري تحضير تقرير PDF للتصدير...');
+    try {
+      const { jsPDF } = await import('jspdf');
+      await import('jspdf-autotable');
+      
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Fetch Amiri font from Google Fonts Main Repository on GitHub (via jsDelivr)
+      // This is a direct ttf file that is open-source and highly compatible
+      try {
+        const fontUrl = 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/amiri/Amiri-Regular.ttf';
+        const res = await fetch(fontUrl);
+        if (res.ok) {
+          const fontBuffer = await res.arrayBuffer();
+          // Convert arrayBuffer to base64
+          let binary = '';
+          const bytes = new Uint8Array(fontBuffer);
+          const len = bytes.byteLength;
+          for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          const base64 = btoa(binary);
+          doc.addFileToVFS('Amiri-Regular.ttf', base64);
+          doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
+          doc.setFont('Amiri');
+        } else {
+          console.warn('Failed to fetch Arabic font, falling back to standard font');
+        }
+      } catch (fontErr) {
+        console.error('Error fetching font, using fallback', fontErr);
+      }
+
+      // Calculations
+      const totalExpenses = state.expenses.reduce((sum, e) => sum + e.amount, 0);
+      const totalIncome = state.income.reduce((sum, i) => sum + i.amount, 0);
+      const balance = totalIncome - totalExpenses;
+      const currency = state.currency || 'د.ت';
+
+      // Title & Header Information
+      const userNameStr = state.userName || (user?.email ? user.email.split('@')[0] : 'مستخدم مصاريفي');
+      const todayStr = new Date().toLocaleDateString('ar-TN', { year: 'numeric', month: 'long', day: 'numeric' });
+      
+      // Determine overall period
+      const allDates = [
+        ...state.expenses.map(e => e.date),
+        ...state.income.map(i => i.date)
+      ].sort();
+      let periodStr = 'كل المعاملات المسجلة';
+      if (allDates.length > 0) {
+        periodStr = `من ${allDates[0]} إلى ${allDates[allDates.length - 1]}`;
+      }
+
+      // Metadata at top
+      doc.setFontSize(22);
+      if (doc.getFont()?.fontName === 'Amiri') {
+        doc.text('تقرير الإدارة المالية - تطبيق مصاريفي', 105, 18, { align: 'center' });
+        doc.setFontSize(12);
+        doc.text(`تاريخ التصدير: ${todayStr}`, 190, 28, { align: 'right' });
+        doc.text(`اسم المستخدم: ${userNameStr}`, 190, 34, { align: 'right' });
+        doc.text(`الفترة: ${periodStr}`, 190, 40, { align: 'right' });
+      } else {
+        doc.text('Financial Report - Masarifi', 105, 18, { align: 'center' });
+        doc.setFontSize(12);
+        doc.text(`Export Date: ${new Date().toLocaleDateString()}`, 15, 28, { align: 'left' });
+        doc.text(`User Name: ${userNameStr}`, 15, 34, { align: 'left' });
+        doc.text(`Period: ${periodStr}`, 15, 40, { align: 'left' });
+      }
+
+      // Draw a sleek line
+      doc.setDrawColor(226, 232, 240); // slate-200
+      doc.setLineWidth(0.5);
+      doc.line(15, 45, 195, 45);
+
+      // Summary Cards Layout: Expenses, Income, Balance
+      // Let's draw some rectangles with nice backgrounds
+      if (doc.getFont()?.fontName === 'Amiri') {
+        // 1. Income Card (Green background/border)
+        doc.setFillColor(240, 253, 244); // bg-emerald-50
+        doc.setDrawColor(187, 247, 208); // border-emerald-200
+        doc.roundedRect(15, 52, 55, 25, 3, 3, 'FD');
+        doc.setFontSize(10);
+        doc.setTextColor(21, 128, 61); // text-emerald-700
+        doc.text('إجمالي الدخل', 42.5, 58, { align: 'center' });
+        doc.setFontSize(14);
+        doc.text(`+${totalIncome.toFixed(3)} ${currency}`, 42.5, 68, { align: 'center' });
+
+        // 2. Expenses Card (Red background/border)
+        doc.setFillColor(254, 242, 242); // bg-rose-50
+        doc.setDrawColor(254, 202, 202); // border-rose-200
+        doc.roundedRect(77.5, 52, 55, 25, 3, 3, 'FD');
+        doc.setFontSize(10);
+        doc.setTextColor(185, 28, 28); // text-rose-700
+        doc.text('إجمالي المصاريف', 105, 58, { align: 'center' });
+        doc.setFontSize(14);
+        doc.text(`-${totalExpenses.toFixed(3)} ${currency}`, 105, 68, { align: 'center' });
+
+        // 3. Net Balance Card (Blue background/border)
+        doc.setFillColor(240, 249, 255); // bg-sky-50
+        doc.setDrawColor(186, 230, 253); // border-sky-200
+        doc.roundedRect(140, 52, 55, 25, 3, 3, 'FD');
+        doc.setFontSize(10);
+        doc.setTextColor(3, 105, 161); // text-sky-700
+        doc.text('صافي الرصيد الحالي', 167.5, 58, { align: 'center' });
+        doc.setFontSize(14);
+        doc.text(`${balance >= 0 ? '+' : ''}${balance.toFixed(3)} ${currency}`, 167.5, 68, { align: 'center' });
+      } else {
+        // 1. Income Card
+        doc.setFillColor(240, 253, 244);
+        doc.setDrawColor(187, 247, 208);
+        doc.roundedRect(15, 52, 55, 25, 3, 3, 'FD');
+        doc.setFontSize(10);
+        doc.setTextColor(21, 128, 61);
+        doc.text('Total Income', 42.5, 58, { align: 'center' });
+        doc.setFontSize(14);
+        doc.text(`+${totalIncome.toFixed(3)} ${currency}`, 42.5, 68, { align: 'center' });
+
+        // 2. Expenses Card
+        doc.setFillColor(254, 242, 242);
+        doc.setDrawColor(254, 202, 202);
+        doc.roundedRect(77.5, 52, 55, 25, 3, 3, 'FD');
+        doc.setFontSize(10);
+        doc.setTextColor(185, 28, 28);
+        doc.text('Total Expenses', 105, 58, { align: 'center' });
+        doc.setFontSize(14);
+        doc.text(`-${totalExpenses.toFixed(3)} ${currency}`, 105, 68, { align: 'center' });
+
+        // 3. Net Balance Card
+        doc.setFillColor(240, 249, 255);
+        doc.setDrawColor(186, 230, 253);
+        doc.roundedRect(140, 52, 55, 25, 3, 3, 'FD');
+        doc.setFontSize(10);
+        doc.setTextColor(3, 105, 161);
+        doc.text('Net Balance', 167.5, 58, { align: 'center' });
+        doc.setFontSize(14);
+        doc.text(`${balance >= 0 ? '+' : ''}${balance.toFixed(3)} ${currency}`, 167.5, 68, { align: 'center' });
+      }
+
+      // Restore default text colors
+      doc.setTextColor(30, 41, 59); // text-slate-800
+
+      // Table preparation
+      // Combine expenses and income
+      const allTransactions = [
+        ...state.expenses.map(e => ({
+          date: e.date,
+          type: 'مصروف',
+          typeEn: 'Expense',
+          category: state.categories.find(c => c.id === e.categoryId)?.name || 'غير مصنف',
+          account: state.accounts.find(a => a.id === e.accountId)?.name || 'رئيسي',
+          amount: e.amount,
+          amountStr: `-${e.amount.toFixed(3)} ${currency}`,
+          description: e.note || '-',
+          isIncome: false
+        })),
+        ...state.income.map(i => ({
+          date: i.date,
+          type: 'دخل',
+          typeEn: 'Income',
+          category: 'دخل / راتب',
+          account: state.accounts.find(a => a.id === i.accountId)?.name || 'رئيسي',
+          amount: i.amount,
+          amountStr: `+${i.amount.toFixed(3)} ${currency}`,
+          description: i.source || '-',
+          isIncome: true
+        }))
+      ].sort((a, b) => b.date.localeCompare(a.date));
+
+      const isAmiriLoaded = doc.getFont()?.fontName === 'Amiri';
+      
+      // Build table body rows (as arrays)
+      const tableRows = allTransactions.map(t => [
+        t.description,
+        t.amountStr,
+        t.account,
+        t.category,
+        isAmiriLoaded ? t.type : t.typeEn,
+        t.date
+      ]);
+
+      const headers = isAmiriLoaded 
+        ? ['البيان / المصدر', 'المبلغ', 'الحساب', 'التصنيف', 'النوع', 'التاريخ'] 
+        : ['Description / Source', 'Amount', 'Account', 'Category', 'Type', 'Date'];
+
+      // jspdf-autotable options
+      (doc as any).autoTable({
+        startY: 85,
+        head: [headers],
+        body: tableRows,
+        styles: {
+          font: isAmiriLoaded ? 'Amiri' : 'Helvetica',
+          halign: isAmiriLoaded ? 'right' : 'left',
+          fontSize: 10,
+          cellPadding: 3
+        },
+        headStyles: {
+          fillColor: [51, 65, 85], // slate-700
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: isAmiriLoaded ? 'right' : 'left'
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252] // slate-50
+        },
+        columnStyles: isAmiriLoaded ? {
+          0: { cellWidth: 'auto', halign: 'right' },
+          1: { cellWidth: 35, halign: 'left', fontStyle: 'bold' },
+          2: { cellWidth: 25, halign: 'right' },
+          3: { cellWidth: 25, halign: 'right' },
+          4: { cellWidth: 20, halign: 'right' },
+          5: { cellWidth: 25, halign: 'center' }
+        } : {
+          0: { cellWidth: 'auto', halign: 'left' },
+          1: { cellWidth: 35, halign: 'right', fontStyle: 'bold' },
+          2: { cellWidth: 25, halign: 'left' },
+          3: { cellWidth: 25, halign: 'left' },
+          4: { cellWidth: 20, halign: 'left' },
+          5: { cellWidth: 25, halign: 'center' }
+        },
+        // Adjust individual cells for color
+        didParseCell: (data: any) => {
+          if (data.section === 'body') {
+            const rowIndex = data.row.index;
+            const item = allTransactions[rowIndex];
+            if (data.column.index === 1) { // Amount column
+              if (item.isIncome) {
+                data.cell.styles.textColor = [21, 128, 61]; // green
+              } else {
+                data.cell.styles.textColor = [185, 28, 28]; // red
+              }
+            }
+          }
+        },
+        margin: { left: 15, right: 15 }
+      });
+
+      // Save PDF
+      doc.save(`masarifi_report_${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.dismiss(loadingToast);
+      toast.success('تم تصدير التقرير المالي بصيغة PDF بنجاح!');
+    } catch (err: any) {
+      console.error('PDF generation failed', err);
+      toast.dismiss(loadingToast);
+      toast.error(`فشل تصدير PDF: ${err.message || 'حدث خطأ غير معروف'}`);
+    }
+  };
+
   const importData = async (dataStr: string) => {
     try {
       const parsed = JSON.parse(dataStr);
@@ -1882,6 +2134,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTheme,
     repeatExpense,
     exportData,
+    exportToPDF,
     importData,
     updateAchievement,
     addNotification,
