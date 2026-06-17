@@ -31,6 +31,12 @@ import HeroSlidingDeck from '../components/HeroSlidingDeck';
 import FinancialRadar from '../components/FinancialRadar';
 import BehavioralAdvisor from '../components/BehavioralAdvisor';
 
+// Import unified design system components
+import PageHeader from '../components/ui/PageHeader';
+import Card from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
+import Badge from '../components/ui/Badge';
+
 const Dashboard = () => {
   const { 
     expenses, 
@@ -389,78 +395,48 @@ const Dashboard = () => {
       )}
 
       {/* 1. Header with Greeting & Hot Streak widget */}
-      <motion.div 
-        variants={itemVariants}
-        initial="hidden"
-        animate="visible"
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-4 rounded-3xl border border-slate-100 dark:border-slate-800/60 shadow-sm"
-      >
-        <div className="flex items-center gap-3">
+      <PageHeader
+        title={`مرحباً، ${userName || 'صديقي الملتزم'} 👋`}
+        subtitle={`${format(new Date(), 'EEEE، d MMMM', { locale: ar })} • دورة الميزانية النشطة`}
+        action={
           <motion.div 
-            whileHover={{ scale: 1.05, rotate: 5 }}
-            className="w-14 h-14 rounded-2xl border-2 border-emerald-500/20 overflow-hidden shadow-md shrink-0 bg-slate-100 dark:bg-slate-800"
+            onClick={() => {
+              hapticFeedback('medium');
+              if(!streakCheckedIn) {
+                setStreakCheckedIn(true);
+                toast.success('تم احتساب نقاط التزام اليوم! حافظ على عادتك 🔥');
+              }
+            }}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+            className={cn(
+              "flex items-center gap-3 px-4 py-2.5 rounded-button cursor-pointer border transition-all duration-300 shrink-0 select-none",
+              streakCheckedIn 
+                ? "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400 shadow-md shadow-amber-500/5"
+                : "bg-slate-100 dark:bg-slate-800/80 border-transparent hover:border-amber-500/30 text-slate-700 dark:text-slate-300"
+            )}
           >
-            <img 
-              src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix&backgroundColor=e2e8f0" 
-              alt="avatar" 
-              className="w-full h-full object-cover" 
-            />
-          </motion.div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
-                {format(new Date(), 'EEEE، d MMMM', { locale: ar })}
-              </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
-              <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 dark:text-slate-500">
-                <Clock size={10} className="text-indigo-500" />
-                <span>دورة الميزانية النشطة</span>
+            <div className="relative">
+              <Flame className={cn("size-6 scale-110", streakCheckedIn ? "text-amber-500 fill-amber-500 animate-pulse" : "text-slate-400")} />
+              {streakCheckedIn && (
+                <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+              )}
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-0.5">سلسلة الالتزام</div>
+              <div className="text-xs font-black flex items-center gap-1">
+                <span>{bestStreak ? `${bestStreak} يوم` : '0 أيام'}</span>
+                <span className="text-[10px] font-black underline uppercase text-indigo-500">
+                  {streakCheckedIn ? 'تم التسجيل ✓' : 'تسجيل التزام اليوم'}
+                </span>
               </div>
             </div>
-            <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white mt-1">
-              مرحباً، {userName || 'صديقي الملتزم'} <span className="inline-block animate-bounce">👋</span>
-            </h1>
-          </div>
-        </div>
-
-        {/* Dynamic Interactive Streak Feature */}
-        <motion.div 
-          onClick={() => {
-            hapticFeedback('medium');
-            if(!streakCheckedIn) {
-              setStreakCheckedIn(true);
-              toast.success('تم احتساب نقاط التزام اليوم! حافظ على عادتك 🔥');
-            }
-          }}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.98 }}
-          className={cn(
-            "flex items-center gap-3 px-4 py-2.5 rounded-2xl cursor-pointer border transition-all duration-300 shrink-0",
-            streakCheckedIn 
-              ? "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400 shadow-md shadow-amber-500/5 glow"
-              : "bg-slate-100 dark:bg-slate-800/80 border-transparent hover:border-amber-500/30 text-slate-700 dark:text-slate-300"
-          )}
-        >
-          <div className="relative">
-            <Flame className={cn("size-6 scale-110", streakCheckedIn ? "text-amber-500 fill-amber-500 animate-pulse" : "text-slate-400")} />
-            {streakCheckedIn && (
-              <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-              </span>
-            )}
-          </div>
-          <div>
-            <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-0.5">سلسلة الالتزام</div>
-            <div className="text-xs font-black flex items-center gap-1">
-              <span>{bestStreak ? `${bestStreak} يوم` : '0 أيام'}</span>
-              <span className="text-[10px] font-black underline uppercase text-indigo-500">
-                {streakCheckedIn ? 'تم التسجيل ✓' : 'تسجيل التزام اليوم'}
-              </span>
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
+          </motion.div>
+        }
+      />
 
       {/* 2. Cozy View Mode Switcher */}
       <motion.div 
@@ -628,104 +604,101 @@ const Dashboard = () => {
       />
 
       {/* 4. Interactive Transaction List with live Filters */}
-      <motion.div 
-        variants={itemVariants}
-        className="premium-card p-6 sm:p-7 rounded-[2.5rem] flex flex-col min-h-[500px]"
-      >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800/65">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
-              <Clock size={22} />
-            </div>
-            <div>
-              <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">آخر العمليات المكتملة</h3>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">اسحب على أي معاملة لتكرارها أو حذفها</p>
-            </div>
-          </div>
-
-          {/* Sliging Filter Indicator pills */}
-          <div className="flex bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200/5">
-            {[
-              { id: 'all', label: 'الكل' },
-              { id: 'expense', label: 'المصاريف' },
-              { id: 'income', label: 'التحويلات/المداخيل' },
-            ].map((op) => (
-              <button
-                key={op.id}
-                onClick={() => {
-                  hapticFeedback('light');
-                  setTxFilter(op.id as any);
-                }}
-                className={cn(
-                  "px-3.5 py-1.5 rounded-lg text-xs font-black transition-all",
-                  txFilter === op.id 
-                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" 
-                    : "text-slate-400 hover:text-slate-200"
-                )}
-              >
-                {op.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* List Content */}
-        <div className="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 text-right" dir="rtl">
-          <AnimatePresence mode="popLayout">
-            {recentTransactions.length > 0 ? (
-              recentTransactions.map((expense, idx) => (
-                <motion.div
-                  key={expense.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: idx * 0.05 }}
-                >
-                  <SwipeableTransactionItem 
-                    expense={expense} 
-                    category={categories.find(c => c.id === expense.categoryId)}
-                    currency={currency}
-                    accountName={accounts.find(a => a.id === expense.accountId)?.name}
-                    onDelete={() => {
-                      hapticFeedback('medium');
-                      deleteExpense(expense.id);
-                      toast.success('تم حذف العملية');
-                    }}
-                    onRepeat={() => {
-                      hapticFeedback('medium');
-                      repeatExpense(expense.id);
-                      toast.success('تم تكرار العملية بنجاح');
-                    }}
-                    onEdit={() => {
-                      hapticFeedback('medium');
-                      handleEdit(expense);
-                    }}
-                  />
-                </motion.div>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-center h-full">
-                <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800/40 text-slate-300 dark:text-slate-600 rounded-2xl flex items-center justify-center mb-4">
-                  <Activity size={28} />
-                </div>
-                <h4 className="text-sm font-black text-slate-800 dark:text-slate-200">لا تتوفر أي معاملات ضمن الفئة</h4>
-                <p className="text-xs text-slate-400 max-w-xs mt-1 font-semibold leading-relaxed">
-                  ابدأ بإنشاء أولى المصاريف لتبدأ عجائب الذكاء المالي وسلوكيات الادخار بالعمل معك!
-                </p>
+      <motion.div variants={itemVariants}>
+        <Card className="flex flex-col min-h-[500px] p-6 sm:p-7">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800/65">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-indigo-500/10 rounded-button flex items-center justify-center text-indigo-600 shadow-inner">
+                <Clock size={22} />
               </div>
-            )}
-          </AnimatePresence>
-        </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">آخر العمليات المكتملة</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">اسحب على أي معاملة لتكرارها أو حذفها</p>
+              </div>
+            </div>
 
-        <div className="pt-4 mt-6 border-t border-slate-100 dark:border-slate-850 text-center">
-          <Link 
-            to="/transactions" 
-            className="inline-flex items-center gap-2 hover:gap-3 text-xs font-black text-indigo-500 hover:text-indigo-600 transition-all py-2 px-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
-          >
-            <span>استعراض شامل وجدولة كافة الفلاتر للعمليات</span>
-            <ArrowRight size={14} className="rtl:rotate-180" />
-          </Link>
-        </div>
+            {/* Sliging Filter Indicator pills */}
+            <div className="flex bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200/5">
+              {[
+                { id: 'all', label: 'الكل' },
+                { id: 'expense', label: 'المصاريف' },
+                { id: 'income', label: 'التحويلات/المداخيل' },
+              ].map((op) => (
+                <button
+                  key={op.id}
+                  onClick={() => {
+                    hapticFeedback('light');
+                    setTxFilter(op.id as any);
+                  }}
+                  className={cn(
+                    "px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer",
+                    txFilter === op.id 
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" 
+                      : "text-slate-400 hover:text-slate-200"
+                  )}
+                >
+                  {op.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* List Content */}
+          <div className="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1 text-right" dir="rtl">
+            <AnimatePresence mode="popLayout">
+              {recentTransactions.length > 0 ? (
+                recentTransactions.map((expense, idx) => (
+                  <motion.div
+                    key={expense.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: idx * 0.05 }}
+                  >
+                    <SwipeableTransactionItem 
+                      expense={expense} 
+                      category={categories.find(c => c.id === expense.categoryId)}
+                      currency={currency}
+                      accountName={accounts.find(a => a.id === expense.accountId)?.name}
+                      onDelete={() => {
+                        hapticFeedback('medium');
+                        deleteExpense(expense.id);
+                        toast.success('تم حذف العملية');
+                      }}
+                      onRepeat={() => {
+                        hapticFeedback('medium');
+                        repeatExpense(expense.id);
+                        toast.success('تم تكرار العملية بنجاح');
+                      }}
+                      onEdit={() => {
+                        hapticFeedback('medium');
+                        handleEdit(expense);
+                      }}
+                    />
+                  </motion.div>
+                ))
+              ) : (
+                <EmptyState
+                  icon={Activity}
+                  title="لا تتوفر أي معاملات ضمن الفئة"
+                  description="ابدأ بإنشاء أولى المصاريف لتبدأ عجائب الذكاء المالي وسلوكيات الادخار بالعمل معك!"
+                  actionLabel="إضافة أول عملية"
+                  onAction={() => setIsAddModalOpen(true)}
+                />
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="pt-4 mt-6 border-t border-slate-100 dark:border-slate-850 text-center">
+            <Link 
+              to="/transactions" 
+              className="inline-flex items-center gap-2 hover:gap-3 text-xs font-black text-indigo-500 hover:text-indigo-600 transition-all py-2 px-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <span>استعراض شامل وجدولة كافة الفلاتر للعمليات</span>
+              <ArrowRight size={14} className="rtl:rotate-180" />
+            </Link>
+          </div>
+        </Card>
       </motion.div>
         </div>
       )}

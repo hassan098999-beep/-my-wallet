@@ -47,6 +47,12 @@ import { useWindowSize } from "../hooks/useWindowSize";
 import { useDebounce } from "../hooks/useDebounce";
 import { TransactionItem } from "../components/TransactionItem";
 
+// Import unified design system components
+import PageHeader from "../components/ui/PageHeader";
+import Card from "../components/ui/Card";
+import EmptyState from "../components/ui/EmptyState";
+import Badge from "../components/ui/Badge";
+
 const Transactions = () => {
   const { width } = useWindowSize();
   const [displayLimit, setDisplayLimit] = useState(20);
@@ -522,38 +528,28 @@ const Transactions = () => {
   return (
     <div className="space-y-3 md:space-y-6 pb-[calc(1rem+env(safe-area-inset-bottom))] relative pt-[env(safe-area-inset-top)]">
       <motion.div className="space-y-3 md:space-y-6">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 md:gap-8">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="space-y-1"
-          >
-            <h1 className="text-2xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
-              سجل <span className="text-emerald-600">العمليات</span>
-            </h1>
-            <p className="text-xs md:text-base text-slate-500 dark:text-slate-400 font-medium">
-              تتبع وإدارة جميع مصاريفك في مكان واحد
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center gap-3 w-full md:w-auto"
-          >
-            <button
-              onClick={exportToCSV}
-              className="btn-secondary flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-2xl md:rounded-3xl"
+        <PageHeader
+          title="سجل العمليات"
+          subtitle="تتبع وإدارة جميع مصاريفك ودخلك بدقة وسلاسة في مكان واحد موحد"
+          action={
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center gap-3 w-full md:w-auto"
             >
-              <DownloadCloud
-                size={18}
-                className="group-hover:translate-y-0.5 transition-transform"
-              />
-              <span className="font-bold text-sm">تصدير البيانات</span>
-            </button>
-          </motion.div>
-        </div>
+              <button
+                onClick={exportToCSV}
+                className="btn-secondary flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-2xl md:rounded-3xl cursor-pointer"
+              >
+                <DownloadCloud
+                  size={18}
+                  className="group-hover:translate-y-0.5 transition-transform"
+                />
+                <span className="font-bold text-sm">تصدير البيانات</span>
+              </button>
+            </motion.div>
+          }
+        />
 
         {/* Summary Stats & Filters */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
@@ -1105,22 +1101,14 @@ const Transactions = () => {
               )}
             </div>
           ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="p-20 md:p-32 text-center"
-            >
-              <div className="inline-flex items-center justify-center w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-slate-50 dark:bg-slate-900/50 mb-8 text-slate-200 dark:text-slate-800">
-                <Search size={80} />
-              </div>
-              <h4 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white mb-4">
-                لا توجد نتائج
-              </h4>
-              <p className="text-slate-500 dark:text-slate-400 font-medium max-w-sm mx-auto text-base md:text-xl">
-                لم نجد أي عمليات تطابق معايير البحث الحالية. جرب تغيير الفلاتر.
-              </p>
-              <button
-                onClick={() => {
+            <div className="py-20">
+              <EmptyState
+                icon={Search}
+                title="لا توجد نتائج مطابقة"
+                description="لم نجد أي عمليات تطابق معايير البحث أو فلاتر التصفية الحالية. جرّب تعديل الفلاتر أو إعادة تعيينها بالكامل لتظهر العمليات مجدداً."
+                actionLabel="إعادة تعيين كافة الفلاتر"
+                onAction={() => {
+                  hapticFeedback("heavy");
                   setSearchTerm("");
                   setCategoryFilter("");
                   setStartDate("");
@@ -1131,11 +1119,8 @@ const Transactions = () => {
                   setAccountFilter("");
                   setPaymentMethodFilter("all");
                 }}
-                className="mt-10 text-emerald-600 dark:text-emerald-500 font-black text-base md:text-xl uppercase tracking-widest hover:underline"
-              >
-                إعادة تعيين الفلاتر
-              </button>
-            </motion.div>
+              />
+            </div>
           )}
         </motion.div>
 

@@ -6,10 +6,16 @@ import { formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } from '
 import { parseISO } from 'date-fns';
 import { Skeleton } from '../components/Skeleton';
 import { motion } from 'motion/react';
-import { PiggyBank, Target, ArrowRight, TrendingUp, Percent, Sparkles, Link as LinkIcon, Baby, CalendarDays, Coins, HeartPulse } from 'lucide-react';
+import { PiggyBank, Target, ArrowRight, TrendingUp, Percent, Sparkles, Link as LinkIcon, Baby, CalendarDays, Coins, HeartPulse, Activity } from 'lucide-react';
 import { Goal } from '../types';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import BabySavingTargetModal from '../components/BabySavingTargetModal';
+
+// Import unified design system components
+import PageHeader from '../components/ui/PageHeader';
+import Card from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
+import Badge from '../components/ui/Badge';
 
 const SavingsPage = () => {
   const { income, expenses, goals, updateGoal, currency, budget, categories, firstDayOfMonth, addIncome, accounts } = useAppContext();
@@ -205,22 +211,14 @@ const SavingsPage = () => {
       animate="visible"
       className="space-y-4 md:space-y-6 pb-12 max-w-5xl mx-auto px-2"
     >
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
-        <div className="space-y-0.5">
-          <h1 className="text-lg md:text-xl font-black tracking-tight text-slate-900 dark:text-white">
-            تخصيص <span className="text-emerald-500">الادخار</span>
-          </h1>
-          <p className="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-            احسب ووزع مدخراتك تلقائياً على أهدافك المالية
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="تخصيص الادخار"
+        subtitle="احسب ووزع مدخراتك تلقائياً وبأمان على أهدافك المالية والأسئلة العائلية"
+      />
 
-      <motion.div 
-        variants={itemVariants}
-        className="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      <motion.div variants={itemVariants}>
+        <Card className="p-4 md:p-6 pb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div className="space-y-3 md:space-y-4">
             <div className="flex items-center gap-3 md:gap-4">
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-500 shadow-sm">
@@ -479,18 +477,14 @@ const SavingsPage = () => {
           </div>
           
           {goals.length === 0 && (
-            <div className="mt-8 text-center p-6 md:p-8 bg-white/40 dark:bg-slate-900/20 rounded-card border-2 border-dashed border-slate-100 dark:border-slate-800 space-y-4">
-              <p className="text-sm font-black text-slate-500 dark:text-slate-400">
-                لا توجد أهداف ادخارية مسجلة حالياً.
-              </p>
-              <Link
-                to="/goals"
-                onClick={() => hapticFeedback('medium')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-button bg-primary-600 hover:bg-primary-700 text-white font-black text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <Target size={14} />
-                <span>إنشاء وتحديد هدف ادخاري الآن</span>
-              </Link>
+            <div className="mt-8">
+              <EmptyState
+                icon={Target}
+                title="لا توجد أهداف ادخارية مسجلة حالياً"
+                description="أضف أهدافك الادخارية المحددة لتقوم بربط حركة ميزانيتك المباشرة واستخراج الفائض المالي!"
+                actionLabel="إنشاء وتحديد هدف ادخاري الآن"
+                onAction={() => window.location.hash = '#/goals'}
+              />
             </div>
           )}
 
@@ -571,7 +565,8 @@ const SavingsPage = () => {
             </div>
           )}
         </div>
-      </motion.div>
+      </Card>
+    </motion.div>
 
       {/* Baby Saving Targets Configuration Modal */}
       <BabySavingTargetModal 

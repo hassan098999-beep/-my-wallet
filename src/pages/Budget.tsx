@@ -12,6 +12,12 @@ import {
 import { DynamicIcon } from '../components/DynamicIcon';
 import { motion } from 'motion/react';
 
+// Import unified design system components
+import PageHeader from '../components/ui/PageHeader';
+import Card from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
+import Badge from '../components/ui/Badge';
+
 const BudgetPage = () => {
   const { budget, setBudget, categories, expenses, income, currency, firstDayOfMonth, setFirstDayOfMonth, rollingBudgetEnabled } = useAppContext();
 
@@ -170,55 +176,49 @@ const BudgetPage = () => {
       className="space-y-8 pb-32 max-w-5xl mx-auto px-4 md:px-6"
     >
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="space-y-2">
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
-            إدارة <span className="text-primary-500">الميزانية</span>
-          </h1>
-          <p className="text-base text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2">
-            <ShieldCheck size={18} className="text-emerald-500" />
-            خطط لمستقبلك المالي بذكاء ودقة
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 shadow-sm">
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">بداية الشهر</span>
-              <select
-                value={firstDayOfMonth}
-                onChange={(e) => setFirstDayOfMonth(Number(e.target.value))}
-                className="bg-transparent text-sm font-black text-slate-900 dark:text-white outline-none cursor-pointer min-w-[40px]"
-              >
-                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                  <option key={day} value={day}>{day}</option>
-                ))}
-              </select>
+      <PageHeader
+        title="إدارة الميزانية"
+        subtitle="خطط لمستقبلك المالي بذكاء ودقة ورشّد قفة العائلة"
+        action={
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-button px-4 py-2.5 shadow-sm">
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">بداية الشهر</span>
+                <select
+                  value={firstDayOfMonth}
+                  onChange={(e) => setFirstDayOfMonth(Number(e.target.value))}
+                  className="bg-transparent text-xs font-black text-slate-900 dark:text-white outline-none cursor-pointer min-w-[40px]"
+                >
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                    <option key={day} value={day}>{day}</option>
+                  ))}
+                </select>
+              </div>
             </div>
+            <div className="relative flex-1 sm:flex-none">
+              <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-3.5 pointer-events-none" />
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-button pl-3 pr-9 py-2.5 text-xs font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all shadow-sm"
+              />
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleSave}
+              className={cn(
+                "flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-button font-black text-xs transition-all shadow-md cursor-pointer",
+                isSaved ? "bg-emerald-500 text-white" : "bg-primary-600 text-white"
+              )}
+            >
+              {isSaved ? <CircleCheckBig size={16} /> : <Save size={16} />}
+              {isSaved ? 'تم الحفظ' : 'حفظ'}
+            </motion.button>
           </div>
-          <div className="relative flex-1 md:flex-none">
-            <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
-            <input
-              type="month"
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl pl-4 pr-11 py-3 text-sm font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all shadow-sm"
-            />
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleSave}
-            className={cn(
-              "flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-2xl font-black text-sm transition-all shadow-lg",
-              isSaved ? "bg-emerald-500 text-white" : "bg-primary-600 text-white"
-            )}
-          >
-            {isSaved ? <CircleCheckBig size={20} /> : <Save size={20} />}
-            {isSaved ? 'تم الحفظ' : 'حفظ'}
-          </motion.button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Main Budget Dashboard Card */}
       <motion.div variants={itemVariants} className="relative group">
@@ -363,15 +363,15 @@ const BudgetPage = () => {
                   const isOver = catBudgetNum > 0 && spent > catBudgetNum;
 
                   return (
-                    <motion.div
+                    <Card
                       key={cat.id}
-                      whileHover={{ y: -6 }}
                       className={cn(
-                        "p-6 rounded-3xl border-2 transition-all relative overflow-hidden group shadow-sm",
+                        "p-6 border-2 transition-all relative overflow-hidden group hover:border-primary-500/30",
                         isOver 
-                          ? "bg-rose-50/50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/50" 
-                          : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-primary-500/30 shadow-sm hover:shadow-md"
+                          ? "border-rose-200 dark:border-rose-800/50 bg-rose-50/50 dark:bg-rose-900/10" 
+                          : ""
                       )}
+                      interactive
                     >
                       <div className="flex items-center gap-5 mb-6">
                         <div 
@@ -434,12 +434,16 @@ const BudgetPage = () => {
                           </div>
                         </div>
                       </div>
-                    </motion.div>
+                    </Card>
                   );
                 })
               ) : (
-                <div className="col-span-full p-8 text-center bg-slate-50 dark:bg-slate-900/50 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-                  <p className="text-base font-bold text-slate-400">لا توجد فئات مخصصة لهذا القسم</p>
+                <div className="col-span-full">
+                  <EmptyState
+                    icon={CircleAlert}
+                    title="لا توجد فئات مخصصة لهذا القسم"
+                    description="ابدأ بإعداد فئات إضافية من صفحة الإعدادات لتنظيم ميزانيتك بالطريقة الأضمن."
+                  />
                 </div>
               )}
             </div>

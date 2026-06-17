@@ -7,6 +7,11 @@ import { cn, hapticFeedback, getBudgetMonth, safeStorage, formatCurrency } from 
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+
+// Import unified components
+import PageHeader from '../components/ui/PageHeader';
+import Badge from '../components/ui/Badge';
+
 import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export default function Assistant() {
@@ -407,26 +412,23 @@ export default function Assistant() {
       animate={{ opacity: 1, y: 0 }}
       className="max-w-4xl mx-auto h-[calc(100vh-140px)] flex flex-col"
     >
-      <div className="flex items-center justify-between mb-4 px-2">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-xl">
-            <Sparkles className="size-6" />
+      <PageHeader
+        title="المستشار الذكي"
+        subtitle="تحليل مالي متقدم وتكامل ذكي لقراءة الفواتير وتوجيه ميزانيتك بكفاءة"
+        action={
+          <div className="flex items-center gap-2">
+            <Badge variant="success">ذكاء اصطناعي آمن</Badge>
+            <button 
+              onClick={() => { hapticFeedback('light'); setShowSettings(!showSettings); }}
+              className="p-2 text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 transition-colors cursor-pointer"
+            >
+              <SettingsIcon className="size-5" />
+            </button>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-black text-slate-900 dark:text-white">المساعد <span className="text-primary-500">الذكي</span></h1>
-              <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-black rounded-full uppercase tracking-tighter">مجاني</span>
-            </div>
-            <p className="text-xs text-slate-500 font-medium">تحليل مالي متقدم وإدارة ذكية</p>
-          </div>
-        </div>
-        <button 
-          onClick={() => setShowSettings(!showSettings)}
-          className="p-2 text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 transition-colors"
-        >
-          <SettingsIcon className="size-5" />
-        </button>
-      </div>
+        }
+      />
+
+      <div className="h-4" />
 
       {showSettings && (
         <motion.div 

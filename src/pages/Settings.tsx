@@ -14,6 +14,9 @@ import AIManager from './settings/AIManager';
 import ProfileManager from './settings/ProfileManager';
 import { NavLink } from 'react-router-dom';
 
+// Import PageHeader component
+import PageHeader from '../components/ui/PageHeader';
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: { 
@@ -117,44 +120,25 @@ const Settings = () => {
       animate="visible"
       className="max-w-6xl mx-auto pb-16 px-2 md:px-4 space-y-6 md:space-y-8"
     >
-      {/* 1. Header Banner */}
-      <motion.div 
-        variants={itemVariants}
-        className="relative rounded-3xl overflow-hidden border border-slate-200/50 dark:border-slate-800 bg-gradient-to-tr from-slate-900 via-slate-900 to-indigo-950 text-white p-6 md:p-8 shadow-xl"
-      >
-        <div className="absolute top-0 left-0 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
-        
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 text-right">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/5 text-[9px] font-black uppercase tracking-wider">
-              <span>تخصيص لوحة التحكم العائلية</span>
-              <SettingsIcon className="size-3 text-primary-450 rotate-45" />
-            </div>
-            <h1 className="text-xl md:text-3xl font-black tracking-tight leading-none">
-              الإعدادات <span className="text-primary-400 font-black">والتحكم الذكي</span> 🇹🇳
-            </h1>
-            <p className="text-xs text-slate-450 font-bold leading-relaxed max-w-xl">
-              تخصيص الدفتر المالي لعائلتك التونسية. من هنا يمكنك ضبط الميزانيات اليومية ومزامنة الحسابات وتحسين محرك الذكاء الاصطناعي الخاص بك.
-            </p>
-          </div>
-
-          {/* Live Sync Status Info widget */}
-          <div className="p-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl flex flex-col gap-1 w-full md:w-auto text-right min-w-[220px]">
+      <PageHeader
+        title="الإعدادات والتحكم الذكي"
+        subtitle="تخصيص الدفتر المالي لعائلتك التونسية. اضبط الميزانيات، حدّث الحسابات، المزامنة السحابية وضبط المساعد الذكي."
+        action={
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/40 rounded-2xl flex flex-col gap-1 w-full md:w-auto text-right min-w-[220px] shadow-xs">
             <p className="text-[9px] font-bold text-slate-400">المستخدم الحالي النشط</p>
-            <p className="text-sm font-black text-slate-100">{userName || 'رب العائلة التونسية'}</p>
-            <div className="my-1.5 border-t border-white/5" />
+            <p className="text-sm font-black text-slate-800 dark:text-white leading-tight">{userName || 'رب العائلة التونسية'}</p>
+            <div className="my-1.5 border-t border-slate-250 dark:border-slate-800" />
             <div className="flex justify-between items-center text-[10px] font-bold">
-              <span className="text-emerald-400 font-mono">{formatCurrency(dailyBudget || 14, currency)}</span>
-              <span className="text-slate-400">الميزانية اليومية المقدرة:</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-mono">{formatCurrency(dailyBudget || 14, currency)}</span>
+              <span className="text-slate-500 dark:text-slate-400 font-bold">الميزانية اليومية المقدرة:</span>
             </div>
             <div className="flex justify-between items-center text-[10px] font-bold mt-1">
-              <span className="text-blue-400 font-mono">{accounts.length} حسابات</span>
-              <span className="text-slate-400">الحقيبة المالية:</span>
+              <span className="text-blue-600 dark:text-blue-400 font-mono">{accounts.length} حسابات</span>
+              <span className="text-slate-500 dark:text-slate-400 font-bold">الحقيبة المالية:</span>
             </div>
           </div>
-        </div>
-      </motion.div>
+        }
+      />
 
       {/* 2. Main Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

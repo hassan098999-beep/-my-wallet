@@ -4,10 +4,16 @@ import { Goal } from '../types';
 import { formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth, cn } from '../utils';
 import { parseISO } from 'date-fns';
 import { motion } from 'motion/react';
-import { Target, Plus, Trash, Calendar, TrendingUp, Sparkles, Trophy, ArrowUpRight, ArrowDownRight, History } from 'lucide-react';
+import { Target, Plus, Trash, Calendar, TrendingUp, Sparkles, Trophy, ArrowUpRight, ArrowDownRight, History, Activity } from 'lucide-react';
 import NumericKeypad from '../components/NumericKeypad';
 import { AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
+
+// Import unified design system components
+import PageHeader from '../components/ui/PageHeader';
+import Card from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
+import Badge from '../components/ui/Badge';
 
 const GoalsPage = () => {
   const { goals, addGoal, deleteGoal, updateGoal, currency, expenses, income, categories, budget, firstDayOfMonth, addIncome, addExpense, accounts, setIsAddModalOpen, setInitialGoalId } = useAppContext();
@@ -214,14 +220,10 @@ const GoalsPage = () => {
         />
       </div>
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-        <div className="space-y-2">
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
-            أهداف <span className="text-emerald-500">الادخار</span>
-          </h1>
-          <p className="text-base text-slate-500 dark:text-slate-400 font-medium">حدد أهدافك المالية وتابع تقدمك نحو تحقيقها</p>
-        </div>
-      </div>
+      <PageHeader
+        title="أهداف الادخار"
+        subtitle="حدد أهدافك المالية وداوم بذكاء لتتبع تقدمك نحو تحقيقها بسلاسة"
+      />
 
       {/* Goals Summary Stats */}
       {goals.length > 0 && (
@@ -250,18 +252,16 @@ const GoalsPage = () => {
       )}
 
       {/* Add Goal Form */}
-      <motion.div 
-        variants={itemVariants}
-        className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-3xl p-6 md:p-8 rounded-3xl border-2 border-dashed border-primary-500/20 shadow-sm"
-      >
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-500">
-            <Plus size={20} />
+      <motion.div variants={itemVariants}>
+        <Card className="p-6 md:p-8 border-2 border-dashed border-primary-500/20">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-500">
+              <Plus size={20} />
+            </div>
+            <h2 className="text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase">إضافة هدف ادخار جديد</h2>
           </div>
-          <h2 className="text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase">إضافة هدف ادخار جديد</h2>
-        </div>
 
-        <form onSubmit={handleAddGoal} className="space-y-8">
+          <form onSubmit={handleAddGoal} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">اسم الهدف</label>
@@ -422,7 +422,8 @@ const GoalsPage = () => {
             <Plus className="size-7" /> إضافة هدف جديد
           </motion.button>
         </form>
-      </motion.div>
+      </Card>
+    </motion.div>
 
       {/* Goals List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -437,9 +438,10 @@ const GoalsPage = () => {
                 layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm hover:shadow-md transition-all relative overflow-hidden group"
+                className="w-full"
               >
-                <div className="relative z-10">
+                <Card className="p-6 md:p-8 w-full group relative overflow-hidden h-full" interactive>
+                  <div className="relative z-10">
                   <div className="flex justify-between items-start mb-10">
                     <div className="space-y-4">
                       <div className="flex items-center gap-4">
@@ -667,43 +669,23 @@ const GoalsPage = () => {
                 
                 {/* Background Decoration */}
                 <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-primary-500/5 rounded-full blur-[100px] group-hover:bg-primary-500/10 transition-colors duration-700" />
+                </Card>
               </motion.div>
             );
           })
         ) : (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="col-span-full py-24 md:py-40 flex flex-col items-center text-center"
-          >
-            <div className="relative mb-12">
-              <motion.div 
-                animate={{ 
-                  scale: [1, 1.1, 1],
-                  rotate: [0, 5, -5, 0]
-                }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="w-32 h-32 md:w-48 md:h-48 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center text-primary-200 dark:text-primary-800"
-              >
-                <Target size={80} className="md:size-120 opacity-20 absolute" />
-                <Sparkles size={60} className="md:size-80 text-primary-400 dark:text-primary-600" />
-              </motion.div>
-            </div>
-            <h3 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-6 uppercase tracking-tight">ابدأ رحلة الادخار</h3>
-            <p className="text-slate-500 dark:text-slate-400 font-medium max-w-lg mx-auto text-base md:text-2xl leading-relaxed mb-6">
-              لم تقم بإضافة أي أهداف بعد. حدد ما تطمح إليه ماليًا وابدأ في توفير الفائض لتحقيقه.
-            </p>
-            <button
-              onClick={() => {
+          <div className="col-span-full">
+            <EmptyState
+              icon={Target}
+              title="ابدأ رحلة الادخار"
+              description="لم تقم بإضافة أي أهداف بعد. حدد ما تطمح إليه ماليًا وابدأ في توفير الفائض لتحقيقه."
+              actionLabel="أضف أول هدف ادخار"
+              onAction={() => {
                 hapticFeedback('medium');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-button bg-primary-600 hover:bg-primary-700 text-white font-black text-sm shadow-md shadow-primary-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-            >
-              <Plus size={16} />
-              <span>أضف أول هدف ادخار</span>
-            </button>
-          </motion.div>
+            />
+          </div>
         )}
       </div>
     </motion.div>

@@ -5,11 +5,17 @@ import { cn, formatCurrency, hapticFeedback } from '../utils';
 import { Skeleton, TransactionSkeleton } from '../components/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Plus, Trash, Pencil, RefreshCcw, Calendar, CreditCard, Wallet, ArrowRightLeft, AlertCircle, Clock, X, BarChart3, Receipt } from 'lucide-react';
+import { Plus, Trash, Pencil, RefreshCcw, Calendar, CreditCard, Wallet, ArrowRightLeft, AlertCircle, Clock, X, BarChart3, Receipt, Activity } from 'lucide-react';
 import { DynamicIcon } from '../components/DynamicIcon';
 import { PaymentMethod, RecurringInterval, RecurringExpense } from '../types';
 import { CategorySelect } from '../components/CategorySelect';
 import { motion, AnimatePresence } from 'motion/react';
+
+// Import unified design system components
+import PageHeader from '../components/ui/PageHeader';
+import Card from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
+import Badge from '../components/ui/Badge';
 
 const RecurringExpenses = () => {
   const { recurringExpenses, categories, accounts, currency, addRecurringExpense, updateRecurringExpense, deleteRecurringExpense } = useAppContext();
@@ -202,37 +208,32 @@ const RecurringExpenses = () => {
       animate="visible"
       className="space-y-4 md:space-y-8 max-w-5xl mx-auto pb-12"
     >
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4 px-2">
-        <div className="space-y-0.5">
-          <h1 className="text-lg md:text-xl font-black tracking-tight text-slate-900 dark:text-white">
-            المصاريف <span className="text-primary-500">المتكررة</span>
-          </h1>
-          <p className="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-            أتمتة مصاريفك الدورية لتوفير الوقت والجهد
-          </p>
-        </div>
-        
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => {
-            if (isAdding) {
-              resetForm();
-            } else {
-              setIsAdding(true);
-            }
-          }}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl font-black text-[9px] md:text-xs transition-all shadow-lg",
-            isAdding 
-              ? "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400" 
-              : "bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20"
-          )}
-        >
-          {isAdding ? <X size={14} /> : <Plus size={14} />}
-          <span>{isAdding ? 'إلغاء' : 'إضافة مصروف متكرر'}</span>
-        </motion.button>
-      </div>
+      <PageHeader
+        title="المصاريف المتكررة"
+        subtitle="أتمتة مصاريفك الدورية لتوفير الوقت والجهد وتجنب التناسي المزعج"
+        action={
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              if (isAdding) {
+                resetForm();
+              } else {
+                setIsAdding(true);
+              }
+            }}
+            className={cn(
+              "flex items-center gap-1.5 px-4 py-2.5 rounded-button font-black text-xs transition-all shadow-md cursor-pointer select-none",
+              isAdding 
+                ? "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400" 
+                : "bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20"
+            )}
+          >
+            {isAdding ? <X size={14} /> : <Plus size={14} />}
+            <span>{isAdding ? 'إلغاء' : 'إضافة مصروف متكرر'}</span>
+          </motion.button>
+        }
+      />
 
       {/* Commitment Metric Dashboard */}
       <motion.div 
@@ -297,7 +298,7 @@ const RecurringExpenses = () => {
             exit={{ opacity: 0, height: 0, y: -20 }}
             className="overflow-hidden px-2"
           >
-            <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-6 md:p-8 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm mb-8">
+            <Card className="p-6 md:p-8 mb-8 border border-white/40 dark:border-slate-800/40 shadow-sm">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-500 shadow-inner">
                   {editingId ? <Pencil size={24} /> : <Plus size={24} />}
@@ -549,7 +550,7 @@ const RecurringExpenses = () => {
                   {editingId ? 'حفظ التعديلات' : 'إضافة المصروف المتكرر'}
                 </motion.button>
               </form>
-            </div>
+            </Card>
           </motion.div>
         )}
       </AnimatePresence>
@@ -578,109 +579,98 @@ const RecurringExpenses = () => {
                   layout
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-6 md:p-8 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm hover:shadow-md transition-all group relative overflow-hidden"
+                  className="w-full"
                 >
-                  <div className="relative z-10 flex flex-col gap-6">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className={cn(
-                          "w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:rotate-6 text-white",
-                          category?.color || "bg-primary-500"
-                        )} style={{ backgroundColor: category?.color }}>
-                          {category?.icon ? (
-                            <DynamicIcon name={category.icon} size={28} />
-                          ) : (
-                            <Clock size={28} />
+                  <Card className="p-6 md:p-8 w-full group relative overflow-hidden" interactive>
+                    <div className="relative z-10 flex flex-col gap-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          <div className={cn(
+                            "w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:rotate-6 text-white",
+                            category?.color || "bg-primary-500"
+                          )} style={{ backgroundColor: category?.color }}>
+                            {category?.icon ? (
+                              <DynamicIcon name={category.icon} size={28} />
+                            ) : (
+                              <Clock size={28} />
+                            )}
+                          </div>
+                          <div className="space-y-0.5">
+                            <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                              {expense.note || (expense.subcategoryId ? `${category?.name} - ${expense.subcategoryId}` : category?.name)}
+                            </h3>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] font-black text-primary-500 uppercase tracking-widest bg-primary-500/10 px-2 py-0.5 rounded-lg">
+                                {intervalLabels[expense.interval]}
+                              </span>
+                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                {category?.name}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleEdit(expense)}
+                            className="text-slate-300 hover:text-primary-500 p-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-xl transition-all active:scale-90 cursor-pointer"
+                          >
+                            <Pencil className="size-5" />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              deleteRecurringExpense(expense.id);
+                              toast.success('تم حذف المصروف المتكرر');
+                            }}
+                            className="text-slate-300 hover:text-rose-500 p-2 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all active:scale-90 cursor-pointer"
+                          >
+                            <Trash className="size-5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-end justify-between pt-4 border-t border-slate-100 dark:border-slate-800/50">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 text-slate-400">
+                            <Calendar size={12} />
+                            <span className="text-[9px] font-bold uppercase tracking-widest">
+                              القادم: {format(parseISO(expense.nextDate), 'dd MMM yyyy', { locale: ar })}
+                            </span>
+                          </div>
+                          {isSoon && (
+                            <div className="flex items-center gap-1.5 text-rose-500 animate-pulse">
+                              <AlertCircle size={12} />
+                              <span className="text-[9px] font-black uppercase tracking-widest">يستحق قريباً</span>
+                            </div>
                           )}
                         </div>
-                        <div className="space-y-0.5">
-                          <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                            {expense.note || (expense.subcategoryId ? `${category?.name} - ${expense.subcategoryId}` : category?.name)}
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-black text-primary-500 uppercase tracking-widest bg-primary-500/10 px-2 py-0.5 rounded-lg">
-                              {intervalLabels[expense.interval]}
-                            </span>
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                              {category?.name}
-                            </span>
-                          </div>
+                        
+                        <div className="text-right">
+                          <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">
+                            {formatCurrency(expense.amount, currency)}
+                          </p>
                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => handleEdit(expense)}
-                          className="text-slate-300 hover:text-primary-500 p-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-xl transition-all active:scale-90"
-                        >
-                          <Pencil className="size-5" />
-                        </button>
-                        <button 
-                          onClick={() => {
-                            // Using a more subtle way to confirm or just deleting for now to comply with "no alert/confirm"
-                            // For now, I'll just delete but in a real app I'd add a custom modal.
-                            deleteRecurringExpense(expense.id);
-                            toast.success('تم حذف المصروف المتكرر');
-                          }}
-                          className="text-slate-300 hover:text-rose-500 p-2 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all active:scale-90"
-                        >
-                          <Trash className="size-5" />
-                        </button>
                       </div>
                     </div>
 
-                    <div className="flex items-end justify-between pt-4 border-t border-slate-100 dark:border-slate-800/50">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 text-slate-400">
-                          <Calendar size={12} />
-                          <span className="text-[9px] font-bold uppercase tracking-widest">
-                            القادم: {format(parseISO(expense.nextDate), 'dd MMM yyyy', { locale: ar })}
-                          </span>
-                        </div>
-                        {isSoon && (
-                          <div className="flex items-center gap-1.5 text-rose-500 animate-pulse">
-                            <AlertCircle size={12} />
-                            <span className="text-[9px] font-black uppercase tracking-widest">يستحق قريباً</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="text-right">
-                        <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">
-                          {formatCurrency(expense.amount, currency)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Background Decoration */}
-                  <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-primary-500/5 rounded-full blur-[60px] group-hover:bg-primary-500/10 transition-colors duration-700" />
+                    {/* Background Decoration */}
+                    <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-primary-500/5 rounded-full blur-[60px] group-hover:bg-primary-500/10 transition-colors duration-700" />
+                  </Card>
                 </motion.div>
               );
             })}
           </div>
         ) : (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-8 md:py-12 bg-white/40 dark:bg-slate-900/20 backdrop-blur-3xl rounded-card border-2 border-dashed border-slate-100 dark:border-slate-800"
-          >
-            <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-100 dark:bg-slate-800 rounded-button flex items-center justify-center mx-auto mb-3 md:mb-4 text-slate-400">
-              <RefreshCcw className="size-6 md:size-8" />
-            </div>
-            <h3 className="text-xs md:text-sm font-black text-slate-900 dark:text-white mb-1 uppercase tracking-tight">لا توجد مصاريف متكررة</h3>
-            <p className="text-[9px] md:text-[10px] text-slate-500 dark:text-slate-400 font-medium max-w-[180px] md:max-w-xs mx-auto mb-4">قم بإضافة مصاريفك الثابتة (مثل الإيجار أو الاشتراكات) ليتم تسجيلها تلقائياً</p>
-            <button
-              onClick={() => {
-                hapticFeedback('medium');
-                setIsAdding(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-button bg-primary-600 hover:bg-primary-700 text-white font-black text-xs shadow-md shadow-primary-500/10 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-            >
-              <Plus size={14} />
-              <span>إضافة أول مصروف متكرر</span>
-            </button>
-          </motion.div>
+          <EmptyState
+            icon={RefreshCcw}
+            title="لا توجد مصاريف متكررة"
+            description="قم بإضافة مصاريفك الثابتة (مثل الإيجار أو الاشتراكات) ليتم تسجيلها وجدولتها تلقائياً عبر الأيام!"
+            actionLabel="إضافة أول مصروف متكرر"
+            onAction={() => {
+              hapticFeedback('medium');
+              setIsAdding(true);
+            }}
+          />
         )}
       </div>
     </motion.div>

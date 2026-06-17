@@ -8,6 +8,7 @@ import { Calendar, Activity, Target, ChartPie as PieChartIcon } from 'lucide-rea
 import { useWindowSize } from '../hooks/useWindowSize';
 import { useBehavioralEngine } from '../hooks/useBehavioralEngine';
 
+import PageHeader from '../components/ui/PageHeader';
 import { OverviewSection } from '../components/analytics/OverviewSection';
 import { BudgetSection } from '../components/analytics/BudgetSection';
 import { ChartsSection } from '../components/analytics/ChartsSection';
@@ -263,67 +264,61 @@ const Analytics = () => {
       className="space-y-6 md:space-y-8 pb-20 relative text-right"
       dir="rtl"
     >
-      {/* Upper header section with Title & Range pickers */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-2 border-b border-slate-100 dark:border-slate-850">
-        <div className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
-            التحليل <span className="text-primary-500">المالي</span>
-          </h1>
-          <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
-            نظرة مبسطة ومقسمة على تدفقاتك المالية والتزامات الميزانية
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-2xl border border-slate-200/40 dark:border-slate-700/40">
-            <button
-              onClick={() => { hapticFeedback('light'); setRangeType('monthly'); }}
-              className={cn(
-                "flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all",
-                rangeType === 'monthly' ? "bg-white dark:bg-slate-705 text-primary-600 dark:text-primary-400 shadow-xs" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-              )}
-            >
-              شهري
-            </button>
-            <button
-              onClick={() => { hapticFeedback('light'); setRangeType('custom'); }}
-              className={cn(
-                "flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all",
-                rangeType === 'custom' ? "bg-white dark:bg-slate-705 text-primary-600 dark:text-primary-400 shadow-xs" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-              )}
-            >
-              مخصص
-            </button>
+      <PageHeader
+        title="التحليل المالي"
+        subtitle="نظرة ممتدة وشاملة على تدفقاتك المالية والتزامات الميزانية بذكاء"
+        action={
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-2xl border border-slate-200/40 dark:border-slate-700/40 select-none">
+              <button
+                onClick={() => { hapticFeedback('light'); setRangeType('monthly'); }}
+                className={cn(
+                  "flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer",
+                  rangeType === 'monthly' ? "bg-white dark:bg-slate-900 text-primary-600 dark:text-primary-400 shadow-xs" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                )}
+              >
+                شهري
+              </button>
+              <button
+                onClick={() => { hapticFeedback('light'); setRangeType('custom'); }}
+                className={cn(
+                  "flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer",
+                  rangeType === 'custom' ? "bg-white dark:bg-slate-900 text-primary-600 dark:text-primary-400 shadow-xs" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                )}
+              >
+                مخصص
+              </button>
+            </div>
+            
+            {rangeType === 'monthly' ? (
+              <div className="relative group flex-1 sm:flex-none">
+                <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-primary-500 pointer-events-none" size={14} />
+                <input
+                  type="month"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="w-full pr-10 pl-4 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-[10px] font-black uppercase tracking-wider shadow-xs font-mono cursor-pointer"
+                />
+              </div>
+            ) : (
+              <div className="flex gap-1.5 flex-1 sm:flex-none">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="flex-1 px-3 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-[10px] font-black tracking-wider shadow-xs font-mono cursor-pointer"
+                />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="flex-1 px-3 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-[10px] font-black tracking-wider shadow-xs font-mono cursor-pointer"
+                />
+              </div>
+            )}
           </div>
-          
-          {rangeType === 'monthly' ? (
-            <div className="relative group flex-1 sm:flex-none">
-              <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-primary-500 pointer-events-none" size={14} />
-              <input
-                type="month"
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="w-full pr-10 pl-4 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-[10px] font-black uppercase tracking-wider shadow-xs font-mono"
-              />
-            </div>
-          ) : (
-            <div className="flex gap-1.5 flex-1 sm:flex-none">
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-[10px] font-black tracking-wider shadow-xs font-mono"
-              />
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-[10px] font-black tracking-wider shadow-xs font-mono"
-              />
-            </div>
-          )}
-        </div>
-      </div>
+        }
+      />
 
       {/* Segmented Tab Switche Controls */}
       <motion.div 
