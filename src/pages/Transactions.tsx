@@ -558,7 +558,7 @@ const Transactions = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="premium-card bg-emerald-600 rounded-3xl p-4 md:p-6 text-white shadow-md shadow-emerald-500/20 relative overflow-hidden group flex-1 flex flex-col justify-between"
+              className="card bg-emerald-600 rounded-[--radius-lg] p-4 md:p-6 text-white shadow-md shadow-emerald-500/20 relative overflow-hidden group flex-1 flex flex-col justify-between border-transparent"
             >
               <div className="absolute -right-12 -top-12 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
               <div className="relative z-10 space-y-4">
@@ -588,7 +588,7 @@ const Transactions = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="premium-card bg-rose-600 rounded-3xl p-4 md:p-6 text-white shadow-md shadow-rose-500/20 relative overflow-hidden group flex-1 flex flex-col justify-between"
+              className="card bg-rose-600 rounded-[--radius-lg] p-4 md:p-6 text-white shadow-md shadow-rose-500/20 relative overflow-hidden group flex-1 flex flex-col justify-between border-transparent"
             >
               <div className="absolute -right-12 -top-12 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
               <div className="relative z-10 space-y-4">
@@ -620,7 +620,7 @@ const Transactions = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="lg:col-span-3 premium-card p-5 md:p-6 rounded-3xl flex flex-col bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-100 dark:border-slate-800 shadow-sm"
+            className="lg:col-span-3 card p-5 md:p-6 flex flex-col bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-100 dark:border-slate-800 shadow-sm"
           >
             <div className="flex flex-col gap-4 md:gap-5 flex-1">
               {/* Search and Core Controls Row */}
@@ -989,7 +989,7 @@ const Transactions = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="premium-card p-6 md:p-8 rounded-3xl"
+            className="card p-6 md:p-8"
           >
             <div className="flex items-center justify-between mb-8 md:mb-12">
               <h2 className="text-[--text-h2] font-semibold text-slate-900 dark:text-white">
@@ -1056,7 +1056,7 @@ const Transactions = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="premium-card rounded-3xl overflow-hidden"
+          className="card p-0 overflow-hidden"
         >
           <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl z-20">
             <div className="flex items-center gap-4">
@@ -1165,7 +1165,7 @@ const Transactions = () => {
                   className="space-y-3 md:space-y-4"
                 >
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
                       المبلغ ({currency})
                     </label>
                     <input
@@ -1182,7 +1182,7 @@ const Transactions = () => {
                     <>
                       <div className="grid grid-cols-2 gap-3 md:gap-4">
                         <div className="space-y-1.5">
-                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">
+                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
                             الفئة
                           </label>
                           <CategorySelect
@@ -1195,7 +1195,7 @@ const Transactions = () => {
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">
+                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
                             الحساب
                           </label>
                           <select
@@ -1219,7 +1219,7 @@ const Transactions = () => {
                         categories.find((c) => c.id === editCategoryId)!
                           .subcategories!.length > 0 && (
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
                               التصنيف الفرعي
                             </label>
                             <select
@@ -1246,7 +1246,7 @@ const Transactions = () => {
                   ) : (
                     <div className="grid grid-cols-2 gap-3 md:gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
                           المصدر
                         </label>
                         <input
@@ -1258,7 +1258,7 @@ const Transactions = () => {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
                           الحساب (اختياري)
                         </label>
                         <select
@@ -1279,7 +1279,7 @@ const Transactions = () => {
 
                   <div className="grid grid-cols-1 gap-3 md:gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
                         التاريخ
                       </label>
                       <input
@@ -1295,7 +1295,7 @@ const Transactions = () => {
                   {editingTransaction.type === "expense" && (
                     <>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
                           طريقة الدفع
                         </label>
                         <div className="grid grid-cols-3 gap-2">
@@ -1323,7 +1323,7 @@ const Transactions = () => {
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
                           ملاحظة
                         </label>
                         <input
@@ -1340,13 +1340,13 @@ const Transactions = () => {
                     <button
                       type="button"
                       onClick={() => setEditingTransaction(null)}
-                      className="flex-1 px-3 py-2.5 md:px-4 md:py-3 rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                      className="flex-1 px-3 py-2.5 md:px-4 md:py-3 rounded-xl md:rounded-2xl font-semibold text-xs md:text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                     >
                       إلغاء
                     </button>
                     <button
                       type="submit"
-                      className="flex-[2] px-3 py-2.5 md:px-4 md:py-3 rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-widest bg-primary-600 text-white hover:bg-primary-700 shadow-md shadow-primary-500/20 transition-all"
+                      className="btn-primary flex-[2] px-3 py-2.5 md:px-4 md:py-3 rounded-xl md:rounded-2xl font-semibold text-xs md:text-sm shadow-md shadow-primary-500/20 transition-all"
                     >
                       حفظ التغييرات
                     </button>
@@ -1389,7 +1389,7 @@ const Transactions = () => {
 
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-3 md:p-4 rounded-xl md:rounded-2xl mb-6 md:mb-8 flex items-center justify-between border border-slate-100 dark:border-slate-700">
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                       العملية
                     </p>
                     <p className="text-sm md:text-base font-bold text-slate-900 dark:text-white">
@@ -1408,7 +1408,7 @@ const Transactions = () => {
                     </p>
                   </div>
                   <div className="text-left">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 text-left mb-1">
                       المبلغ
                     </p>
                     <p
@@ -1429,7 +1429,7 @@ const Transactions = () => {
                 <div className="flex gap-2.5 md:gap-3">
                   <button
                     onClick={() => setShowDeleteConfirm(null)}
-                    className="flex-1 px-4 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                    className="flex-1 px-4 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl font-semibold text-xs md:text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                   >
                     إلغاء
                   </button>
@@ -1437,7 +1437,7 @@ const Transactions = () => {
                     onClick={() =>
                       handleDelete(showDeleteConfirm.id, showDeleteConfirm.type)
                     }
-                    className="flex-1 px-4 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl font-black text-xs md:text-sm uppercase tracking-widest bg-rose-500 text-white hover:bg-rose-600 shadow-md shadow-rose-500/20 transition-all"
+                    className="flex-1 px-4 py-3 md:px-6 md:py-4 rounded-xl md:rounded-2xl font-semibold text-xs md:text-sm bg-rose-500 text-white hover:bg-rose-600 shadow-md shadow-rose-500/20 transition-all"
                   >
                     حذف نهائي
                   </button>

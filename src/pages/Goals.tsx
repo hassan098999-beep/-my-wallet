@@ -616,13 +616,13 @@ const GoalsPage = () => {
             <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-500">
               <Plus size={20} />
             </div>
-            <h2 className="text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase">إضافة هدف ادخار جديد</h2>
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">إضافة هدف ادخار جديد</h2>
           </div>
 
           <form onSubmit={handleAddGoal} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">اسم الهدف</label>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">اسم الهدف</label>
               <input
                 type="text"
                 value={name}
@@ -633,7 +633,7 @@ const GoalsPage = () => {
               />
             </div>
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">المبلغ المستهدف</label>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">المبلغ المستهدف</label>
               <div className="relative group">
                 <div className={cn(
                   "absolute -inset-1 bg-gradient-to-r from-primary-500 to-indigo-500 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-1000 group-hover:duration-200",
@@ -658,7 +658,7 @@ const GoalsPage = () => {
               </div>
             </div>
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">المبلغ المتوفر</label>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">المبلغ المتوفر</label>
               <div className="relative group">
                 <div className={cn(
                   "absolute -inset-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-1000 group-hover:duration-200",
@@ -682,7 +682,7 @@ const GoalsPage = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">الموعد النهائي</label>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">الموعد النهائي</label>
               <div className="relative">
                 <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 size-5" />
                 <input
@@ -750,13 +750,13 @@ const GoalsPage = () => {
                 className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-3xl border border-slate-100 dark:border-slate-800"
               >
                 <div className="flex justify-between items-center mb-4 px-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                     إدخال {activeInput === 'target' ? 'المبلغ المستهدف' : 'المبلغ المتوفر'}
                   </span>
                   <button 
                     type="button"
                     onClick={() => setActiveInput(null)}
-                    className="text-[10px] font-black text-primary-500 uppercase tracking-widest"
+                    className="text-xs font-semibold text-primary-600 dark:text-primary-400"
                   >
                     إغلاق
                   </button>
@@ -775,9 +775,9 @@ const GoalsPage = () => {
             whileHover={{ scale: 1.01, y: -2 }}
             whileTap={{ scale: 0.98 }}
             type="submit" 
-            className="w-full bg-primary-600 hover:bg-primary-700 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-4 text-lg transition-all shadow-md shadow-primary-500/20 uppercase tracking-[0.2em]"
+            className="btn-primary w-full h-14 rounded-2xl font-semibold flex items-center justify-center gap-2 text-lg transition-all shadow-md shadow-primary-500/20"
           >
-            <Plus className="size-7" /> إضافة هدف جديد
+            <Plus className="size-5" /> إضافة هدف جديد
           </motion.button>
         </form>
       </Card>
@@ -815,10 +815,10 @@ const GoalsPage = () => {
                       </div>
                       <div className="flex items-center gap-3 text-slate-400">
                         <Calendar className="size-5" />
-                        <p className="text-[10px] font-black uppercase tracking-widest">
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                           الموعد: {goal.deadline}
                           {new Date(goal.deadline) > new Date() && (
-                            <span className="mr-3 text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20 lowercase">
+                            <span className="mr-3 text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20">
                               {Math.ceil((new Date(goal.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} يوم متبقي
                             </span>
                           )}
@@ -836,7 +836,7 @@ const GoalsPage = () => {
                   {/* Progress Section */}
                   <div className="space-y-8 mb-6 text-center flex flex-col items-center">
                     <div className="space-y-3">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">التقدم الحالي</p>
+                      <p className="text-xs font-semibold text-slate-500">التقدم الحالي</p>
                       <p className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
                         {formatCurrency(goal.currentAmount, currency)}
                         <span className="text-slate-200 dark:text-slate-700 mx-4">/</span>
@@ -856,7 +856,7 @@ const GoalsPage = () => {
                         {Math.round(percentage)}%
                       </span>
                       <p className={cn(
-                        "text-sm font-black uppercase tracking-widest px-4 py-2 rounded-xl inline-block",
+                        "text-sm font-semibold px-4 py-2 rounded-xl inline-block",
                         isCompleted 
                           ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20" 
                           : percentage >= 75 
@@ -905,13 +905,13 @@ const GoalsPage = () => {
                           <TrendingUp className="size-8" />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest">مربوط بـ</p>
+                          <p className="text-[11px] font-semibold text-slate-500">مربوط بـ</p>
                           <div className="flex flex-wrap items-center gap-3">
-                            <p className="text-base md:text-xl font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">
+                            <p className="text-base md:text-xl font-bold text-slate-700 dark:text-slate-200 tracking-tight">
                               {goal.isLinkedToOverallBudget ? 'الميزانية العامة' : categories.find(c => c.id === goal.linkedCategoryId)?.name}
                             </p>
                             {calculateSurplus(goal) > 0 && (
-                              <span className="bg-emerald-500/10 text-emerald-600 text-[11px] font-black px-3 py-1 rounded-lg border border-emerald-500/20">
+                              <span className="bg-emerald-500/10 text-emerald-600 text-[11px] font-semibold px-3 py-1 rounded-lg border border-emerald-500/20">
                                 +{formatCurrency(calculateSurplus(goal), currency)} فائض
                               </span>
                             )}
@@ -924,10 +924,10 @@ const GoalsPage = () => {
                           whileHover={{ scale: 1.05, y: -2 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleContributeSurplus(goal)}
-                          className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white px-8 py-4 rounded-2xl transition-all shadow-md shadow-primary-500/20 flex items-center justify-center gap-3"
+                          className="w-full sm:w-auto btn-primary px-8 py-4 rounded-2xl transition-all shadow-md shadow-primary-500/20 flex items-center justify-center gap-2"
                         >
-                          <Sparkles className="size-6 font-black" />
-                          <span className="text-sm font-black uppercase tracking-widest">توفير الفائض</span>
+                          <Sparkles className="size-5" />
+                          <span className="text-sm font-semibold">توفير الفائض</span>
                         </motion.button>
                       )}
                     </div>
@@ -936,7 +936,7 @@ const GoalsPage = () => {
                   {/* Quick Add & History */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <h4 className="text-xs font-semibold text-slate-500 flex items-center gap-2">
                         <History size={12} /> سجل العمليات المرتبطة
                       </h4>
                       <div className="flex items-center gap-4">
@@ -945,13 +945,13 @@ const GoalsPage = () => {
                             setInitialGoalId(goal.id);
                             setIsAddModalOpen(true);
                           }}
-                          className="text-[10px] font-black text-emerald-500 uppercase tracking-widest hover:underline"
+                          className="text-xs font-semibold text-emerald-600 hover:underline"
                         >
                           مساهمة مفصلة
                         </button>
                         <button 
                           onClick={() => setShowQuickAdd(showQuickAdd === goal.id ? null : goal.id)}
-                          className="text-[10px] font-black text-primary-500 uppercase tracking-widest hover:underline"
+                          className="text-xs font-semibold text-primary-600 hover:underline"
                         >
                           {showQuickAdd === goal.id ? 'إلغاء' : 'إضافة سريعة'}
                         </button>
@@ -977,7 +977,7 @@ const GoalsPage = () => {
                             <button
                               onClick={() => handleQuickAdd(goal.id)}
                               disabled={!quickAddAmount}
-                              className="bg-primary-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest disabled:opacity-50"
+                              className="btn-primary px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-50"
                             >
                               إضافة
                             </button>

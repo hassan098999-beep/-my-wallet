@@ -211,15 +211,15 @@ const SavingsIndicators = () => {
       {/* Header and Context Title */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div className="space-y-0.5 text-right">
-          <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2 justify-end">
+          <h1 className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-white flex items-center gap-2 justify-end">
             <span>مؤشرات التوفير العائلية</span>
             <PiggyBank className="text-emerald-500 size-6" />
           </h1>
-          <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-bold">
+          <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium">
             صُمم خصيصاً لمراقبة ميزانية ومستقبل العائلة التونسية (الأب والأم والرضيع)
           </p>
         </div>
-        <div className="bg-slate-100 dark:bg-slate-900 px-3 py-1.5 rounded-xl text-[10px] font-bold text-slate-600 dark:text-slate-300">
+        <div className="bg-slate-100 dark:bg-slate-900 px-3 py-1.5 rounded-xl text-[10px] font-semibold text-slate-600 dark:text-slate-300">
           دورة الحساب الحالية: <span className="font-mono">{currentMonth}</span>
         </div>
       </div>
@@ -233,7 +233,7 @@ const SavingsIndicators = () => {
             <AlertTriangle size={32} />
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-black text-slate-800 dark:text-white">لم نجد أي مدخول مسجل لهذا الشهر!</h3>
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-white">لم نجد أي مدخول مسجل لهذا الشهر!</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
               لتتمكن من حساب نسبة الادخار بدقة وتقديم مؤشرات التوفير المخصصة والذكية لعائلتك، يجب أولاً إدخال مدخولك الشهري الإجمالي (مرتب الأب، مرتب الأم، إلخ).
             </p>
@@ -241,7 +241,7 @@ const SavingsIndicators = () => {
           <div className="pt-2">
             <Link 
               to="/income" 
-              className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-black text-xs inline-flex items-center gap-2 shadow-lg shadow-primary-500/20"
+              className="btn-primary px-6 py-3 rounded-2xl font-semibold text-xs inline-flex items-center gap-2 shadow-lg shadow-primary-500/20"
             >
               <span>إرساء وإدخال الدخل والانطلاق</span>
               <ArrowRight size={14} className="rotate-180" />
@@ -260,30 +260,30 @@ const SavingsIndicators = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Coins className="text-primary-500 size-5" />
-                  <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none">الملخص الحسابي للشهر</h3>
+                  <h3 className="text-xs font-semibold text-slate-600 dark:text-slate-400 leading-none">الملخص الحسابي للشهر</h3>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-slate-800/80">
                     <p className="text-[9px] font-bold text-slate-400 mb-0.5">إجمالي المداخيل العائلية</p>
-                    <p className="text-base md:text-lg font-black text-emerald-600 dark:text-emerald-400">{formatCurrency(totalIncome, currency)}</p>
+                    <p className="text-base md:text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(totalIncome, currency)}</p>
                   </div>
                   <div className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-slate-800/80">
                     <p className="text-[9px] font-bold text-slate-400 mb-0.5">إجمالي المصاريف والنفقات</p>
-                    <p className="text-base md:text-lg font-black text-rose-600 dark:text-rose-400">{formatCurrency(totalExpense, currency)}</p>
+                    <p className="text-base md:text-lg font-bold text-rose-600 dark:text-rose-400">{formatCurrency(totalExpense, currency)}</p>
                   </div>
                 </div>
 
                 <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-between">
                   <div>
                     <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">الفائض المدخّر الفعلي</p>
-                    <p className="text-lg md:text-xl font-black text-slate-900 dark:text-white leading-none mt-1-5">
+                    <p className="text-lg md:text-xl font-bold text-slate-900 dark:text-white leading-none mt-1-5">
                       {formatCurrency(actualSavings, currency)}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-[9px] font-bold text-slate-400">معدل التوفير</p>
-                    <p className="text-lg md:text-xl font-black text-emerald-600 tracking-tighter mt-1-5">
+                    <p className="text-lg md:text-xl font-bold text-emerald-600 tracking-tighter mt-1-5">
                       {savingRate.toFixed(1)}%
                     </p>
                   </div>
@@ -293,11 +293,11 @@ const SavingsIndicators = () => {
               {/* Savings Evaluation Card */}
               <div className={`p-4 border rounded-2xl space-y-1.5 ${savingsGrade.color}`}>
                 <div className="flex items-center gap-2 justify-between">
-                  <span className="text-xs font-extrabold flex items-center gap-1.5">
+                  <span className="text-xs font-semibold flex items-center gap-1.5">
                     <ShieldCheck size={14} className="shrink-0" />
                     التقييم: <span className="underline">{savingsGrade.title}</span>
                   </span>
-                  <span className="text-[8px] font-extrabold uppercase tracking-wider bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-full text-slate-600 dark:text-slate-300">نصيحة تلقائية</span>
+                  <span className="text-[9px] font-semibold bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-full text-slate-600 dark:text-slate-300">نصيحة تلقائية</span>
                 </div>
                 <p className="text-[10px] md:text-xs font-semibold leading-relaxed text-right text-slate-700 dark:text-slate-200">
                   {savingsGrade.desc}
@@ -311,8 +311,8 @@ const SavingsIndicators = () => {
               className="glass-card p-5 rounded-3xl border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center text-center space-y-4"
             >
               <div className="space-y-1 w-full text-right">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">مقياس توفير الميزانية</span>
-                <p className="text-xs font-black text-slate-800 dark:text-white">النسبة المئوية الحالية للادخار</p>
+                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block">مقياس توفير الميزانية</span>
+                <p className="text-xs font-semibold text-slate-800 dark:text-white">النسبة المئوية الحالية للادخار</p>
               </div>
 
               <div className="h-44 w-full flex items-center justify-center relative">
@@ -335,10 +335,10 @@ const SavingsIndicators = () => {
                   </RadialBarChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
+                  <span className="text-3xl font-bold font-mono tracking-tight text-slate-900 dark:text-white">
                     {Math.round(savingRate)}%
                   </span>
-                  <span className="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-widest leading-none">توفير من مجموع الدخل</span>
+                  <span className="text-[10px] font-semibold text-slate-500 mt-1 leading-none">توفير من مجموع الدخل</span>
                 </div>
               </div>
 
@@ -360,19 +360,19 @@ const SavingsIndicators = () => {
           >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div className="space-y-0.5 text-right w-full sm:w-auto">
-                <span className="text-[9px] font-black text-primary-500 dark:text-primary-400 uppercase tracking-widest block flex items-end justify-end gap-1">
+                <span className="text-[10px] font-semibold text-primary-600 dark:text-primary-405 block flex items-end justify-end gap-1">
                   <span>أداة تفاعلية للمحاكاة المباشرة</span>
                   <Sliders size={12} />
                 </span>
-                <h3 className="text-sm font-black text-slate-800 dark:text-white">محاكي ميزانية وترشيد المصاريف</h3>
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-white">محاكي ميزانية وترشيد المصاريف</h3>
                 <p className="text-[10px] text-slate-400 font-semibold mt-0.5 leading-relaxed">
                   احسب كم يمكنك ادخاره بتعديل طفيف على سلوك شراء قفة عيش العائلة، مستلزمات البيبي والمواسم.
                 </p>
               </div>
               <div className="bg-gradient-to-tr from-emerald-500/15 to-emerald-400/5 dark:from-emerald-500/10 dark:to-emerald-500/0 px-4 py-3 rounded-2xl border border-emerald-500/20 text-right w-full sm:w-auto">
                 <p className="text-[9px] font-bold text-slate-400">الوفر المالي التقديري الإضافي شهرياً</p>
-                <p className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">
-                  +{formatCurrency(simulatedExtraSavings, currency)}
+                <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                  {formatCurrency(simulatedExtraSavings, currency)}
                 </p>
               </div>
             </div>
@@ -382,8 +382,8 @@ const SavingsIndicators = () => {
                 {/* Food Simulation */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center text-right">
-                    <span className="text-[10px] font-bold text-slate-400">(الحالي: {formatCurrency(foodExpense, currency)})</span>
-                    <span className="text-xs font-black text-slate-700 dark:text-slate-250 flex items-center gap-1">
+                    <span className="text-[10px] font-semibold text-slate-400">(الحالي: {formatCurrency(foodExpense, currency)})</span>
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                       <span>ترشيد قفة السوق ومواد العطارة</span>
                       <UtensilsCrossed size={12} className="text-rose-500" />
                     </span>
@@ -405,8 +405,8 @@ const SavingsIndicators = () => {
                 {/* Baby Simulation */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center text-right">
-                    <span className="text-[10px] font-bold text-slate-400">(الحالي: {formatCurrency(babyExpense, currency)})</span>
-                    <span className="text-xs font-black text-slate-700 dark:text-slate-250 flex items-center gap-1">
+                    <span className="text-[10px] font-semibold text-slate-400">(الحالي: {formatCurrency(babyExpense, currency)})</span>
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                       <span>توفير لوازم الرضيع (البيع بالجملة)</span>
                       <Baby size={12} className="text-cyan-500" />
                     </span>
@@ -428,8 +428,8 @@ const SavingsIndicators = () => {
                 {/* Leisure Simulation */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center text-right">
-                    <span className="text-[10px] font-bold text-slate-400">(الحالي: {formatCurrency(leisureExpense, currency)})</span>
-                    <span className="text-xs font-black text-slate-700 dark:text-slate-250 flex items-center gap-1">
+                    <span className="text-[10px] font-semibold text-slate-400">(الحالي: {formatCurrency(leisureExpense, currency)})</span>
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
                       <span>التحكم في مصاريف المقهى والترفيه</span>
                       <Sparkles size={12} className="text-amber-500" />
                     </span>
@@ -452,20 +452,20 @@ const SavingsIndicators = () => {
               {/* Simulation Result Details */}
               <div className="bg-slate-50 dark:bg-slate-900/40 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col justify-between space-y-3">
                 <div className="space-y-1.5 text-right">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">مقارنة معدل الادخار التقديري</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">مقارنة معدل الادخار التقديري</p>
                   <div className="flex items-center gap-3 justify-end text-sm">
                     <span className="line-through text-slate-400 font-mono">{savingRate.toFixed(1)}%</span>
                     <span className="text-slate-400">←</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-black font-mono text-lg">{simulatedSavingRate.toFixed(1)}%</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono text-lg">{simulatedSavingRate.toFixed(1)}%</span>
                   </div>
                 </div>
 
                 <div className="space-y-1 text-right border-t border-slate-200/50 dark:border-slate-800/55 pt-3">
-                  <span className="text-[9px] font-extrabold uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md">
+                  <span className="text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md">
                     المستقبل المالي المتوقع
                   </span>
                   <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-350 leading-relaxed mt-1.5">
-                    الالتزام بهذا الترشيد البسيط يوفر لعائلتك مبلغاً صافياً مقداره <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">{formatCurrency(simulatedTotalSavings, currency)}</span> شهرياً. هذا المبلغ يكفي لتغطية نفقات طبيب الأطفال بالكامل وتكوين مدخرات صلبة لمستقبل مدرسة الصغير وصندوق الطوارئ الصحي.
+                    الالتزام بهذا الترشيد البسيط يوفر لعائلتك مبلغاً صافياً مقداره <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(simulatedTotalSavings, currency)}</span> شهرياً. هذا المبلغ يكفي لتغطية نفقات طبيب الأطفال بالكامل وتكوين مدخرات صلبة لمستقبل مدرسة الصغير وصندوق الطوارئ الصحي.
                   </p>
                 </div>
               </div>
@@ -474,7 +474,7 @@ const SavingsIndicators = () => {
 
           {/* DIAGNOSTICS & ADVICE LIST FROM EXPERTS */}
           <div className="space-y-4">
-            <h3 className="text-sm font-black text-slate-800 dark:text-white text-right flex items-center gap-1.5 justify-end">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-white text-right flex items-center gap-1.5 justify-end">
               <span>توجيهات وإرشادات حماية الميزانية العائلية</span>
               <Lightbulb className="text-amber-500 size-4" />
             </h3>
@@ -489,7 +489,7 @@ const SavingsIndicators = () => {
                     className="p-5 bg-white dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex gap-4 text-right"
                   >
                     <div className="flex-1 space-y-2">
-                      <h4 className="text-xs font-black text-slate-900 dark:text-white">{diag.title}</h4>
+                      <h4 className="text-xs font-semibold text-slate-900 dark:text-white">{diag.title}</h4>
                       <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
                         {diag.assessment}
                       </p>

@@ -116,8 +116,8 @@ export const AIAdvisor: React.FC = () => {
           </motion.div>
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">المستشار الذكي</h2>
-              <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black rounded-full uppercase tracking-widest border border-emerald-500/20">AI Powered</span>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">المستشار الذكي</h2>
+              <span className="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold rounded-full border border-emerald-500/20">AI Powered</span>
             </div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">تحليل مخصص لبياناتك المالية</p>
           </div>
@@ -159,7 +159,7 @@ export const AIAdvisor: React.FC = () => {
             <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-500">
               <Lightbulb size={18} />
             </div>
-            <h3 className="text-lg font-black text-slate-800 dark:text-slate-200 tracking-tight">نصائح ذكية</h3>
+            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">نصائح ذكية</h2>
           </div>
           <AnimatePresence mode="wait">
             {isLoading ? (
@@ -167,7 +167,7 @@ export const AIAdvisor: React.FC = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center py-24 premium-card shadow-sm"
+                className="flex flex-col items-center justify-center py-24 card shadow-xs"
               >
                 <div className="relative">
                   <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-20 animate-pulse" />
@@ -179,21 +179,21 @@ export const AIAdvisor: React.FC = () => {
                     <Loader2 className="w-12 h-12 text-indigo-500" />
                   </motion.div>
                 </div>
-                <p className="text-slate-400 font-black mt-6 uppercase tracking-widest text-xs">جاري تحليل بياناتك...</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium mt-6 text-xs">جاري تحليل بياناتك...</p>
               </motion.div>
             ) : error ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center py-20 premium-card border-rose-100 dark:border-rose-900/30 text-center px-10 shadow-sm"
+                className="flex flex-col items-center justify-center py-20 card border-rose-100 dark:border-rose-900/30 text-center px-10 shadow-xs"
               >
                 <div className="w-20 h-20 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex items-center justify-center text-rose-500 mb-6">
                   <CircleAlert size={40} />
                 </div>
-                <p className="text-slate-700 dark:text-slate-300 font-black text-lg mb-4 leading-tight">{error}</p>
+                <p className="text-slate-700 dark:text-slate-300 font-semibold mb-4 leading-tight">{error}</p>
                 <button 
                   onClick={() => fetchInsights(true)}
-                  className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 font-black rounded-xl hover:bg-indigo-50 transition-all uppercase tracking-widest text-[10px]"
+                  className="btn-secondary text-[12px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-slate-200/80 transition-all px-4 py-2"
                 >
                   إعادة المحاولة
                 </button>
@@ -206,12 +206,12 @@ export const AIAdvisor: React.FC = () => {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="p-6 premium-card hover:shadow-md transition-all group"
+                    className="card-interactive hover:shadow-sm"
                   >
                     <div className="flex items-start justify-between mb-4">
-                      <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-tight">{item.title}</h4>
+                      <h3 className="text-base font-semibold text-slate-900 dark:text-white leading-tight">{item.title}</h3>
                       <span className={cn(
-                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                        "px-2.5 py-0.5 rounded-full text-[10px] font-semibold border",
                         item.priority === 'high' ? 'text-rose-500 bg-rose-50 border-rose-100 dark:bg-rose-900/20 dark:border-rose-500/20' : 
                         item.priority === 'medium' ? 'text-amber-500 bg-amber-50 border-amber-100 dark:bg-amber-900/20 dark:border-amber-500/20' : 
                         'text-emerald-500 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-500/20'
@@ -224,7 +224,7 @@ export const AIAdvisor: React.FC = () => {
                     </p>
                     <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl text-indigo-600 dark:text-indigo-400 border border-slate-100 dark:border-slate-700/50">
                       <CircleCheckBig className="w-5 h-5 shrink-0" />
-                      <span className="text-xs font-black uppercase tracking-tight">{item.actionItem}</span>
+                      <span className="text-xs font-semibold">{item.actionItem}</span>
                     </div>
                   </motion.div>
                 ))}
@@ -239,20 +239,20 @@ export const AIAdvisor: React.FC = () => {
             <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-500">
               <TrendingUp size={18} />
             </div>
-            <h3 className="text-lg font-black text-slate-800 dark:text-slate-200 tracking-tight">التوقعات المالية</h3>
+            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">التوقعات المالية</h2>
           </div>
-          <div className="premium-card p-8 shadow-sm flex flex-col h-[500px]">
+          <div className="card-elevated flex flex-col h-[500px]">
             {isLoading ? (
               <div className="h-full flex flex-col items-center justify-center">
                 <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-6" />
-                <p className="text-slate-400 font-black uppercase tracking-widest text-xs">جاري بناء التوقعات...</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium text-xs">جاري بناء التوقعات...</p>
               </div>
             ) : error ? (
               <div className="h-full flex flex-col items-center justify-center text-center px-10">
                 <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-200 mb-6">
                   <TrendingUp size={40} />
                 </div>
-                <p className="text-slate-400 font-black text-sm uppercase tracking-widest">لا يمكن عرض التوقعات حالياً</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">لا يمكن عرض التوقعات حالياً</p>
               </div>
             ) : forecast.length > 0 ? (
               <div className="h-full flex flex-col">
@@ -306,7 +306,7 @@ export const AIAdvisor: React.FC = () => {
                 </div>
                 <div className="mt-8 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-1 h-full bg-indigo-500" />
-                  <p className="text-[10px] text-indigo-500 uppercase font-black tracking-[0.2em] mb-2">تحليل التوقعات</p>
+                  <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold mb-1">تحليل التوقعات</p>
                   <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                     {forecast[forecast.length - 1]?.reasoning}
                   </p>
@@ -317,7 +317,7 @@ export const AIAdvisor: React.FC = () => {
                 <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-200 mb-6">
                   <TrendingUp size={40} />
                 </div>
-                <p className="text-slate-400 font-black text-sm uppercase tracking-widest">أضف المزيد من البيانات للحصول على توقعات دقيقة</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">أضف المزيد من البيانات للحصول على توقعات دقيقة</p>
               </div>
             )}
           </div>

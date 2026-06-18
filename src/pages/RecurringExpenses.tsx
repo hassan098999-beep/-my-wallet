@@ -304,17 +304,17 @@ const RecurringExpenses = () => {
                   {editingId ? <Pencil size={24} /> : <Plus size={24} />}
                 </div>
                 <div>
-                  <h2 className="text-base md:text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase">
+                  <h2 className="text-base md:text-lg font-bold text-slate-900 dark:text-white">
                     {editingId ? 'تعديل المصروف الدوري' : 'إضافة مصروف دوري جديد'}
                   </h2>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">قم بجدولة مدفوعاتك القادمة بدقة</p>
+                  <p className="text-xs font-semibold text-slate-500">قم بجدولة مدفوعاتك القادمة بدقة</p>
                 </div>
               </div>
 
               <form onSubmit={handleAdd} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">المبلغ ({currency})</label>
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">المبلغ ({currency})</label>
                     <div className="relative group">
                       <input
                         type="number"
@@ -330,7 +330,7 @@ const RecurringExpenses = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">الفئة</label>
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">الفئة</label>
                     <CategorySelect
                       categories={categories}
                       selectedId={categoryId}
@@ -344,7 +344,7 @@ const RecurringExpenses = () => {
 
                   {categories.find(c => c.id === categoryId)?.subcategories && categories.find(c => c.id === categoryId)!.subcategories!.length > 0 && (
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">التصنيف الفرعي</label>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">التصنيف الفرعي</label>
                       <select
                         value={subcategoryId}
                         onChange={(e) => setSubcategoryId(e.target.value)}
@@ -359,7 +359,7 @@ const RecurringExpenses = () => {
                   )}
 
                   <div className="space-y-2 lg:col-span-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">دورة التكرار</label>
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">دورة التكرار</label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {(['daily', 'weekly', 'monthly', 'yearly'] as RecurringInterval[]).map((int) => (
                         <button
@@ -367,7 +367,7 @@ const RecurringExpenses = () => {
                           type="button"
                           onClick={() => setInterval(int)}
                           className={cn(
-                            "py-4 rounded-2xl border-2 border-dashed text-[10px] font-black uppercase tracking-widest transition-all",
+                            "py-4 rounded-2xl border-2 border-dashed text-xs font-semibold transition-all",
                             interval === int
                               ? "border-primary-500 bg-primary-500/5 text-primary-600 shadow-lg shadow-primary-500/5"
                               : "border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-200"
@@ -387,7 +387,7 @@ const RecurringExpenses = () => {
                         exit={{ opacity: 0, y: -10 }}
                         className="space-y-2 lg:col-span-3"
                       >
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">يوم التكرار</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">يوم التكرار</label>
                         <div className="flex flex-wrap gap-2">
                           {daysOfWeek.map((day) => (
                             <button
@@ -395,7 +395,7 @@ const RecurringExpenses = () => {
                               type="button"
                               onClick={() => setSelectedDayOfWeek(day.id)}
                               className={cn(
-                                "px-4 py-3 rounded-xl border-2 border-dashed text-[10px] font-black transition-all uppercase tracking-widest",
+                                "px-4 py-3 rounded-xl border-2 border-dashed text-xs font-semibold transition-all",
                                 selectedDayOfWeek === day.id
                                   ? "border-primary-500 bg-primary-500 text-white shadow-lg shadow-primary-500/20"
                                   : "border-slate-100 dark:border-slate-800 text-slate-400"
@@ -415,7 +415,7 @@ const RecurringExpenses = () => {
                         exit={{ opacity: 0, y: -10 }}
                         className="space-y-2 lg:col-span-3"
                       >
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">يوم الشهر</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">يوم الشهر</label>
                         <div className="grid grid-cols-7 sm:grid-cols-10 gap-2">
                           {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                             <button
@@ -423,7 +423,7 @@ const RecurringExpenses = () => {
                               type="button"
                               onClick={() => setSelectedDayOfMonth(day)}
                               className={cn(
-                                "w-10 h-10 rounded-xl border-2 border-dashed text-[10px] font-black transition-all flex items-center justify-center",
+                                "w-10 h-10 rounded-xl border-2 border-dashed text-xs font-semibold transition-all flex items-center justify-center",
                                 selectedDayOfMonth === day
                                   ? "border-primary-500 bg-primary-500 text-white shadow-lg shadow-primary-500/20"
                                   : "border-slate-100 dark:border-slate-800 text-slate-400"
@@ -444,7 +444,7 @@ const RecurringExpenses = () => {
                         className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:col-span-3"
                       >
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">الشهر</label>
+                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">الشهر</label>
                           <select
                             value={selectedMonthOfYear}
                             onChange={(e) => setSelectedMonthOfYear(Number(e.target.value))}
@@ -456,7 +456,7 @@ const RecurringExpenses = () => {
                           </select>
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">اليوم</label>
+                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">اليوم</label>
                           <input
                             type="number"
                             min="1"
@@ -471,7 +471,7 @@ const RecurringExpenses = () => {
                   </AnimatePresence>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">الحساب</label>
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">الحساب</label>
                     <select
                       value={accountId}
                       onChange={(e) => setAccountId(e.target.value)}
@@ -484,7 +484,7 @@ const RecurringExpenses = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">تاريخ البدء</label>
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">تاريخ البدء</label>
                     <div className="relative">
                       <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 size-5" />
                       <input
@@ -498,7 +498,7 @@ const RecurringExpenses = () => {
                   </div>
 
                   <div className="md:col-span-2 lg:col-span-1 space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">ملاحظة (اختياري)</label>
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">ملاحظة (اختياري)</label>
                     <input
                       type="text"
                       value={note}
@@ -509,7 +509,7 @@ const RecurringExpenses = () => {
                   </div>
 
                   <div className="md:col-span-3 space-y-4">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">طريقة الدفع</label>
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">طريقة الدفع</label>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {[
                         { id: 'cash', label: 'نقدي', icon: Wallet },
@@ -533,7 +533,7 @@ const RecurringExpenses = () => {
                           )}>
                             <method.icon size={20} />
                           </div>
-                          <span className="font-black text-[10px] uppercase tracking-widest">{method.label}</span>
+                          <span className="font-semibold text-xs leading-none">{method.label}</span>
                         </button>
                       ))}
                     </div>
@@ -544,7 +544,7 @@ const RecurringExpenses = () => {
                   whileHover={{ scale: 1.01, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
-                  className="w-full bg-primary-600 hover:bg-primary-700 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-4 text-base transition-all shadow-md shadow-primary-500/20 uppercase tracking-[0.2em]"
+                  className="btn-primary w-full h-14 rounded-2xl font-semibold flex items-center justify-center gap-2 text-base transition-all shadow-md shadow-primary-500/20"
                 >
                   {editingId ? <Pencil size={20} /> : <RefreshCcw size={20} />}
                   {editingId ? 'حفظ التعديلات' : 'إضافة المصروف المتكرر'}
@@ -600,10 +600,10 @@ const RecurringExpenses = () => {
                               {expense.note || (expense.subcategoryId ? `${category?.name} - ${expense.subcategoryId}` : category?.name)}
                             </h3>
                             <div className="flex items-center gap-2">
-                              <span className="text-[9px] font-black text-primary-500 uppercase tracking-widest bg-primary-500/10 px-2 py-0.5 rounded-lg">
+                              <span className="text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded-md">
                                 {intervalLabels[expense.interval]}
                               </span>
-                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
                                 {category?.name}
                               </span>
                             </div>
@@ -633,14 +633,14 @@ const RecurringExpenses = () => {
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5 text-slate-400">
                             <Calendar size={12} />
-                            <span className="text-[9px] font-bold uppercase tracking-widest">
+                            <span className="text-[11px] font-medium">
                               القادم: {format(parseISO(expense.nextDate), 'dd MMM yyyy', { locale: ar })}
                             </span>
                           </div>
                           {isSoon && (
                             <div className="flex items-center gap-1.5 text-rose-500 animate-pulse">
                               <AlertCircle size={12} />
-                              <span className="text-[9px] font-black uppercase tracking-widest">يستحق قريباً</span>
+                              <span className="text-[11px] font-semibold">يستحق قريباً</span>
                             </div>
                           )}
                         </div>
