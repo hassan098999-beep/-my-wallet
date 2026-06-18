@@ -6,7 +6,8 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
-  const basePath = "./";
+  const isGithubPages = env.VITE_GITHUB_PAGES === 'true';
+  const basePath = isGithubPages ? '/-my-wallet/' : '/';
 
   return {
     base: basePath,
@@ -27,7 +28,7 @@ export default defineConfig(({ mode }) => {
           cleanupOutdatedCaches: true,
           skipWaiting: true,
           clientsClaim: true,
-          navigateFallback: `index.html`,
+          navigateFallback: isGithubPages ? '/-my-wallet/index.html' : '/index.html',
         },
         manifest: {
           name: "مصاريفي - إدارة المصاريف الشخصية",
