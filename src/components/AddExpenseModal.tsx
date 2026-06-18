@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { PaymentMethod, Expense } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Check, ChevronLeft, Calendar, Layers, Building2, AlignLeft, Search } from 'lucide-react';
+import { X, Check, ChevronLeft, Calendar, Layers, Building2, AlignLeft, Search, Sparkles } from 'lucide-react';
 import { formatCurrency, cn, hapticFeedback } from '../utils';
 import { DynamicIcon } from './DynamicIcon';
 import CalculatorKeypad from './CalculatorKeypad';
@@ -41,6 +41,53 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   const selectedAccount = accounts.find(a => a.id === accountId);
   const selectedToAccount = accounts.find(a => a.id === toAccountId);
 
+  // Find last expense to duplicate
+  const lastExpense = useMemo(() => {
+    if (!expenses || expenses.length === 0) return null;
+    return [...expenses].sort((a, b) => {
+      const timeA = new Date(a.createdAt || a.date).getTime();
+      const timeB = new Date(b.createdAt || b.date).getTime();
+      return timeB - timeA;
+    })[0];
+  }, [expenses]);
+
+  const lastExpenseCategory = useMemo(() => {
+    if (!lastExpense) return null;
+    return categories.find(c => c.id === lastExpense.categoryId);
+  }, [lastExpense, categories]);
+
+  const favoriteCategories = useMemo(() => {
+    if (type !== 'expense' || !expenses || expenses.length === 0) return [];
+    
+    // Filter expenses in the last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentExpenses = expenses.filter(exp => {
+      const expDate = new Date(exp.date);
+      return expDate >= thirtyDaysAgo;
+    });
+
+    // If we don't have enough recent expenses, find from all
+    const targetExpenses = recentExpenses.length > 0 ? recentExpenses : expenses;
+
+    // Count occurrences of each categoryId
+    const counts: Record<string, number> = {};
+    targetExpenses.forEach(exp => {
+      if (exp.categoryId) {
+        counts[exp.categoryId] = (counts[exp.categoryId] || 0) + 1;
+      }
+    });
+
+    // Sort categories by usage count
+    const sortedCategoryIds = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+    
+    // Return top 4 unique category details
+    return sortedCategoryIds
+      .map(id => categories.find(c => c.id === id))
+      .filter((c): c is NonNullable<typeof c> => !!c)
+      .slice(0, 4);
+  }, [expenses, categories, type]);
+
   useEffect(() => {
     if (isOpen) {
       if (editExpenseData) {
@@ -54,16 +101,42 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
         setPaymentMethod(editExpenseData.paymentMethod || 'cash');
         setGoalId('');
       } else {
+        // Load last used settings from localStorage if available
+        let savedLastUsed = { accountId: '', paymentMethod: 'cash' };
+        try {
+          const raw = localStorage.getItem('masarifi_last_used');
+          if (raw) savedLastUsed = JSON.parse(raw);
+        } catch (e) {
+          console.error('Failed to parse last used from localStorage:', e);
+        }
+
+        // Check if there is a shared intent parsed
+        let sharedAmount = '';
+        let sharedNote = '';
+        try {
+          const rawShared = localStorage.getItem('masarifi_shared_intent');
+          if (rawShared) {
+            const parsed = JSON.parse(rawShared);
+            if (parsed.amount) sharedAmount = parsed.amount.toString();
+            if (parsed.note) sharedNote = parsed.note;
+            // Clean it so it doesn't run on every subsequent modal toggle
+            localStorage.removeItem('masarifi_shared_intent');
+          }
+        } catch (e) {
+          console.error('Failed to load shared intent:', e);
+        }
+
         setType(initialGoalId ? 'income' : 'expense');
-        setExpression('0');
-        setCategoryId(categories[0]?.id || '');
+        setExpression(sharedAmount || '0');
+        // If there is a shared text intent, leave categoryId blank for user selection
+        setCategoryId(sharedAmount ? '' : (categories[0]?.id || ''));
         setSubcategoryId('');
-        setAccountId(accounts[0]?.id || '');
+        setAccountId(savedLastUsed.accountId || accounts[0]?.id || '');
         setToAccountId(accounts.length > 1 ? accounts[1].id : '');
         setDate(new Date().toISOString().split('T')[0]);
         setSource('');
-        setNote('');
-        setPaymentMethod('cash');
+        setNote(sharedNote);
+        setPaymentMethod((savedLastUsed.paymentMethod as PaymentMethod) || 'cash');
         setGoalId(initialGoalId || '');
       }
       setActiveView('main');
@@ -162,6 +235,12 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
           toast.success('تم تحديث المصروف بنجاح');
           hapticFeedback('success');
         } else {
+          // Save last used parameters to localStorage
+          try {
+            localStorage.setItem('masarifi_last_used', JSON.stringify({ accountId, paymentMethod }));
+          } catch (e) {
+            console.error('Failed to save last used values:', e);
+          }
           await addExpense(expenseData);
           toast.success('تمت إضافة المصروف بنجاح');
           hapticFeedback('success');
@@ -308,6 +387,31 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                       ={formatCurrency(evaluateExpression(expression), currency)}
                     </div>
                   )}
+
+                  {/* Duplicate Last Transaction Button */}
+                  {lastExpense && type === 'expense' && (
+                    <motion.button
+                      type="button"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        hapticFeedback('medium');
+                        setExpression(lastExpense.amount.toString());
+                        setCategoryId(lastExpense.categoryId);
+                        setSubcategoryId(lastExpense.subcategoryId || '');
+                        if (lastExpense.accountId) {
+                          setAccountId(lastExpense.accountId);
+                        }
+                        setPaymentMethod(lastExpense.paymentMethod || 'cash');
+                        setNote(lastExpense.note || '');
+                        toast.success('تم تكرار آخر عملية وتحديث البيانات بنجاح!');
+                      }}
+                      className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-md text-white text-[11px] font-black rounded-full transition-all border border-white/10 shadow-md select-none cursor-pointer"
+                    >
+                      <Sparkles size={11} className="text-amber-300 fill-amber-300 animate-pulse" />
+                      <span>تكرار آخر مصروف: {lastExpenseCategory?.name || 'مصروف'} ({lastExpense.amount} {currency})</span>
+                    </motion.button>
+                  )}
                 </div>
 
                 {/* Subcategories (if applicable) */}
@@ -451,6 +555,44 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                       />
                       <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     </div>
+
+                    {/* Favorite Categories Quick Grid */}
+                    {type === 'expense' && favoriteCategories.length > 0 && !categorySearchQuery && (
+                      <div className="shrink-0 space-y-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                        <span className="text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 uppercase flex items-center gap-1.5 px-1">
+                          <Sparkles size={11} className="text-rose-500 fill-rose-500" />
+                          التصنيفات الأكثر استخداماً (آخر 30 يوم)
+                        </span>
+                        <div className="grid grid-cols-4 gap-3.5 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-100 dark:border-slate-805/30">
+                          {favoriteCategories.map((cat) => (
+                            <button
+                              key={`fav-${cat.id}`}
+                              onClick={() => {
+                                hapticFeedback('light');
+                                setCategoryId(cat.id);
+                                setSubcategoryId('');
+                                setActiveView('main');
+                              }}
+                              className="flex flex-col items-center gap-1.5 group/fav cursor-pointer"
+                            >
+                              <div
+                                className={cn(
+                                  "w-11 h-11 rounded-xl flex items-center justify-center text-white transition-all shadow-sm group-hover/fav:scale-105",
+                                  categoryId === cat.id ? "ring-2 ring-rose-500 ring-offset-2 scale-105" : "opacity-95"
+                                )}
+                                style={{ backgroundColor: cat.color, '--tw-ring-color': cat.color } as any}
+                              >
+                                <DynamicIcon name={cat.icon || 'Circle'} size={18} />
+                              </div>
+                              <span className="text-[9px] font-black text-center text-slate-600 dark:text-slate-400 truncate w-full px-0.5">
+                                {cat.name}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-4 gap-4 overflow-y-auto custom-scrollbar pb-2">
                       {categories.filter(cat => cat.name.toLowerCase().includes(categorySearchQuery.toLowerCase())).map((cat) => (
                         <button

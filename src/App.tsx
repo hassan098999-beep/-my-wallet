@@ -13,6 +13,7 @@ import Transactions from './pages/Transactions';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Assistant from './pages/Assistant';
+import ShareAdd from './pages/ShareAdd';
 
 const BudgetPage = lazy(() => import('./pages/Budget'));
 const GoalsPage = lazy(() => import('./pages/Goals'));
@@ -47,6 +48,7 @@ function AppContent() {
               <Route path="savings-indicators" element={<SavingsIndicatorsPage />} />
               <Route path="settings" element={<Settings />} />
               <Route path="assistant" element={<Assistant />} />
+              <Route path="share-add" element={<ShareAdd />} />
             </Route>
           </Routes>
         </Suspense>

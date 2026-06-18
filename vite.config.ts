@@ -39,6 +39,31 @@ export default defineConfig(({ mode }) => {
           orientation: "portrait",
           lang: "ar",
           dir: "rtl",
+          share_target: {
+            action: "/share-add",
+            method: "GET",
+            enctype: "application/x-www-form-urlencoded",
+            params: {
+              title: "title",
+              text: "text",
+              url: "url"
+            }
+          },
+          shortcuts: [
+            {
+              name: "إضافة مصروف",
+              short_name: "إضافة مصروف",
+              description: "تسجيل مصروف جديد بسرعة وسلاسة",
+              url: "/?action=add",
+              icons: [
+                {
+                  src: "icon-192.png",
+                  sizes: "192x192",
+                  type: "image/png"
+                }
+              ]
+            }
+          ],
           icons: [
             {
               src: "icon-192.png",
