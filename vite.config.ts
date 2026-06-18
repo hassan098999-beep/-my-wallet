@@ -19,8 +19,7 @@ export default defineConfig(({ mode }) => {
         injectRegister: "auto",
         includeAssets: ["icon-192.png", "icon-512.png", "icon.svg"],
         devOptions: {
-          enabled: true,
-          type: "module",
+          enabled: false,
         },
         workbox: {
           globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
