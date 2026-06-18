@@ -5,16 +5,44 @@
 @theme {
   --font-tajawal: "Tajawal", ui-sans-serif, system-ui, sans-serif;
   
+  /* نظام الخطوط - 5 مستويات واضحة */
+  --text-display: 2rem;      /* عناوين البطاقة البطلة */
+  --text-h1: 1.375rem;       /* عنوان الصفحة */
+  --text-h2: 1.125rem;       /* عنوان القسم */
+  --text-body: 0.875rem;     /* النص الأساسي */
+  --text-label: 0.75rem;     /* التسميات والـ badges */
+  --text-micro: 0.6875rem;   /* التواريخ والتفاصيل الثانوية */
+
+  --font-display: 800;       /* bold جداً - للأرقام الكبيرة فقط */
+  --font-heading: 700;       /* عناوين الأقسام */
+  --font-body: 500;          /* النص العادي */
+  --font-label: 600;         /* التسميات */
+
+  /* نظام الزوايا - 4 مستويات دلالية */
+  --radius-xs: 0.5rem;       /* حقول الإدخال الداخلية، badges صغيرة */
+  --radius-sm: 0.75rem;      /* أزرار، chips */
+  --radius-md: 1rem;         /* بطاقات ثانوية */
+  --radius-lg: 1.5rem;       /* بطاقات رئيسية */
+  --radius-xl: 2rem;         /* البطاقة البطلة (HeroSlidingDeck) */
+
+  /* ألوان سطحية للعمق */
+  --color-surface-0: #ffffff;
+  --color-surface-1: #f8fafc;
+  --color-surface-2: #f1f5f9;
+  --color-surface-dark-0: #0f172a;
+  --color-surface-dark-1: #1e293b;
+  --color-surface-dark-2: #334155;
+
+  /* ألوان دلالية */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #6366f1;
+
   /* Layout & Custom Borders */
   --radius-card: 1.5rem;
   --radius-button: 0.75rem;
   --radius-pill: 9999px;
-
-  /* Semantic Color Tokens */
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --color-info: #3b82f6;
   
   /* Premium Fintech Palette - Deep Slate & Vibrant Emerald */
   --color-primary-50: #f0fdf4;
@@ -95,16 +123,20 @@
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-white dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800/50 shadow-sm rounded-2xl transition-all duration-300;
+  /* بطاقة وحيدة بـ 3 حالات */
+  .card {
+    @apply bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[--radius-lg] p-4 transition-all duration-200;
   }
-  
-  .glass-morphism {
-    @apply backdrop-blur-md bg-white/30 dark:bg-slate-900/30 border border-white/20 dark:border-slate-800/20 rounded-2xl;
+  .card-interactive {
+    @apply bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[--radius-lg] p-4 transition-all duration-200 hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-md hover:shadow-emerald-500/5 active:scale-[0.99] cursor-pointer;
+  }
+  .card-elevated {
+    @apply bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[--radius-lg] p-4 transition-all duration-200 shadow-sm shadow-slate-200/80 dark:shadow-black/20;
   }
 
-  .premium-card {
-    @apply bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:shadow-slate-200/20 dark:hover:shadow-black/20 transition-all duration-500;
+  /* احتفظ بـ glass-card لأنها مستعملة كثيراً، فقط نظّفها */
+  .glass-card {
+    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800/60 rounded-[--radius-lg] transition-all duration-200;
   }
 
   .text-gradient-primary {
@@ -115,16 +147,20 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600;
   }
 
+  /* نظام الأزرار */
   .btn-primary {
-    @apply bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2 py-2.5 px-4;
+    @apply bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-semibold rounded-[--radius-sm] transition-all duration-150 active:scale-95 shadow-sm shadow-emerald-500/20 flex items-center justify-center gap-2 px-4 py-2.5 text-sm;
   }
-
   .btn-secondary {
-    @apply bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-black rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 py-2.5 px-4;
+    @apply bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-[--radius-sm] transition-all duration-150 active:scale-95 flex items-center justify-center gap-2 px-4 py-2.5 text-sm;
+  }
+  .btn-ghost {
+    @apply hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium rounded-[--radius-sm] transition-all duration-150 active:scale-95 flex items-center justify-center gap-2 px-3 py-2 text-sm;
   }
 
+  /* نظام الحقول */
   .input-field {
-    @apply w-full px-3 py-2.5 rounded-xl border-none bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white font-bold text-sm focus:ring-4 focus:ring-emerald-500/10 shadow-inner transition-all outline-none;
+    @apply w-full px-3 py-2.5 rounded-[--radius-xs] border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white font-medium text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all duration-150;
   }
 
   .no-scrollbar::-webkit-scrollbar {

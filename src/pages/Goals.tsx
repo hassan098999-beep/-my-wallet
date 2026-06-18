@@ -261,7 +261,7 @@ const GoalsPage = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-8 md:space-y-12 pb-32 max-w-5xl mx-auto px-4 md:px-6 relative"
+      className="space-y-8 max-w-5xl mx-auto p-4 pb-32 relative"
     >
       {/* Atmospheric Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
@@ -294,19 +294,19 @@ const GoalsPage = () => {
       {goals.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm text-center group hover:shadow-md transition-all">
-            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">إجمالي المستهدف</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">إجمالي المستهدف</p>
             <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter group-hover:scale-110 transition-transform">
               {formatCurrency(goals.reduce((sum, g) => sum + g.targetAmount, 0), currency)}
             </p>
           </motion.div>
           <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm text-center group hover:shadow-md transition-all">
-            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">إجمالي المدخرات</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">إجمالي المدخرات</p>
             <p className="text-3xl font-black text-emerald-500 tracking-tighter group-hover:scale-110 transition-transform">
               {formatCurrency(goals.reduce((sum, g) => sum + g.currentAmount, 0), currency)}
             </p>
           </motion.div>
           <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm text-center group hover:shadow-md transition-all">
-            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">نسبة الإنجاز الكلية</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">نسبة الإنجاز الكلية</p>
             <p className="text-3xl font-black text-primary-500 tracking-tighter group-hover:scale-110 transition-transform">
               {goals.reduce((sum, g) => sum + g.targetAmount, 0) > 0 
                 ? Math.round((goals.reduce((sum, g) => sum + g.currentAmount, 0) / goals.reduce((sum, g) => sum + g.targetAmount, 0)) * 100) 
@@ -482,7 +482,7 @@ const GoalsPage = () => {
                   <div className="p-5 bg-indigo-50/30 dark:bg-slate-950/40 border border-indigo-100/10 rounded-2xl relative overflow-hidden flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                       <div className="space-y-1 text-right">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">تقديرات الوقت الذاتية ⏳</span>
+                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">تقديرات الوقت الذاتية ⏳</span>
                         <h4 className="text-2xl font-black text-slate-800 dark:text-white">
                           {simMonthsRequired >= 12 ? (
                             <>
@@ -494,7 +494,7 @@ const GoalsPage = () => {
                             </>
                           ) : (
                             <>
-                              {simMonthsRequired} <span className="text-xs font-black text-slate-400">أشهر</span>
+                              {simMonthsRequired} <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">أشهر</span>
                             </>
                           )}
                         </h4>
@@ -521,19 +521,19 @@ const GoalsPage = () => {
 
                   {/* Acceleration Scenarios */}
                   <div className="space-y-2">
-                    <span className="text-[10px] font-black text-slate-400 tracking-wider block">عجّل وتيرة إنجاز الهدف 🚀</span>
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block pb-1">عجّل وتيرة إنجاز الهدف 🚀</span>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {/* Extra 15% */}
                       <div className="p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-xl space-y-1 text-right">
                         <div className="flex justify-between items-center">
-                          <span className="text-[9px] font-black text-emerald-500">+15% سرعة</span>
+                          <span className="text-[9px] font-bold text-emerald-500">+15% سرعة</span>
                           <span className="text-[9px] text-slate-400 font-mono">({formatCurrency(savings15Extra, currency)}/ش)</span>
                         </div>
-                        <p className="text-[10px] font-black text-slate-700 dark:text-slate-300">
-                          خلال <span className="text-indigo-500 font-mono">{simMonths15}</span> شهر فقط
+                        <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">
+                          خلال <span className="text-indigo-500 font-mono font-bold">{simMonths15}</span> شهر فقط
                         </p>
-                        <p className="text-[8px] text-slate-400 font-medium">
+                        <p className="text-[8px] text-slate-400 font-medium font-tajawal">
                           توفير ({simMonthsRequired - simMonths15}) أشهر • بحلول {date15Str}
                         </p>
                       </div>
@@ -541,11 +541,11 @@ const GoalsPage = () => {
                       {/* Extra 30% */}
                       <div className="p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-xl space-y-1 text-right">
                         <div className="flex justify-between items-center">
-                          <span className="text-[9px] font-black text-cyan-500">+30% سرعة</span>
+                          <span className="text-[9px] font-bold text-cyan-500">+30% سرعة</span>
                           <span className="text-[9px] text-slate-400 font-mono">({formatCurrency(savings30Extra, currency)}/ش)</span>
                         </div>
-                        <p className="text-[10px] font-black text-slate-700 dark:text-slate-300">
-                          خلال <span className="text-indigo-500 font-mono">{simMonths30}</span> شهر فقط
+                        <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">
+                          خلال <span className="text-indigo-500 font-mono font-bold">{simMonths30}</span> شهر فقط
                         </p>
                         <p className="text-[8px] text-slate-400 font-medium font-tajawal">
                           توفير ({simMonthsRequired - simMonths30}) أشهر • بحلول {date30Str}
@@ -556,7 +556,7 @@ const GoalsPage = () => {
 
                   {/* Milestone Trackers */}
                   <div className="p-3 bg-slate-50 dark:bg-slate-950/20 rounded-xl border border-slate-100 dark:border-slate-850/50 space-y-2">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">لوحة محطات التقدم المعيارية</span>
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block">لوحة محطات التقدم المعيارية</span>
                     
                     <div className="grid grid-cols-4 gap-2 text-center">
                       <div className="space-y-1">

@@ -77,7 +77,7 @@ const HeroSlidingDeck: React.FC<HeroSlidingDeckProps> = ({
                   setHeroTab(tab.id as any);
                 }}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-black transition-all relative overflow-hidden whitespace-nowrap cursor-pointer",
+                  "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold transition-all relative overflow-hidden whitespace-nowrap cursor-pointer",
                   isActive 
                     ? "bg-white text-slate-950 shadow-md"
                     : "text-slate-400 hover:text-slate-200"

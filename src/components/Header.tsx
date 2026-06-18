@@ -50,7 +50,7 @@ const Header = () => {
   return (
     <header className="h-[calc(3rem+env(safe-area-inset-top))] md:h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between px-3 md:px-5 z-[100] sticky top-0">
       <div className="flex items-center gap-3">
-        <h2 className="text-base md:text-lg font-black text-slate-900 dark:text-white tracking-tighter uppercase">
+        <h2 className="text-base md:text-lg font-bold text-slate-900 dark:text-white">
           {getPageName()}
         </h2>
       </div>
@@ -95,8 +95,8 @@ const Header = () => {
                       <UserCircle size={22} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-black text-slate-900 dark:text-white truncate tracking-tight">حسابي</p>
-                      <p className="text-[10px] font-bold text-slate-500 truncate">{user ? user.email : 'حساب محلي (غير متصل)'}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">حسابي</p>
+                      <p className="text-[10px] font-semibold text-slate-400 truncate">{user ? user.email : 'حساب محلي (غير متصل)'}</p>
                     </div>
                   </div>
                 </div>
@@ -109,7 +109,7 @@ const Header = () => {
                       onClick={() => setIsDropdownOpen(false)}
                       className={({ isActive }) =>
                         cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black transition-all",
+                          "flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all",
                           isActive
                             ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 shadow-sm"
                             : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50"
@@ -119,7 +119,7 @@ const Header = () => {
                       {({ isActive }) => (
                         <>
                           <item.icon size={18} className={cn("transition-transform", isActive && "scale-110")} />
-                          <span className="uppercase tracking-wider">{item.name}</span>
+                          <span>{item.name}</span>
                         </>
                       )}
                     </NavLink>
@@ -130,7 +130,7 @@ const Header = () => {
                   {user ? (
                     <button 
                       onClick={() => { setIsDropdownOpen(false); logout(); }}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all w-full text-right uppercase tracking-widest cursor-pointer"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all w-full text-right cursor-pointer"
                     >
                       <LogOut size={18} />
                       تسجيل الخروج
@@ -138,7 +138,7 @@ const Header = () => {
                   ) : (
                     <button 
                       onClick={() => { setIsDropdownOpen(false); login(); }}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all w-full text-right uppercase tracking-widest cursor-pointer"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all w-full text-right cursor-pointer"
                     >
                       <LogIn size={18} />
                       تسجيل الدخول (Google)

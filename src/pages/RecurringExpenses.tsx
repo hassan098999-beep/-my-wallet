@@ -206,7 +206,7 @@ const RecurringExpenses = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-4 md:space-y-8 max-w-5xl mx-auto pb-12"
+      className="space-y-8 p-4 pb-32 max-w-5xl mx-auto"
     >
       <PageHeader
         title="المصاريف المتكررة"
@@ -247,7 +247,7 @@ const RecurringExpenses = () => {
               <Receipt size={22} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">العبء المالي الشهري</p>
+              <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">العبء المالي الشهري</p>
               <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none mt-1">
                 {formatCurrency(summaryStats.monthlyBurden, currency)}
               </h3>
@@ -262,7 +262,7 @@ const RecurringExpenses = () => {
               <BarChart3 size={22} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">الالتزامات النشطة</p>
+              <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">الالتزامات النشطة</p>
               <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none mt-1">
                 {summaryStats.activeCount} {summaryStats.activeCount === 1 ? 'التزام' : summaryStats.activeCount >= 3 && summaryStats.activeCount <= 10 ? 'التزامات' : 'التزاماً'}
               </h3>
@@ -277,7 +277,7 @@ const RecurringExpenses = () => {
               <Calendar size={22} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">أقرب دفعة قادمة</p>
+              <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">أقرب دفعة قادمة</p>
               <h3 className="text-sm md:text-base font-black text-slate-900 dark:text-white leading-none mt-2 truncate max-w-[180px]">
                 {summaryStats.soonest ? (
                   format(parseISO(summaryStats.soonest.nextDate), 'dd MMMM yyyy', { locale: ar })
@@ -561,8 +561,8 @@ const RecurringExpenses = () => {
             <Clock className="size-3.5 md:size-4" />
           </div>
           <div>
-            <h3 className="text-xs md:text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase">قائمة المصاريف المتكررة</h3>
-            <p className="text-[7px] md:text-[8px] font-bold text-slate-400 uppercase tracking-widest">إدارة وجدولة مدفوعاتك الدورية</p>
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">قائمة المصاريف المتكررة</h2>
+            <p className="text-[11px] font-medium text-slate-500">إدارة وجدولة مدفوعاتك الدورية</p>
           </div>
         </div>
         

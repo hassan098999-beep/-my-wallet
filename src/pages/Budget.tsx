@@ -220,7 +220,7 @@ const BudgetPage = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-8 pb-32 max-w-5xl mx-auto px-4 md:px-6 text-right font-tajawal rtl"
+      className="space-y-8 p-4 pb-32 max-w-5xl mx-auto text-right font-tajawal rtl"
     >
       {/* Header Section */}
       <PageHeader
@@ -230,7 +230,7 @@ const BudgetPage = () => {
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
             {/* Cycle day component */}
             <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 shadow-xs">
-              <span className="text-[10px] font-black text-slate-400">بداية الدورة:</span>
+              <span className="text-[10px] font-semibold text-slate-500">بداية الدورة:</span>
               <select
                 value={firstDayOfMonth}
                 onChange={(e) => {
@@ -358,7 +358,7 @@ const BudgetPage = () => {
             {/* Left Portion of Block: Raw Input and Balance Indicators */}
             <div className="lg:col-span-5 space-y-6">
               <div className="space-y-2">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-widest block">مبلغ الميزانية المستهدف</span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">مبلغ الميزانية المستهدف</span>
                 <div className="relative">
                   <input
                     type="number"
@@ -375,11 +375,11 @@ const BudgetPage = () => {
               {/* Dynamic summary counts */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-50 dark:bg-slate-950/30 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">ما تم صرفه فعلياً</p>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">ما تم صرفه فعلياً</p>
                   <p className="text-sm font-black text-rose-500">{formatCurrency(totalSpent, currency)}</p>
                 </div>
                 <div className="bg-slate-50 dark:bg-slate-950/30 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">المبلغ المتبقي</p>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">المبلغ المتبقي</p>
                   <p className={cn(
                     "text-sm font-black",
                     remainingBudget > 0 ? "text-emerald-500" : "text-rose-500"
@@ -392,7 +392,7 @@ const BudgetPage = () => {
             <div className="lg:col-span-7 space-y-6 bg-slate-50/50 dark:bg-slate-950/20 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/40">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">نسبة استهلاك الميزانية الكلية</span>
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">نسبة استهلاك الميزانية الكلية</span>
                   <span className={cn(
                     "text-xs font-black px-2.5 py-1 rounded-lg",
                     overallPercentage > 100 ? "bg-rose-50/50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400" :
@@ -420,7 +420,7 @@ const BudgetPage = () => {
               {/* Auxiliary calculation summary */}
               <div className="grid grid-cols-2 gap-4 pt-1">
                 <div className="bg-white dark:bg-slate-900/60 rounded-xl p-3 shadow-xs border border-slate-100/30">
-                  <p className="text-[9px] font-black text-slate-400 tracking-wider mb-1">الميزانية اليومية المقترحة ⚡</p>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">الميزانية اليومية المقترحة ⚡</p>
                   <p className="text-base font-black text-slate-800 dark:text-white">{formatCurrency(dailyLimit, currency)}</p>
                   <p className="text-[8px] text-slate-400 font-medium mt-0.5">
                     {rollingBudgetEnabled ? "تتكيف يومياً بناءً على ما أنفقته" : "موزعة بالتساوي على الأيام"}
@@ -428,7 +428,7 @@ const BudgetPage = () => {
                 </div>
 
                 <div className="bg-white dark:bg-slate-900/60 rounded-xl p-3 shadow-xs border border-slate-100/30">
-                  <p className="text-[9px] font-black text-slate-400 tracking-wider mb-1">دورتك المالية المتبقية ⏳</p>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">دورتك المالية المتبقية ⏳</p>
                   <p className="text-base font-black text-slate-800 dark:text-white">{remainingDays} <span className="text-xs text-slate-400">أيّام</span></p>
                   <p className="text-[8px] text-slate-400 font-medium mt-0.5">من أصل {daysInMonth} يوم في دورتك</p>
                 </div>
@@ -542,7 +542,7 @@ const BudgetPage = () => {
               <div className="space-y-1">
                 <div className="flex items-center gap-2.5">
                   <div className={cn("w-3.5 h-3.5 rounded-full shadow-xs", group.color)} />
-                  <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-1.5">
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                     <span>{group.title}</span>
                     <span className="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md font-mono">%{group.percentNum} المقترح</span>
                   </h4>
@@ -551,7 +551,7 @@ const BudgetPage = () => {
                   {group.description}
                 </p>
               </div>
-              <span className="text-[10px] font-black text-slate-400 shrink-0 self-start md:self-center bg-slate-50 dark:bg-slate-850 px-2.5 py-1 rounded-full border border-slate-100 dark:border-slate-800 font-mono">{group.items.length} فئات فعالة</span>
+              <span className="text-[10px] font-semibold text-slate-500 shrink-0 self-start md:self-center bg-slate-50 dark:bg-slate-850 px-2.5 py-1 rounded-full border border-slate-100 dark:border-slate-800 font-mono">{group.items.length} فئات فعالة</span>
             </div>
 
             {/* Grid of details */}

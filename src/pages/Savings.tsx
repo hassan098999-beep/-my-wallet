@@ -209,7 +209,7 @@ const SavingsPage = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-4 md:space-y-6 pb-12 max-w-5xl mx-auto px-2"
+      className="space-y-6 p-4 pb-32 max-w-5xl mx-auto"
     >
       <PageHeader
         title="تخصيص الادخار"
@@ -224,10 +224,10 @@ const SavingsPage = () => {
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-500 shadow-sm">
                 <TrendingUp size={18} />
               </div>
-              <h3 className="text-xs md:text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">المدخرات المحتملة (الفائض الكلي)</h3>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">المدخرات المحتملة (الفائض الكلي)</h2>
             </div>
             <div className="p-4 md:p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-inner text-center">
-              <p className="text-[7px] md:text-[8px] font-bold text-slate-500 mb-1 md:mb-2 uppercase tracking-widest">الفرق بين الدخل والمصاريف</p>
+              <p className="text-[10px] font-semibold text-slate-500 mb-1">الفرق بين الدخل والمصاريف</p>
               <p className="text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter">
                 {formatCurrency(potentialSavings, currency)}
               </p>
@@ -239,7 +239,7 @@ const SavingsPage = () => {
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center text-primary-500 shadow-sm">
                 <Percent size={18} />
               </div>
-              <h3 className="text-xs md:text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">نسبة الادخار المستهدفة</h3>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">نسبة الادخار المستهدفة</h2>
             </div>
             <div className="relative group">
               <input
@@ -318,7 +318,7 @@ const SavingsPage = () => {
               <div className="p-4 bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-100 dark:border-slate-800/80 flex flex-col justify-between space-y-4 shadow-sm">
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1">
+                    <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
                       <CalendarDays size={13} />
                       تتبع الادخار الشهري للرضيع
                     </span>
@@ -340,7 +340,7 @@ const SavingsPage = () => {
 
                 <div className="flex justify-between items-end">
                   <div className="text-right">
-                    <p className="text-[8px] font-bold text-slate-400 uppercase">المُدخر هذا الشهر</p>
+                    <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">المُدخر هذا الشهر</p>
                     <p className="text-base font-black text-slate-800 dark:text-slate-100 leading-none font-mono">
                       {formatCurrency(monthlyBabyContribution, currency)} <span className="text-xs text-slate-400 font-bold">/ {formatCurrency(babyMonthlyTarget, currency)}</span>
                     </p>
@@ -362,7 +362,7 @@ const SavingsPage = () => {
               <div className="p-4 bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-100 dark:border-slate-800/80 flex flex-col justify-between space-y-4 shadow-sm">
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-black text-cyan-500 uppercase tracking-widest flex items-center gap-1">
+                    <span className="text-[10px] font-semibold text-cyan-600 dark:text-cyan-400 flex items-center gap-1">
                       <HeartPulse size={13} />
                       رصيد الأمان التراكمي الإجمالي
                     </span>
@@ -383,7 +383,7 @@ const SavingsPage = () => {
                 </div>
 
                 <div className="text-right">
-                  <p className="text-[8px] font-bold text-slate-400 uppercase">الرصيد التراكمي حالياً</p>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">الرصيد التراكمي حالياً</p>
                   <p className="text-base font-black text-slate-800 dark:text-slate-100 leading-none font-mono">
                     {formatCurrency(babyGoal.currentAmount, currency)} <span className="text-xs text-slate-400 font-bold">/ {formatCurrency(babyGoal.targetAmount, currency)}</span>
                   </p>
@@ -404,7 +404,7 @@ const SavingsPage = () => {
                 <Target size={18} />
               </div>
               <div>
-                <h3 className="text-xs md:text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">تحليل حصة الأهداف</h3>
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">تحليل حصة الأهداف</h2>
                 <p className="text-[10px] text-slate-400 font-bold">نسبة كل هدف من إجمالي المبالغ الادخارية المتراكمة</p>
               </div>
             </div>

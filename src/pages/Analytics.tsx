@@ -261,7 +261,7 @@ const Analytics = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6 md:space-y-8 pb-20 relative text-right"
+      className="space-y-6 p-4 pb-32 relative text-right"
       dir="rtl"
     >
       <PageHeader
@@ -273,7 +273,7 @@ const Analytics = () => {
               <button
                 onClick={() => { hapticFeedback('light'); setRangeType('monthly'); }}
                 className={cn(
-                  "flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer",
+                  "flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
                   rangeType === 'monthly' ? "bg-white dark:bg-slate-900 text-primary-600 dark:text-primary-400 shadow-xs" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                 )}
               >
@@ -282,7 +282,7 @@ const Analytics = () => {
               <button
                 onClick={() => { hapticFeedback('light'); setRangeType('custom'); }}
                 className={cn(
-                  "flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer",
+                  "flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
                   rangeType === 'custom' ? "bg-white dark:bg-slate-900 text-primary-600 dark:text-primary-400 shadow-xs" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                 )}
               >
@@ -297,7 +297,7 @@ const Analytics = () => {
                   type="month"
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="w-full pr-10 pl-4 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-[10px] font-black uppercase tracking-wider shadow-xs font-mono cursor-pointer"
+                  className="w-full pr-10 pl-4 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-xs font-semibold shadow-xs font-mono cursor-pointer"
                 />
               </div>
             ) : (
@@ -306,13 +306,13 @@ const Analytics = () => {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-[10px] font-black tracking-wider shadow-xs font-mono cursor-pointer"
+                  className="flex-1 px-3 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-xs font-semibold shadow-xs font-mono cursor-pointer"
                 />
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-[10px] font-black tracking-wider shadow-xs font-mono cursor-pointer"
+                  className="flex-1 px-3 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-xs font-semibold shadow-xs font-mono cursor-pointer"
                 />
               </div>
             )}

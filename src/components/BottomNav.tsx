@@ -107,7 +107,7 @@ const NavItem = ({ item }: { item: typeof mainNavItems[0] }) => {
               <item.icon size={isActive ? 24 : 22} strokeWidth={isActive ? 2.5 : 2} className="transition-all duration-300" />
             </div>
             <span className={cn(
-              "text-[10px] font-bold uppercase tracking-tight transition-all duration-300",
+              "text-[10px] font-semibold transition-all duration-300",
               isActive ? "opacity-100 text-emerald-700 dark:text-emerald-300 mt-0.5" : "opacity-70"
             )}>
               {item.name}

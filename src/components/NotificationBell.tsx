@@ -148,7 +148,7 @@ const NotificationBell = () => {
           >
             <div className="flex justify-between items-center mb-4">
               <button aria-label="إغلاق الإشعارات" onClick={() => setIsOpen(false)} className="hover:text-rose-500 transition-colors"><X size={16} /></button>
-              <h3 className="font-black text-slate-900 dark:text-white">الإشعارات الذكية</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white">الإشعارات الذكية</h3>
             </div>
             <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
               {visibleNotifications.length === 0 ? (
@@ -156,14 +156,14 @@ const NotificationBell = () => {
               ) : (
                 visibleNotifications.map(n => (
                   <div key={n.id} className={cn(
-                    "p-3 rounded-xl text-xs font-bold leading-relaxed shadow-xs border text-right",
+                    "p-3 rounded-xl text-xs font-medium leading-relaxed shadow-xs border text-right",
                     n.type === 'budget' ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30 text-amber-900 dark:text-amber-200' :
                     n.type === 'achievement' ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-900 dark:text-emerald-200' :
                     'bg-rose-50/50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30 text-rose-900 dark:text-rose-200'
                   )}>
                     <p>{n.message}</p>
                     <div className="flex justify-start items-center mt-2.5">
-                      <button onClick={() => handleDismiss(n.id)} className="text-[10px] font-black underline cursor-pointer hover:no-underline opacity-80 hover:opacity-100">مسح التنبيه</button>
+                      <button onClick={() => handleDismiss(n.id)} className="text-[10px] font-semibold underline cursor-pointer hover:no-underline opacity-80 hover:opacity-100">مسح التنبيه</button>
                     </div>
                   </div>
                 ))

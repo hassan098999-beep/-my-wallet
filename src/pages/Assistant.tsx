@@ -410,7 +410,7 @@ export default function Assistant() {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto h-[calc(100vh-140px)] flex flex-col"
+      className="max-w-4xl mx-auto p-4 pb-32 flex flex-col"
     >
       <PageHeader
         title="المستشار الذكي"
@@ -467,10 +467,10 @@ export default function Assistant() {
               <Sparkles size={20} className="animate-pulse" />
             </div>
             <div>
-              <h2 className="text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase">المستشار الذكي</h2>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">المستشار الذكي</h2>
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">متصل الآن</span>
+                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">متصل الآن</span>
               </div>
             </div>
           </div>
@@ -513,7 +513,7 @@ export default function Assistant() {
               </motion.div>
               
               <div className="space-y-3 max-w-sm">
-                <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">كيف يمكنني مساعدتك؟</h3>
+                <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">كيف يمكنني مساعدتك؟</h3>
                 <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
                   أنا مستشارك المالي الذكي. يمكنني تحليل مصاريفك، تقديم نصائح للادخار، أو الإجابة على أي استفسار مالي.
                 </p>
@@ -711,7 +711,7 @@ export default function Assistant() {
               <Send size={18} className="md:size-22 rotate-180" />
             </motion.button>
           </form>
-          <p className="text-center text-[8px] font-bold text-slate-400 mt-3 uppercase tracking-widest">
+          <p className="text-center text-[10px] font-semibold text-slate-400 mt-3">
             قد يخطئ الذكاء الاصطناعي أحياناً، يرجى مراجعة النصائح المالية الهامة.
           </p>
         </div>

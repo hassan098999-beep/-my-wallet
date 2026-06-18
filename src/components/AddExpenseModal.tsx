@@ -346,19 +346,19 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                   <div className="flex w-full bg-black/20 p-1 rounded-2xl backdrop-blur-md">
                     <button
                       onClick={() => { hapticFeedback('light'); setType('income'); }}
-                      className={cn("flex-1 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all rounded-xl", type === 'income' ? activeTabColor : "text-white/70 hover:text-white")}
+                      className={cn("flex-1 py-2.5 text-xs sm:text-sm font-semibold transition-all rounded-xl", type === 'income' ? activeTabColor : "text-white/70 hover:text-white")}
                     >
                       دخل
                     </button>
                     <button
                       onClick={() => { hapticFeedback('light'); setType('expense'); }}
-                      className={cn("flex-1 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all rounded-xl", type === 'expense' ? activeTabColor : "text-white/70 hover:text-white")}
+                      className={cn("flex-1 py-2.5 text-xs sm:text-sm font-semibold transition-all rounded-xl", type === 'expense' ? activeTabColor : "text-white/70 hover:text-white")}
                     >
                       مصروف
                     </button>
                     <button
                       onClick={() => { hapticFeedback('light'); setType('transfer'); }}
-                      className={cn("flex-1 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all rounded-xl", type === 'transfer' ? activeTabColor : "text-white/70 hover:text-white")}
+                      className={cn("flex-1 py-2.5 text-xs sm:text-sm font-semibold transition-all rounded-xl", type === 'transfer' ? activeTabColor : "text-white/70 hover:text-white")}
                     >
                       تحويل
                     </button>
@@ -406,7 +406,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                         setNote(lastExpense.note || '');
                         toast.success('تم تكرار آخر عملية وتحديث البيانات بنجاح!');
                       }}
-                      className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-md text-white text-[11px] font-black rounded-full transition-all border border-white/10 shadow-md select-none cursor-pointer"
+                      className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-md text-white text-[11px] font-semibold rounded-full transition-all border border-white/10 shadow-md select-none cursor-pointer"
                     >
                       <Sparkles size={11} className="text-amber-300 fill-amber-300 animate-pulse" />
                       <span>تكرار آخر مصروف: {lastExpenseCategory?.name || 'مصروف'} ({lastExpense.amount} {currency})</span>
@@ -440,7 +440,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                     onClick={() => { hapticFeedback('light'); setActiveView('account'); }}
                     className="flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors"
                   >
-                    <span className="text-[10px] uppercase tracking-widest opacity-70 mb-1">الحساب</span>
+                    <span className="text-[10px] opacity-70 mb-1">الحساب</span>
                     <span className="text-sm font-bold truncate w-full text-center">{selectedAccount?.name || 'اختر الحساب'}</span>
                   </button>
                   
@@ -449,7 +449,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                       onClick={() => { hapticFeedback('light'); setActiveView('toAccount'); }}
                       className="flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors"
                     >
-                      <span className="text-[10px] uppercase tracking-widest opacity-70 mb-1">إلى حساب</span>
+                      <span className="text-[10px] opacity-70 mb-1">إلى حساب</span>
                       <span className="text-sm font-bold truncate w-full text-center">{selectedToAccount?.name || 'اختر الحساب'}</span>
                     </button>
                   ) : (
@@ -457,7 +457,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                       onClick={() => { hapticFeedback('light'); setActiveView('category'); }}
                       className="flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors"
                     >
-                      <span className="text-[10px] uppercase tracking-widest opacity-70 mb-1">{type === 'income' ? 'المصدر' : 'الفئة'}</span>
+                      <span className="text-[10px] opacity-70 mb-1">{type === 'income' ? 'المصدر' : 'الفئة'}</span>
                       <span className="text-sm font-bold truncate w-full text-center">{type === 'income' ? (source || 'اختر المصدر') : (selectedCategory?.name || 'اختر الفئة')}</span>
                     </button>
                   )}
@@ -466,7 +466,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                     onClick={() => { hapticFeedback('light'); setActiveView('details'); }}
                     className="flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors relative"
                   >
-                    <span className="text-[10px] uppercase tracking-widest opacity-70 mb-1">تفاصيل</span>
+                    <span className="text-[10px] opacity-70 mb-1">تفاصيل</span>
                     <span className="text-sm font-bold truncate w-full text-center">{format(parseISO(date), 'dd MMM', { locale: ar })}</span>
                     {note && <div className="absolute top-3 right-3 w-2 h-2 bg-emerald-400 rounded-full" />}
                   </button>
@@ -503,7 +503,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                 {type === 'income' ? (
                   <div className="space-y-8">
                     <div className="space-y-4">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <label className="text-xs font-semibold text-slate-500 flex items-center gap-2">
                         <Layers size={16} /> مصادر شائعة
                       </label>
                       <div className="flex flex-wrap gap-2.5">
@@ -524,7 +524,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                       </div>
                     </div>
                     <div className="space-y-4">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <label className="text-xs font-semibold text-slate-500 flex items-center gap-2">
                         <AlignLeft size={16} /> مصدر مخصص
                       </label>
                       <input
@@ -559,7 +559,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                     {/* Favorite Categories Quick Grid */}
                     {type === 'expense' && favoriteCategories.length > 0 && !categorySearchQuery && (
                       <div className="shrink-0 space-y-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                        <span className="text-[10px] font-black tracking-wider text-slate-400 dark:text-slate-500 uppercase flex items-center gap-1.5 px-1">
+                        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-1.5 px-1">
                           <Sparkles size={11} className="text-rose-500 fill-rose-500" />
                           التصنيفات الأكثر استخداماً (آخر 30 يوم)
                         </span>
@@ -584,7 +584,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                               >
                                 <DynamicIcon name={cat.icon || 'Circle'} size={18} />
                               </div>
-                              <span className="text-[9px] font-black text-center text-slate-600 dark:text-slate-400 truncate w-full px-0.5">
+                              <span className="text-[9px] font-semibold text-center text-slate-600 dark:text-slate-400 truncate w-full px-0.5">
                                 {cat.name}
                               </span>
                             </button>
@@ -680,7 +680,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
               <div className="flex-1 overflow-y-auto p-6 space-y-6 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                 {/* Date */}
                 <div className="space-y-3">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                  <label className="text-xs font-semibold text-slate-500 flex items-center gap-2">
                     <Calendar size={16} /> التاريخ
                   </label>
                   <input
@@ -694,7 +694,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                 {/* Link to goal (only for income) */}
                 {type === 'income' && goals && goals.length > 0 && (
                   <div className="space-y-3">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <label className="text-xs font-semibold text-slate-500 flex items-center gap-2">
                       <Check size={16} className="text-emerald-500" /> ربط بهدف مالي (اختياري)
                     </label>
                     <select
@@ -712,7 +712,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
 
                 {/* Note */}
                 <div className="space-y-3">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                  <label className="text-xs font-semibold text-slate-500 flex items-center gap-2">
                     <AlignLeft size={16} /> ملاحظة
                   </label>
                   <textarea
@@ -726,7 +726,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                 {/* Payment Method (only for expense) */}
                 {type === 'expense' && (
                   <div className="space-y-3">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <label className="text-xs font-semibold text-slate-500 flex items-center gap-2">
                       <Layers size={16} /> طريقة الدفع
                     </label>
                     <div className="grid grid-cols-3 gap-2">
@@ -736,7 +736,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                           type="button"
                           onClick={() => setPaymentMethod(method)}
                           className={cn(
-                            "py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all",
+                            "py-3 rounded-xl text-xs font-semibold transition-all",
                             paymentMethod === method
                               ? "bg-rose-500 text-white shadow-md shadow-rose-500/20"
                               : "bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-500 hover:border-rose-500/30"

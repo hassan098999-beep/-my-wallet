@@ -359,7 +359,7 @@ const Dashboard = () => {
   [categories]);
 
   return (
-    <div className="space-y-6 pb-12 relative mt-2 px-1">
+    <div className="space-y-6 p-4 pb-32 relative mt-2">
       
       {/* Tunisian Family Template Migration Banner */}
       {!hasTunisianFamilyCategories && (
@@ -373,11 +373,11 @@ const Dashboard = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-3xl">🇹🇳</span>
-                <span className="bg-white/20 text-white text-[10px] uppercase tracking-wider font-extrabold px-3 py-1 rounded-full backdrop-blur-md">
+                <span className="bg-white/20 text-white text-[10px] font-bold px-3 py-1 rounded-full backdrop-blur-md">
                   ميزة عائلية جديدة
                 </span>
               </div>
-              <h3 className="text-xl md:text-2xl font-black leading-snug">
+              <h3 className="text-xl md:text-2xl font-bold leading-snug">
                 تفعيل قالب ميزانية العائلة التونسية (أب، أم، ورضيع)
               </h3>
               <p className="text-xs md:text-sm text-white/90 max-w-2xl font-semibold leading-relaxed">
@@ -432,10 +432,10 @@ const Dashboard = () => {
               )}
             </div>
             <div className="text-right">
-              <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-0.5">سلسلة الالتزام</div>
-              <div className="text-xs font-black flex items-center gap-1">
+              <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 leading-none mb-0.5">سلسلة الالتزام</div>
+              <div className="text-xs font-bold flex items-center gap-1">
                 <span>{bestStreak ? `${bestStreak} يوم` : '0 أيام'}</span>
-                <span className="text-[10px] font-black underline uppercase text-indigo-500">
+                <span className="text-[10px] font-semibold underline text-indigo-500">
                   {streakCheckedIn ? 'تم التسجيل ✓' : 'تسجيل التزام اليوم'}
                 </span>
               </div>
@@ -495,14 +495,14 @@ const Dashboard = () => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </span>
-            <span className="text-xs font-black text-slate-500 dark:text-slate-400 font-mono">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 font-mono">
               {new Date().toLocaleDateString('ar-TN', { weekday: 'long', day: 'numeric', month: 'long' })}
             </span>
           </div>
-          <h3 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-1.5">
-            <Clock size={18} className="text-emerald-500" />
+          <h2 className="text-[--text-h2] font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <Clock size={16} className="text-emerald-500" />
             <span>لوحة عمليات اليوم</span>
-          </h3>
+          </h2>
         </div>
 
         {/* Financial Progress Indicators */}
@@ -758,8 +758,8 @@ const Dashboard = () => {
                 <Clock size={22} />
               </div>
               <div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">آخر العمليات المكتملة</h3>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">اسحب على أي معاملة لتكرارها أو حذفها</p>
+                <h2 className="text-[--text-h2] font-semibold text-slate-900 dark:text-white">آخر العمليات المكتملة</h2>
+                <p className="text-[--text-body] font-medium text-slate-500 mt-0.5">اسحب على أي معاملة لتكرارها أو حذفها</p>
               </div>
             </div>
 

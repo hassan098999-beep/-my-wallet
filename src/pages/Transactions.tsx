@@ -526,7 +526,7 @@ const Transactions = () => {
   };
 
   return (
-    <div className="space-y-3 md:space-y-6 pb-[calc(1rem+env(safe-area-inset-bottom))] relative pt-[env(safe-area-inset-top)]">
+    <div className="space-y-6 p-4 pb-32 relative">
       <motion.div className="space-y-3 md:space-y-6">
         <PageHeader
           title="سجل العمليات"
@@ -566,18 +566,18 @@ const Transactions = () => {
                   <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
                     <ArrowUp className="size-5 text-white" />
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70">
+                  <span className="text-xs font-semibold opacity-70">
                     إجمالي الدخل
                   </span>
                 </div>
                 <div>
-                  <div className="text-3xl md:text-4xl font-black tracking-tighter leading-none">
+                  <div className="text-3xl md:text-4xl font-black leading-none">
                     {formatCurrency(totalIncome, currency)}
                   </div>
                 </div>
               </div>
               <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between opacity-60">
-                <span className="text-[9px] font-black uppercase tracking-widest">
+                <span className="text-xs font-semibold">
                   معدل النمو
                 </span>
                 <span className="text-xs font-black">+12.5%</span>
@@ -596,18 +596,18 @@ const Transactions = () => {
                   <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
                     <ArrowDown className="size-5 text-white" />
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70">
+                  <span className="text-xs font-semibold opacity-70">
                     إجمالي المصاريف
                   </span>
                 </div>
                 <div>
-                  <div className="text-3xl md:text-4xl font-black tracking-tighter leading-none">
+                  <div className="text-3xl md:text-4xl font-black leading-none">
                     {formatCurrency(totalExpenses, currency)}
                   </div>
                 </div>
               </div>
               <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between opacity-60">
-                <span className="text-[9px] font-black uppercase tracking-widest">
+                <span className="text-xs font-semibold">
                   معدل الإنفاق
                 </span>
                 <span className="text-xs font-black">مرتفع</span>
@@ -730,7 +730,7 @@ const Transactions = () => {
               {/* Dismissible Filter Badges (Tag row) */}
               {activeFiltersList.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60">
-                  <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-1">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 pl-1">
                     الفلاتر النشطة:
                   </span>
                   {activeFiltersList.map((filter) => (
@@ -788,7 +788,7 @@ const Transactions = () => {
                         <div className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-3xl border border-slate-100 dark:border-slate-800/50 space-y-4">
                           <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100">
                             <Calendar className="size-4 text-emerald-500" />
-                            <span className="text-xs font-black uppercase tracking-wider">الفترة الزمنية</span>
+                            <span className="text-xs font-bold">الفترة الزمنية</span>
                           </div>
 
                           {/* Quick Preset Chips */}
@@ -827,7 +827,7 @@ const Transactions = () => {
 
                           <div className="grid grid-cols-2 gap-2 pt-1">
                             <div className="space-y-1">
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">من تاريخ</label>
+                              <label className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 pl-1">من تاريخ</label>
                               <input
                                 type="date"
                                 value={startDate}
@@ -836,7 +836,7 @@ const Transactions = () => {
                               />
                             </div>
                             <div className="space-y-1">
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">إلى تاريخ</label>
+                              <label className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 pl-1">إلى تاريخ</label>
                               <input
                                 type="date"
                                 value={endDate}
@@ -851,12 +851,12 @@ const Transactions = () => {
                         <div className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-3xl border border-slate-100 dark:border-slate-800/50 space-y-4">
                           <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100">
                             <ChartPie className="size-4 text-indigo-500" />
-                            <span className="text-xs font-black uppercase tracking-wider">التصنيفات والنوع</span>
+                            <span className="text-xs font-bold">التصنيفات والنوع</span>
                           </div>
 
                           <div className="space-y-3">
                             <div className="space-y-1">
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">الفئة</label>
+                              <label className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 pl-1">الفئة</label>
                               <select
                                 value={categoryFilter}
                                 onChange={(e) => setCategoryFilter(e.target.value)}
@@ -872,7 +872,7 @@ const Transactions = () => {
                             </div>
 
                             <div className="space-y-1">
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">التقسيم المالي (50/30/20)</label>
+                              <label className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 pl-1">التقسيم المالي (50/30/20)</label>
                               <select
                                 value={typeFilter}
                                 onChange={(e) => setTypeFilter(e.target.value)}
@@ -891,12 +891,12 @@ const Transactions = () => {
                         <div className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-3xl border border-slate-100 dark:border-slate-800/50 space-y-4">
                           <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100">
                             <Wallet className="size-4 text-amber-500" />
-                            <span className="text-xs font-black uppercase tracking-wider">الحسابات والعملية</span>
+                            <span className="text-xs font-bold">الحسابات والعملية</span>
                           </div>
 
                           <div className="grid grid-cols-2 gap-2">
                             <div className="space-y-1">
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">الحساب</label>
+                              <label className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 pl-1">الحساب</label>
                               <select
                                 value={accountFilter}
                                 onChange={(e) => setAccountFilter(e.target.value)}
@@ -912,7 +912,7 @@ const Transactions = () => {
                             </div>
 
                             <div className="space-y-1">
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">طريقة الدفع</label>
+                              <label className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 pl-1">طريقة الدفع</label>
                               <select
                                 value={paymentMethodFilter}
                                 onChange={(e) => setPaymentMethodFilter(e.target.value as any)}
@@ -928,7 +928,7 @@ const Transactions = () => {
 
                           <div className="grid grid-cols-2 gap-2">
                             <div className="space-y-1">
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">الحد الأدنى ({currency})</label>
+                              <label className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 pl-1">الحد الأدنى ({currency})</label>
                               <input
                                 type="number"
                                 placeholder="من"
@@ -938,7 +938,7 @@ const Transactions = () => {
                               />
                             </div>
                             <div className="space-y-1">
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">الحد الأقصى ({currency})</label>
+                              <label className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 pl-1">الحد الأقصى ({currency})</label>
                               <input
                                 type="number"
                                 placeholder="إلى"
@@ -992,12 +992,12 @@ const Transactions = () => {
             className="premium-card p-6 md:p-8 rounded-3xl"
           >
             <div className="flex items-center justify-between mb-8 md:mb-12">
-              <h3 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+              <h2 className="text-[--text-h2] font-semibold text-slate-900 dark:text-white">
                 {transactionType === "income"
                   ? "توزيع مصادر الدخل"
                   : "توزيع المصاريف"}
-              </h3>
-              <div className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
+              </h2>
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
                 <ChartPie className="size-4" />
                 <span>نظرة تحليلية</span>
               </div>
@@ -1030,7 +1030,7 @@ const Transactions = () => {
                       if (active && payload && payload.length) {
                         return (
                           <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl p-5 rounded-3xl shadow-md border border-slate-100 dark:border-slate-800">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                            <p className="text-xs font-semibold text-slate-500 mb-2">
                               {payload[0].name}
                             </p>
                             <p className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">
@@ -1063,9 +1063,9 @@ const Transactions = () => {
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
                 <FileText className="size-5 md:size-6" />
               </div>
-              <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-sm md:text-2xl">
+              <h2 className="text-[--text-h2] font-semibold text-slate-900 dark:text-white">
                 قائمة العمليات
-              </h3>
+              </h2>
             </div>
           </div>
 
@@ -1093,7 +1093,7 @@ const Transactions = () => {
                 <div className="p-8 text-center">
                   <button
                     onClick={loadMore}
-                    className="btn-secondary px-10 py-4 rounded-2xl text-sm font-black uppercase tracking-widest"
+                    className="btn-secondary px-10 py-4 rounded-2xl text-sm font-semibold"
                   >
                     تحميل المزيد
                   </button>

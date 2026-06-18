@@ -73,8 +73,8 @@ const LockScreen = () => {
         </motion.div>
 
         {/* Header */}
-        <h1 className="text-2xl font-black mb-2 text-slate-900 dark:text-white tracking-tight">مصاريفي - حماية البيانات</h1>
-        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-8 max-w-[280px]">
+        <h1 className="text-2xl font-bold mb-2 text-slate-900 dark:text-white">مصاريفي - حماية البيانات</h1>
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-8 max-w-[280px]">
           الرجاء إدخال الرمز السري المتكون من 4 أرقام لفتح قفل التطبيق ومتابعة حساباتك.
         </p>
 
@@ -105,7 +105,7 @@ const LockScreen = () => {
               id={`dial_${num}`}
               key={num}
               onClick={() => handleNumberClick(num)}
-              className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-black bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all text-slate-900 dark:text-slate-100 shadow-sm cursor-pointer mx-auto"
+              className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all text-slate-900 dark:text-slate-100 shadow-sm cursor-pointer mx-auto"
             >
               {num}
             </button>
@@ -113,14 +113,14 @@ const LockScreen = () => {
           <button
             id="dial_clear"
             onClick={handleClear}
-            className="w-16 h-16 rounded-full flex items-center justify-center text-xs font-bold text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors mx-auto cursor-pointer"
+            className="w-16 h-16 rounded-full flex items-center justify-center text-xs font-semibold text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors mx-auto cursor-pointer"
           >
             مسح الكل
           </button>
           <button
             id="dial_0"
             onClick={() => handleNumberClick('0')}
-            className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-black bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all text-slate-900 dark:text-slate-100 shadow-sm cursor-pointer mx-auto"
+            className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all text-slate-900 dark:text-slate-100 shadow-sm cursor-pointer mx-auto"
           >
             0
           </button>

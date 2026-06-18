@@ -122,10 +122,10 @@ const SwipeableTransactionItem: React.FC<SwipeableTransactionItemProps> = ({
             )}
           </div>
           <div className="text-right">
-            <h4 className="text-sm font-black text-slate-900 dark:text-white mb-1 leading-snug">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1 leading-snug">
               {expense.note || (expense.isTransfer ? 'عملية تحويل' : category?.name)}
             </h4>
-            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+            <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400 dark:text-slate-500">
               <span>{expense.isTransfer ? 'حساب في الحساب' : (category?.name || 'غير مجدول')}</span>
               {accountName && (
                 <>
@@ -138,10 +138,10 @@ const SwipeableTransactionItem: React.FC<SwipeableTransactionItemProps> = ({
         </div>
         
         <div className="text-left flex flex-col items-end shrink-0">
-          <span className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
+          <span className="text-sm font-bold text-slate-900 dark:text-white">
             {formatCurrency(expense.amount, currency)}
           </span>
-          <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">
+          <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">
             {formatExpenseDate(expense.date)}
           </span>
         </div>

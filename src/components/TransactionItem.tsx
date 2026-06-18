@@ -100,13 +100,13 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
               <div className="flex gap-3">
                 <button 
                   onClick={() => setShowConfirmDelete(false)} 
-                  className="px-4 py-2 md:px-6 md:py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs md:text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  className="px-4 py-2 md:px-6 md:py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs md:text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                 >
                   إلغاء
                 </button>
                 <button 
                   onClick={confirmDelete} 
-                  className="px-4 py-2 md:px-6 md:py-2.5 rounded-xl bg-rose-500 text-white font-bold text-xs md:text-sm shadow-md shadow-rose-500/20 active:scale-95 transition-all outline outline-2 outline-rose-500/0 hover:outline-rose-500 hover:bg-white hover:text-rose-500 dark:hover:bg-slate-900"
+                  className="px-4 py-2 md:px-6 md:py-2.5 rounded-xl bg-rose-500 text-white font-semibold text-xs md:text-sm shadow-md shadow-rose-500/20 active:scale-95 transition-all outline outline-2 outline-rose-500/0 hover:outline-rose-500 hover:bg-white hover:text-rose-500 dark:hover:bg-slate-900"
                 >
                   تأكيد الحذف
                 </button>
@@ -186,33 +186,33 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
             ) : category?.icon ? (
               <DynamicIcon name={category.icon} className="size-7 md:size-12" />
             ) : (
-              <span className="text-2xl md:text-4xl font-black">{category?.name?.charAt(0) || '?'}</span>
+              <span className="text-2xl md:text-4xl font-bold">{category?.name?.charAt(0) || '?'}</span>
             )}
           </div>
           <div className="space-y-3 md:space-y-4 flex-1 min-w-0">
             <div className="flex flex-col gap-1">
-              <h4 className="font-black text-slate-900 dark:text-white text-lg md:text-3xl leading-tight truncate tracking-tight">
+              <h4 className="font-bold text-slate-900 dark:text-white text-lg md:text-3xl leading-tight truncate">
                 {isTransfer ? (isExpense ? (transaction as any).note : (transaction as any).source) : (!isExpense ? (transaction as any).source : ((transaction as any).note || ((transaction as any).subcategoryId ? `${category?.name} - ${(transaction as any).subcategoryId}` : category?.name)))}
               </h4>
               <div className="flex items-center gap-3">
-                <span className={cn("text-[10px] md:text-xs font-black uppercase tracking-[0.2em]", typeColor)}>
+                <span className={cn("text-[10px] md:text-xs font-semibold", typeColor)}>
                   {isTransfer ? 'تحويل مالي' : (!isExpense ? 'دخل' : category?.type === 'need' ? 'احتياجات' : category?.type === 'want' ? 'رغبات' : 'ادخار')}
                 </span>
                 {(transaction as any).subcategoryId && !isTransfer && (
-                  <span className="text-[9px] md:text-[11px] font-black uppercase tracking-widest text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
+                  <span className="text-[9px] md:text-[11px] font-semibold text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
                     {(transaction as any).subcategoryId}
                   </span>
                 )}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-x-4 md:gap-x-8 gap-y-3 text-xs md:text-lg font-bold text-slate-400 dark:text-slate-500">
+            <div className="flex flex-wrap items-center gap-x-4 md:gap-x-8 gap-y-3 text-xs md:text-lg font-medium text-slate-400 dark:text-slate-500">
               <span className="flex items-center gap-2.5 whitespace-nowrap">
                 <Calendar className="size-4 md:size-6 shrink-0 text-slate-300 dark:text-slate-600" />
                 {format(parseISO(transaction.date), 'dd MMM yyyy', { locale: ar })}
               </span>
               <span className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800/30 px-4 md:px-6 py-2 rounded-2xl whitespace-nowrap truncate max-w-[180px] sm:max-w-none border border-slate-200/5 dark:border-slate-700/5">
                 {isTransfer ? <ArrowRightLeft size={18} className="shrink-0" /> : (isExpense ? getPaymentIcon((transaction as any).paymentMethod) : <Building2 size={18} className="shrink-0" />)}
-                <span className="truncate font-black text-[10px] md:text-sm uppercase tracking-widest">
+                <span className="truncate font-semibold text-[10px] md:text-sm">
                   {transaction.accountId ? (
                     accounts.find(a => a.id === transaction.accountId)?.name || 'حساب محذوف'
                   ) : (

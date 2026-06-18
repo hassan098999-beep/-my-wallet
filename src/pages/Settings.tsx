@@ -118,7 +118,7 @@ const Settings = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="max-w-6xl mx-auto pb-16 px-2 md:px-4 space-y-6 md:space-y-8"
+      className="max-w-6xl mx-auto p-4 pb-32 space-y-6"
     >
       <PageHeader
         title="الإعدادات والتحكم الذكي"
@@ -158,7 +158,7 @@ const Settings = () => {
             >
               {/* Section Heading for Settings */}
               <div className="space-y-1 pr-1">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">أقسام وجوانب الضبط</h3>
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400">أقسام وجوانب الضبط</h3>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">اختر حقلاً لتعديله ومراجعته فورياً</p>
               </div>
 
@@ -270,7 +270,7 @@ const Settings = () => {
                     <ChevronLeft size={14} className="rotate-180" />
                     <span>الرجوع للوحة التوجيه</span>
                   </button>
-                  <span className="text-[9px] font-black text-slate-400 tracking-wider">الدفتر المالي التونسي</span>
+                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">الدفتر المالي التونسي</span>
                 </div>
 
                 {activeTab === 'profile' && <ProfileManager />}
@@ -291,7 +291,7 @@ const Settings = () => {
               >
                 {/* Launchpad Grid Column of options */}
                 <div className="space-y-1 pr-1 text-right">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-primary-500 dark:text-primary-450 flex items-center gap-1.5 justify-end">
+                  <h3 className="text-xs font-semibold text-primary-600 dark:text-primary-400 flex items-center gap-1.5 justify-end">
                     <span>لوحة التوجيه والتنقل السلس</span>
                     <SettingsIcon size={12} className="rotate-45" />
                   </h3>

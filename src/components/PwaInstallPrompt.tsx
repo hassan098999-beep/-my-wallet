@@ -84,7 +84,7 @@ export default function PwaInstallPrompt() {
           <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl shadow-xl flex flex-col gap-3">
             <div className="flex justify-between items-center">
                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">جاري تجهيز التطبيق للتثبيت...</span>
-               <span className="text-xs font-black text-primary-500">{installProgress}%</span>
+               <span className="text-xs font-bold text-primary-500">{installProgress}%</span>
             </div>
             <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
               <div 
@@ -115,7 +115,7 @@ export default function PwaInstallPrompt() {
                   <Download size={24} />
                 </div>
                 <div>
-                  <p className="text-sm font-black">تثبيت التطبيق</p>
+                  <p className="text-sm font-bold">تثبيت التطبيق</p>
                   <p className="text-[10px] opacity-90 font-medium">ثبت التطبيق للوصول السريع</p>
                 </div>
               </div>
@@ -128,7 +128,7 @@ export default function PwaInstallPrompt() {
                     window.deferredPrompt = null;
                   }
                 }}
-                className="relative z-10 bg-white text-emerald-600 px-4 py-2 rounded-xl text-xs font-black hover:bg-emerald-50 shadow-sm transition-colors mr-2 active:scale-95"
+                className="relative z-10 bg-white text-emerald-600 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-emerald-50 shadow-sm transition-colors mr-2 active:scale-95"
               >
                 تثبيت
               </button>
