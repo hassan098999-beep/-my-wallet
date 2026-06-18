@@ -1,16 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../store/AppContext';
 import { cn, formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
-import { isThisMonth, parseISO, format, startOfMonth, endOfMonth, differenceInDays, startOfDay } from 'date-fns';
-import { ar } from 'date-fns/locale';
+import { parseISO, differenceInDays, startOfDay } from 'date-fns';
 import { 
   Save, CircleAlert, TrendingUp, Target, Wallet, Activity, 
-  ArrowUpRight, ArrowDownRight, CircleCheckBig, Calendar, 
-  ChevronDown, Wand2, Loader2, Info, Lightbulb, Zap,
-  TrendingDown, PieChart, BarChart3, ShieldCheck
+  CircleCheckBig, Calendar, Wand2, Loader2, Info, Lightbulb, Zap,
+  TrendingDown, PieChart, ShieldCheck, Sparkles, Clock, HelpCircle,
+  RefreshCw, Check, Percent
 } from 'lucide-react';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import toast from 'react-hot-toast';
 
 // Import unified design system components
 import PageHeader from '../components/ui/PageHeader';
@@ -19,13 +19,24 @@ import EmptyState from '../components/ui/EmptyState';
 import Badge from '../components/ui/Badge';
 
 const BudgetPage = () => {
-  const { budget, setBudget, categories, expenses, income, currency, firstDayOfMonth, setFirstDayOfMonth, rollingBudgetEnabled } = useAppContext();
+  const { 
+    budget, 
+    setBudget, 
+    categories, 
+    expenses, 
+    currency, 
+    firstDayOfMonth, 
+    setFirstDayOfMonth, 
+    rollingBudgetEnabled,
+    setRollingBudgetEnabled 
+  } = useAppContext();
 
   const [globalBudget, setGlobalBudget] = useState(budget?.amount.toString() || '');
   const [selectedMonth, setSelectedMonth] = useState(budget?.month || getBudgetMonth(new Date(), firstDayOfMonth));
   const [isSaved, setIsSaved] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showDayPicker, setShowDayPicker] = useState(false);
+  const [showRuleInfo, setShowRuleInfo] = useState(false);
+  
   const [categoryBudgets, setCategoryBudgets] = useState<Record<string, string>>(
     budget?.categoryBudgets 
       ? Object.fromEntries(Object.entries(budget.categoryBudgets).map(([k, v]) => [k, v.toString()]))
@@ -59,6 +70,13 @@ const BudgetPage = () => {
     });
     
     setIsSaved(true);
+    toast.success(
+      <div className="flex flex-col gap-1 text-right font-tajawal">
+        <span className="font-bold text-sm">تم حفظ الميزانية الذكية! 💾</span>
+        <span className="text-xs opacity-90">تم تحديث المخصصات والميزانية اليومية بنجاح.</span>
+      </div>,
+      { duration: 3000 }
+    );
     setTimeout(() => setIsSaved(false), 3000);
   };
 
@@ -66,23 +84,25 @@ const BudgetPage = () => {
     setCategoryBudgets(prev => ({ ...prev, [id]: value }));
   };
 
+  // One-click 50/30/20 Tuning
   const autoAllocate = () => {
+    const totalBudget = Number(globalBudget) || 0;
+    if (totalBudget <= 0) {
+      toast.error('الرجاء كتابة مبلغ الميزانية أولاً لتنفيذ التوزيع الذكي!');
+      return;
+    }
+
     setIsGenerating(true);
     hapticFeedback('medium');
     
     setTimeout(() => {
-      const totalBudget = Number(globalBudget) || 0;
-      if (totalBudget <= 0) {
-        setIsGenerating(false);
-        return;
-      }
-
       const newBudgets: Record<string, string> = {};
       
       const needs = categories.filter(c => c.type === 'need' || !c.type);
       const wants = categories.filter(c => c.type === 'want');
       const savings = categories.filter(c => c.type === 'saving');
 
+      // 50% for Needs, 30% for Wants, 20% for Savings
       const needsPool = totalBudget * 0.5;
       const wantsPool = totalBudget * 0.3;
       const savingsPool = totalBudget * 0.2;
@@ -102,7 +122,15 @@ const BudgetPage = () => {
 
       setCategoryBudgets(newBudgets);
       setIsGenerating(false);
-    }, 800);
+      
+      toast.success(
+        <div className="flex flex-col gap-1 text-right font-tajawal">
+          <span className="font-black text-sm">تم مواءمة الميزانية حسب قاعدة 50/30/20 ✨</span>
+          <span className="text-xs opacity-90">قمنا بتقسيم المجموع تلقائياً على فئات الاحتياجات، الكماليات والادخار.</span>
+        </div>,
+        { duration: 4000 }
+      );
+    }, 700);
   };
 
   const currentMonthExpenses = useMemo(() => {
@@ -118,7 +146,7 @@ const BudgetPage = () => {
   const globalBudgetNum = Number(globalBudget) || 0;
   const overallPercentage = globalBudgetNum > 0 ? (totalSpent / globalBudgetNum) * 100 : 0;
 
-  // Calculate daily limit
+  // Calculate Days & Daily Limits
   const { start: rangeStart, end: rangeEnd } = useMemo(() => getBudgetRange(selectedMonth, firstDayOfMonth), [selectedMonth, firstDayOfMonth]);
   const daysInMonth = useMemo(() => differenceInDays(rangeEnd, rangeStart) + 1, [rangeStart, rangeEnd]);
 
@@ -131,7 +159,7 @@ const BudgetPage = () => {
     
     if (todayStart > end) return 0;
     if (todayStart < start) return daysInMonth;
-    return differenceInDays(end, todayStart) + 1; // +1 to include today
+    return differenceInDays(end, todayStart) + 1;
   }, [today, rangeStart, rangeEnd, daysInMonth]);
 
   const remainingBudget = Math.max(0, globalBudgetNum - totalSpent);
@@ -140,7 +168,7 @@ const BudgetPage = () => {
     const todayStart = startOfDay(today);
     const end = startOfDay(rangeEnd);
     
-    if (todayStart > end) return 0; // Past month
+    if (todayStart > end) return 0;
 
     if (!rollingBudgetEnabled) {
       return globalBudgetNum / daysInMonth;
@@ -148,24 +176,43 @@ const BudgetPage = () => {
     return remainingDays > 0 ? remainingBudget / remainingDays : 0;
   }, [rollingBudgetEnabled, globalBudgetNum, daysInMonth, remainingBudget, remainingDays, today, rangeEnd]);
 
+  // Stagger Animations
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
+    hidden: { opacity: 0, y: 15 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
   };
 
-  // Group categories
+  // Categories Categorization mapped to standard system categories
   const groupedCategories = [
-    { id: 'need', title: 'الاحتياجات الأساسية (50%)', color: 'bg-indigo-500', items: categories.filter(c => c.type === 'need' || !c.type) },
-    { id: 'want', title: 'الرغبات والكماليات (30%)', color: 'bg-amber-500', items: categories.filter(c => c.type === 'want') },
-    { id: 'saving', title: 'الادخار والاستثمار (20%)', color: 'bg-emerald-500', items: categories.filter(c => c.type === 'saving') },
+    { 
+      id: 'need', 
+      title: 'الاحتياجات الضرورية والمصاريف الأساسية', 
+      percentNum: 50,
+      description: 'الفواتير، الأكل والشرب، النقل، الكراء ومصاريف التداوي. نوصي بتخصيص %50 كحد أقصى للتحكم في قفة العائلة.',
+      color: 'bg-rose-500', 
+      items: categories.filter(c => c.type === 'need' || !c.type) 
+    },
+    { 
+      id: 'want', 
+      title: 'الرغبات ومصاريف الرفاهية والكماليات', 
+      percentNum: 30,
+      description: 'القهوة، المطاعم، الشوبينغ، السفر والاشتراكات الترفيهية. نوصي ألا تتخطى مصاريف الرفاهية %30.',
+      color: 'bg-amber-500', 
+      items: categories.filter(c => c.type === 'want') 
+    },
+    { 
+      id: 'saving', 
+      title: 'الادخار الشخصي والاستثمار وبناء المستقبل', 
+      percentNum: 20,
+      description: 'حسابات الإدخار، حصالة الأطفال، الاستثمار أو تسديد الديون الطارئة. حافظ على %20 على الأقل لبناء غدٍ أضمن.',
+      color: 'bg-emerald-500', 
+      items: categories.filter(c => c.type === 'saving') 
+    },
   ];
 
   return (
@@ -173,184 +220,342 @@ const BudgetPage = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-8 pb-32 max-w-5xl mx-auto px-4 md:px-6"
+      className="space-y-8 pb-32 max-w-5xl mx-auto px-4 md:px-6 text-right font-tajawal rtl"
     >
       {/* Header Section */}
       <PageHeader
-        title="إدارة الميزانية"
-        subtitle="خطط لمستقبلك المالي بذكاء ودقة ورشّد قفة العائلة"
+        title="مخطط الميزانية الذكي"
+        subtitle="وزّع ميزانيتك الشهرية بذكاء، فعّل الصرف المتدحرج، ورشّد نفقاتك لضمان عيش متوازن"
         action={
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-button px-4 py-2.5 shadow-sm">
-              <div className="flex flex-col">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">بداية الشهر</span>
-                <select
-                  value={firstDayOfMonth}
-                  onChange={(e) => setFirstDayOfMonth(Number(e.target.value))}
-                  className="bg-transparent text-xs font-black text-slate-900 dark:text-white outline-none cursor-pointer min-w-[40px]"
-                >
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                    <option key={day} value={day}>{day}</option>
-                  ))}
-                </select>
-              </div>
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
+            {/* Cycle day component */}
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 shadow-xs">
+              <span className="text-[10px] font-black text-slate-400">بداية الدورة:</span>
+              <select
+                value={firstDayOfMonth}
+                onChange={(e) => {
+                  hapticFeedback('light');
+                  setFirstDayOfMonth(Number(e.target.value));
+                  toast.success(`دورتك المالية الجديدة ستبدأ يوم ${e.target.value} من كل شهر.`);
+                }}
+                className="bg-transparent text-xs font-black text-slate-900 dark:text-white outline-none cursor-pointer"
+              >
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                  <option key={day} value={day}>{day}</option>
+                ))}
+              </select>
             </div>
+
+            {/* Custom Month Selector */}
             <div className="relative flex-1 sm:flex-none">
-              <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-3.5 pointer-events-none" />
+              <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 size-3.5 pointer-events-none" />
               <input
                 type="month"
                 value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-button pl-3 pr-9 py-2.5 text-xs font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all shadow-sm"
+                onChange={(e) => {
+                  hapticFeedback('light');
+                  setSelectedMonth(e.target.value);
+                }}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-3 pr-8 py-2 text-xs font-black text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/20"
               />
             </div>
+
+            {/* Save Button */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleSave}
               className={cn(
-                "flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-button font-black text-xs transition-all shadow-md cursor-pointer",
-                isSaved ? "bg-emerald-500 text-white" : "bg-primary-600 text-white"
+                "flex items-center justify-center gap-2 px-5 py-2 rounded-xl font-black text-xs transition-all shadow-xs cursor-pointer active:scale-95",
+                isSaved ? "bg-emerald-500 text-white" : "bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
               )}
             >
-              {isSaved ? <CircleCheckBig size={16} /> : <Save size={16} />}
-              {isSaved ? 'تم الحفظ' : 'حفظ'}
+              {isSaved ? <CircleCheckBig size={14} className="animate-bounce" /> : <Save size={14} />}
+              <span>{isSaved ? 'تم الحفظ والمواءمة' : 'حفظ المخصّصات'}</span>
             </motion.button>
           </div>
         }
       />
 
-      {/* Main Budget Dashboard Card */}
-      <motion.div variants={itemVariants} className="relative group">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-indigo-600 rounded-3xl blur-3xl opacity-10 group-hover:opacity-20 transition-opacity" />
-        <div className="relative bg-slate-900 dark:bg-black rounded-3xl p-6 md:p-8 text-white overflow-hidden shadow-md border border-white/5">
-          <div className="absolute -right-20 -top-20 w-96 h-96 bg-primary-500/20 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute -left-20 -bottom-20 w-96 h-96 bg-emerald-500/20 rounded-full blur-[120px] animate-pulse" />
+      {/* Main Intelligent Budget Dashboard Dashboard and Progress */}
+      <motion.div variants={itemVariants}>
+        <div className="relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xs">
           
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-16">
-            {/* Left: Input & Main Stat */}
-            <div className="lg:col-span-5 space-y-10">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-primary-400">
-                    <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center">
-                      <Wallet size={20} />
-                    </div>
-                    <span className="text-xs font-black uppercase tracking-[0.2em]">الميزانية المستهدفة</span>
+          {/* Subtle decorative background light */}
+          <div className="absolute right-0 top-0 -mr-20 -mt-20 w-80 h-80 bg-emerald-500/5 dark:bg-emerald-400/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute left-0 bottom-0 -ml-20 -mb-20 w-80 h-80 bg-primary-500/5 dark:bg-primary-400/5 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Interactive header of Dashboard */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-6 mb-6 border-b border-slate-100 dark:border-slate-800/60 gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-500 shrink-0">
+                <Wallet size={20} />
+              </div>
+              <div>
+                <h2 className="text-base font-black text-slate-800 dark:text-white">الميزانية الإجمالية وحالة الصرف</h2>
+                <p className="text-[10px] text-slate-400 font-bold">عيّن سقف مصروفاتك للشهر الحالي لتنظيم الميزانية الذكية</p>
+              </div>
+            </div>
+
+            {/* Quick Allocator and Information clicker */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setShowRuleInfo(!showRuleInfo)}
+                className="flex items-center gap-1 text-[11px] font-bold text-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/10 px-3 py-1.5 rounded-lg border border-indigo-150/15"
+              >
+                <HelpCircle size={13} />
+                <span>شرح قاعدة 50/30/20</span>
+              </button>
+              
+              <button 
+                onClick={autoAllocate}
+                disabled={isGenerating || !globalBudget}
+                className="flex items-center gap-1 text-[11px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-4 py-1.5 rounded-lg border border-emerald-500/10 disabled:opacity-50 active:scale-95 transition-all cursor-pointer"
+              >
+                {isGenerating ? <Loader2 size={13} className="animate-spin" /> : <Wand2 size={13} />}
+                توزيع تلقائي للمخصصات
+              </button>
+            </div>
+          </div>
+
+          {/* 50/30/20 explanation panel */}
+          <AnimatePresence>
+            {showRuleInfo && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden mb-6 bg-slate-50 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-850 rounded-2xl p-4 space-y-2 text-xs leading-relaxed"
+              >
+                <p className="font-black text-slate-800 dark:text-white text-xs flex items-center gap-1.5">
+                  <Sparkles size={14} className="text-amber-500" />
+                  ما هي قاعدة الميزانية المثالية 50/30/20؟
+                </p>
+                <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                  قاعدة مالية بسيطة وفعالة تقسم دخلك أو ميزانيتك الكلية إلى ثلاثة روافد لتضمن العيش السليم وتجنّب الديون والاستهلاك السلبي لـ قفة العائلة:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                  <div className="p-3 bg-red-50/50 dark:bg-red-950/10 rounded-xl border border-red-100/30">
+                    <p className="font-black text-red-600 dark:text-red-400 flex items-center gap-1">%50 للاحتياجات الأساسية</p>
+                    <p className="text-[10px] text-slate-400 mt-1 font-medium">كل المصاريف الحتمية التي لا مفر منها للمعيشة اليومية لتسيير حياتك بسلاسة.</p>
                   </div>
-                  <button 
-                    onClick={autoAllocate}
-                    disabled={isGenerating || !globalBudget}
-                    className="flex items-center gap-2 text-[11px] font-black text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20 disabled:opacity-50"
-                  >
-                    {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
-                    توزيع ذكي (50/30/20)
-                  </button>
+                  <div className="p-3 bg-amber-50/50 dark:bg-amber-950/10 rounded-xl border border-amber-100/30">
+                    <p className="font-black text-amber-600 dark:text-amber-400 flex items-center gap-1">%30 للرغبات والكماليات</p>
+                    <p className="text-[10px] text-slate-400 mt-1 font-medium font-tajawal">النشاطات الترفيهية، الشوبينغ، القهوة والموائد الخارجية والأشياء التي تحبها.</p>
+                  </div>
+                  <div className="p-3 bg-emerald-50/50 dark:bg-emerald-950/10 rounded-xl border border-emerald-100/30">
+                    <p className="font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1">%20 للإدخار والاستثمار المستقبل</p>
+                    <p className="text-[10px] text-slate-400 mt-1 font-medium leading-relaxed">بناء الوسادة الطارئة، الاستثمار العقلي أو تزويد حصالة الأهداف والتحصين المالي.</p>
+                  </div>
                 </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Budget Input & Progress Gauge Block */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            {/* Left Portion of Block: Raw Input and Balance Indicators */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="space-y-2">
+                <span className="text-xs font-black text-slate-400 uppercase tracking-widest block">مبلغ الميزانية المستهدف</span>
                 <div className="relative">
                   <input
                     type="number"
+                    inputMode="decimal"
                     value={globalBudget}
                     onChange={(e) => setGlobalBudget(e.target.value)}
-                    className="w-full bg-white/5 border-2 border-dashed border-white/10 rounded-2xl px-6 py-6 text-4xl md:text-5xl font-black tracking-tighter focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all text-center font-mono"
+                    className="w-full bg-slate-50 dark:bg-slate-950/50 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-3xl font-black text-center font-mono text-slate-800 dark:text-white transition-all focus:border-emerald-500 outline-none"
                     placeholder="0.00"
                   />
-                  <span className="absolute left-8 top-1/2 -translate-y-1/2 text-white/20 text-2xl font-black">{currency}</span>
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg font-black">{currency}</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-white/5 rounded-2xl p-6 border border-white/5 backdrop-blur-sm">
-                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">المصروف الفعلي</p>
-                  <p className="text-2xl font-black text-emerald-400">{formatCurrency(totalSpent, currency)}</p>
+              {/* Dynamic summary counts */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-50 dark:bg-slate-950/30 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">ما تم صرفه فعلياً</p>
+                  <p className="text-sm font-black text-rose-500">{formatCurrency(totalSpent, currency)}</p>
                 </div>
-                <div className="bg-white/5 rounded-2xl p-6 border border-white/5 backdrop-blur-sm">
-                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">المتبقي</p>
+                <div className="bg-slate-50 dark:bg-slate-950/30 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">المبلغ المتبقي</p>
                   <p className={cn(
-                    "text-2xl font-black",
-                    remainingBudget > 0 ? "text-primary-400" : "text-rose-400"
+                    "text-sm font-black",
+                    remainingBudget > 0 ? "text-emerald-500" : "text-rose-500"
                   )}>{formatCurrency(remainingBudget, currency)}</p>
                 </div>
               </div>
             </div>
 
-            {/* Right: Progress & Health */}
-            <div className="lg:col-span-7 flex flex-col justify-center space-y-8">
-              <div className="space-y-6">
-                <div className="flex justify-between items-end">
-                  <div className="space-y-2">
-                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">معدل الاستهلاك</p>
-                    <p className="text-6xl md:text-7xl font-black tracking-tighter">{overallPercentage.toFixed(1)}%</p>
-                  </div>
+            {/* Right Portion of Block: Visual Progress, Daily Limit calculation, Rolling switch */}
+            <div className="lg:col-span-7 space-y-6 bg-slate-50/50 dark:bg-slate-950/20 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/40">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">نسبة استهلاك الميزانية الكلية</span>
+                  <span className={cn(
+                    "text-xs font-black px-2.5 py-1 rounded-lg",
+                    overallPercentage > 100 ? "bg-rose-50/50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400" :
+                    overallPercentage > 85 ? "bg-amber-50/50 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400" :
+                    "bg-emerald-50/50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400"
+                  )}>
+                    {overallPercentage.toFixed(1)}% المستهلك
+                  </span>
                 </div>
-
-                <div className="h-6 bg-white/5 rounded-full p-1.5 border border-white/10 shadow-inner relative overflow-hidden">
+                
+                {/* Custom glowing progress bar */}
+                <div className="h-4 bg-slate-150 dark:bg-slate-900 rounded-full p-0.5 border border-slate-200/40 dark:border-slate-800 shadow-inner relative overflow-hidden">
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.min(overallPercentage, 100)}%` }}
-                    transition={{ duration: 1.5, ease: "circOut" }}
+                    transition={{ duration: 1.2, ease: "easeOut" }}
                     className={cn(
-                      "h-full rounded-full relative overflow-hidden transition-colors duration-500",
-                      overallPercentage > 100 ? "bg-rose-500" : overallPercentage > 85 ? "bg-amber-500" : "bg-gradient-to-r from-primary-500 to-emerald-500"
+                      "h-full rounded-full transition-colors duration-500",
+                      overallPercentage > 100 ? "bg-rose-500" : overallPercentage > 85 ? "bg-amber-500" : "bg-gradient-to-r from-emerald-500 to-teal-400"
                     )}
-                  >
-                    <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:24px_24px] animate-[shimmer_2s_linear_infinite]" />
-                  </motion.div>
+                  />
                 </div>
               </div>
 
-              {/* Budget Details Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white/5 rounded-2xl p-5 border border-white/5 backdrop-blur-sm">
-                  <div className="flex items-center gap-3 mb-3 text-amber-400">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                      <Zap size={16} />
-                    </div>
-                    <span className="text-[11px] font-black uppercase tracking-widest">الميزانية اليومية المقترحة</span>
-                  </div>
-                  <p className="text-2xl md:text-3xl font-black tracking-tighter">{formatCurrency(dailyLimit, currency)}</p>
-                  <p className="text-[10px] text-slate-400 mt-2 font-bold">
-                    {rollingBudgetEnabled ? "بناءً على المبلغ المتبقي" : "ميزانية يومية ثابتة"}
+              {/* Auxiliary calculation summary */}
+              <div className="grid grid-cols-2 gap-4 pt-1">
+                <div className="bg-white dark:bg-slate-900/60 rounded-xl p-3 shadow-xs border border-slate-100/30">
+                  <p className="text-[9px] font-black text-slate-400 tracking-wider mb-1">الميزانية اليومية المقترحة ⚡</p>
+                  <p className="text-base font-black text-slate-800 dark:text-white">{formatCurrency(dailyLimit, currency)}</p>
+                  <p className="text-[8px] text-slate-400 font-medium mt-0.5">
+                    {rollingBudgetEnabled ? "تتكيف يومياً بناءً على ما أنفقته" : "موزعة بالتساوي على الأيام"}
                   </p>
                 </div>
 
-                <div className="bg-white/5 rounded-2xl p-5 border border-white/5 backdrop-blur-sm">
-                  <div className="flex items-center gap-3 mb-3 text-primary-400">
-                    <div className="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center">
-                      <Calendar size={16} />
-                    </div>
-                    <span className="text-[11px] font-black uppercase tracking-widest">الأيام المتبقية</span>
-                  </div>
-                  <p className="text-2xl md:text-3xl font-black tracking-tighter">{remainingDays} <span className="text-sm text-slate-400">يوم</span></p>
-                  <p className="text-[10px] text-slate-400 mt-2 font-bold">حتى نهاية الدورة المالية</p>
+                <div className="bg-white dark:bg-slate-900/60 rounded-xl p-3 shadow-xs border border-slate-100/30">
+                  <p className="text-[9px] font-black text-slate-400 tracking-wider mb-1">دورتك المالية المتبقية ⏳</p>
+                  <p className="text-base font-black text-slate-800 dark:text-white">{remainingDays} <span className="text-xs text-slate-400">أيّام</span></p>
+                  <p className="text-[8px] text-slate-400 font-medium mt-0.5">من أصل {daysInMonth} يوم في دورتك</p>
                 </div>
               </div>
             </div>
+
+          </div>
+
+        </div>
+      </motion.div>
+
+      {/* Embedded rolling budget toggle manager */}
+      <motion.div variants={itemVariants}>
+        <Card className="p-5 border-l-4 border-l-primary-500 text-right bg-gradient-to-br from-indigo-50/20 via-white to-white dark:from-indigo-950/5 dark:via-slate-900 dark:to-slate-900">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="space-y-1">
+              <span className="flex items-center gap-1.5 text-xs font-black text-indigo-600 dark:text-indigo-400">
+                <Sparkles size={14} className="text-amber-500 animate-pulse" />
+                الميزانية المتدحرجة (Rolling Budget)
+              </span>
+              <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed max-w-2xl font-medium">
+                ميزة ذكية تعيد حساب مسموح صرفك اليومي تلقائياً كل 24 ساعة. إذا صرفت أقل من حدك اليومي، يرتفع حدك غداً مفسحاً لك المجال للترفيه الآمن، والعكس بالعكس لتبقى منضبطاً!
+              </p>
+            </div>
+            
+            {/* Elegant Toggle switch */}
+            <div className="flex items-center gap-3 self-end md:self-center">
+              <span className="text-xs font-black text-slate-500 dark:text-slate-300">
+                {rollingBudgetEnabled ? 'مفعلة تلقائياً ✅' : 'الميزانية الثابتة ⚠️'}
+              </span>
+              <button
+                onClick={() => {
+                  hapticFeedback('medium');
+                  setRollingBudgetEnabled(!rollingBudgetEnabled);
+                  toast.success(
+                    rollingBudgetEnabled 
+                      ? 'تم التحول للمود الثابت للميزانية اليومية.' 
+                      : 'تم تفعيل حساب الميزانية المتدحرجة! استمتع بنصائح يومية ذكية هادفة.'
+                  );
+                }}
+                className={cn(
+                  "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none",
+                  rollingBudgetEnabled ? "bg-primary-600" : "bg-slate-300 dark:bg-slate-700"
+                )}
+              >
+                <span
+                  className={cn(
+                    "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out",
+                    rollingBudgetEnabled ? "translate-x-5" : "translate-x-0"
+                  )}
+                />
+              </button>
+            </div>
+          </div>
+        </Card>
+      </motion.div>
+
+      {/* Advisory and Alert Box based on current status */}
+      <motion.div variants={itemVariants}>
+        <div className={cn(
+          "p-4 rounded-2xl border flex items-start gap-3.5 transition-all",
+          overallPercentage > 100 ? "bg-rose-50/40 border-rose-100 text-rose-800 dark:bg-rose-950/10 dark:border-rose-900/30" :
+          overallPercentage > 80 ? "bg-amber-50/40 border-amber-100 text-amber-800 dark:bg-amber-950/10 dark:border-amber-900/30" :
+          globalBudgetNum === 0 ? "bg-slate-50 border-slate-200 text-slate-700 dark:bg-slate-800/10 dark:border-slate-800" :
+          "bg-emerald-50/40 border-emerald-100 text-emerald-800 dark:bg-emerald-950/10 dark:border-emerald-900/30"
+        )}>
+          <div className="shrink-0 mt-0.5">
+            {overallPercentage > 100 ? <TrendingDown size={18} className="text-rose-500 animate-[bounce_2s_infinite]" /> :
+             overallPercentage > 80 ? <Info size={18} className="text-amber-500 animate-pulse" /> :
+             globalBudgetNum === 0 ? <HelpCircle size={18} className="text-slate-500" /> :
+             <ShieldCheck size={18} className="text-emerald-500" />}
+          </div>
+          <div className="space-y-1.5 flex-1 text-right">
+            <h4 className="text-xs font-black">
+              {overallPercentage > 100 ? 'لقد تخطيت الميزانية المحددة بالكامل! 🚨' :
+               overallPercentage > 80 ? 'لقد شارفت ميزانيتك على النفاد! ⚠️' :
+               globalBudgetNum === 0 ? 'ابدأ بإعداد ميزانيتك المالية للتحكم بمصاريفك.' :
+               'وضعك المالي متميز ومنضبط! 🛡️'}
+            </h4>
+            <p className="text-[11px] leading-relaxed opacity-95">
+              {overallPercentage > 100 ? 'ننصحك بشدة بوقف الصرف غير الطارئ فوراً وتفعيل الميزانية المتدحرجة لتخفيض الصدمة والحد من التأثير السلبي لقفة العائلة.' :
+               overallPercentage > 80 ? `المبلغ المتبقي لدورتك هو (${formatCurrency(remainingBudget, currency)}) الموزع على ${remainingDays} أيام. أي بمعدل ${formatCurrency(dailyLimit, currency)} لليوم الواحد.` :
+               globalBudgetNum === 0 ? 'ضع مبلغاً تقديرياً تود ألا تتخطاه هذا الشهر، ثم انقر على "توزيع ذكي" لنوزعه تلقائياً على كل فئة حسب أهميتها.' :
+               'أنت تصرف بمعدل صحي ومقنن تحت وطأة التحكم المالي. التزامك بقاعدة 50/30/20 سيحمي أهداف إدخارك.'}
+            </p>
           </div>
         </div>
       </motion.div>
 
 
-      {/* Category Breakdown Sections */}
+      {/* Category Breakdown list */}
       <div className="space-y-10">
+        <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h3 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
+            <PieChart size={18} className="text-indigo-500" />
+            <span>تنظيم وتفصيل ميزانية الفئات الفردية</span>
+          </h3>
+          <p className="text-xs text-slate-400 mt-1 font-bold">خصّص ميزانية دقيقة لكل فئة والمسؤوليات المصاحبة ككل</p>
+        </div>
+
         {groupedCategories.map((group, groupIdx) => (
           <motion.div 
             key={group.id}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: groupIdx * 0.1 }}
+            transition={{ delay: groupIdx * 0.12 }}
             className="space-y-4"
           >
-            <div className="flex items-center justify-between px-4">
-              <div className="flex items-center gap-4">
-                <div className={cn("w-5 h-5 rounded-full shadow-lg ring-4 ring-white/10", group.color)} />
-                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{group.title}</h3>
+            {/* Header of Section */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-1">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2.5">
+                  <div className={cn("w-3.5 h-3.5 rounded-full shadow-xs", group.color)} />
+                  <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-1.5">
+                    <span>{group.title}</span>
+                    <span className="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md font-mono">%{group.percentNum} المقترح</span>
+                  </h4>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold max-w-3xl leading-relaxed">
+                  {group.description}
+                </p>
               </div>
-              <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 mx-6 hidden md:block" />
-              <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">{group.items.length} فئات</span>
+              <span className="text-[10px] font-black text-slate-400 shrink-0 self-start md:self-center bg-slate-50 dark:bg-slate-850 px-2.5 py-1 rounded-full border border-slate-100 dark:border-slate-800 font-mono">{group.items.length} فئات فعالة</span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Grid of details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {group.items.length > 0 ? (
                 group.items.map((cat) => {
                   const spent = currentMonthExpenses
@@ -366,70 +571,90 @@ const BudgetPage = () => {
                     <Card
                       key={cat.id}
                       className={cn(
-                        "p-6 border-2 transition-all relative overflow-hidden group hover:border-primary-500/30",
+                        "p-5 border-2 transition-all relative overflow-hidden group hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs",
                         isOver 
-                          ? "border-rose-200 dark:border-rose-800/50 bg-rose-50/50 dark:bg-rose-900/10" 
-                          : ""
+                          ? "border-rose-200 dark:border-rose-800/40 bg-rose-50/20 dark:bg-rose-950/10" 
+                          : "border-slate-100 dark:border-slate-800/60"
                       )}
                       interactive
                     >
-                      <div className="flex items-center gap-5 mb-6">
+                      {/* Top components of Card */}
+                      <div className="flex items-center gap-4 mb-4">
                         <div 
-                          className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-md group-hover:rotate-6 transition-transform"
+                          className="w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0"
                           style={{ backgroundColor: cat.color }}
                         >
-                          <DynamicIcon name={cat.icon || 'Circle'} size={28} />
+                          <DynamicIcon name={cat.icon || 'Circle'} size={22} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start">
-                            <h4 className="text-lg font-black text-slate-900 dark:text-white truncate">{cat.name}</h4>
-                            <div className="text-right">
-                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">المصروف</p>
-                              <p className="text-base font-black">{formatCurrency(spent, currency)}</p>
+                            <div>
+                              <h5 className="text-xs font-black text-slate-900 dark:text-white truncate">{cat.name}</h5>
+                              <p className="text-[9px] text-slate-450 dark:text-slate-500 font-bold mt-0.5">
+                                {cat.type === 'need' ? 'احتياج ضروري' : cat.type === 'want' ? 'رفاهية وكماليات' : 'إدخار واستثمار'}
+                              </p>
+                            </div>
+                            <div className="text-left font-sans shrink-0">
+                              <p className="text-[9px] font-bold text-slate-400 mb-0.5">صرف فعلي</p>
+                              <p className={cn("text-xs font-black", spent > 0 ? "text-slate-700 dark:text-slate-300" : "text-slate-400")}>
+                                {formatCurrency(spent, currency)}
+                              </p>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex-1 h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${Math.min(100, percentage)}%` }}
-                              className={cn(
-                                "h-full rounded-full relative",
-                                isOver ? "bg-rose-500" : percentage > 85 ? "bg-amber-500" : "bg-primary-500"
-                              )}
-                            >
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-                            </motion.div>
+                      {/* Display Progress Indicator */}
+                      <div className="space-y-3.5">
+                        <div className="space-y-1.5 shadow-5xs p-2.5 rounded-lg bg-slate-50/50 dark:bg-slate-950/10 border border-slate-100/30">
+                          <div className="flex justify-between items-center text-[10px]">
+                            <span className="text-slate-400 font-bold">الحالة ومعدل الصرف:</span>
+                            <span className={cn(
+                              "font-black font-sans px-1.5 py-0.5 rounded-md text-[9px]",
+                              isOver ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400" :
+                              percentage > 85 ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400" :
+                              catBudgetNum > 0 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" :
+                              "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                            )}>
+                              {catBudgetNum === 0 ? 'غير محدد' : `${Math.round(percentage)}%`}
+                            </span>
                           </div>
-                          <span className={cn(
-                            "text-xs font-black w-12 text-right",
-                            isOver ? "text-rose-500" : "text-slate-400"
-                          )}>{Math.round(percentage)}%</span>
+
+                          <div className="h-2 bg-slate-150 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner relative">
+                            {catBudgetNum > 0 && (
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min(100, percentage)}%` }}
+                                className={cn(
+                                  "h-full rounded-full transition-all duration-300",
+                                  isOver ? "bg-rose-500" : percentage > 85 ? "bg-amber-500" : "bg-primary-600"
+                                )}
+                              />
+                            )}
+                          </div>
                         </div>
 
-                        <div className="flex items-center justify-between gap-6">
+                        {/* Input allocation and remaining display */}
+                        <div className="flex items-center justify-between gap-4">
                           <div className="flex-1 relative">
                             <input
                               type="number"
                               inputMode="decimal"
                               value={catBudgetStr}
                               onChange={(e) => handleCategoryBudgetChange(cat.id, e.target.value)}
-                              className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-3 text-base font-black text-slate-900 dark:text-white focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all text-center font-mono"
+                              className="w-full bg-slate-50 dark:bg-slate-950/40 border border-slate-250 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs font-black text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all text-center font-mono"
                               placeholder="حدد الميزانية"
                             />
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400">{currency}</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400">{currency}</span>
                           </div>
-                          <div className="text-right shrink-0">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">المتبقي</p>
+                          
+                          <div className="text-left shrink-0 font-sans">
+                            <p className="text-[9px] font-bold text-slate-400 mb-0.5">الباقي الآمن</p>
                             <p className={cn(
-                              "text-sm font-black",
-                              (catBudgetNum - spent) > 0 ? "text-emerald-500" : "text-rose-500"
+                              "text-xs font-black",
+                              (catBudgetNum - spent) >= 0 ? "text-emerald-500" : "text-rose-500"
                             )}>
-                              {formatCurrency(Math.max(0, catBudgetNum - spent), currency)}
+                              {formatCurrency(catBudgetNum - spent, currency)}
                             </p>
                           </div>
                         </div>
@@ -441,8 +666,8 @@ const BudgetPage = () => {
                 <div className="col-span-full">
                   <EmptyState
                     icon={CircleAlert}
-                    title="لا توجد فئات مخصصة لهذا القسم"
-                    description="ابدأ بإعداد فئات إضافية من صفحة الإعدادات لتنظيم ميزانيتك بالطريقة الأضمن."
+                    title="لا توجد فئات مخصصة لهذا التصنيف حالياً"
+                    description="انتقل لقسم الفئات لتفعيل أو تعديل تصنيفات الميزانية الذكية وتأمينها."
                   />
                 </div>
               )}
