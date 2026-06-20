@@ -275,7 +275,7 @@ const CategoryManager = () => {
               { label: 'رغبات', percent: '30%', color: 'text-amber-400', desc: 'نمط الحياة' },
               { label: 'ادخار', percent: '20%', color: 'text-emerald-400', desc: 'المستقبل' }
             ].map((item, i) => (
-              <div key={i} className="bg-white/5 backdrop-blur-md border border-white/5 rounded-2xl p-3 md:p-4 flex flex-col items-center text-center space-y-1">
+              <div key={i} className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 md:p-4 flex flex-col items-center text-center space-y-1">
                 <span className={cn("text-xl md:text-3xl font-black tracking-tighter", item.color)}>{item.percent}</span>
                 <div className="space-y-0.5">
                   <p className="text-[9px] md:text-[10px] font-black uppercase tracking-tight">{item.label}</p>

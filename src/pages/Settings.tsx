@@ -258,7 +258,7 @@ const Settings = () => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98, y: -10 }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
-                className="bg-white dark:bg-slate-900/50 rounded-2xl md:rounded-[2.5rem] p-4 md:p-6 lg:p-8 shadow-sm border border-slate-200/55 dark:border-slate-800/80 backdrop-blur-md"
+                className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[2.5rem] p-4 md:p-6 lg:p-8 shadow-sm border border-slate-200/55 dark:border-slate-800/80"
               >
                 {/* Mobile Back Button built beautifully into container top */}
                 <div className="flex items-center gap-2 lg:hidden pb-3 mb-4 border-b border-slate-100 dark:border-slate-800 justify-between">
