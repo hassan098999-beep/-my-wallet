@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../../store/AppContext';
+import { Category } from '../../types';
 import { Layers, Plus, Trash, Pencil, Search, X, ShieldCheck, TrendingUp, Target, Sparkles } from 'lucide-react';
 import { DynamicIcon } from '../../components/DynamicIcon';
 import { IconSelect } from '../../components/IconSelect';
 import { ColorPicker } from '../../components/ColorPicker';
+import { EditCategoryModal } from '../../components/EditCategoryModal';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, hapticFeedback } from '../../utils';
 
@@ -16,10 +18,8 @@ const CategoryManager = () => {
   const [newCatIcon, setNewCatIcon] = useState('Circle');
   const [newCatType, setNewCatType] = useState<'need' | 'want' | 'saving'>('need');
   const [searchQuery, setSearchQuery] = useState('');
-  const [editingCatId, setEditingCatId] = useState<string | null>(null);
-  const [editingCatName, setEditingCatName] = useState('');
-  const [editingCatIcon, setEditingCatIcon] = useState('Circle');
-  const [editingCatColor, setEditingCatColor] = useState('#3b82f6');
+  const [selectedCatForEdit, setSelectedCatForEdit] = useState<Category | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [newSubcatName, setNewSubcatName] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -319,32 +319,23 @@ const CategoryManager = () => {
                           <DynamicIcon name={cat.icon || 'Circle'} size={16} />
                         </div>
                         <div className="flex flex-col min-w-0">
-                          {editingCatId === cat.id ? (
-                            <div className="flex flex-col gap-2">
-                              <input 
-                                type="text" 
-                                value={editingCatName} 
-                                onChange={(e) => setEditingCatName(e.target.value)} 
-                                onBlur={() => {updateCategory(cat.id, { name: editingCatName, icon: editingCatIcon, color: editingCatColor }); setEditingCatId(null)}} 
-                                onKeyDown={(e) => e.key === 'Enter' && (updateCategory(cat.id, { name: editingCatName, icon: editingCatIcon, color: editingCatColor }), setEditingCatId(null))}
-                                autoFocus 
-                                className="w-full px-1.5 py-0.5 rounded-md border-2 border-primary-500 bg-white dark:bg-slate-900 text-[10px] font-black" 
-                              />
-                              <div className="flex gap-1">
-                                <IconSelect value={editingCatIcon} onChange={setEditingCatIcon} availableIcons={availableIcons} className="w-8 !h-8 rounded-md" />
-                                <ColorPicker value={editingCatColor} onChange={setEditingCatColor} />
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="font-black text-[11px] text-slate-900 dark:text-white truncate">{cat.name}</span>
-                          )}
-                          <span className={`text-[7px] font-black uppercase tracking-widest mt-0.5 ${group.textColor}`}>
+                          <span className="font-semibold text-xs text-slate-800 dark:text-white truncate">{cat.name}</span>
+                          <span className={`text-[9px] font-semibold tracking-tight mt-0.5 ${group.textColor}`}>
                             {group.id === 'need' ? 'احتياجات' : group.id === 'want' ? 'رغبات' : 'ادخار'}
                           </span>
                         </div>
                       </div>
                       <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => {setEditingCatId(cat.id); setEditingCatName(cat.name); setEditingCatIcon(cat.icon || 'Circle'); setEditingCatColor(cat.color || '#3b82f6')}} className="p-1 text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"><Pencil size={10} /></button>
+                        <button 
+                          onClick={() => {
+                            setSelectedCatForEdit(cat);
+                            setIsEditModalOpen(true);
+                          }} 
+                          className="p-1 text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                          title="تعديل الفئة"
+                        >
+                          <Pencil size={10} />
+                        </button>
                         <button onClick={() => deleteCategory(cat.id)} className="p-1 text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"><Trash size={10} /></button>
                       </div>
                     </div>
@@ -382,6 +373,20 @@ const CategoryManager = () => {
           </div>
         ))}
       </div>
+
+      <EditCategoryModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedCatForEdit(null);
+        }}
+        category={selectedCatForEdit}
+        onSave={(id, updates) => {
+          updateCategory(id, updates);
+          toast.success('تم تحديث الفئة بنجاح');
+        }}
+        onDelete={deleteCategory}
+      />
     </motion.div>
   );
 };
