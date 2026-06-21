@@ -241,7 +241,7 @@ const SavingsIndicators = () => {
           <div className="pt-2">
             <Link 
               to="/income" 
-              className="btn-primary px-6 py-3 rounded-2xl font-semibold text-xs inline-flex items-center gap-2 shadow-lg shadow-primary-500/20"
+              className="btn-primary px-6 py-3 rounded-2xl font-semibold text-xs inline-flex items-center gap-2 shadow-lg shadow-emerald-500/20"
             >
               <span>إرساء وإدخال الدخل والانطلاق</span>
               <ArrowRight size={14} className="rotate-180" />
@@ -259,7 +259,7 @@ const SavingsIndicators = () => {
             >
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Coins className="text-primary-500 size-5" />
+                  <Coins className="text-emerald-500 size-5" />
                   <h3 className="text-xs font-semibold text-slate-600 dark:text-slate-400 leading-none">الملخص الحسابي للشهر</h3>
                 </div>
 
@@ -360,7 +360,7 @@ const SavingsIndicators = () => {
           >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div className="space-y-0.5 text-right w-full sm:w-auto">
-                <span className="text-[10px] font-semibold text-primary-600 dark:text-primary-405 block flex items-end justify-end gap-1">
+                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 block flex items-end justify-end gap-1">
                   <span>أداة تفاعلية للمحاكاة المباشرة</span>
                   <Sliders size={12} />
                 </span>

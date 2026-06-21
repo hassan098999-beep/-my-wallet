@@ -7,10 +7,32 @@ import { cn } from '../utils';
 import toast from 'react-hot-toast';
 
 const NotificationBell = () => {
-  const { notifications, removeNotification, recurringExpenses, expenses, currency } = useAppContext();
-  const { overallPercentage, totalSpent, globalBudgetNum } = useBudgetStatus();
+  const { notifications, removeNotification, recurringExpenses, expenses, currency, categories } = useAppContext();
+  const { overallPercentage, totalSpent, globalBudgetNum, categoryStatuses, remainingDays } = useBudgetStatus();
   const [isOpen, setIsOpen] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+
+  // 4. Category-specific sub-budget limit alerts
+  const subBudgetAlerts = useMemo(() => {
+    if (!categoryStatuses || categoryStatuses.length === 0) return [];
+
+    return categoryStatuses
+      .filter(cs => cs.percentage >= 85) // Warning at 85% or more
+      .map(cs => {
+        const cat = categories.find(c => c.id === cs.categoryId);
+        const name = cat ? cat.name : 'الفئة';
+        const formattedRemaining = cs.remaining < 0 
+          ? `عجز بقيمة ${Math.abs(cs.remaining).toFixed(1)}` 
+          : `متبقي ${cs.remaining.toFixed(1)}`;
+
+        return {
+          id: `virtual-subbudget-${cs.categoryId}`,
+          message: `تنبیه موازنة العائلة: اقتربت ميزانية الفئة "${name}" من النفاد (${cs.percentage.toFixed(0)}%). الحالة: ${formattedRemaining} ${currency}، الأيام المتبقية بالشهر لربط قشور الدفتر: ${remainingDays} أيام.`,
+          type: 'budget' as const,
+          createdAt: new Date().toISOString()
+        };
+      });
+  }, [categoryStatuses, categories, currency, remainingDays]);
 
   // 1. Budget 80% limit warning
   const budgetAlert = useMemo(() => {
@@ -116,10 +138,11 @@ const NotificationBell = () => {
     const list = [...notifications];
     if (budgetAlert) list.unshift(budgetAlert);
     recurringAlerts.forEach(re => list.unshift(re));
+    subBudgetAlerts.forEach(sba => list.unshift(sba));
     if (weeklySummaryAlert) list.unshift(weeklySummaryAlert);
 
     return list.filter(n => !dismissedIds.includes(n.id));
-  }, [notifications, budgetAlert, recurringAlerts, weeklySummaryAlert, dismissedIds]);
+  }, [notifications, budgetAlert, recurringAlerts, subBudgetAlerts, weeklySummaryAlert, dismissedIds]);
 
   const handleDismiss = (id: string) => {
     if (id.startsWith('virtual-')) {

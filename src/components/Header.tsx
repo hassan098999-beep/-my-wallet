@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings2, Target, RefreshCcw, Trophy, Flag, LogOut, LogIn, UserCircle, PlusCircle, PiggyBank, Moon, Sun, Wallet, SlidersHorizontal, ChartPie } from 'lucide-react';
+import { Settings2, Target, RefreshCcw, Trophy, Flag, LogOut, LogIn, UserCircle, PlusCircle, PiggyBank, Moon, Sun, Wallet, SlidersHorizontal, ChartPie, Baby } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { motion, AnimatePresence } from 'motion/react';
@@ -9,6 +9,7 @@ import { useAppContext } from '../store/AppContext';
 const dropdownItems = [
   { path: '/income', name: 'إدارة الدخل', icon: Wallet },
   { path: '/budget', name: 'الميزانيات', icon: ChartPie },
+  { path: '/family', name: 'تفريرة العيلة', icon: Baby },
   { path: '/recurring', name: 'المصاريف المتكررة', icon: RefreshCcw },
   { path: '/goals', name: 'الأهداف المالية', icon: Target },
   { path: '/savings', name: 'تخصيص الادخار', icon: PiggyBank },
@@ -31,6 +32,7 @@ const Header = () => {
       case '/goals': return 'الأهداف المالية';
       case '/savings': return 'تخصيص الادخار';
       case '/income': return 'الدخل';
+      case '/family': return 'تفريرة العيلة';
       case '/settings': return 'الإعدادات';
       case '/assistant': return 'المساعد الذكي';
       default: return 'مصاريفي';

@@ -1654,10 +1654,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         format: 'a4'
       });
 
-      // Fetch Amiri font from Google Fonts Main Repository on GitHub (via jsDelivr)
-      // This is a direct ttf file that is open-source and highly compatible
+      // Fetch Amiri font locally from public assets for complete offline support
       try {
-        const fontUrl = 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/amiri/Amiri-Regular.ttf';
+        const fontUrl = '/fonts/Amiri-Regular.ttf';
         const res = await fetch(fontUrl);
         if (res.ok) {
           const fontBuffer = await res.arrayBuffer();

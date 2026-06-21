@@ -11,7 +11,8 @@ import {
   Target, 
   Plus, 
   ArrowRightLeft, 
-  Sparkles 
+  Sparkles,
+  Shield
 } from 'lucide-react';
 import { Account, Goal } from '../types';
 import { DynamicIcon } from './DynamicIcon';
@@ -321,6 +322,12 @@ const HeroSlidingDeck: React.FC<HeroSlidingDeckProps> = ({
                           <span className="text-xs font-black text-white flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                             {goal.name}
+                            {goal.isEmergencyFund && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                <Shield size={8} />
+                                طوارئ
+                              </span>
+                            )}
                           </span>
                           <span className="text-xs font-bold text-emerald-400 font-mono">{percentage.toFixed(0)}%</span>
                         </div>

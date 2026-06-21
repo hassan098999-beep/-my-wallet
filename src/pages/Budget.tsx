@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../store/AppContext';
+import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import { cn, formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
 import { parseISO, differenceInDays, startOfDay } from 'date-fns';
 import { 
@@ -170,39 +171,15 @@ const BudgetPage = () => {
     }).filter(item => item.spent > 0 || item.budgeted > 0);
   }, [categories, currentMonthExpenses, categoryBudgets]);
 
-  const totalSpent = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const globalBudgetNum = Number(globalBudget) || 0;
-  const overallPercentage = globalBudgetNum > 0 ? (totalSpent / globalBudgetNum) * 100 : 0;
-
-  // Calculate Days & Daily Limits
-  const { start: rangeStart, end: rangeEnd } = useMemo(() => getBudgetRange(selectedMonth, firstDayOfMonth), [selectedMonth, firstDayOfMonth]);
-  const daysInMonth = useMemo(() => differenceInDays(rangeEnd, rangeStart) + 1, [rangeStart, rangeEnd]);
-
-  const today = new Date();
-  
-  const remainingDays = useMemo(() => {
-    const todayStart = startOfDay(today);
-    const end = startOfDay(rangeEnd);
-    const start = startOfDay(rangeStart);
-    
-    if (todayStart > end) return 0;
-    if (todayStart < start) return daysInMonth;
-    return differenceInDays(end, todayStart) + 1;
-  }, [today, rangeStart, rangeEnd, daysInMonth]);
-
-  const remainingBudget = Math.max(0, globalBudgetNum - totalSpent);
-  
-  const dailyLimit = useMemo(() => {
-    const todayStart = startOfDay(today);
-    const end = startOfDay(rangeEnd);
-    
-    if (todayStart > end) return 0;
-
-    if (!rollingBudgetEnabled) {
-      return globalBudgetNum / daysInMonth;
-    }
-    return remainingDays > 0 ? remainingBudget / remainingDays : 0;
-  }, [rollingBudgetEnabled, globalBudgetNum, daysInMonth, remainingBudget, remainingDays, today, rangeEnd]);
+  const {
+    totalSpent,
+    globalBudgetNum,
+    overallPercentage,
+    remainingDays,
+    remainingBudget,
+    dailyLimit,
+    daysInMonth
+  } = useBudgetStatus(selectedMonth);
 
   // Stagger Animations
   const containerVariants = {
@@ -307,7 +284,7 @@ const BudgetPage = () => {
 
       {/* Main Intelligent Budget Dashboard Dashboard and Progress */}
       <motion.div variants={itemVariants}>
-        <div className="relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xs">
+        <div className="card relative overflow-hidden p-6 md:p-8 shadow-xs">
           
           {/* Subtle decorative background light */}
           <div className="absolute right-0 top-0 -mr-20 -mt-20 w-80 h-80 bg-emerald-500/5 dark:bg-emerald-400/5 rounded-full blur-3xl pointer-events-none" />
@@ -558,7 +535,7 @@ const BudgetPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Comparative horizontal Bar Chart */}
-          <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800/80 rounded-3xl p-5 shadow-xs relative overflow-hidden">
+          <div className="lg:col-span-8 card p-5 shadow-xs relative overflow-hidden">
             <div className="flex justify-between items-center mb-4 text-right">
               <div>
                 <h4 className="text-xs font-black text-slate-900 dark:text-white">الميزانية المرصودة مقابل المصروف المنجز</h4>
@@ -629,7 +606,7 @@ const BudgetPage = () => {
           </div>
 
           {/* Allocation Gauge cards */}
-          <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800/80 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4">
+          <div className="lg:col-span-4 card p-5 shadow-xs flex flex-col justify-between space-y-4">
             <div>
               <h4 className="text-xs font-black text-slate-900 dark:text-white">توزيع النفقات حسب قاعدة 50/30/20</h4>
               <p className="text-[9px] text-slate-400 font-bold mt-0.5">حالة توازن النفقات حسب طبيعة كل فئة</p>

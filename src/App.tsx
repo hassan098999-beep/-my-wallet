@@ -21,6 +21,7 @@ const IncomePage = lazy(() => import('./pages/settings/Income'));
 const RecurringExpenses = lazy(() => import('./pages/RecurringExpenses'));
 const SavingsPage = lazy(() => import('./pages/Savings'));
 const SavingsIndicatorsPage = lazy(() => import('./pages/SavingsIndicators'));
+const FamilyReport = lazy(() => import('./pages/FamilyReport'));
 
 function AppContent() {
   const { isLocked } = useAppContext();
@@ -46,6 +47,7 @@ function AppContent() {
               <Route path="income" element={<IncomePage />} />
               <Route path="savings" element={<SavingsPage />} />
               <Route path="savings-indicators" element={<SavingsIndicatorsPage />} />
+              <Route path="family" element={<FamilyReport />} />
               <Route path="settings" element={<Settings />} />
               <Route path="assistant" element={<Assistant />} />
               <Route path="share-add" element={<ShareAdd />} />

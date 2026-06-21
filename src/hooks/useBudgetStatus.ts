@@ -3,12 +3,12 @@ import { useAppContext } from '../store/AppContext';
 import { getBudgetRange, getBudgetMonth } from '../utils';
 import { parseISO, differenceInDays, startOfDay } from 'date-fns';
 
-export function useBudgetStatus() {
-  const { budget, expenses, firstDayOfMonth, rollingBudgetEnabled } = useAppContext();
+export function useBudgetStatus(overrideMonth?: string) {
+  const { budget, expenses, firstDayOfMonth, rollingBudgetEnabled, categoryBudgets } = useAppContext();
 
   return useMemo(() => {
     const today = new Date();
-    const activeMonth = getBudgetMonth(today, firstDayOfMonth);
+    const activeMonth = overrideMonth || getBudgetMonth(today, firstDayOfMonth);
     
     // Parse range for budget month
     const { start, end } = getBudgetRange(activeMonth, firstDayOfMonth);
@@ -24,6 +24,29 @@ export function useBudgetStatus() {
     const globalBudgetNum = budget?.amount || 0;
     const overallPercentage = globalBudgetNum > 0 ? (totalSpent / globalBudgetNum) * 100 : 0;
     const remainingBudget = Math.max(0, globalBudgetNum - totalSpent);
+
+    // Individual category sub-budget calculations
+    const categoryStatuses = Object.entries(categoryBudgets || {}).map(([catId, amount]) => {
+      const limit = Number(amount) || 0;
+      const spent = currentMonthExpenses
+        .filter(e => e.categoryId === catId)
+        .reduce((sum, e) => sum + e.amount, 0);
+      const percentage = limit > 0 ? (spent / limit) * 100 : 0;
+      const remaining = limit - spent; // Can be negative represents overspent
+      
+      return {
+        categoryId: catId,
+        limit,
+        spent,
+        percentage,
+        remaining
+      };
+    });
+
+    const categoryStatusesLookup = categoryStatuses.reduce((acc, curr) => {
+      acc[curr.categoryId] = curr;
+      return acc;
+    }, {} as Record<string, { categoryId: string, limit: number, spent: number, percentage: number, remaining: number }>);
 
     // Days calculation
     const daysInMonth = differenceInDays(end, start) + 1;
@@ -65,7 +88,9 @@ export function useBudgetStatus() {
       remainingToday,
       daysInMonth,
       remainingDays,
-      activeMonth
+      activeMonth,
+      categoryStatuses,
+      categoryStatusesLookup
     };
-  }, [budget, expenses, firstDayOfMonth, rollingBudgetEnabled]);
+  }, [budget, expenses, firstDayOfMonth, rollingBudgetEnabled, categoryBudgets]);
 }

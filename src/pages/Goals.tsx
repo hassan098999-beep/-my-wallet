@@ -7,7 +7,7 @@ import { motion } from 'motion/react';
 import { 
   Target, Plus, Trash, Calendar, TrendingUp, Sparkles, Trophy, 
   ArrowUpRight, ArrowDownRight, History, Activity, Coins, Clock, Zap, 
-  Info, HelpCircle, Hourglass, ChevronLeft, ChevronRight, Gauge 
+  Info, HelpCircle, Hourglass, ChevronLeft, ChevronRight, Gauge, Shield 
 } from 'lucide-react';
 import NumericKeypad from '../components/NumericKeypad';
 import { AnimatePresence } from 'motion/react';
@@ -27,6 +27,7 @@ const GoalsPage = () => {
   const [deadline, setDeadline] = useState(new Date().toISOString().split('T')[0]);
   const [linkedCategoryId, setLinkedCategoryId] = useState<string>('');
   const [isLinkedToOverallBudget, setIsLinkedToOverallBudget] = useState(false);
+  const [isEmergencyFund, setIsEmergencyFund] = useState(false);
   const [activeInput, setActiveInput] = useState<'target' | 'current' | null>(null);
   const [showQuickAdd, setShowQuickAdd] = useState<string | null>(null);
   const [quickAddAmount, setQuickAddAmount] = useState('');
@@ -48,6 +49,7 @@ const GoalsPage = () => {
         deadline,
         linkedCategoryId: linkedCategoryId || undefined,
         isLinkedToOverallBudget: isLinkedToOverallBudget,
+        isEmergencyFund: isEmergencyFund,
       });
       
       toast.success(
@@ -63,6 +65,7 @@ const GoalsPage = () => {
       setCurrentAmount('');
       setLinkedCategoryId('');
       setIsLinkedToOverallBudget(false);
+      setIsEmergencyFund(false);
       setActiveInput(null);
     }
   };
@@ -293,21 +296,21 @@ const GoalsPage = () => {
       {/* Goals Summary Stats */}
       {goals.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm text-center group hover:shadow-md transition-all">
+          <motion.div variants={itemVariants} className="card text-center group hover:shadow-md transition-all">
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">إجمالي المستهدف</p>
             <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter group-hover:scale-110 transition-transform">
               {formatCurrency(goals.reduce((sum, g) => sum + g.targetAmount, 0), currency)}
             </p>
           </motion.div>
-          <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm text-center group hover:shadow-md transition-all">
+          <motion.div variants={itemVariants} className="card text-center group hover:shadow-md transition-all">
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">إجمالي المدخرات</p>
             <p className="text-3xl font-black text-emerald-500 tracking-tighter group-hover:scale-110 transition-transform">
               {formatCurrency(goals.reduce((sum, g) => sum + g.currentAmount, 0), currency)}
             </p>
           </motion.div>
-          <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm text-center group hover:shadow-md transition-all">
+          <motion.div variants={itemVariants} className="card text-center group hover:shadow-md transition-all">
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">نسبة الإنجاز الكلية</p>
-            <p className="text-3xl font-black text-primary-500 tracking-tighter group-hover:scale-110 transition-transform">
+            <p className="text-3xl font-black text-emerald-500 tracking-tighter group-hover:scale-110 transition-transform">
               {goals.reduce((sum, g) => sum + g.targetAmount, 0) > 0 
                 ? Math.round((goals.reduce((sum, g) => sum + g.currentAmount, 0) / goals.reduce((sum, g) => sum + g.targetAmount, 0)) * 100) 
                 : 0}%
@@ -696,7 +699,7 @@ const GoalsPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div 
               onClick={() => {
                 setIsLinkedToOverallBudget(!isLinkedToOverallBudget);
@@ -705,19 +708,19 @@ const GoalsPage = () => {
               className={cn(
                 "flex items-center gap-4 p-5 rounded-2xl border-2 border-dashed transition-all cursor-pointer group",
                 isLinkedToOverallBudget 
-                  ? "border-primary-500 bg-primary-500/5 shadow-lg shadow-primary-500/5" 
+                  ? "border-emerald-500 bg-emerald-500/5 shadow-lg shadow-emerald-500/5" 
                   : "border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800"
               )}
             >
               <div className={cn(
                 "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all",
-                isLinkedToOverallBudget ? "bg-primary-500 border-primary-500 text-white" : "border-slate-300 dark:border-slate-600"
+                isLinkedToOverallBudget ? "bg-emerald-500 border-emerald-500 text-white" : "border-slate-300 dark:border-slate-600"
               )}>
                 {isLinkedToOverallBudget && <TrendingUp size={14} />}
               </div>
               <span className={cn(
                 "text-sm font-black uppercase tracking-tight transition-colors",
-                isLinkedToOverallBudget ? "text-primary-600" : "text-slate-500"
+                isLinkedToOverallBudget ? "text-emerald-600" : "text-slate-500"
               )}>
                 ربط بالميزانية العامة (توفير الفائض الكلي)
               </span>
@@ -731,13 +734,36 @@ const GoalsPage = () => {
                   if (e.target.value) setIsLinkedToOverallBudget(false);
                 }}
                 disabled={isLinkedToOverallBudget}
-                className="w-full p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 disabled:opacity-50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-black uppercase tracking-tight appearance-none cursor-pointer"
+                className="w-full p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 disabled:opacity-50 text-base outline-none focus:ring-8 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-black uppercase tracking-tight appearance-none cursor-pointer"
               >
                 <option value="">ربط بفئة محددة (اختياري)</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
+            </div>
+
+            <div 
+              onClick={() => setIsEmergencyFund(!isEmergencyFund)}
+              className={cn(
+                "flex items-center gap-4 p-5 rounded-2xl border-2 border-dashed transition-all cursor-pointer group",
+                isEmergencyFund 
+                  ? "border-emerald-500 bg-emerald-500/5 shadow-lg shadow-emerald-500/5" 
+                  : "border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800"
+              )}
+            >
+              <div className={cn(
+                "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all",
+                isEmergencyFund ? "bg-emerald-500 border-emerald-500 text-white" : "border-slate-300 dark:border-slate-600"
+              )}>
+                {isEmergencyFund && <Shield size={14} />}
+              </div>
+              <span className={cn(
+                "text-sm font-black uppercase tracking-tight transition-colors",
+                isEmergencyFund ? "text-emerald-600" : "text-slate-500"
+              )}>
+                صندوق طوارئ عائلي (تأمين العيلة) 🛡️
+              </span>
             </div>
           </div>
 
@@ -809,8 +835,14 @@ const GoalsPage = () => {
                         )}>
                           {isCompleted ? <Trophy size={28} /> : <Target size={28} />}
                         </div>
-                        <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                          {goal.name}
+                        <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight flex items-center gap-2 flex-wrap">
+                          <span>{goal.name}</span>
+                          {goal.isEmergencyFund && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-wider bg-rose-500 text-white rounded-full transition-all shadow-xs shrink-0 select-none">
+                              <Shield size={12} className="shrink-0" />
+                              <span>صندوق طوارئ العائلة 🛡️</span>
+                            </span>
+                          )}
                         </h3>
                       </div>
                       <div className="flex items-center gap-3 text-slate-400">

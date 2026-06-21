@@ -366,7 +366,7 @@ const Dashboard = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-r from-cyan-600 via-primary-600 to-indigo-700 text-white rounded-3xl p-6 md:p-8 shadow-md border border-white/10 relative overflow-hidden text-right"
+          className="bg-gradient-to-r from-cyan-600 via-emerald-600 to-indigo-700 text-white rounded-3xl p-6 md:p-8 shadow-md border border-white/10 relative overflow-hidden text-right"
         >
           <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -391,7 +391,7 @@ const Dashboard = () => {
                 await applyTunisianFamilyTemplate();
                 toast.dismiss(loadingToast);
               }}
-              className="self-start md:self-auto bg-white text-primary-600 hover:bg-neutral-100 font-extrabold text-xs md:text-sm px-6 py-4 rounded-2xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+              className="self-start md:self-auto bg-white text-emerald-600 hover:bg-neutral-100 font-extrabold text-xs md:text-sm px-6 py-4 rounded-2xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0 cursor-pointer"
             >
               <Sparkles size={16} />
               تحديث التصنيفات والميزانية الآن

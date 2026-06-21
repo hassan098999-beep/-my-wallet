@@ -620,7 +620,7 @@ const Transactions = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="lg:col-span-3 card p-5 md:p-6 flex flex-col bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-slate-100 dark:border-slate-800 shadow-sm"
+            className="lg:col-span-3 card p-5 md:p-6 flex flex-col"
           >
             <div className="flex flex-col gap-4 md:gap-5 flex-1">
               {/* Search and Core Controls Row */}

@@ -194,7 +194,7 @@ const Settings = () => {
           <div className="hidden lg:block p-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-850 space-y-2 text-right">
             <div className="flex items-center gap-1.5 justify-end text-[10px] font-black text-slate-500">
               <span>معلومة الأمان المالي</span>
-              <Info size={12} className="text-primary-500" />
+              <Info size={12} className="text-emerald-500" />
             </div>
             <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
               جميع النفقات، الحسابات الشخصية والفئات المتخصصة تونسياً لحماية طفلك وتأمين طفولته محفوظة محلياً وتعمل بدون إنترنت بالكامل.
@@ -229,7 +229,7 @@ const Settings = () => {
         <div className="space-y-1 text-right pr-1">
           <h3 className="text-xs font-black text-slate-800 dark:text-white flex items-center gap-1.5 justify-end">
             <span>لوحة التنقل السريع والأدوات المالية</span>
-            <SettingsIcon size={12} className="text-primary-500" />
+            <SettingsIcon size={12} className="text-emerald-500" />
           </h3>
           <p className="text-[10px] text-slate-400 font-bold">قم بالوصول السريع لمختلف جوانب التخطيط المالي لعائلتك</p>
         </div>

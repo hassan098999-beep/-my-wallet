@@ -57,7 +57,7 @@ const OnboardingModal: React.FC = () => {
                   key={s}
                   className={cn(
                     "h-1.5 flex-1 rounded-full transition-all duration-500",
-                    s <= step ? "bg-primary-500" : "bg-slate-100 dark:bg-slate-800"
+                    s <= step ? "bg-emerald-500" : "bg-slate-100 dark:bg-slate-800"
                   )}
                 />
               ))}
@@ -73,17 +73,17 @@ const OnboardingModal: React.FC = () => {
                   className="space-y-6"
                 >
                   <div className="space-y-2">
-                    <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center text-primary-600 dark:text-primary-400 mb-4">
+                    <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4">
                       <Sparkles size={24} />
                     </div>
-                    <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">مرحباً بك في <span className="text-primary-500">مصاريفي العائلية</span></h2>
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">مرحباً بك في <span className="text-emerald-500">مصاريفي العائلية</span></h2>
                     <p className="text-slate-500 dark:text-slate-400 font-bold">المستشار المالي الذكي للعائلات التونسية الشابة (أب، أم، ورضيع).</p>
                     <p className="text-xs text-slate-400 mt-1 font-bold">مصمم لمساعدتكم في موازنة قفة الشهر، حفاظات وحليب الرضيع، صحة طفلكم، وفواتير السكن (STEG/SONEDE) بكل يسر.</p>
                     
-                    <div className="space-y-3 mt-8 p-6 rounded-3xl bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500 flex items-center gap-4 text-right">
+                    <div className="space-y-3 mt-8 p-6 rounded-3xl bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-500 flex items-center gap-4 text-right">
                       <span className="text-4xl">🇹🇳</span>
                       <div>
-                        <p className="text-lg font-black text-primary-600 dark:text-primary-400">الدينار التونسي</p>
+                        <p className="text-lg font-black text-emerald-600 dark:text-emerald-400">الدينار التونسي</p>
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">TND (1 دينار = 1000 مليم)</p>
                       </div>
                     </div>
@@ -178,12 +178,12 @@ const OnboardingModal: React.FC = () => {
                       initial={{ scale: 0, rotate: -180 }}
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                      className="w-24 h-24 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 mb-6"
+                      className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-6"
                     >
                       <CircleCheckBig size={48} />
                     </motion.div>
                   </div>
-                  <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">أنت جاهز <span className="text-primary-500">للانطلاق!</span></h2>
+                  <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">أنت جاهز <span className="text-emerald-500">للانطلاق!</span></h2>
                   <p className="text-slate-500 dark:text-slate-400 font-bold max-w-xs mx-auto">لقد تم إعداد حسابك بنجاح. يمكنك الآن البدء في تسجيل مصاريفك ومتابعة أهدافك المالية.</p>
                   
                   <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border-2 border-dashed border-slate-100 dark:border-slate-800 mt-8">
@@ -206,7 +206,7 @@ const OnboardingModal: React.FC = () => {
               )}
               <button
                 onClick={handleNext}
-                className="flex-[2] bg-primary-600 hover:bg-primary-700 text-white py-4 rounded-2xl font-black transition-all shadow-md shadow-primary-500/20 flex items-center justify-center gap-2 active:scale-95 text-sm uppercase tracking-widest"
+                className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black transition-all shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 active:scale-95 text-sm uppercase tracking-widest"
               >
                 {step === 3 ? 'ابدأ الآن' : 'التالي'}
                 <ArrowLeft size={18} className="rotate-180" />

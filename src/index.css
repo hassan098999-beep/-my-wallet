@@ -40,26 +40,13 @@
   --color-info: #6366f1;
 
   /* Layout & Custom Borders */
-  --radius-card: 1.5rem;
   --radius-button: 0.75rem;
   --radius-pill: 9999px;
   
-  /* Premium Fintech Palette - Deep Slate & Vibrant Emerald */
-  --color-primary-50: #f0fdf4;
-  --color-primary-100: #dcfce7;
-  --color-primary-500: #10b981;
-  --color-primary-600: #059669;
-  --color-primary-700: #047857;
-
   --color-emerald-500: #10b981;
   --color-rose-500: #ef4444;
   --color-amber-500: #f59e0b;
   --color-indigo-500: #6366f1;
-  
-  --color-surface-light: #ffffff;
-  --color-surface-dark: #0f172a;
-  --color-bg-light: #f8fafc;
-  --color-bg-dark: #020617;
 
   @keyframes shimmer {
     from { transform: translateX(-100%); }
@@ -93,7 +80,7 @@
   }
   body {
     font-family: var(--font-tajawal);
-    background-color: var(--color-bg-light);
+    background-color: var(--color-surface-1);
     color: #0f172a;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
