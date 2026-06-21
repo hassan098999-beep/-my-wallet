@@ -34,6 +34,7 @@ const itemVariants = {
 };
 
 const LAUNCHER_ITEMS = [
+  { path: '/budget', name: 'مخطط ومقارنة الميزانية الكلية', icon: Layers, desc: 'تحديد الميزانية الشهرية والتحليل الرسومي المباشر للفئات 📊', bg: 'from-rose-500/10 to-rose-500/5 hover:border-rose-500/30 border-rose-500/15', iconColor: 'text-rose-600' },
   { path: '/savings-indicators', name: 'مؤشرات وفرص التوفير', icon: Percent, desc: 'حساب نسبة الادخار من الراتب ومحاكاة القفة 🇹🇳', bg: 'from-emerald-500/10 to-emerald-500/5 hover:border-emerald-500/30 border-emerald-500/15', iconColor: 'text-emerald-600' },
   { path: '/savings', name: 'حصالة الادخار العائلية', icon: PiggyBank, desc: 'توفير مبالغ مخصصة للبيبي ومراجعة الأرصدة', bg: 'from-blue-500/10 to-blue-500/5 hover:border-blue-500/30 border-blue-500/15', iconColor: 'text-blue-600' },
   { path: '/goals', name: 'الأهداف المالية الكبرى', icon: Target, desc: 'خطط ادخار مصروف الرعاية، الصحة، والتعليم الكلي', bg: 'from-indigo-500/10 to-indigo-500/5 hover:border-indigo-500/30 border-indigo-500/15', iconColor: 'text-indigo-600' },

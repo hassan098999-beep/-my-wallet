@@ -8,6 +8,19 @@ import {
   TrendingDown, PieChart, ShieldCheck, Sparkles, Clock, HelpCircle,
   RefreshCw, Check, Percent
 } from 'lucide-react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip as RechartsTooltip, 
+  Legend as RechartsLegend, 
+  ResponsiveContainer, 
+  PieChart as RechartsPieChart, 
+  Pie, 
+  Cell 
+} from 'recharts';
 import { DynamicIcon } from '../components/DynamicIcon';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
@@ -141,6 +154,21 @@ const BudgetPage = () => {
       return d >= start && d <= end;
     });
   }, [expenses, selectedMonth, firstDayOfMonth]);
+
+  const chartData = useMemo(() => {
+    return categories.map(cat => {
+      const spent = currentMonthExpenses
+        .filter(e => e.categoryId === cat.id)
+        .reduce((sum, e) => sum + e.amount, 0);
+      const budgeted = Number(categoryBudgets[cat.id]) || 0;
+      return {
+        name: cat.name,
+        spent: Number(spent.toFixed(2)),
+        budgeted: Number(budgeted.toFixed(2)),
+        color: cat.color,
+      };
+    }).filter(item => item.spent > 0 || item.budgeted > 0);
+  }, [categories, currentMonthExpenses, categoryBudgets]);
 
   const totalSpent = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
   const globalBudgetNum = Number(globalBudget) || 0;
@@ -514,6 +542,188 @@ const BudgetPage = () => {
                globalBudgetNum === 0 ? 'ضع مبلغاً تقديرياً تود ألا تتخطاه هذا الشهر، ثم انقر على "توزيع ذكي" لنوزعه تلقائياً على كل فئة حسب أهميتها.' :
                'أنت تصرف بمعدل صحي ومقنن تحت وطأة التحكم المالي. التزامك بقاعدة 50/30/20 سيحمي أهداف إدخارك.'}
             </p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Graphical Comparison Dashboard */}
+      <motion.div variants={itemVariants} className="space-y-4">
+        <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h3 className="text-base font-black text-slate-800 dark:text-white flex items-center gap-2">
+            <Activity size={18} className="text-emerald-500 animate-pulse" />
+            <span>التحليل والمقارنة الرسومية للفئات المحددة</span>
+          </h3>
+          <p className="text-xs text-slate-400 mt-1 font-bold">تقرير بصري مقارن يوضح نفقاتك الفعلية بموازاة السقف المحدد لكل فئة من دورتك الحالية</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Comparative horizontal Bar Chart */}
+          <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800/80 rounded-3xl p-5 shadow-xs relative overflow-hidden">
+            <div className="flex justify-between items-center mb-4 text-right">
+              <div>
+                <h4 className="text-xs font-black text-slate-900 dark:text-white">الميزانية المرصودة مقابل المصروف المنجز</h4>
+                <p className="text-[9px] text-slate-400 font-bold mt-0.5">مقارنة ثنائية بصرية لكافة فئات الدفتر العائلي</p>
+              </div>
+              <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950/20 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-800">
+                <span className="w-2 h-2 bg-indigo-500/80 rounded-full" />
+                <span className="text-[9px] text-slate-500 font-black pl-2">الميزانية</span>
+                <span className="w-2 h-2 bg-rose-500/90 rounded-full" />
+                <span className="text-[9px] text-slate-500 font-black">المصروف</span>
+              </div>
+            </div>
+
+            {chartData.length > 0 ? (
+              <div className="w-full" style={{ height: `${Math.max(240, chartData.length * 40)}px` }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={chartData}
+                    layout="vertical"
+                    margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" opacity={0.3} />
+                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 750, fill: '#94a3b8' }} />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      axisLine={false}
+                      tickLine={false}
+                      orientation="right"
+                      tick={{ fontSize: 9, fontWeight: 900, fill: '#64748b' }}
+                      width={110}
+                    />
+                    <RechartsTooltip
+                      cursor={{ fill: '#f8fafc', opacity: 0.1 }}
+                      contentStyle={{ borderRadius: '14px', background: '#0f172a', border: '1px solid #1e293b', direction: 'rtl' }}
+                      itemStyle={{ color: '#fff', fontSize: '10px', fontFamily: 'Tajawal, sans-serif' }}
+                      labelStyle={{ color: '#94a3b8', fontSize: '9px', fontWeight: 'bold', fontFamily: 'Tajawal, sans-serif', textAlign: 'right' }}
+                      formatter={(value: any, name: any) => [
+                        `${value} ${currency}`,
+                        name === 'budgeted' ? 'الميزانية المخصصة' : 'المصروف الفعلي'
+                      ]}
+                    />
+                    <Bar dataKey="budgeted" name="budgeted" fill="#6366f1" radius={[0, 3, 3, 0]} barSize={8}>
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-budgeted-${index}`} fill={entry.color ? `${entry.color}35` : '#6366f135'} stroke={entry.color || '#6366f1'} strokeWidth={1.5} />
+                      ))}
+                    </Bar>
+                    <Bar dataKey="spent" name="spent" fill="#ef4444" radius={[0, 3, 3, 0]} barSize={8}>
+                      {chartData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-spent-${index}`} 
+                          fill={entry.spent > entry.budgeted && entry.budgeted > 0 ? '#f43f5e' : `${entry.color || '#10b981'}bb`} 
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center space-y-2">
+                <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-950/40 flex items-center justify-center text-slate-400">
+                  <TrendingUp size={22} />
+                </div>
+                <p className="text-xs font-black text-slate-500">لا توجد مخصصات أو مصاريف لتمثيلها حالياً.</p>
+                <p className="text-[10px] text-slate-400">حدد ميزانية لبعض الفئات في الأسفل أو أضف نفقات جديدة للشهر الحالي لتفعيل الرسم البياني التفاعلي.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Allocation Gauge cards */}
+          <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800/80 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4">
+            <div>
+              <h4 className="text-xs font-black text-slate-900 dark:text-white">توزيع النفقات حسب قاعدة 50/30/20</h4>
+              <p className="text-[9px] text-slate-400 font-bold mt-0.5">حالة توازن النفقات حسب طبيعة كل فئة</p>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-center space-y-5 py-2">
+              {/* Needs Indicator */}
+              <div className="space-y-1.5 text-right">
+                <div className="flex justify-between items-center text-[10px] font-black">
+                  <span className="text-rose-500 font-mono">
+                    {formatCurrency(chartData.filter(i => {
+                      const found = categories.find(c => c.name === i.name);
+                      return found?.type === 'need' || !found?.type;
+                    }).reduce((s, x) => s + x.spent, 0), currency)}
+                    {' / '}
+                    {formatCurrency(chartData.filter(i => {
+                      const found = categories.find(c => c.name === i.name);
+                      return found?.type === 'need' || !found?.type;
+                    }).reduce((s, x) => s + x.budgeted, 0), currency)}
+                  </span>
+                  <span className="text-slate-650 dark:text-slate-350">الاحتياجات الحتمية (%50 المقترح)</span>
+                </div>
+                <div className="h-1.5 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-rose-500 transition-all duration-500" 
+                    style={{ 
+                      width: `${Math.min(100, (() => {
+                        const budgets = chartData.filter(i => {
+                          const found = categories.find(c => c.name === i.name);
+                          return found?.type === 'need' || !found?.type;
+                        }).reduce((s, x) => s + x.budgeted, 0);
+                        const spents = chartData.filter(i => {
+                          const found = categories.find(c => c.name === i.name);
+                          return found?.type === 'need' || !found?.type;
+                        }).reduce((s, x) => s + x.spent, 0);
+                        return budgets > 0 ? (spents / budgets) * 100 : 0;
+                      })())}%` 
+                    }} 
+                  />
+                </div>
+              </div>
+
+              {/* Wants Indicator */}
+              <div className="space-y-1.5 text-right">
+                <div className="flex justify-between items-center text-[10px] font-black">
+                  <span className="text-amber-500 font-mono">
+                    {formatCurrency(chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'want').reduce((s, x) => s + x.spent, 0), currency)}
+                    {' / '}
+                    {formatCurrency(chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'want').reduce((s, x) => s + x.budgeted, 0), currency)}
+                  </span>
+                  <span className="text-slate-650 dark:text-slate-350">الكماليات والترفيه (%30 المقترح)</span>
+                </div>
+                <div className="h-1.5 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-amber-500 transition-all duration-500" 
+                    style={{ 
+                      width: `${Math.min(100, (() => {
+                        const budgets = chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'want').reduce((s, x) => s + x.budgeted, 0);
+                        const spents = chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'want').reduce((s, x) => s + x.spent, 0);
+                        return budgets > 0 ? (spents / budgets) * 100 : 0;
+                      })())}%` 
+                    }} 
+                  />
+                </div>
+              </div>
+
+              {/* Savings Indicator */}
+              <div className="space-y-1.5 text-right">
+                <div className="flex justify-between items-center text-[10px] font-black">
+                  <span className="text-emerald-500 font-mono">
+                    {formatCurrency(chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'saving').reduce((s, x) => s + x.spent, 0), currency)}
+                    {' / '}
+                    {formatCurrency(chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'saving').reduce((s, x) => s + x.budgeted, 0), currency)}
+                  </span>
+                  <span className="text-slate-650 dark:text-slate-350">الادخار والتأمين (%20 المقترح)</span>
+                </div>
+                <div className="h-1.5 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-emerald-500 transition-all duration-500" 
+                    style={{ 
+                      width: `${Math.min(100, (() => {
+                        const budgets = chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'saving').reduce((s, x) => s + x.budgeted, 0);
+                        const spents = chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'saving').reduce((s, x) => s + x.spent, 0);
+                        return budgets > 0 ? (spents / budgets) * 100 : 0;
+                      })())}%` 
+                    }} 
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-[9px] text-slate-400 font-bold leading-relaxed">
+              إذا تجاوز المصروف الفعلي حاجز الميزانية، سيظهر شريط فئة المعاملات باللون الأحمر المنبّه لحمايتك من الاستهلاك الزائد للقفة الأسبوعية.
+            </div>
           </div>
         </div>
       </motion.div>
