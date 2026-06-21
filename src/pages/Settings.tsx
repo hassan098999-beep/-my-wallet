@@ -246,7 +246,7 @@ const Settings = () => {
 
         {/* RIGHT COLUMN: Active settings content OR Mobile Hub Launcher if no tab is selected */}
         <div className={cn(
-          "space-y-6 text-right lg:col-span-8 w-full",
+          "space-y-6 text-right lg:col-span-8 w-full min-h-[520px] lg:min-h-[620px] transition-all relative flex flex-col",
           activeTab === null ? "block" : "block"
         )}>
           <AnimatePresence mode="wait">
@@ -258,7 +258,7 @@ const Settings = () => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98, y: -10 }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
-                className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[2.5rem] p-4 md:p-6 lg:p-8 shadow-sm border border-slate-200/55 dark:border-slate-800/80"
+                className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[2.5rem] p-4 md:p-6 lg:p-8 shadow-sm border border-slate-200/55 dark:border-slate-800/80 w-full flex-1 flex flex-col min-h-[500px] lg:min-h-[600px]"
               >
                 {/* Mobile Back Button built beautifully into container top */}
                 <div className="flex items-center gap-2 lg:hidden pb-3 mb-4 border-b border-slate-100 dark:border-slate-800 justify-between">
@@ -287,7 +287,7 @@ const Settings = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className="space-y-4 w-full"
+                className="space-y-4 w-full flex-1 flex flex-col min-h-[500px]"
               >
                 {/* Launchpad Grid Column of options */}
                 <div className="space-y-1 pr-1 text-right">
