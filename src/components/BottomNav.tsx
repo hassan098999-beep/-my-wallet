@@ -13,18 +13,12 @@ const mainNavItems = [
 
 interface BottomNavProps {
   onAddClick: () => void;
-  onQuickClick: () => void;
 }
 
-const BottomNav: React.FC<BottomNavProps> = ({ onAddClick, onQuickClick }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ onAddClick }) => {
   const handleAddClick = () => {
     hapticFeedback('medium');
     onAddClick();
-  };
-
-  const handleQuickClick = () => {
-    hapticFeedback('medium');
-    onQuickClick();
   };
 
   return (
@@ -38,29 +32,17 @@ const BottomNav: React.FC<BottomNavProps> = ({ onAddClick, onQuickClick }) => {
             ))}
           </div>
 
-          {/* Central Add Buttons Area */}
-          <div className="relative -top-5 px-1.5 flex items-center gap-1.5">
-            {/* Quick Expense button */}
-            <motion.button
-              aria-label="إضافة مصروف سريع"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={handleQuickClick}
-              className="w-10 h-10 rounded-full bg-amber-400 text-slate-950 shadow-lg shadow-amber-400/30 flex items-center justify-center border-2 border-white dark:border-slate-900 transition-all cursor-pointer"
-              title="مصروف سريع ⚡"
-            >
-              <Zap size={16} strokeWidth={2.5} className="animate-pulse" />
-            </motion.button>
-
-            {/* Standard Add button */}
+          {/* Central Add Button Area */}
+          <div className="relative -top-5 px-1.5 flex items-center">
+            {/* Unified Add button */}
             <motion.button
               aria-label="إضافة عملية جديدة"
               whileHover={{ scale: 1.05, rotate: 90 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleAddClick}
-              className="w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white shadow-xl shadow-emerald-500/40 flex items-center justify-center border-4 border-white dark:border-slate-900 transition-all duration-300 cursor-pointer"
+              className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white shadow-xl shadow-emerald-500/40 flex items-center justify-center border-4 border-white dark:border-slate-900 transition-all duration-300 cursor-pointer"
             >
-              <Plus size={22} strokeWidth={3} />
+              <Plus size={24} strokeWidth={3} />
             </motion.button>
           </div>
 

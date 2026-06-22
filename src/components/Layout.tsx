@@ -90,8 +90,7 @@ const Layout = () => {
       </div>
 
       <Sidebar 
-        onAddClick={() => { setAddModalMode('calculator'); setIsAddModalOpen(true); }} 
-        onQuickClick={() => { setAddModalMode('quick'); setIsAddModalOpen(true); }} 
+        onAddClick={() => { setAddModalMode('quick'); setIsAddModalOpen(true); }} 
       />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
@@ -142,8 +141,7 @@ const Layout = () => {
 
         <div className="md:hidden">
           <BottomNav 
-            onAddClick={() => { setAddModalMode('calculator'); setIsAddModalOpen(true); }} 
-            onQuickClick={() => { setAddModalMode('quick'); setIsAddModalOpen(true); }} 
+            onAddClick={() => { setAddModalMode('quick'); setIsAddModalOpen(true); }} 
           />
         </div>
       </div>
