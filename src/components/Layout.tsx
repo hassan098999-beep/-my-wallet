@@ -4,6 +4,7 @@ import BottomNav from './BottomNav';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import AddExpenseModal from './AddExpenseModal';
+import { QuickAddExpenseModal } from './QuickAddExpenseModal';
 import { AnimatePresence, motion, Variants } from 'motion/react';
 import { useAppContext } from '../store/AppContext';
 import { Sparkles } from 'lucide-react';
@@ -13,6 +14,7 @@ const Layout = () => {
   const navigate = useNavigate();
   const currentOutlet = useOutlet();
   const { isAddModalOpen, setIsAddModalOpen, editingExpense, setEditingExpense, initialGoalId, setInitialGoalId } = useAppContext();
+  const [isQuickExpenseOpen, setIsQuickExpenseOpen] = React.useState(false);
 
   // Determine transition direction based on route index
   const routeOrder = ['/', '/analytics', '/transactions', '/settings', '/assistant'];
@@ -87,7 +89,10 @@ const Layout = () => {
         <div className="absolute -bottom-[10%] left-[20%] w-[35%] h-[35%] rounded-full bg-emerald-500/10 blur-[110px] animate-pulse-soft" />
       </div>
 
-      <Sidebar onAddClick={() => setIsAddModalOpen(true)} />
+      <Sidebar 
+        onAddClick={() => setIsAddModalOpen(true)} 
+        onQuickClick={() => setIsQuickExpenseOpen(true)} 
+      />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
         <div className="md:hidden">
@@ -136,7 +141,10 @@ const Layout = () => {
         )}
 
         <div className="md:hidden">
-          <BottomNav onAddClick={() => setIsAddModalOpen(true)} />
+          <BottomNav 
+            onAddClick={() => setIsAddModalOpen(true)} 
+            onQuickClick={() => setIsQuickExpenseOpen(true)} 
+          />
         </div>
       </div>
 
@@ -149,6 +157,11 @@ const Layout = () => {
         }} 
         editExpenseData={editingExpense || undefined}
         initialGoalId={initialGoalId || undefined}
+      />
+
+      <QuickAddExpenseModal 
+        isOpen={isQuickExpenseOpen} 
+        onClose={() => setIsQuickExpenseOpen(false)} 
       />
     </div>
   );

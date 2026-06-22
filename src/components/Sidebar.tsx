@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, ChartPie, History, Settings, Plus, Sparkles, Wallet, RefreshCcw, Target, PiggyBank, SlidersHorizontal, Percent, Baby } from 'lucide-react';
+import { Home, ChartPie, History, Settings, Plus, Sparkles, Wallet, RefreshCcw, Target, PiggyBank, SlidersHorizontal, Percent, Baby, Zap } from 'lucide-react';
 import { cn, hapticFeedback } from '../utils';
 import { motion } from 'motion/react';
 import { useAppContext } from '../store/AppContext';
@@ -25,14 +25,20 @@ const subNavItems = [
 
 interface SidebarProps {
   onAddClick: () => void;
+  onQuickClick: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onAddClick }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onAddClick, onQuickClick }) => {
   const { userName } = useAppContext();
 
   const handleAddClick = () => {
     hapticFeedback('medium');
     onAddClick();
+  };
+
+  const handleQuickClick = () => {
+    hapticFeedback('medium');
+    onQuickClick();
   };
 
   return (
@@ -69,15 +75,25 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddClick }) => {
         </div>
       </div>
 
-      <div className="p-4 border-t border-slate-200/50 dark:border-slate-800/50 shrink-0">
+      <div className="p-4 border-t border-slate-200/50 dark:border-slate-800/50 shrink-0 space-y-2">
         <motion.button
           onClick={handleAddClick}
           whileHover={{ scale: 1.02, y: -2 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full py-3 px-4 bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white rounded-xl shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 transition-all font-bold group"
+          className="w-full py-3 px-4 bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white rounded-xl shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 transition-all font-bold group cursor-pointer"
         >
           <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
           <span className="text-xs uppercase tracking-widest">إضافة عملية جديدة</span>
+        </motion.button>
+
+        <motion.button
+          onClick={handleQuickClick}
+          whileHover={{ scale: 1.02, y: -2 }}
+          whileTap={{ scale: 0.98 }}
+          className="w-full py-2.5 px-4 bg-amber-400 text-slate-950 rounded-xl shadow-md hover:bg-amber-500 flex items-center justify-center gap-2 transition-all font-black text-xs cursor-pointer"
+        >
+          <Zap size={14} className="animate-pulse" />
+          <span className="uppercase tracking-widest">إضافة مصروف سريع ⚡</span>
         </motion.button>
       </div>
     </div>
