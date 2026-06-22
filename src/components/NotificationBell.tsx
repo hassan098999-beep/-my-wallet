@@ -179,12 +179,21 @@ const NotificationBell = () => {
               ) : (
                 visibleNotifications.map(n => (
                   <div key={n.id} className={cn(
-                    "p-3 rounded-xl text-xs font-medium leading-relaxed shadow-xs border text-right",
+                    "p-3 rounded-xl text-xs font-medium leading-relaxed shadow-xs border text-right relative group/item",
                     n.type === 'budget' ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30 text-amber-900 dark:text-amber-200' :
                     n.type === 'achievement' ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-900 dark:text-emerald-200' :
                     'bg-rose-50/50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30 text-rose-900 dark:text-rose-200'
                   )}>
-                    <p>{n.message}</p>
+                    <div className="pl-6">
+                      <p>{n.message}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDismiss(n.id)}
+                      className="absolute left-2.5 top-2.5 p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                      title="إغلاق"
+                    >
+                      <X size={12} />
+                    </button>
                     <div className="flex justify-start items-center mt-2.5">
                       <button onClick={() => handleDismiss(n.id)} className="text-[10px] font-semibold underline cursor-pointer hover:no-underline opacity-80 hover:opacity-100">مسح التنبيه</button>
                     </div>

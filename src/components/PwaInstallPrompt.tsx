@@ -102,11 +102,12 @@ export default function PwaInstallPrompt() {
           className="fixed bottom-20 left-4 right-4 z-[100] md:left-auto md:right-4 md:w-80"
         >
           {deferredPrompt ? (
-            <div className="bg-emerald-500 text-white p-4 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group">
+            <div className="bg-emerald-500 text-white p-4 rounded-2xl shadow-xl flex items-center justify-between relative overflow-hidden group pl-8">
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <button 
                 onClick={() => setIsDismissed(true)}
-                className="absolute -top-2 -right-2 bg-white text-emerald-600 rounded-full p-1 shadow-md hover:bg-gray-100 z-10"
+                className="absolute top-2 left-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl p-1.5 transition-all z-20 cursor-pointer"
+                title="إغلاق"
               >
                 <X size={14} strokeWidth={3} />
               </button>

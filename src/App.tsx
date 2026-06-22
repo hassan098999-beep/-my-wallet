@@ -8,12 +8,12 @@ import LoadingScreen from './components/LoadingScreen';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import LockScreen from './components/LockScreen';
 
-import Dashboard from './pages/Dashboard';
-import Transactions from './pages/Transactions';
-import Analytics from './pages/Analytics';
-import Settings from './pages/Settings';
-import Assistant from './pages/Assistant';
-import ShareAdd from './pages/ShareAdd';
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Transactions = lazy(() => import('./pages/Transactions'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Assistant = lazy(() => import('./pages/Assistant'));
+const ShareAdd = lazy(() => import('./pages/ShareAdd'));
 
 const BudgetPage = lazy(() => import('./pages/Budget'));
 const GoalsPage = lazy(() => import('./pages/Goals'));
