@@ -20,8 +20,9 @@ import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 
 const FamilyReport: React.FC = () => {
-  const { state } = useAppContext();
-  const { expenses, income, categories, categoryBudgets, currency = 'TND' } = state;
+  const { expenses, income, categories, budget, currency = 'TND' } = useAppContext();
+  
+  const categoryBudgets = useMemo(() => budget?.categoryBudgets || {}, [budget]);
 
   const currentMonthStr = useMemo(() => format(new Date(), 'yyyy-MM'), []);
   const lastMonthStr = useMemo(() => format(subMonths(new Date(), 1), 'yyyy-MM'), []);
