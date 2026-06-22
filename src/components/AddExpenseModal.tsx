@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { PaymentMethod, Expense } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Check, ChevronLeft, Calendar, Layers, Building2, AlignLeft, Search, Sparkles } from 'lucide-react';
+import { X, Check, ChevronLeft, Calendar, Layers, Building2, AlignLeft, Search, Sparkles, Zap, Coins } from 'lucide-react';
 import { formatCurrency, cn, hapticFeedback } from '../utils';
 import { DynamicIcon } from './DynamicIcon';
 import CalculatorKeypad from './CalculatorKeypad';
@@ -15,11 +15,13 @@ interface AddExpenseModalProps {
   onClose: () => void;
   editExpenseData?: Expense;
   initialGoalId?: string;
+  initialMode?: 'quick' | 'calculator';
 }
 
-const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, editExpenseData, initialGoalId }) => {
+const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, editExpenseData, initialGoalId, initialMode }) => {
   const { categories, accounts, expenses, income, goals, addExpense, addIncome, updateExpense, updateIncome, transferAccount, currency } = useAppContext();
 
+  const [inputMode, setInputMode] = useState<'quick' | 'calculator'>('quick');
   const [type, setType] = useState<'expense' | 'income' | 'transfer'>('expense');
   const [expression, setExpression] = useState('0');
   const [categoryId, setCategoryId] = useState('');
@@ -90,6 +92,12 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
 
   useEffect(() => {
     if (isOpen) {
+      if (initialMode) {
+        setInputMode(initialMode);
+      } else {
+        setInputMode(editExpenseData ? 'calculator' : 'quick');
+      }
+
       if (editExpenseData) {
         setType('expense');
         setExpression(editExpenseData.amount.toString());
@@ -141,7 +149,22 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
       }
       setActiveView('main');
     }
-  }, [isOpen, categories, accounts, editExpenseData, initialGoalId]);
+  }, [isOpen, categories, accounts, editExpenseData, initialGoalId, initialMode]);
+
+  const handleAmountChange = (val: string) => {
+    let clean = val.replace(/[^0-9.]/g, '');
+    const parts = clean.split('.');
+    if (parts.length > 2) {
+      clean = parts[0] + '.' + parts.slice(1).join('');
+    }
+    setExpression(clean || '0');
+  };
+
+  const handleSpeedAdd = (val: number) => {
+    hapticFeedback('light');
+    const currentAmount = evaluateExpression(expression);
+    setExpression((currentAmount + val).toString());
+  };
 
   const evaluateExpression = (expr: string): number => {
     try {
@@ -323,164 +346,508 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
             className="w-full h-full sm:h-[85vh] sm:max-h-[850px] sm:max-w-lg bg-white dark:bg-slate-900 flex flex-col overflow-hidden sm:rounded-3xl sm:shadow-2xl z-20 relative border-0 sm:border border-slate-100 dark:border-slate-800"
           >
           {activeView === 'main' && (
-            <div className="flex flex-col h-full">
-              {/* Top Section */}
-              <div className={cn("flex flex-col text-white transition-colors duration-300 flex-1 pt-[env(safe-area-inset-top)]", bgColor)}>
-                {/* Header */}
+            <div className="flex flex-col h-full bg-white dark:bg-slate-900">
+              {/* Header */}
+              <div className={cn("flex flex-col text-white transition-colors duration-300 pb-3 pt-[env(safe-area-inset-top)] shrink-0", bgColor)}>
                 <div className="flex items-center justify-between p-4">
-                  <button onClick={() => { hapticFeedback('light'); onClose(); }} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                  <button type="button" onClick={() => { hapticFeedback('light'); onClose(); }} className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer mr-1">
                     <X size={24} />
                   </button>
                   
-                  <div className="text-sm font-bold opacity-80">
-                    {type === 'expense' ? 'إضافة مصروف' : type === 'income' ? 'إضافة دخل' : 'تحويل رصيد'}
+                  {/* Mode Shifter Segmented Control inside Header! */}
+                  <div className="inline-flex bg-black/20 p-0.5 rounded-xl border border-white/5 mx-auto shrink-0 select-none">
+                    <button
+                      type="button"
+                      onClick={() => { hapticFeedback('light'); setInputMode('quick'); }}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1 cursor-pointer",
+                        inputMode === 'quick' 
+                          ? "bg-white text-slate-900 shadow-sm" 
+                          : "text-white/70 hover:text-white"
+                      )}
+                    >
+                      <Zap size={11} className={cn("shrink-0", inputMode === 'quick' ? "text-amber-500 fill-amber-500" : "")} />
+                      <span>إدخال سريع⚡</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { hapticFeedback('light'); setInputMode('calculator'); }}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1 cursor-pointer",
+                        inputMode === 'calculator' 
+                          ? "bg-white text-slate-900 shadow-sm" 
+                          : "text-white/70 hover:text-white"
+                      )}
+                    >
+                      <span className="shrink-0 text-[10px]">🧮</span>
+                      <span>آلة حاسبة</span>
+                    </button>
                   </div>
 
-                  <button onClick={handleSubmit} disabled={loading} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                  <button type="button" onClick={handleSubmit} disabled={loading} className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer ml-1">
                     {loading ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={28} strokeWidth={3} />}
                   </button>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex w-full px-4 mb-2 mt-4">
+                {/* Main Tabs (إيراد / مصروف / تحويل) */}
+                <div className="flex w-full px-4 mb-1">
                   <div className="flex w-full bg-black/20 p-1 rounded-2xl backdrop-blur-md">
                     <button
+                      type="button"
                       onClick={() => { hapticFeedback('light'); setType('income'); }}
-                      className={cn("flex-1 py-2.5 text-xs sm:text-sm font-semibold transition-all rounded-xl", type === 'income' ? activeTabColor : "text-white/70 hover:text-white")}
+                      className={cn("flex-1 py-1.5 text-xs sm:text-sm font-semibold transition-all rounded-xl cursor-pointer", type === 'income' ? activeTabColor : "text-white/70 hover:text-white")}
                     >
                       دخل
                     </button>
                     <button
+                      type="button"
                       onClick={() => { hapticFeedback('light'); setType('expense'); }}
-                      className={cn("flex-1 py-2.5 text-xs sm:text-sm font-semibold transition-all rounded-xl", type === 'expense' ? activeTabColor : "text-white/70 hover:text-white")}
+                      className={cn("flex-1 py-1.5 text-xs sm:text-sm font-semibold transition-all rounded-xl cursor-pointer", type === 'expense' ? activeTabColor : "text-white/70 hover:text-white")}
                     >
                       مصروف
                     </button>
                     <button
+                      type="button"
                       onClick={() => { hapticFeedback('light'); setType('transfer'); }}
-                      className={cn("flex-1 py-2.5 text-xs sm:text-sm font-semibold transition-all rounded-xl", type === 'transfer' ? activeTabColor : "text-white/70 hover:text-white")}
+                      className={cn("flex-1 py-1.5 text-xs sm:text-sm font-semibold transition-all rounded-xl cursor-pointer", type === 'transfer' ? activeTabColor : "text-white/70 hover:text-white")}
                     >
                       تحويل
                     </button>
                   </div>
                 </div>
+              </div>
 
-                {/* Amount Display */}
-                <div className="flex-1 flex flex-col items-center justify-center px-6 py-4">
-                  <div className="flex items-baseline gap-2 w-full justify-center overflow-hidden drop-shadow-sm">
-                    <span className="text-4xl sm:text-5xl font-light opacity-80 shrink-0">
-                      {type === 'expense' ? '-' : type === 'income' ? '+' : ''}
-                    </span>
-                    <span 
-                      className={cn(
-                        "font-light tracking-tighter truncate dir-ltr transition-all duration-200", 
-                        expression.length > 8 ? "text-5xl sm:text-6xl" : "text-7xl sm:text-8xl"
-                      )}
-                    >
-                      {expression}
-                    </span>
-                    <span className="text-2xl sm:text-3xl font-light opacity-80 shrink-0">{currency}</span>
+              {/* Dynamic Viewport based on inputMode */}
+              {inputMode === 'calculator' ? (
+                <>
+                  {/* Amount Display (Calculator Style) */}
+                  <div className={cn("flex-1 flex flex-col items-center justify-center px-6 py-4 text-white min-h-[140px] max-h-[220px]", bgColor)}>
+                    <div className="flex items-baseline gap-2 w-full justify-center overflow-hidden drop-shadow-sm">
+                      <span className="text-4xl sm:text-5xl font-light opacity-80 shrink-0">
+                        {type === 'expense' ? '-' : type === 'income' ? '+' : ''}
+                      </span>
+                      <span 
+                        className={cn(
+                          "font-light tracking-tighter truncate dir-ltr transition-all duration-200", 
+                          expression.length > 8 ? "text-5xl sm:text-6xl" : "text-7xl sm:text-8xl"
+                        )}
+                      >
+                        {expression}
+                      </span>
+                      <span className="text-2xl sm:text-3xl font-light opacity-80 shrink-0">{currency}</span>
+                    </div>
+                    {/* Subtle info if expression has operators */}
+                    {/[+\-*/]/.test(expression) && (
+                      <div className="text-sm font-bold bg-white/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm animate-pulse">
+                        ={formatCurrency(evaluateExpression(expression), currency)}
+                      </div>
+                    )}
+
+                    {/* Duplicate Last Transaction Button */}
+                    {lastExpense && type === 'expense' && (
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          hapticFeedback('medium');
+                          setExpression(lastExpense.amount.toString());
+                          setCategoryId(lastExpense.categoryId);
+                          setSubcategoryId(lastExpense.subcategoryId || '');
+                          if (lastExpense.accountId) {
+                            setAccountId(lastExpense.accountId);
+                          }
+                          setPaymentMethod(lastExpense.paymentMethod || 'cash');
+                          setNote(lastExpense.note || '');
+                          toast.success('تم تكرار آخر عملية وتحديث البيانات بنجاح!');
+                        }}
+                        className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-md text-white text-[11px] font-semibold rounded-full transition-all border border-white/10 shadow-md select-none cursor-pointer"
+                      >
+                        <Sparkles size={11} className="text-amber-300 fill-amber-300 animate-pulse" />
+                        <span>تكرار آخر مصروف: {lastExpenseCategory?.name || 'مصروف'} ({lastExpense.amount} {currency})</span>
+                      </motion.button>
+                    )}
                   </div>
-                  {/* Subtle info if expression has operators */}
-                  {/[+\-*/]/.test(expression) && (
-                    <div className="text-sm font-bold bg-white/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm animate-pulse">
-                      ={formatCurrency(evaluateExpression(expression), currency)}
+
+                  {/* Subcategories (if applicable) */}
+                  {type === 'expense' && selectedCategory?.subcategories && selectedCategory.subcategories.length > 0 && (
+                    <div className={cn("px-6 pb-4 flex gap-2 overflow-x-auto custom-scrollbar shrink-0", bgColor)}>
+                      {selectedCategory.subcategories.map(sub => (
+                        <button
+                          key={sub}
+                          onClick={() => { hapticFeedback('light'); setSubcategoryId(subcategoryId === sub ? '' : sub); }}
+                          className={cn(
+                            "px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors border border-transparent shrink-0",
+                            subcategoryId === sub 
+                              ? "bg-white text-rose-600 shadow-sm" 
+                              : "bg-black/10 text-white hover:bg-black/20"
+                          )}
+                        >
+                          {sub}
+                        </button>
+                      ))}
                     </div>
                   )}
 
-                  {/* Duplicate Last Transaction Button */}
-                  {lastExpense && type === 'expense' && (
-                    <motion.button
-                      type="button"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        hapticFeedback('medium');
-                        setExpression(lastExpense.amount.toString());
-                        setCategoryId(lastExpense.categoryId);
-                        setSubcategoryId(lastExpense.subcategoryId || '');
-                        if (lastExpense.accountId) {
-                          setAccountId(lastExpense.accountId);
-                        }
-                        setPaymentMethod(lastExpense.paymentMethod || 'cash');
-                        setNote(lastExpense.note || '');
-                        toast.success('تم تكرار آخر عملية وتحديث البيانات بنجاح!');
-                      }}
-                      className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-md text-white text-[11px] font-semibold rounded-full transition-all border border-white/10 shadow-md select-none cursor-pointer"
+                  {/* Selectors */}
+                  <div className="grid grid-cols-3 gap-px bg-slate-250 dark:bg-slate-800 shrink-0">
+                    <button 
+                      onClick={() => { hapticFeedback('light'); setActiveView('account'); }}
+                      className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     >
-                      <Sparkles size={11} className="text-amber-300 fill-amber-300 animate-pulse" />
-                      <span>تكرار آخر مصروف: {lastExpenseCategory?.name || 'مصروف'} ({lastExpense.amount} {currency})</span>
-                    </motion.button>
-                  )}
-                </div>
-
-                {/* Subcategories (if applicable) */}
-                {type === 'expense' && selectedCategory?.subcategories && selectedCategory.subcategories.length > 0 && (
-                  <div className="px-6 pb-4 flex gap-2 overflow-x-auto custom-scrollbar">
-                    {selectedCategory.subcategories.map(sub => (
-                      <button
-                        key={sub}
-                        onClick={() => { hapticFeedback('light'); setSubcategoryId(subcategoryId === sub ? '' : sub); }}
-                        className={cn(
-                          "px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors border border-transparent shrink-0",
-                          subcategoryId === sub 
-                            ? "bg-white text-rose-600 shadow-sm" 
-                            : "bg-black/10 text-white hover:bg-black/20"
-                        )}
+                      <span className="text-[10px] text-slate-400 mb-1">الحساب</span>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{selectedAccount?.name || 'اختر الحساب'}</span>
+                    </button>
+                    
+                    {type === 'transfer' ? (
+                      <button 
+                        onClick={() => { hapticFeedback('light'); setActiveView('toAccount'); }}
+                        className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                       >
-                        {sub}
+                        <span className="text-[10px] text-slate-400 mb-1">إلى حساب</span>
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{selectedToAccount?.name || 'اختر الحساب'}</span>
                       </button>
-                    ))}
-                  </div>
-                )}
+                    ) : (
+                      <button 
+                        onClick={() => { hapticFeedback('light'); setActiveView('category'); }}
+                        className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      >
+                        <span className="text-[10px] text-slate-400 mb-1">{type === 'income' ? 'المصدر' : 'الفئة'}</span>
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{type === 'income' ? (source || 'اختر المصدر') : (selectedCategory?.name || 'اختر الفئة')}</span>
+                      </button>
+                    )}
 
-                {/* Selectors */}
-                <div className="grid grid-cols-3 gap-px bg-black/10 mt-auto">
-                  <button 
-                    onClick={() => { hapticFeedback('light'); setActiveView('account'); }}
-                    className="flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors"
-                  >
-                    <span className="text-[10px] opacity-70 mb-1">الحساب</span>
-                    <span className="text-sm font-bold truncate w-full text-center">{selectedAccount?.name || 'اختر الحساب'}</span>
-                  </button>
+                    <button 
+                      onClick={() => { hapticFeedback('light'); setActiveView('details'); }}
+                      className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative cursor-pointer"
+                    >
+                      <span className="text-[10px] text-slate-400 mb-1">تفاصيل</span>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{format(parseISO(date), 'dd MMM', { locale: ar })}</span>
+                      {note && <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
+                    </button>
+                  </div>
+
+                  {/* Keypad Section */}
+                  <div className="flex-1 bg-slate-50 dark:bg-slate-900 pb-[env(safe-area-inset-bottom)]">
+                    <CalculatorKeypad 
+                      onPress={handleKeyPress}
+                      onDelete={handleDelete}
+                      onCalculate={handleCalculate}
+                    />
+                  </div>
+                </>
+              ) : (
+                /* SMART INTEGRATED QUICK ADD WORKSPACE */
+                <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-4 space-y-4 custom-scrollbar pb-[calc(2.5rem+env(safe-area-inset-bottom))] text-right" dir="rtl">
                   
-                  {type === 'transfer' ? (
-                    <button 
-                      onClick={() => { hapticFeedback('light'); setActiveView('toAccount'); }}
-                      className="flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors"
-                    >
-                      <span className="text-[10px] opacity-70 mb-1">إلى حساب</span>
-                      <span className="text-sm font-bold truncate w-full text-center">{selectedToAccount?.name || 'اختر الحساب'}</span>
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => { hapticFeedback('light'); setActiveView('category'); }}
-                      className="flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors"
-                    >
-                      <span className="text-[10px] opacity-70 mb-1">{type === 'income' ? 'المصدر' : 'الفئة'}</span>
-                      <span className="text-sm font-bold truncate w-full text-center">{type === 'income' ? (source || 'اختر المصدر') : (selectedCategory?.name || 'اختر الفئة')}</span>
-                    </button>
+                  {/* 1. Large Direct Amount Input */}
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/80 shadow-sm space-y-3">
+                    <div className="flex justify-between items-center px-1">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        مبلغ العملية الفعلي
+                      </span>
+                      {/[+\-*/]/.test(expression) && (
+                        <span className="text-[11px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full font-mono">
+                          حاسبة نشطة: {expression}
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={expression}
+                        onChange={(e) => handleAmountChange(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full pl-16 pr-4 py-3.5 bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-200 dark:border-slate-800/80 focus:border-amber-400 focus:outline-[#f59e0b] rounded-xl text-center text-3xl font-black text-slate-800 dark:text-white transition-all font-mono"
+                        dir="ltr"
+                      />
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#10b981] font-mono">
+                        {currency}
+                      </span>
+                    </div>
+                    
+                    {/* Speed addition badge short buttons */}
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {[1, 5, 10, 20, 50, 100].map((val) => (
+                        <button
+                          type="button"
+                          key={`speed-${val}`}
+                          onClick={() => handleSpeedAdd(val)}
+                          className="px-3 py-1.5 text-[11px] font-black rounded-xl bg-slate-50 dark:bg-slate-950 hover:bg-[#eab308]/15 hover:text-[#d97706] border border-slate-200/60 dark:border-slate-800/80 active:scale-95 transition-all cursor-pointer font-mono text-slate-600 dark:text-slate-400"
+                        >
+                          +{val}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => { hapticFeedback('light'); setExpression('0'); }}
+                        className="px-3 py-1.5 text-[11px] font-black rounded-xl text-rose-500 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-900/30 border border-rose-200/40 active:scale-95 transition-all cursor-pointer"
+                      >
+                        صفر
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 2. Embedded Smart Grid Selection */}
+                  {type === 'expense' && (
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-right pr-1">حدد تصنيف المصروف 📁</span>
+                      <div className="grid grid-cols-4 gap-2">
+                        {categories.map((cat) => {
+                          const isSelected = categoryId === cat.id;
+                          return (
+                            <button
+                              type="button"
+                              key={`quick-cat-${cat.id}`}
+                              onClick={() => {
+                                hapticFeedback('light');
+                                setCategoryId(cat.id);
+                                setSubcategoryId('');
+                              }}
+                              className={cn(
+                                "p-2 rounded-xl border flex flex-col items-center justify-center text-center gap-1.5 transition-all relative cursor-pointer",
+                                isSelected
+                                  ? "bg-rose-500/10 border-rose-400 text-rose-600 dark:text-rose-400 shadow-sm"
+                                  : "border-slate-100 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-950 text-slate-500 hover:border-slate-350 dark:hover:border-slate-700"
+                              )}
+                            >
+                              {isSelected && (
+                                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500" />
+                              )}
+                              <div
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm"
+                                style={{ backgroundColor: cat.color }}
+                              >
+                                <DynamicIcon name={cat.icon || 'Circle'} size={15} />
+                              </div>
+                              <span className="text-[10px] font-bold truncate max-w-full">{cat.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Compact Subcategories inline inside Quick mode if chosen */}
+                      {selectedCategory?.subcategories && selectedCategory.subcategories.length > 0 && (
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex gap-1.5 overflow-x-auto custom-scrollbar pr-1">
+                          {selectedCategory.subcategories.map(sub => {
+                            const isSubSelected = subcategoryId === sub;
+                            return (
+                              <button
+                                type="button"
+                                key={`quick-sub-${sub}`}
+                                onClick={() => { hapticFeedback('light'); setSubcategoryId(subcategoryId === sub ? '' : sub); }}
+                                className={cn(
+                                  "px-3 py-1 rounded-lg text-[10px] font-black whitespace-nowrap transition-all shrink-0 cursor-pointer border",
+                                  isSubSelected 
+                                    ? "bg-rose-500 text-white border-rose-500" 
+                                    : "bg-slate-50 dark:bg-slate-950 text-slate-500 border-slate-150 dark:border-slate-850 hover:bg-slate-100"
+                                )}
+                              >
+                                {sub}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   )}
 
-                  <button 
-                    onClick={() => { hapticFeedback('light'); setActiveView('details'); }}
-                    className="flex flex-col items-center justify-center py-4 px-2 hover:bg-black/10 transition-colors relative"
-                  >
-                    <span className="text-[10px] opacity-70 mb-1">تفاصيل</span>
-                    <span className="text-sm font-bold truncate w-full text-center">{format(parseISO(date), 'dd MMM', { locale: ar })}</span>
-                    {note && <div className="absolute top-3 right-3 w-2 h-2 bg-emerald-400 rounded-full" />}
-                  </button>
-                </div>
-              </div>
+                  {/* Income Source embedded list */}
+                  {type === 'income' && (
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-right pr-1">حدد مصدر الدخل والمقبوضات 💼</span>
+                      <div className="flex flex-wrap gap-2 justify-start font-sans">
+                        {['راتب', 'عمل حر', 'مكافأة', 'هدية', 'استثمار', 'أخرى'].map((src) => {
+                          const isSelected = source === src;
+                          return (
+                            <button
+                              type="button"
+                              key={`quick-src-${src}`}
+                              onClick={() => {
+                                hapticFeedback('light');
+                                setSource(src);
+                                setCategoryId(''); 
+                              }}
+                              className={cn(
+                                "px-3.5 py-2 text-xs font-black rounded-xl border transition-all active:scale-95 cursor-pointer",
+                                isSelected
+                                  ? "bg-emerald-500 border-emerald-500 text-white shadow-sm"
+                                  : "border-slate-150 dark:border-slate-850 bg-slate-50 dark:bg-slate-950 text-slate-650 dark:text-slate-350"
+                              )}
+                            >
+                              {src}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <input
+                          type="text"
+                          value={source}
+                          onChange={(e) => { setSource(e.target.value); setCategoryId(''); }}
+                          placeholder="أو اكتب مصدراً مخصصاً للدخل المالي هنا..."
+                          className="w-full px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-955 rounded-xl text-xs font-bold outline-none focus:border-emerald-500 transition-colors text-right"
+                        />
+                      </div>
+                    </div>
+                  )}
 
-              {/* Keypad Section */}
-              <div className="flex-1 bg-slate-50 dark:bg-slate-900 pb-[env(safe-area-inset-bottom)]">
-                <CalculatorKeypad 
-                  onPress={handleKeyPress}
-                  onDelete={handleDelete}
-                  onCalculate={handleCalculate}
-                />
-              </div>
+                  {/* 3. Account / Bank Wallet direct select grid */}
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-right pr-1">
+                      {type === 'transfer' ? 'الحساب الـمُحوِل منه (الخصم)' : 'حساب الخصم أو الإيداع 🏦'}
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      {accounts.map((acc) => {
+                        const isSelected = accountId === acc.id;
+                        return (
+                          <button
+                            type="button"
+                            key={`quick-acc-${acc.id}`}
+                            onClick={() => {
+                              hapticFeedback('light');
+                              setAccountId(acc.id);
+                            }}
+                            className={cn(
+                              "p-3 rounded-xl border flex items-center justify-start text-right gap-3 cursor-pointer transition-all w-full",
+                              isSelected
+                                ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                : "border-slate-100 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-950 text-slate-500 hover:border-slate-200"
+                            )}
+                          >
+                            <div 
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm"
+                              style={{ backgroundColor: acc.color }}
+                            >
+                              <DynamicIcon name={acc.icon || 'Wallet'} size={15} />
+                            </div>
+                            <div className="flex flex-col min-w-0 flex-1">
+                              <span className="text-[11px] font-black truncate">{acc.name}</span>
+                              <span className="text-[9px] font-extrabold opacity-85 font-mono">{formatCurrency(acc.balance, currency)}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* If Transfer, show the destination account directly! */}
+                  {type === 'transfer' && (
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-right pr-1">
+                        الحساب الـمُحول إليه (الإيداع) 📥
+                      </span>
+                      <div className="grid grid-cols-2 gap-2">
+                        {accounts.map((acc) => {
+                          const isSelected = toAccountId === acc.id;
+                          return (
+                            <button
+                              type="button"
+                              key={`quick-toacc-${acc.id}`}
+                              onClick={() => {
+                                hapticFeedback('light');
+                                setToAccountId(acc.id);
+                              }}
+                              className={cn(
+                                "p-3 rounded-xl border flex items-center justify-start text-right gap-3 cursor-pointer transition-all w-full",
+                                isSelected
+                                  ? "border-indigo-500 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                                  : "border-slate-100 dark:border-slate-855 bg-slate-50/50 dark:bg-slate-955 text-slate-500 hover:border-slate-200"
+                              )}
+                            >
+                              <div 
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm"
+                                style={{ backgroundColor: acc.color }}
+                              >
+                                <DynamicIcon name={acc.icon || 'Wallet'} size={15} />
+                              </div>
+                              <div className="flex flex-col min-w-0 flex-1">
+                                <span className="text-[11px] font-black truncate">{acc.name}</span>
+                                <span className="text-[9px] font-extrabold opacity-85 font-mono">{formatCurrency(acc.balance, currency)}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 4. Payment method selector card (only for expense) */}
+                  {type === 'expense' && (
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-2.5">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-right pr-1">طريقة دفع المصروف 💳</span>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(['cash', 'card', 'transfer'] as PaymentMethod[]).map((method) => {
+                          const isSelected = paymentMethod === method;
+                          return (
+                            <button
+                              type="button"
+                              key={`quick-pay-${method}`}
+                              onClick={() => { hapticFeedback('light'); setPaymentMethod(method); }}
+                              className={cn(
+                                "py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer border text-center flex items-center justify-center gap-1.5",
+                                isSelected
+                                  ? "bg-rose-500 border-rose-500 text-white shadow-sm"
+                                  : "bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-850 text-slate-500 hover:bg-slate-100"
+                              )}
+                            >
+                              {method === 'cash' ? '💵 كاش' : method === 'card' ? '💳 بطاقة' : '🏦 تحويل'}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 5. Date & Memo/Note combined in a single card row */}
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5 flex flex-col justify-start items-stretch">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block text-right pr-1">تاريخ المعاملة</label>
+                      <input
+                        type="date"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 rounded-xl text-[11px] font-bold text-slate-700 dark:text-slate-300 outline-none transition-all cursor-pointer text-center"
+                      />
+                    </div>
+                    <div className="space-y-1.5 flex flex-col justify-start items-stretch">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block text-right pr-1">بيان أو مذكرات</label>
+                      <input
+                        type="text"
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        placeholder="ملاحظات توضيحية..."
+                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-955 rounded-xl text-[11px] font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-amber-400 transition-all text-right"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Done button specifically for Quick mode at bottom */}
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className={cn(
+                      "w-full py-3.5 rounded-2xl text-xs font-black shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2",
+                      type === 'expense' 
+                        ? "bg-amber-400 hover:bg-amber-500 shadow-amber-400/20 text-slate-950" 
+                        : type === 'income' 
+                        ? "bg-emerald-400 hover:bg-emerald-500 shadow-emerald-400/20 text-slate-950" 
+                        : "bg-indigo-400 hover:bg-indigo-500 shadow-indigo-400/20 text-slate-950"
+                    )}
+                  >
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Zap size={13} className="fill-slate-950" />
+                        <span>تسجيل وحفظ العملية فوراً ⚡</span>
+                      </>
+                    )}
+                  </button>
+
+                </div>
+              )}
             </div>
           )}
 

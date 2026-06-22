@@ -4,7 +4,6 @@ import BottomNav from './BottomNav';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import AddExpenseModal from './AddExpenseModal';
-import { QuickAddExpenseModal } from './QuickAddExpenseModal';
 import { AnimatePresence, motion, Variants } from 'motion/react';
 import { useAppContext } from '../store/AppContext';
 import { Sparkles } from 'lucide-react';
@@ -14,7 +13,7 @@ const Layout = () => {
   const navigate = useNavigate();
   const currentOutlet = useOutlet();
   const { isAddModalOpen, setIsAddModalOpen, editingExpense, setEditingExpense, initialGoalId, setInitialGoalId } = useAppContext();
-  const [isQuickExpenseOpen, setIsQuickExpenseOpen] = React.useState(false);
+  const [addModalMode, setAddModalMode] = React.useState<'quick' | 'calculator'>('quick');
 
   // Determine transition direction based on route index
   const routeOrder = ['/', '/analytics', '/transactions', '/settings', '/assistant'];
@@ -47,6 +46,7 @@ const Layout = () => {
     const params = new URLSearchParams(location.search);
     const action = params.get('action');
     if (action === 'add' || action === 'add-expense') {
+      setAddModalMode('calculator');
       setIsAddModalOpen(true);
       navigate(location.pathname, { replace: true });
     }
@@ -90,8 +90,8 @@ const Layout = () => {
       </div>
 
       <Sidebar 
-        onAddClick={() => setIsAddModalOpen(true)} 
-        onQuickClick={() => setIsQuickExpenseOpen(true)} 
+        onAddClick={() => { setAddModalMode('calculator'); setIsAddModalOpen(true); }} 
+        onQuickClick={() => { setAddModalMode('quick'); setIsAddModalOpen(true); }} 
       />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
@@ -142,8 +142,8 @@ const Layout = () => {
 
         <div className="md:hidden">
           <BottomNav 
-            onAddClick={() => setIsAddModalOpen(true)} 
-            onQuickClick={() => setIsQuickExpenseOpen(true)} 
+            onAddClick={() => { setAddModalMode('calculator'); setIsAddModalOpen(true); }} 
+            onQuickClick={() => { setAddModalMode('quick'); setIsAddModalOpen(true); }} 
           />
         </div>
       </div>
@@ -157,11 +157,7 @@ const Layout = () => {
         }} 
         editExpenseData={editingExpense || undefined}
         initialGoalId={initialGoalId || undefined}
-      />
-
-      <QuickAddExpenseModal 
-        isOpen={isQuickExpenseOpen} 
-        onClose={() => setIsQuickExpenseOpen(false)} 
+        initialMode={addModalMode}
       />
     </div>
   );
