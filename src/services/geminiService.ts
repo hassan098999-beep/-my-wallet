@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { Expense, Income, Budget, Goal, Account, FinancialAdvice, FinancialForecast } from "../types";
+import { Expense, Income, Budget, Goal, Account, FinancialAdvice, FinancialForecast, Category, SmartSavingChallenge } from "../types";
 import { safeStorage } from "../utils";
 
 const getApiKey = () => {
@@ -245,5 +245,124 @@ export const scanReceipt = async (
   } catch (error) {
     console.error("Receipt scan error:", error);
     throw error;
+  }
+};
+
+export const getSmartSavingChallenge = async (
+  expenses: Expense[],
+  categories: Category[],
+  budget: Budget | null,
+  currency: string
+): Promise<SmartSavingChallenge> => {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('Gemini API key is missing');
+  const ai = new GoogleGenAI({ apiKey });
+
+  // Prepare simplified data
+  const categoryMap = new Map<string, string>();
+  categories.forEach(c => categoryMap.set(c.id, c.name));
+
+  const simplifiedExpenses = expenses.slice(0, 50).map(e => ({
+    amount: e.amount,
+    category: categoryMap.get(e.categoryId) || 'أخرى',
+    date: e.date,
+    note: e.note || ''
+  }));
+
+  const categoryTotals: Record<string, number> = {};
+  expenses.forEach(e => {
+    const catName = categoryMap.get(e.categoryId) || 'أخرى';
+    categoryTotals[catName] = (categoryTotals[catName] || 0) + e.amount;
+  });
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: `
+        بصفتك مستشاراً مالياً ذكياً خبيراً في الاقتصاد التونسي ومخطط ميزانيات مبتكر، قم بتحليل نمط الإنفاق الشهري للمستخدم واقتراح "تحدي توفير ذكي ومخصص" (Smart Saving Challenge) لمساعدته على توفير المال بذكاء خلال الفترة القادمة.
+        
+        العملة المستخدمة: الدينار التونسي (TND) - يرجى تمثيل المبالغ بدقة مع المليمات (مثلاً: 15.000 د.ت).
+        
+        بيانات المستخدم الحالية:
+        - الميزانية الإجمالية: ${budget ? JSON.stringify(budget) : "غير محددة"}
+        - إجمالي المصاريف حسب الفئات: ${JSON.stringify(categoryTotals)}
+        - آخر 50 عملية صرف بالتفصيل: ${JSON.stringify(simplifiedExpenses)}
+        - جميع الفئات المتاحة: ${JSON.stringify(categories.map(c => c.name))}
+
+        التعليمات:
+        1. ابحث عن الفئة الأكثر استهلاكاً أو التي تعاني من تسرب مالي غير مبرر (مثل "أخرى"، "طعام"، "قهوة وتسلية"، إلخ).
+        2. صمم تحدياً تفاعلياً ومحفزاً يحمل اسماً جذاباً وتونسياً باللغة العربية (مثال: "تحدي كوش الجملة 👶"، "مطبخ البيت التونسي 🥘"، "أسبوع بدون دليفري 🚫"، "تحدي قهوة البيت والترشيد ☕").
+        3. حدد مبلغاً مستهدفاً منطقياً وقابلاً للتحقيق للتوفير (مثال: 50.000 د.ت)، ومدة بالأيام (مثال: 7 أو 14 أو 30 يوماً).
+        4. قدم 3 إلى 5 نصائح عملية ومباشرة جداً باللهجة التونسية المهذبة أو العربية المبسطة وموجهة خصيصاً للتفوق في هذا التحدي.
+        5. أضف تحليلاً موجزاً (analysis) يشرح للمستخدم بوضوح سبب اختيار هذا التحدي بالذات بناءً على أرقام إنفاقه (مثال: "لاحظنا أنك أنفقت 120 د.ت في فئة الطعام الجاهز هذا الشهر، لذلك نقترح...").
+      `,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING, description: "اسم تحدي التوفير" },
+            description: { type: Type.STRING, description: "تفاصيل ووصف التحدي" },
+            targetAmount: { type: Type.NUMBER, description: "المبلغ المقدر توفيره بالدينار التونسي" },
+            durationDays: { type: Type.INTEGER, description: "مدة التحدي بالأيام" },
+            tips: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "خطوات ونصائح عملية للنجاح بالتحدي"
+            },
+            categoryName: { type: Type.STRING, description: "الفئة المستهدفة" },
+            difficulty: { type: Type.STRING, enum: ["سهل", "متوسط", "صعب"], description: "درجة الصعوبة" },
+            analysis: { type: Type.STRING, description: "تحليل مالي مخصص لسبب اختيار التحدي بناءً على نمط الإنفاق" }
+          },
+          required: ["title", "description", "targetAmount", "durationDays", "tips", "categoryName", "difficulty", "analysis"]
+        }
+      }
+    });
+
+    return JSON.parse(response.text || "{}");
+  } catch (error) {
+    console.warn("Gemini API error generating saving challenge. Using premium fallback.", error);
+    // Find highest category or default to 'طعام'
+    let highestCategory = "طعام";
+    let highestAmount = 0;
+    Object.entries(categoryTotals).forEach(([cat, amt]) => {
+      if (amt > highestAmount) {
+        highestAmount = amt;
+        highestCategory = cat;
+      }
+    });
+
+    // Provide a neat fallback based on highest spending category
+    if (highestCategory === "طعام" || highestCategory === "أغذية") {
+      return {
+        title: "تحدي الطبخ المنزلي اللذيذ 🍳",
+        description: "تقليص الاعتماد على الأكلات الجاهزة والمطاعم والاعتماد بنسبة 90% على وجبات محضرة بحب في البيت التونسي.",
+        targetAmount: 60,
+        durationDays: 14,
+        tips: [
+          "قم بتحضير جدول وجبات أسبوعي واشترِ الخضار والمستلزمات من السوق الأسبوعي بالجملة.",
+          "صنف بقايا العشاء واستغلها كوجبة غداء ممتازة لليوم التالي في العمل.",
+          "تجنب طلبات التوصيل السريعة التي تزيد من كلفة الوجبة بالضعف."
+        ],
+        categoryName: highestCategory,
+        difficulty: "متوسط",
+        analysis: `بما أن فئة "${highestCategory}" تمثل جزءاً كبيراً من مصاريفك الأخيرة، فإن تحدي الطبخ المنزلي هو الأسرع لتحقيق وفر مالي فوري.`
+      };
+    }
+
+    return {
+      title: "تحدي ترشيد قفة الأسبوع 🛒",
+      description: "تنظيم مصاريف المشتريات والسلع الاستهلاكية بالاعتماد على التخطيط المسبق وتجنب الشراء غير المخطط له.",
+      targetAmount: 40,
+      durationDays: 7,
+      tips: [
+        "لا تذهب للتسوق جائعاً أبداً لتفادي شراء سلع إضافية غير ضرورية.",
+        "اكتب قائمة تسوق دقيقة قبل الخروج والتزم بها بنسبة 100%.",
+        "قارن أسعار السلع واشترِ العروض الترويجية والعبوات الاقتصادية الكبيرة."
+      ],
+      categoryName: highestCategory || "المشتريات",
+      difficulty: "سهل",
+      analysis: "تحليل ذكي لنمط إنفاقك يشير إلى أن وضع ميزانية محددة للتسوق الأسبوعي سيوفر لك مبالغ مهمة دون التأثير على جودة معيشتك."
+    };
   }
 };

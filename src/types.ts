@@ -143,6 +143,19 @@ export interface AIInsights {
   lastUpdated: string; // ISO string
 }
 
+export interface SmartSavingChallenge {
+  title: string;
+  description: string;
+  targetAmount: number;
+  durationDays: number;
+  tips: string[];
+  categoryName: string;
+  difficulty: 'سهل' | 'متوسط' | 'صعب';
+  analysis?: string;
+  acceptedAt?: string; // ISO string
+  isCompleted?: boolean;
+}
+
 export interface BackupRecord {
   id: string;
   createdAt: string;
@@ -172,4 +185,5 @@ export interface AppState {
   bestStreak: number;
   offlineMode: boolean;
   gamaeyas?: Gamaeya[];
+  activeChallenge?: SmartSavingChallenge;
 }

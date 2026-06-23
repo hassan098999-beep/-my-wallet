@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { AppState, Category, Expense, Budget, RecurringExpense, Achievement, Goal, AppNotification, Income, Account } from '../types';
+import { AppState, Category, Expense, Budget, RecurringExpense, Achievement, Goal, AppNotification, Income, Account, SmartSavingChallenge } from '../types';
 import { evaluateAchievements } from '../utils/achievements';
 import { getBudgetMonth, safeStorage, safeParseISO, removeUndefinedFields, hashPin } from '../utils';
 import { addDays, addWeeks, addMonths, addYears, isBefore, isSameDay, subDays } from 'date-fns';
@@ -131,7 +131,8 @@ const INITIAL_STATE: AppState = {
       }
     ],
     lastUpdated: new Date().toISOString()
-  }
+  },
+  activeChallenge: undefined
 };
 
 interface AppContextProps extends AppState {
@@ -188,6 +189,7 @@ interface AppContextProps extends AppState {
   setUserName: (name: string) => void;
   setFirstDayOfMonth: (day: number) => void;
   updateAIInsights: (insights: { advice: any[], forecast: any[] }) => void;
+  updateActiveChallenge: (challenge: SmartSavingChallenge | undefined) => Promise<void>;
   applyTunisianFamilyTemplate: () => Promise<void>;
   isPinSet: boolean;
   isLocked: boolean;
@@ -322,7 +324,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           firstDayOfMonth: data.firstDayOfMonth || prev.firstDayOfMonth,
           dailyBudget: data.dailyBudget || prev.dailyBudget,
           rollingBudgetEnabled: data.rollingBudgetEnabled ?? prev.rollingBudgetEnabled,
-          bestStreak: data.bestStreak || prev.bestStreak
+          bestStreak: data.bestStreak || prev.bestStreak,
+          activeChallenge: data.activeChallenge !== undefined ? (data.activeChallenge || undefined) : prev.activeChallenge
         }));
       } else {
         // Initialize user profile in Firestore
@@ -2216,6 +2219,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   }, []);
 
+  const updateActiveChallenge = useCallback(async (challenge: SmartSavingChallenge | undefined) => {
+    setState(prev => ({ ...prev, activeChallenge: challenge }));
+    if (user) {
+      try {
+        await updateDoc(doc(db, 'users', user.uid), { activeChallenge: challenge || null });
+      } catch (error) {
+        console.error('Failed to update activeChallenge in Firestore', error);
+      }
+    }
+  }, [user]);
+
   const resetData = async () => {
     if (user) {
       const confirm = window.confirm('هل أنت متأكد من مسح جميع البيانات من السحاب؟');
@@ -2375,6 +2389,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUserName,
     setFirstDayOfMonth,
     updateAIInsights,
+    updateActiveChallenge,
     resetData,
     toggleOfflineMode,
     applyTunisianFamilyTemplate,

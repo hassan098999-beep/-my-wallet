@@ -31,6 +31,7 @@ import TunisianLedger from '../components/TunisianLedger';
 import HeroSlidingDeck from '../components/HeroSlidingDeck';
 import FinancialRadar from '../components/FinancialRadar';
 import BehavioralAdvisor from '../components/BehavioralAdvisor';
+import { SmartSavingChallengeCard } from '../components/SmartSavingChallengeCard';
 
 // Import unified design system components
 import PageHeader from '../components/ui/PageHeader';
@@ -699,6 +700,7 @@ const Dashboard = () => {
             currentChallenge={currentChallenge}
             itemVariants={itemVariants}
           />
+          <SmartSavingChallengeCard />
         </div>
 
       </div>
