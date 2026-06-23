@@ -110,8 +110,8 @@ const RecurringExpenses = () => {
   ];
 
   const monthsOfYear = [
-    'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    'جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان',
+    'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
   ];
 
   const calculateNextOccurrence = (type: RecurringInterval, baseDate: Date): string => {
