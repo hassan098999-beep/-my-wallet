@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Send, Bot, User, Sparkles, Loader2, Settings as SettingsIcon, Trash2, Lightbulb, ImagePlus, X } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Loader2, Settings as SettingsIcon, Trash2, Lightbulb, ImagePlus, X, Eye, EyeOff, Key } from 'lucide-react';
 import { GoogleGenAI, ThinkingLevel, Type, FunctionDeclaration } from '@google/genai';
 import { useAppContext } from '../store/AppContext';
 import { cn, hapticFeedback, getBudgetMonth, safeStorage, formatCurrency } from '../utils';
@@ -18,13 +18,14 @@ export default function Assistant() {
   const { accounts, expenses, budget, currency, categories, addExpense, addIncome, deleteExpense, deleteIncome, setBudget, updateAccount, addGoal, goals, firstDayOfMonth, transferAccount, addCategory } = useAppContext();
   const [query, setQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string, image?: string, chart?: { type: string, title: string, data: any[] }}[]>([
+  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string, image?: string, isKeyError?: boolean, chart?: { type: string, title: string, data: any[] }}[]>([
     { role: 'assistant', content: 'مرحباً! أنا مساعدك المالي الذكي. يمكنني تحليل مصاريفك، قراءة الفواتير، تقديم نصائح، إنشاء رسوم بيانية، أو حتى إضافة وحذف المصاريف والدخول وتعديل الميزانية نيابة عنك. كيف يمكنني مساعدتك اليوم؟' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [customApiKey, setCustomApiKey] = useState(safeStorage.getItem('gemini_api_key') || '');
+  const [showKeyText, setShowKeyText] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatHistoryRef = useRef<any[]>([]);
@@ -374,12 +375,28 @@ export default function Assistant() {
     } catch (error: any) {
       console.error('Error calling Gemini:', error);
       let errorMessage = 'عذراً، حدث خطأ أثناء الاتصال بالمساعد الذكي. يرجى التأكد من صحة مفتاح API والمحاولة مرة أخرى.';
+      let isKeyError = false;
+      
+      const errorStr = (error?.message || '').toUpperCase();
+      if (
+        errorStr.includes('API_KEY') || 
+        errorStr.includes('API KEY') || 
+        errorStr.includes('INVALID_ARGUMENT') || 
+        errorStr.includes('INVALID') ||
+        errorStr.includes('KEY') ||
+        errorStr.includes('400') ||
+        errorStr.includes('403') ||
+        !safeStorage.getItem('gemini_api_key')
+      ) {
+        isKeyError = true;
+      }
       
       if (error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED')) {
         errorMessage = 'لقد تجاوزت الحد المسموح به من الاستخدام المجاني للمساعد الذكي حالياً. يرجى المحاولة لاحقاً أو غداً.';
+        isKeyError = false;
       }
       
-      setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: errorMessage, isKeyError }]);
     } finally {
       setIsLoading(false);
     }
@@ -441,17 +458,26 @@ export default function Assistant() {
             إذا واجهت مشاكل في "حد الاستخدام"، يمكنك إضافة مفتاح API الخاص بك من Google AI Studio.
           </p>
           <div className="flex gap-2">
-            <input
-              type="password"
-              value={customApiKey}
-              onChange={(e) => setCustomApiKey(e.target.value)}
-              placeholder="أدخل مفتاح API الخاص بك..."
-              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none"
-              dir="ltr"
-            />
+            <div className="relative flex-1">
+              <input
+                type={showKeyText ? "text" : "password"}
+                value={customApiKey}
+                onChange={(e) => setCustomApiKey(e.target.value)}
+                placeholder="أدخل مفتاح API الخاص بك..."
+                className="w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none font-sans"
+                dir="ltr"
+              />
+              <button
+                type="button"
+                onClick={() => setShowKeyText(!showKeyText)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                {showKeyText ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
             <button
               onClick={saveApiKey}
-              className="px-4 py-2 bg-primary-500 text-white rounded-xl text-sm font-black hover:bg-primary-600 transition-colors"
+              className="px-5 py-2 bg-primary-500 text-white rounded-xl text-sm font-black hover:bg-primary-600 transition-colors cursor-pointer shrink-0"
             >
               حفظ
             </button>
@@ -594,6 +620,52 @@ export default function Assistant() {
                                 </LineChart>
                               )}
                             </ResponsiveContainer>
+                          </div>
+                        )}
+                        {msg.isKeyError && (
+                          <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-3" dir="rtl">
+                            <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400">
+                              <Key size={16} />
+                              <span className="text-xs font-bold">إدخال / تحديث مفتاح API الخاص بك:</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <div className="relative flex-1">
+                                <input
+                                  type={showKeyText ? "text" : "password"}
+                                  value={customApiKey}
+                                  onChange={(e) => setCustomApiKey(e.target.value)}
+                                  placeholder="AIzaSy..."
+                                  className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-primary-500 outline-none font-sans"
+                                  dir="ltr"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowKeyText(!showKeyText)}
+                                  className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                >
+                                  {showKeyText ? <EyeOff size={14} /> : <Eye size={14} />}
+                                </button>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (customApiKey.trim()) {
+                                    safeStorage.setItem('gemini_api_key', customApiKey.trim());
+                                    setApiKeyMissing(false);
+                                    toast.success('تم حفظ مفتاح API بنجاح! يمكنك الآن إعادة المحاولة.');
+                                  } else {
+                                    safeStorage.removeItem('gemini_api_key');
+                                    toast.error('تم مسح مفتاح API');
+                                  }
+                                }}
+                                className="px-4 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-xs font-black transition-colors"
+                              >
+                                حفظ
+                              </button>
+                            </div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                              ملاحظة: يمكنك الحصول على مفتاح مجاني من <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline font-bold text-primary-500">Google AI Studio</a>. يُحفظ المفتاح محلياً في متصفحك فقط وهو آمن تماماً.
+                            </div>
                           </div>
                         )}
                       </div>

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Key, Save, CircleCheck } from 'lucide-react';
+import { Key, Save, CircleCheck, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { safeStorage } from '../../utils';
 
 const AIManager = () => {
   const [apiKey, setApiKey] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+  const [showKeyText, setShowKeyText] = useState(false);
 
   useEffect(() => {
     const savedKey = safeStorage.getItem('gemini_api_key');
@@ -47,17 +48,26 @@ const AIManager = () => {
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
               مفتاح Gemini API
             </label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => {
-                setApiKey(e.target.value);
-                setIsSaved(false);
-              }}
-              placeholder="AIzaSy..."
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all dark:text-white"
-              dir="ltr"
-            />
+            <div className="relative">
+              <input
+                type={showKeyText ? "text" : "password"}
+                value={apiKey}
+                onChange={(e) => {
+                  setApiKey(e.target.value);
+                  setIsSaved(false);
+                }}
+                placeholder="AIzaSy..."
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all dark:text-white font-sans"
+                dir="ltr"
+              />
+              <button
+                type="button"
+                onClick={() => setShowKeyText(!showKeyText)}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                {showKeyText ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <div className="flex justify-end">
