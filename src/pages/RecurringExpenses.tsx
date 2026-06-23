@@ -5,9 +5,9 @@ import { cn, formatCurrency, hapticFeedback } from '../utils';
 import { Skeleton, TransactionSkeleton } from '../components/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Plus, Trash, Pencil, RefreshCcw, Calendar, CreditCard, Wallet, ArrowRightLeft, AlertCircle, Clock, X, BarChart3, Receipt, Activity } from 'lucide-react';
+import { Plus, Trash, Pencil, RefreshCcw, Calendar, CreditCard, Wallet, ArrowRightLeft, AlertCircle, Clock, X, BarChart3, Receipt, Activity, Check, Users, Coins } from 'lucide-react';
 import { DynamicIcon } from '../components/DynamicIcon';
-import { PaymentMethod, RecurringInterval, RecurringExpense } from '../types';
+import { PaymentMethod, RecurringInterval, RecurringExpense, Gamaeya } from '../types';
 import { CategorySelect } from '../components/CategorySelect';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -18,8 +18,33 @@ import EmptyState from '../components/ui/EmptyState';
 import Badge from '../components/ui/Badge';
 
 const RecurringExpenses = () => {
-  const { recurringExpenses, categories, accounts, currency, addRecurringExpense, updateRecurringExpense, deleteRecurringExpense } = useAppContext();
+  const { 
+    recurringExpenses, 
+    categories, 
+    accounts, 
+    currency, 
+    addRecurringExpense, 
+    updateRecurringExpense, 
+    deleteRecurringExpense,
+    gamaeyas,
+    addGamaeya,
+    updateGamaeya,
+    deleteGamaeya,
+    payGamaeyaMonth,
+    receiveGamaeyaPayout
+  } = useAppContext();
   
+  const [activeTab, setActiveTab] = useState<'recurring' | 'gamaeya'>('recurring');
+  
+  // Gamaeya specific forms states
+  const [isAddingGamaeya, setIsAddingGamaeya] = useState(false);
+  const [gamaeyaName, setGamaeyaName] = useState('جمعية دخر الشهرية');
+  const [gamaeyaAmount, setGamaeyaAmount] = useState('100'); // Since user wants to pay 100 TND monthly by default
+  const [gamaeyaMembers, setGamaeyaMembers] = useState(10);
+  const [gamaeyaPayoutMonth, setGamaeyaPayoutMonth] = useState(3);
+  const [gamaeyaStartDate, setGamaeyaStartDate] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [gamaeyaAccountId, setGamaeyaAccountId] = useState(accounts[0]?.id || 'cash');
+
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   
@@ -188,6 +213,34 @@ const RecurringExpenses = () => {
     resetForm();
   };
 
+  const handleAddGamaeya = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!gamaeyaName.trim()) {
+      toast.error('الرجاء إدخال اسم الجمعية');
+      return;
+    }
+    const amt = Number(gamaeyaAmount);
+    if (isNaN(amt) || amt <= 0) {
+      toast.error('الرجاء إدخال مبلغ شهري صحيح');
+      return;
+    }
+    addGamaeya({
+      name: gamaeyaName,
+      monthlyAmount: amt,
+      memberCount: gamaeyaMembers,
+      payoutMonth: gamaeyaPayoutMonth,
+      startDate: gamaeyaStartDate,
+      accountId: gamaeyaAccountId,
+    });
+    toast.success('تم إنشاء وتفعيل الجمعية بنجاح!');
+    setIsAddingGamaeya(false);
+    // Reset defaults
+    setGamaeyaName('جمعية دخر الشهرية');
+    setGamaeyaAmount('100');
+    setGamaeyaMembers(10);
+    setGamaeyaPayoutMonth(3);
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -209,34 +262,85 @@ const RecurringExpenses = () => {
       className="space-y-8 p-4 pb-32 max-w-5xl mx-auto"
     >
       <PageHeader
-        title="المصاريف المتكررة"
-        subtitle="أتمتة مصاريفك الدورية لتوفير الوقت والجهد وتجنب التناسي المزعج"
+        title={activeTab === 'recurring' ? "المصاريف المتكررة" : "الجمعيات الادخارية"}
+        subtitle={activeTab === 'recurring' ? "أتمتة مصاريفك الدورية لتوفير الوقت والجهد وتجنب التناسي المزعج" : "تنظيم مجموعات مساهمات الادخار الدورية والقبض الشهرية تلقائياً وبكل شفافية"}
         action={
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              if (isAdding) {
-                resetForm();
-              } else {
-                setIsAdding(true);
-              }
-            }}
-            className={cn(
-              "flex items-center gap-1.5 px-4 py-2.5 rounded-button font-black text-xs transition-all shadow-md cursor-pointer select-none",
-              isAdding 
-                ? "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400" 
-                : "bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20"
-            )}
-          >
-            {isAdding ? <X size={14} /> : <Plus size={14} />}
-            <span>{isAdding ? 'إلغاء' : 'إضافة مصروف متكرر'}</span>
-          </motion.button>
+          activeTab === 'recurring' ? (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                if (isAdding) {
+                  resetForm();
+                } else {
+                  setIsAdding(true);
+                }
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-4 py-2.5 rounded-button font-black text-xs transition-all shadow-md cursor-pointer select-none",
+                isAdding 
+                  ? "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400" 
+                  : "bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20"
+              )}
+            >
+              {isAdding ? <X size={14} /> : <Plus size={14} />}
+              <span>{isAdding ? 'إلغاء' : 'إضافة مصروف متكرر'}</span>
+            </motion.button>
+          ) : (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                setIsAddingGamaeya(!isAddingGamaeya);
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-4 py-2.5 rounded-button font-black text-xs transition-all shadow-md cursor-pointer select-none",
+                isAddingGamaeya 
+                  ? "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400" 
+                  : "bg-primary-600 hover:bg-primary-700 text-white shadow-primary-500/20"
+              )}
+            >
+              {isAddingGamaeya ? <X size={14} /> : <Plus size={14} />}
+              <span>{isAddingGamaeya ? 'إلغاء' : 'إنشاء جمعية جديدة'}</span>
+            </motion.button>
+          )
         }
       />
 
-      {/* Commitment Metric Dashboard */}
+      {/* Tab Switcher */}
       <motion.div 
+        variants={itemVariants}
+        className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl max-w-lg mx-auto relative z-10 shadow-sm border border-slate-200/50 dark:border-slate-700/50"
+      >
+        <button
+          onClick={() => { hapticFeedback('light'); setActiveTab('recurring'); }}
+          className={cn(
+            "flex-1 py-3 text-xs md:text-sm font-semibold rounded-xl transition-all cursor-pointer select-none text-center",
+            activeTab === 'recurring'
+              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm font-black"
+              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+          )}
+        >
+          المصاريف المتكررة والاشتراكات
+        </button>
+        <button
+          onClick={() => { hapticFeedback('light'); setActiveTab('gamaeya'); }}
+          className={cn(
+            "flex-1 py-3 text-xs md:text-sm font-semibold rounded-xl transition-all cursor-pointer select-none text-center flex items-center justify-center gap-2",
+            activeTab === 'gamaeya'
+              ? "bg-primary-600 text-white shadow-md font-black"
+              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+          )}
+        >
+          <Coins size={14} className={activeTab === 'gamaeya' ? "animate-bounce" : ""} />
+          الجمعيات التكافلية (الجمعية)
+        </button>
+      </motion.div>
+
+      {activeTab === 'recurring' && (
+        <>
+          {/* Commitment Metric Dashboard */}
+          <motion.div 
         variants={itemVariants} 
         className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 px-2"
       >
@@ -673,7 +777,360 @@ const RecurringExpenses = () => {
           />
         )}
       </div>
-    </motion.div>
+      </>
+      )}
+
+      {activeTab === 'gamaeya' && (
+        <>
+          {/* Gamaeya Stats Dashboard */}
+          <motion.div 
+            variants={itemVariants} 
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 px-2"
+          >
+            <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-5 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm relative overflow-hidden group">
+              <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-primary-500/5 rounded-full blur-2xl group-hover:bg-primary-500/10 transition-colors" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary-100 dark:bg-primary-950/40 text-primary-600 flex items-center justify-center">
+                  <Coins size={22} className="text-primary-600 dark:text-primary-400" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">إجمالي اشتراكاتك النشطة</p>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none mt-1">
+                    {(gamaeyas || []).filter(g => g.status === 'active').length} جمعيات
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-5 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm relative overflow-hidden group">
+              <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-rose-500/5 rounded-full blur-2xl group-hover:bg-rose-500/10 transition-colors" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 flex items-center justify-center">
+                  <Activity size={22} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">تدفع كل شهر للجمعيات</p>
+                  <h3 className="text-xl font-black text-rose-600 dark:text-rose-400 leading-none mt-1">
+                    {formatCurrency((gamaeyas || []).filter(g => g.status === 'active').reduce((sum, g) => sum + g.monthlyAmount, 0), currency)}
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-5 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm relative overflow-hidden group">
+              <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-colors" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/40 text-amber-500 flex items-center justify-center">
+                  <Users size={22} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">العوائد المستهدفة للقبض</p>
+                  <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400 leading-none mt-1">
+                    {formatCurrency((gamaeyas || []).filter(g => g.status === 'active').reduce((sum, g) => sum + (g.monthlyAmount * g.memberCount), 0), currency)}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          <AnimatePresence>
+            {isAddingGamaeya && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, y: -20 }}
+                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                exit={{ opacity: 0, height: 0, y: -20 }}
+                className="overflow-hidden px-2"
+              >
+                <Card className="p-6 md:p-8 mb-8 border border-white/40 dark:border-slate-800/40 shadow-sm bg-white/50 backdrop-blur-xl">
+                  <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800/50">
+                    <div className="flex items-center gap-2">
+                      <Coins className="text-primary-500 size-5 animate-spin" style={{ animationDuration: '3s' }} />
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white">تخصيص جمعية جديدة</h3>
+                    </div>
+                    <button 
+                      onClick={() => setIsAddingGamaeya(false)} 
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleAddGamaeya} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">اسم الجمعية</label>
+                        <input
+                          type="text"
+                          value={gamaeyaName}
+                          onChange={(e) => setGamaeyaName(e.target.value)}
+                          className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-black"
+                          placeholder="مثال: جمعية الأصدقاء، جمعية العائلة..."
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">مساهمتك الشهرية ({currency})</label>
+                        <input
+                          type="number"
+                          value={gamaeyaAmount}
+                          onChange={(e) => setGamaeyaAmount(e.target.value)}
+                          className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono font-black"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">عدد المشتركين (مدة الجمعية بالأشهر)</label>
+                        <select
+                          value={gamaeyaMembers}
+                          onChange={(e) => setGamaeyaMembers(Number(e.target.value))}
+                          className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-black cursor-pointer appearance-none"
+                        >
+                          {[2,3,4,5,6,7,8,9,10,12,15,18,20,24].map(n => (
+                            <option key={n} value={n}>{n} أشهر ({n} أعضاء)</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">ترتيب قبضك (الشهر الذي تستلم فيه المبلغ)</label>
+                        <select
+                          value={gamaeyaPayoutMonth}
+                          onChange={(e) => setGamaeyaPayoutMonth(Number(e.target.value))}
+                          className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-black cursor-pointer appearance-none"
+                        >
+                          {Array.from({ length: gamaeyaMembers }, (_, i) => i + 1).map(m => (
+                            <option key={m} value={m}>الشهر {m} {m === 1 ? '(الأول)' : m === gamaeyaMembers ? '(الأخير)' : ''}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">تاريخ البداية (شهر/سنة)</label>
+                        <input
+                          type="month"
+                          value={gamaeyaStartDate}
+                          onChange={(e) => setGamaeyaStartDate(e.target.value)}
+                          className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono font-black"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">الحساب المرتبط</label>
+                        <select
+                          value={gamaeyaAccountId}
+                          onChange={(e) => setGamaeyaAccountId(e.target.value)}
+                          className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-black appearance-none cursor-pointer"
+                        >
+                          {accounts.map(acc => (
+                            <option key={acc.id} value={acc.id}>{acc.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="bg-primary-50/50 dark:bg-primary-950/20 p-4 rounded-2xl border border-primary-100/50 dark:border-primary-900/50 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                      <div className="p-3 bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 rounded-xl">
+                        <Activity size={24} />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-white">ملخص الحسابات الذكي للجمعية:</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                          سوف تقوم بدفع <span className="font-bold text-primary-600 dark:text-primary-400">{gamaeyaAmount} {currency}</span> شهرياً لمدة <span className="font-bold text-slate-800 dark:text-slate-200">{gamaeyaMembers} أشهر</span>. 
+                          وستستلم العائد الإجمالي بقيمة <span className="font-bold text-emerald-600 dark:text-emerald-400">{Number(gamaeyaAmount) * gamaeyaMembers} {currency}</span> دفعة واحدة في <span className="font-bold text-primary-600">الشهر {gamaeyaPayoutMonth}</span>.
+                        </p>
+                      </div>
+                    </div>
+
+                    <motion.button
+                      whileHover={{ scale: 1.01, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      className="btn-primary w-full h-14 rounded-2xl font-semibold flex items-center justify-center gap-2 text-base transition-all shadow-md shadow-primary-500/20 cursor-pointer"
+                    >
+                      <Plus size={20} />
+                      إنشاء وتفعيل الجمعية التكافلية
+                    </motion.button>
+                  </form>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Gamaeya list */}
+          <div className="space-y-4 px-2">
+            <h2 className="text-sm font-semibold text-slate-950 dark:text-white flex items-center gap-2">
+              <Coins size={16} /> قائمة الجمعيات النشطة
+            </h2>
+
+            {(gamaeyas || []).length > 0 ? (
+              <div className="grid grid-cols-1 gap-6">
+                {(gamaeyas || []).map(g => {
+                  const paidMonthsCount = (g.payments || []).filter(p => p.paid).length;
+                  const totalMonths = g.memberCount;
+                  const payoutTotalSum = g.monthlyAmount * g.memberCount;
+                  const isPayoutCollected = (g.payments || []).some(p => p.monthIndex === g.payoutMonth && p.payoutReceived);
+
+                  return (
+                    <Card key={g.id} className="p-6 md:p-8 overflow-hidden relative group">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full blur-[80px]" />
+                      
+                      <div className="flex flex-col gap-6 relative z-10">
+                        {/* Card Header */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-primary-100 dark:bg-primary-950/50 text-primary-500 rounded-2xl flex items-center justify-center shadow-inner">
+                              <Coins size={22} className="text-primary-600 dark:text-primary-400 animate-pulse" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-black text-slate-900 dark:text-white">{g.name}</h3>
+                              <p className="text-xs text-slate-400">تاريخ البدء: {g.startDate}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-3">
+                            {g.status === 'completed' ? (
+                              <Badge variant="success">مكتملة</Badge>
+                            ) : (
+                              <Badge variant="warning">نشطة</Badge>
+                            )}
+                            <button
+                              onClick={() => {
+                                if (confirm('هل أنت متأكد من حذف هذه الجمعية؟ لن يتم حذف المصاريف والمدخولات المسجلة سابقاً.')) {
+                                  deleteGamaeya(g.id);
+                                  toast.success('تم حذف الجمعية');
+                                }
+                              }}
+                              className="text-slate-300 hover:text-rose-500 p-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-all cursor-pointer"
+                            >
+                              <Trash size={18} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Card Info Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50/50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800/50">
+                          <div>
+                            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">مساهمتك الشهرية</span>
+                            <p className="text-base font-black text-slate-900 dark:text-white mt-0.5">{g.monthlyAmount} {currency}</p>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">مبلغ القبض الإجمالي</span>
+                            <p className="text-base font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{payoutTotalSum} {currency}</p>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">دورك في قبض الجمعية</span>
+                            <p className="text-base font-black text-amber-500 dark:text-amber-400 mt-0.5">الشهر {g.payoutMonth} من {totalMonths}</p>
+                          </div>
+                        </div>
+
+                        {/* Payment Progress bar */}
+                        <div>
+                          <div className="flex justify-between text-xs font-semibold mb-2">
+                            <span className="text-slate-500 dark:text-slate-400">تقدم المساهمات والمدفوعات</span>
+                            <span className="text-primary-600 dark:text-primary-400">{paidMonthsCount} من إجمالي {totalMonths} أشهر دفعت {`(${Math.round(paidMonthsCount / totalMonths * 100)}%)`}</span>
+                          </div>
+                          <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                            <div className="bg-primary-600 h-full transition-all" style={{ width: `${paidMonthsCount / totalMonths * 100}%` }} />
+                          </div>
+                        </div>
+
+                        {/* Visual beads (أقساط الجمعية) */}
+                        <div className="space-y-3">
+                          <label className="text-xs font-bold text-slate-600 dark:text-slate-300">أقساط المساهمات والأشهر:</label>
+                          <div className="flex flex-wrap gap-2.5">
+                            {(g.payments || []).map(p => {
+                              const isPayoutGoal = p.monthIndex === g.payoutMonth;
+                              return (
+                                <div
+                                  key={p.monthIndex}
+                                  className={cn(
+                                    "flex flex-col items-center gap-1.5 p-2 rounded-xl text-center min-w-[70px] border relative transition-all",
+                                    p.paid 
+                                      ? "bg-emerald-500/5 border-emerald-500/30 text-emerald-600" 
+                                      : isPayoutGoal && !isPayoutCollected
+                                        ? "bg-amber-500/5 border-amber-500/30 text-amber-600"
+                                        : "bg-slate-50 dark:bg-slate-900 border-slate-200/50 dark:border-slate-800/50 text-slate-500"
+                                  )}
+                                >
+                                  <span className="text-[9px] font-semibold dark:text-slate-400">الشهر {p.monthIndex}</span>
+                                  {p.paid ? (
+                                    <div className="w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs shadow-md">
+                                      <Check size={14} />
+                                    </div>
+                                  ) : isPayoutGoal ? (
+                                    <div className="w-7 h-7 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs animate-pulse shadow-md cursor-pointer select-none">
+                                      🎁
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        hapticFeedback('medium');
+                                        payGamaeyaMonth(g.id, p.monthIndex);
+                                      }}
+                                      className="w-7 h-7 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-200 border-2 border-slate-300 dark:border-slate-700 rounded-full flex items-center justify-center text-xs cursor-pointer select-none font-black"
+                                    >
+                                      {p.monthIndex}
+                                    </button>
+                                  )}
+
+                                  <span className="text-[9px] font-bold">
+                                    {isPayoutGoal ? 'شهر القبض' : p.paid ? 'تم الدفع' : 'دفع القسط'}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Collect/Payout Actions */}
+                        {!isPayoutCollected && (
+                          <div className="pt-4 border-t border-slate-100 dark:border-slate-800/50 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="text-right">
+                              <span className="text-xs font-semibold text-slate-400">العائد المتاح عند دورك</span>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">بمساهمتك المنتظمة وزملائك، ستستلم القيمة الكاملة {payoutTotalSum} {currency}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                hapticFeedback('success');
+                                receiveGamaeyaPayout(g.id);
+                              }}
+                              className="w-full md:w-auto px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer select-none flex items-center justify-center gap-2"
+                            >
+                              🎁 استلام وقبض الجمعية الكلية ({payoutTotalSum} {currency})
+                            </button>
+                          </div>
+                        )}
+                        {isPayoutCollected && (
+                          <div className="pt-4 border-t border-slate-100 dark:border-slate-800/50 bg-emerald-500/5 p-4 rounded-xl border border-dashed border-emerald-500/20 flex items-center gap-2 justify-center text-emerald-600 font-bold text-xs">
+                            🎉 مبروك! لقد قمت بقبض هذه الجمعية بنجاح وتم تحصين ميزانيتك.
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyState
+                icon={Coins}
+                title="لا توجد جمعيات نشطة حالياً"
+                description="أضف مجموعات التوفير والادخار (الجمعية) ووزّع الأدوار بنظام ذكي لتتبع مساهماتك واستلام القبض تلقائياً!"
+                actionLabel="تفعيل وإنشاء أول جمعية"
+                onAction={() => {
+                  hapticFeedback('medium');
+                  setIsAddingGamaeya(true);
+                }}
+              />
+            )}
+          </div>
+        </>
+      )}
+  </motion.div>
   );
 };
 

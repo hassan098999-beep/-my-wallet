@@ -75,6 +75,28 @@ export interface RecurringExpense {
   createdAt: string;
 }
 
+export interface GamaeyaPayment {
+  monthIndex: number; // 1 to memberCount
+  date: string; // YYYY-MM
+  paid: boolean;
+  expenseId?: string;
+  payoutReceived: boolean;
+  incomeId?: string;
+}
+
+export interface Gamaeya {
+  id: string;
+  name: string;
+  monthlyAmount: number;
+  memberCount: number;
+  payoutMonth: number; // 1-indexed
+  startDate: string; // YYYY-MM
+  accountId?: string;
+  status: 'active' | 'completed';
+  payments: GamaeyaPayment[];
+  createdAt: string;
+}
+
 export interface Budget {
   amount: number;
   month: string; // YYYY-MM
@@ -149,4 +171,5 @@ export interface AppState {
   aiInsights?: AIInsights;
   bestStreak: number;
   offlineMode: boolean;
+  gamaeyas?: Gamaeya[];
 }
