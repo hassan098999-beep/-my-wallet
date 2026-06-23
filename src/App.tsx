@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense, lazy } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AppProvider, useAppContext } from './store/AppContext';
@@ -8,20 +8,20 @@ import LoadingScreen from './components/LoadingScreen';
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 import LockScreen from './components/LockScreen';
 
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Transactions = lazy(() => import('./pages/Transactions'));
-const Analytics = lazy(() => import('./pages/Analytics'));
-const Settings = lazy(() => import('./pages/Settings'));
-const Assistant = lazy(() => import('./pages/Assistant'));
-const ShareAdd = lazy(() => import('./pages/ShareAdd'));
+import Dashboard from './pages/Dashboard';
+import Transactions from './pages/Transactions';
+import Analytics from './pages/Analytics';
+import Settings from './pages/Settings';
+import Assistant from './pages/Assistant';
+import ShareAdd from './pages/ShareAdd';
 
-const BudgetPage = lazy(() => import('./pages/Budget'));
-const GoalsPage = lazy(() => import('./pages/Goals'));
-const IncomePage = lazy(() => import('./pages/settings/Income'));
-const RecurringExpenses = lazy(() => import('./pages/RecurringExpenses'));
-const SavingsPage = lazy(() => import('./pages/Savings'));
-const SavingsIndicatorsPage = lazy(() => import('./pages/SavingsIndicators'));
-const FamilyReport = lazy(() => import('./pages/FamilyReport'));
+import BudgetPage from './pages/Budget';
+import GoalsPage from './pages/Goals';
+import IncomePage from './pages/settings/Income';
+import RecurringExpenses from './pages/RecurringExpenses';
+import SavingsPage from './pages/Savings';
+import SavingsIndicatorsPage from './pages/SavingsIndicators';
+import FamilyReport from './pages/FamilyReport';
 
 function AppContent() {
   const { isLocked } = useAppContext();

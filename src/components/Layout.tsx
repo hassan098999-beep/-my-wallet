@@ -15,27 +15,13 @@ const Layout = () => {
   const { isAddModalOpen, setIsAddModalOpen, editingExpense, setEditingExpense, initialGoalId, setInitialGoalId } = useAppContext();
   const [addModalMode, setAddModalMode] = React.useState<'quick' | 'calculator'>('quick');
 
-  // Determine transition direction based on route index
-  const routeOrder = ['/', '/analytics', '/transactions', '/settings', '/assistant'];
-  const [prevPath, setPrevPath] = React.useState(location.pathname);
-  const [direction, setDirection] = React.useState(0);
+  // Trigger navigation progress bar
   const [isNavigating, setIsNavigating] = React.useState(false);
 
   useEffect(() => {
-    const currentIndex = routeOrder.indexOf(location.pathname);
-    const prevIndex = routeOrder.indexOf(prevPath);
-
-    if (currentIndex !== -1 && prevIndex !== -1) {
-      setDirection(currentIndex > prevIndex ? 1 : -1);
-    } else {
-      setDirection(0);
-    }
-    
     // Trigger navigation progress bar
     setIsNavigating(true);
-    const timer = setTimeout(() => setIsNavigating(false), 300);
-
-    setPrevPath(location.pathname);
+    const timer = setTimeout(() => setIsNavigating(false), 200);
 
     // Scroll to top on route change
     const mainElement = document.querySelector('main');
@@ -52,30 +38,27 @@ const Layout = () => {
     }
 
     return () => clearTimeout(timer);
-  }, [location.pathname, location.search, setIsAddModalOpen, navigate, prevPath]);
+  }, [location.pathname, location.search, setIsAddModalOpen, navigate]);
 
   const variants: Variants = {
     initial: {
       opacity: 0,
-      scale: 0.99,
-      y: 8,
+      y: 6,
     },
     animate: {
       opacity: 1,
-      scale: 1,
       y: 0,
       transition: {
-        duration: 0.25,
-        ease: [0.16, 1, 0.3, 1],
+        duration: 0.15,
+        ease: "easeOut",
       },
     },
     exit: {
       opacity: 0,
-      scale: 0.99,
-      y: -6,
+      y: -4,
       transition: {
-        duration: 0.15,
-        ease: "easeInOut",
+        duration: 0.08,
+        ease: "easeIn",
       },
     },
   };
@@ -99,10 +82,9 @@ const Layout = () => {
         </div>
         
         <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8 scroll-smooth pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-6 overflow-x-hidden relative custom-scrollbar">
-          <AnimatePresence mode="wait" custom={direction}>
+          <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
-              custom={direction}
               variants={variants}
               initial="initial"
               animate="animate"
