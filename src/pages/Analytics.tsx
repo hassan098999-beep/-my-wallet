@@ -23,7 +23,7 @@ const Analytics = () => {
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [isReady, setIsReady] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'budget' | 'charts'>('overview');
-  const [chartSubTab, setChartSubTab] = useState<'daily' | 'monthly' | 'performance'>('daily');
+  const [chartSubTab, setChartSubTab] = useState<'daily' | 'monthly'>('daily');
 
   useEffect(() => {
     setIsReady(false);

@@ -402,46 +402,8 @@ const Dashboard = () => {
 
       {/* 1. Header with Greeting & Hot Streak widget */}
       <PageHeader
-        title={`مرحباً، ${userName || 'صديقي الملتزم'} 👋`}
+        title={`مرحباً، ${userName || 'صديقي'} 👋`}
         subtitle={`${format(new Date(), 'EEEE، d MMMM', { locale: ar })} • دورة الميزانية النشطة`}
-        action={
-          <motion.div 
-            onClick={() => {
-              hapticFeedback('medium');
-              if(!streakCheckedIn) {
-                setStreakCheckedIn(true);
-                toast.success('تم احتساب نقاط التزام اليوم! حافظ على عادتك 🔥');
-              }
-            }}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.98 }}
-            className={cn(
-              "flex items-center gap-3 px-4 py-2.5 rounded-button cursor-pointer border transition-all duration-300 shrink-0 select-none",
-              streakCheckedIn 
-                ? "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400 shadow-md shadow-amber-500/5"
-                : "bg-slate-100 dark:bg-slate-800/80 border-transparent hover:border-amber-500/30 text-slate-700 dark:text-slate-300"
-            )}
-          >
-            <div className="relative">
-              <Flame className={cn("size-6 scale-110", streakCheckedIn ? "text-amber-500 fill-amber-500 animate-pulse" : "text-slate-400")} />
-              {streakCheckedIn && (
-                <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                </span>
-              )}
-            </div>
-            <div className="text-right">
-              <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 leading-none mb-0.5">سلسلة الالتزام</div>
-              <div className="text-xs font-bold flex items-center gap-1">
-                <span>{bestStreak ? `${bestStreak} يوم` : '0 أيام'}</span>
-                <span className="text-[10px] font-semibold underline text-indigo-500">
-                  {streakCheckedIn ? 'تم التسجيل ✓' : 'تسجيل التزام اليوم'}
-                </span>
-              </div>
-            </div>
-          </motion.div>
-        }
       />
 
       {/* 2. Cozy View Mode Switcher */}

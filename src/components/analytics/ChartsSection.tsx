@@ -6,8 +6,8 @@ import { formatCurrency, cn } from '../../utils';
 import { DynamicIcon } from '../DynamicIcon';
 
 interface ChartsSectionProps {
-  chartSubTab: 'daily' | 'monthly' | 'performance';
-  setChartSubTab: (tab: 'daily' | 'monthly' | 'performance') => void;
+  chartSubTab: 'daily' | 'monthly';
+  setChartSubTab: (tab: 'daily' | 'monthly') => void;
   isReady: boolean;
   dailyData: any[];
   monthlyData: any[];
@@ -49,12 +49,12 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
             </div>
             <div>
               <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">الرسم التفاعلي الرئيس</h3>
-              <p className="text-[9px] font-bold text-slate-400">انقر لتغيير التباين بين اليومي والسنوي والالتزام</p>
+              <p className="text-[9px] font-bold text-slate-400">انقر لتغيير التباين بين اليومي والسنوي</p>
             </div>
           </div>
 
           <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl w-full sm:w-auto self-stretch sm:self-auto border border-slate-200/40 dark:border-slate-700/40">
-            {['daily', 'monthly', 'performance'].map((tab) => (
+            {['daily', 'monthly'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setChartSubTab(tab as any)}
@@ -63,7 +63,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
                   chartSubTab === tab ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                 )}
               >
-                {tab === 'daily' ? 'يومي' : tab === 'monthly' ? 'سنوي' : 'الالتزام اليومي'}
+                {tab === 'daily' ? 'يومي' : 'سنوي'}
               </button>
             ))}
           </div>
@@ -96,7 +96,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
                   <Bar dataKey="incomeAmount" name="الدخل" fill="#10b981" radius={[3, 3, 0, 0]} barSize={width < 640 ? 4 : 10} />
                   <Bar dataKey="expenseAmount" name="المصاريف" fill="#f43f5e" radius={[3, 3, 0, 0]} barSize={width < 640 ? 4 : 10} />
                 </BarChart>
-              ) : chartSubTab === 'monthly' ? (
+              ) : (
                 <BarChart data={monthlyData} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.4} />
                   <XAxis 
@@ -119,36 +119,6 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
                   <Bar dataKey="income" name="الدخل السنوي" fill="#10b981" radius={[3, 3, 0, 0]} barSize={width < 640 ? 6 : 14} />
                   <Bar dataKey="expense" name="المصاريف السنوية" fill="#f43f5e" radius={[3, 3, 0, 0]} barSize={width < 640 ? 6 : 14} />
                 </BarChart>
-              ) : (
-                <BarChart data={dailyPerformance.data} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.4} />
-                  <XAxis 
-                    dataKey="date" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: width < 640 ? 7 : 9, fontWeight: 700, fill: '#94a3b8' }}
-                    interval={width < 640 ? 5 : 4}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: width < 640 ? 7 : 9, fontWeight: 700, fill: '#94a3b8' }}
-                    width={width < 640 ? 25 : 35}
-                  />
-                  <Tooltip 
-                    cursor={{ fill: '#f8fafc', opacity: 0.1 }}
-                    contentStyle={{ borderRadius: '14px', background: '#1e293b', border: 'none', color: '#fff', fontSize: '10px', direction: 'rtl' }}
-                    formatter={(value: any) => [formatCurrency(value, currency), 'صرفت']}
-                  />
-                  <Bar dataKey="spent" radius={[3, 3, 0, 0]} barSize={width < 640 ? 5 : 10}>
-                    {dailyPerformance.data.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={entry.spent > dailyBudget ? '#f43f5e' : entry.spent > dailyBudget * 0.85 ? '#f59e0b' : '#10b981'} 
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
               )}
             </ResponsiveContainer>
           ) : (
@@ -157,23 +127,6 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
             </div>
           )}
         </div>
-
-        {chartSubTab === 'performance' && (
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 text-right">
-            <div>
-              <p className="text-[8px] text-slate-400 font-black uppercase tracking-wider">أيام تخطيت ميزانيتك اليومية فيها:</p>
-              <p className="text-sm font-black text-rose-500 mt-1">{dailyPerformance.overBudgetDays} أيام</p>
-            </div>
-            <div>
-              <p className="text-[8px] text-slate-400 font-black uppercase tracking-wider">معدل التزام الصرف اليومي:</p>
-              <p className="text-sm font-black text-emerald-500 mt-1">{Math.round(dailyPerformance.performanceScore)}%</p>
-            </div>
-            <div className="col-span-2 md:col-span-1">
-              <p className="text-[8px] text-slate-400 font-black uppercase tracking-wider">متوسط المصروف اليومي الفعلي:</p>
-              <p className="text-sm font-black text-indigo-500 mt-1">{formatCurrency(dailyPerformance.avgDailySpending, currency)}</p>
-            </div>
-          </div>
-        )}
       </motion.div>
 
       {/* Side-By-Side Distribution Circle Charts */}
