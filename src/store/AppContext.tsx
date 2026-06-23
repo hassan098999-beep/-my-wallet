@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { AppState, Category, Expense, Budget, RecurringExpense, Achievement, Goal, AppNotification, Income, Account, SmartSavingChallenge } from '../types';
+import { AppState, Category, Expense, Budget, RecurringExpense, Achievement, Goal, AppNotification, Income, Account, SmartSavingChallenge, AutoRoundUpSetting } from '../types';
 import { evaluateAchievements } from '../utils/achievements';
 import { getBudgetMonth, safeStorage, safeParseISO, removeUndefinedFields, hashPin } from '../utils';
 import { addDays, addWeeks, addMonths, addYears, isBefore, isSameDay, subDays } from 'date-fns';
@@ -132,7 +132,8 @@ const INITIAL_STATE: AppState = {
     ],
     lastUpdated: new Date().toISOString()
   },
-  activeChallenge: undefined
+  activeChallenge: undefined,
+  autoRoundUpSetting: undefined
 };
 
 interface AppContextProps extends AppState {
@@ -190,6 +191,7 @@ interface AppContextProps extends AppState {
   setFirstDayOfMonth: (day: number) => void;
   updateAIInsights: (insights: { advice: any[], forecast: any[] }) => void;
   updateActiveChallenge: (challenge: SmartSavingChallenge | undefined) => Promise<void>;
+  updateAutoRoundUpSetting: (setting: AutoRoundUpSetting | undefined) => Promise<void>;
   applyTunisianFamilyTemplate: () => Promise<void>;
   isPinSet: boolean;
   isLocked: boolean;
@@ -325,7 +327,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dailyBudget: data.dailyBudget || prev.dailyBudget,
           rollingBudgetEnabled: data.rollingBudgetEnabled ?? prev.rollingBudgetEnabled,
           bestStreak: data.bestStreak || prev.bestStreak,
-          activeChallenge: data.activeChallenge !== undefined ? (data.activeChallenge || undefined) : prev.activeChallenge
+          activeChallenge: data.activeChallenge !== undefined ? (data.activeChallenge || undefined) : prev.activeChallenge,
+          autoRoundUpSetting: data.autoRoundUpSetting !== undefined ? (data.autoRoundUpSetting || undefined) : prev.autoRoundUpSetting
         }));
       } else {
         // Initialize user profile in Firestore
@@ -339,7 +342,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           firstDayOfMonth: state.firstDayOfMonth || 1,
           dailyBudget: state.dailyBudget || 14,
           rollingBudgetEnabled: state.rollingBudgetEnabled ?? true,
-          bestStreak: state.bestStreak || 0
+          bestStreak: state.bestStreak || 0,
+          autoRoundUpSetting: state.autoRoundUpSetting || null
         });
       }
     });
@@ -626,18 +630,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       parsedDate: safeParseISO(expense.date),
     };
 
+    // Calculate round-up if enabled
+    let roundUpExpense: Expense | null = null;
+    const autoRoundUp = state.autoRoundUpSetting;
+    if (autoRoundUp?.enabled && autoRoundUp?.targetGoalId && !expense.isTransfer) {
+      const multiplier = autoRoundUp.multiplier || 1;
+      const remainder = newExpense.amount % multiplier;
+      if (remainder > 0) {
+        const fakka = Number((multiplier - remainder).toFixed(3));
+        if (fakka > 0) {
+          const savingCategory = state.categories.find(c => c.type === 'saving') || 
+                                 state.categories.find(c => c.name.includes('ادخار')) || 
+                                 { id: newExpense.categoryId };
+          roundUpExpense = {
+            id: crypto.randomUUID(),
+            amount: fakka,
+            categoryId: savingCategory.id,
+            accountId: newExpense.accountId,
+            goalId: autoRoundUp.targetGoalId,
+            date: newExpense.date,
+            createdAt: new Date().toISOString(),
+            parsedDate: safeParseISO(newExpense.date),
+            note: `حصالة التوفير التلقائي: فكة معاملة (${newExpense.note || 'مصروف'})`,
+            paymentMethod: newExpense.paymentMethod,
+            isTransfer: true
+          };
+        }
+      }
+    }
+
     if (user) {
       const batch = writeBatch(db);
       const expenseRef = doc(db, 'users', user.uid, 'expenses', newExpense.id);
       const { parsedDate: _pd, ...expenseToStore } = newExpense;
       batch.set(expenseRef, { ...expenseToStore, uid: user.uid });
 
-      // Update account balance
+      // Update account balance for actual expense
       if (newExpense.accountId) {
         const accRef = doc(db, 'users', user.uid, 'accounts', newExpense.accountId);
         const accDoc = await getDoc(accRef);
         if (accDoc.exists()) {
-          batch.update(accRef, { balance: accDoc.data().balance - newExpense.amount });
+          let newBalance = accDoc.data().balance - newExpense.amount;
+          if (roundUpExpense) {
+            newBalance -= roundUpExpense.amount;
+          }
+          batch.update(accRef, { balance: newBalance });
         }
       }
 
@@ -647,6 +684,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const goalDoc = await getDoc(goalRef);
         if (goalDoc.exists()) {
           batch.update(goalRef, { currentAmount: goalDoc.data().currentAmount + newExpense.amount });
+        }
+      }
+
+      // If roundUpExpense is created, save it and update its target goal!
+      if (roundUpExpense) {
+        const roundUpRef = doc(db, 'users', user.uid, 'expenses', roundUpExpense.id);
+        const { parsedDate: _pdRu, ...ruToStore } = roundUpExpense;
+        batch.set(roundUpRef, { ...ruToStore, uid: user.uid });
+
+        // Update target goal progress
+        const targetGoalRef = doc(db, 'users', user.uid, 'goals', roundUpExpense.goalId!);
+        const targetGoalDoc = await getDoc(targetGoalRef);
+        if (targetGoalDoc.exists()) {
+          batch.update(targetGoalRef, { currentAmount: targetGoalDoc.data().currentAmount + roundUpExpense.amount });
         }
       }
 
@@ -685,19 +736,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else {
       setState((prev) => {
         let newState = { ...prev, expenses: [newExpense, ...prev.expenses] };
+        if (roundUpExpense) {
+          newState.expenses = [roundUpExpense, ...newState.expenses];
+        }
         let newNotifications = [...(prev.notifications || [])];
 
         // Update account balance
         if (newExpense.accountId) {
-          newState.accounts = (newState.accounts || []).map(acc => 
-            acc.id === newExpense.accountId ? { ...acc, balance: acc.balance - newExpense.amount } : acc
-          );
+          newState.accounts = (newState.accounts || []).map(acc => {
+            if (acc.id === newExpense.accountId) {
+              let balanceDiff = newExpense.amount;
+              if (roundUpExpense) balanceDiff += roundUpExpense.amount;
+              return { ...acc, balance: acc.balance - balanceDiff };
+            }
+            return acc;
+          });
         }
 
         // Update linked goal progress
         if (newExpense.goalId) {
           newState.goals = (newState.goals || []).map(goal => 
             goal.id === newExpense.goalId ? { ...goal, currentAmount: goal.currentAmount + newExpense.amount } : goal
+          );
+        }
+
+        // Update round-up target goal progress
+        if (roundUpExpense && roundUpExpense.goalId) {
+          newState.goals = (newState.goals || []).map(goal => 
+            goal.id === roundUpExpense.goalId ? { ...goal, currentAmount: goal.currentAmount + roundUpExpense.amount } : goal
           );
         }
         
@@ -2230,6 +2296,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [user]);
 
+  const updateAutoRoundUpSetting = useCallback(async (setting: AutoRoundUpSetting | undefined) => {
+    setState(prev => ({ ...prev, autoRoundUpSetting: setting }));
+    if (user) {
+      try {
+        await updateDoc(doc(db, 'users', user.uid), { autoRoundUpSetting: setting || null });
+      } catch (error) {
+        console.error('Failed to update autoRoundUpSetting in Firestore', error);
+      }
+    }
+  }, [user]);
+
   const resetData = async () => {
     if (user) {
       const confirm = window.confirm('هل أنت متأكد من مسح جميع البيانات من السحاب؟');
@@ -2390,6 +2467,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setFirstDayOfMonth,
     updateAIInsights,
     updateActiveChallenge,
+    updateAutoRoundUpSetting,
     resetData,
     toggleOfflineMode,
     applyTunisianFamilyTemplate,

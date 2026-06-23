@@ -186,4 +186,11 @@ export interface AppState {
   offlineMode: boolean;
   gamaeyas?: Gamaeya[];
   activeChallenge?: SmartSavingChallenge;
+  autoRoundUpSetting?: AutoRoundUpSetting;
+}
+
+export interface AutoRoundUpSetting {
+  enabled: boolean;
+  targetGoalId?: string; // target Goal to deposit "fakka"
+  multiplier: number; // e.g., 1, 5, or 10 TND
 }

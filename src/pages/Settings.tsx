@@ -12,6 +12,7 @@ import AccountManager from './settings/AccountManager';
 import DataManager from './settings/DataManager';
 import AIManager from './settings/AIManager';
 import ProfileManager from './settings/ProfileManager';
+import RoundUpManager from './settings/RoundUpManager';
 import { NavLink } from 'react-router-dom';
 
 // Import PageHeader component
@@ -49,10 +50,12 @@ const Settings = () => {
     currency, 
     accounts, 
     categories,
+    expenses,
+    autoRoundUpSetting,
     offlineMode 
   } = useAppContext();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'categories' | 'accounts' | 'data' | 'ai'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'categories' | 'accounts' | 'roundup' | 'data' | 'ai'>('profile');
 
   // Smooth scroll container wrapper to top when active tab changes.
   useEffect(() => {
@@ -69,6 +72,8 @@ const Settings = () => {
         return `${categories.length || 0}`;
       case 'accounts':
         return `${accounts.length || 0}`;
+      case 'roundup':
+        return autoRoundUpSetting?.enabled ? 'نشط' : 'مغلق';
       case 'data':
         return offlineMode ? 'أوفلاين' : 'سحابي';
       case 'profile':
@@ -82,6 +87,7 @@ const Settings = () => {
     { id: 'profile', name: 'الملف الشخصي والجوائز', icon: UserCircle, description: 'الاسم والميزانية اليومية والجوائز العائلية', badgeColor: 'bg-indigo-50 text-indigo-650 dark:bg-indigo-950/40 dark:text-indigo-400' },
     { id: 'categories', name: 'إدارة فئات المصروف', icon: Layers, description: 'تنظيم قفة السوق والصحة وقاعدة 50/30/20', badgeColor: 'bg-emerald-50 text-emerald-650 dark:bg-emerald-950/40 dark:text-emerald-400' },
     { id: 'accounts', name: 'الحسابات البنكية والمالية', icon: Wallet, description: 'تحديث أرصدة الحسابات وطرق الدفع الكاش', badgeColor: 'bg-blue-50 text-blue-650 dark:bg-blue-950/40 dark:text-blue-400' },
+    { id: 'roundup', name: 'حصالة التوفير التلقائي والفكة', icon: PiggyBank, description: 'التقريب التلقائي للمصاريف وتحويل الفكة إلى حصالة الادخار', badgeColor: 'bg-teal-50 text-teal-650 dark:bg-teal-950/40 dark:text-teal-400' },
     { id: 'data', name: 'البيانات والأمان المالي', icon: Database, description: 'النسخ الاحتياطي التلقائي والصناعي والتحكم', badgeColor: 'bg-amber-50 text-amber-650 dark:bg-amber-950/40 dark:text-amber-400' },
     { id: 'ai', name: 'المساعد الذكي (Gemini API)', icon: Sparkles, description: 'خيارات المساعد والتوجيه الآلي للأسرة بالدينار التونسي', badgeColor: 'bg-pink-50 text-pink-650 dark:bg-pink-950/40 dark:text-pink-400' },
   ] as const;
@@ -216,6 +222,7 @@ const Settings = () => {
               {activeTab === 'profile' && <ProfileManager />}
               {activeTab === 'categories' && <CategoryManager />}
               {activeTab === 'accounts' && <AccountManager />}
+              {activeTab === 'roundup' && <RoundUpManager />}
               {activeTab === 'data' && <DataManager />}
               {activeTab === 'ai' && <AIManager />}
             </motion.div>
