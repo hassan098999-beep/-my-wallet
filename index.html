@@ -10,9 +10,23 @@
     <link rel="icon" href="/-my-wallet/icon.svg" type="image/svg+xml" />
     <link rel="icon" href="/-my-wallet/icon-192.png" type="image/png" />
     <link rel="apple-touch-icon" href="/-my-wallet/icon-192.png" />
+    <link rel="manifest" href="/-my-wallet/manifest.webmanifest" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="مصاريفي">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/-my-wallet/sw.js', { scope: '/-my-wallet/' })
+            .then(function(reg) {
+              console.log('✅ Service Worker registered statically: ', reg.scope);
+            })
+            .catch(function(err) {
+              console.error('❌ Service Worker static registration failed: ', err);
+            });
+        });
+      }
+    </script>
     <title>مصاريفي - إدارة المصاريف الشخصية</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,8 +53,8 @@
       }(window.location))
     </script>
     <!-- End Single Page Apps for GitHub Pages -->
-    <script type="module" crossorigin src="/-my-wallet/assets/index-BTj1Dj_S.js"></script>
-    <link rel="stylesheet" crossorigin href="/-my-wallet/assets/index-CCvC7de_.css">
+    <script type="module" crossorigin src="/-my-wallet/assets/index-CqIfTitx.js"></script>
+    <link rel="stylesheet" crossorigin href="/-my-wallet/assets/index-8nSobRB6.css">
   <link rel="manifest" href="/-my-wallet/manifest.webmanifest"></head>
   <body class="font-tajawal bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-50">
     <div id="root"></div>
