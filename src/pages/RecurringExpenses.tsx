@@ -429,14 +429,28 @@ const RecurringExpenses = () => {
                           if (!amount || amount === '0' || amount === '0.000' || parseFloat(amount) === 0) {
                             setAmount('');
                           } else {
-                            e.target.select();
+                            const target = e.target;
+                            setTimeout(() => {
+                              try {
+                                target.setSelectionRange(0, target.value.length);
+                              } catch (err) {
+                                target.select();
+                              }
+                            }, 50);
                           }
                         }}
                         onClick={(e) => {
                           if (!amount || amount === '0' || amount === '0.000' || parseFloat(amount) === 0) {
                             setAmount('');
                           } else {
-                            (e.target as HTMLInputElement).select();
+                            const target = e.target as HTMLInputElement;
+                            setTimeout(() => {
+                              try {
+                                target.setSelectionRange(0, target.value.length);
+                              } catch (err) {
+                                target.select();
+                              }
+                            }, 50);
                           }
                         }}
                         placeholder="0.000"
@@ -894,14 +908,28 @@ const RecurringExpenses = () => {
                             if (!gamaeyaAmount || gamaeyaAmount === '0' || gamaeyaAmount === '0.000' || parseFloat(gamaeyaAmount) === 0) {
                               setGamaeyaAmount('');
                             } else {
-                              e.target.select();
+                              const target = e.target;
+                              setTimeout(() => {
+                                try {
+                                  target.setSelectionRange(0, target.value.length);
+                                } catch (err) {
+                                  target.select();
+                                }
+                              }, 50);
                             }
                           }}
                           onClick={(e) => {
                             if (!gamaeyaAmount || gamaeyaAmount === '0' || gamaeyaAmount === '0.000' || parseFloat(gamaeyaAmount) === 0) {
                               setGamaeyaAmount('');
                             } else {
-                              (e.target as HTMLInputElement).select();
+                              const target = e.target as HTMLInputElement;
+                              setTimeout(() => {
+                                try {
+                                  target.setSelectionRange(0, target.value.length);
+                                } catch (err) {
+                                  target.select();
+                                }
+                              }, 50);
                             }
                           }}
                           className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono font-black"

@@ -159,14 +159,28 @@ const TunisianLedger: React.FC<TunisianLedgerProps> = ({
               if (!quickAmount || quickAmount === '0' || quickAmount === '0.000' || parseFloat(quickAmount) === 0) {
                 setQuickAmount('');
               } else {
-                e.target.select();
+                const target = e.target;
+                setTimeout(() => {
+                  try {
+                    target.setSelectionRange(0, target.value.length);
+                  } catch (err) {
+                    target.select();
+                  }
+                }, 50);
               }
             }}
             onClick={(e) => {
               if (!quickAmount || quickAmount === '0' || quickAmount === '0.000' || parseFloat(quickAmount) === 0) {
                 setQuickAmount('');
               } else {
-                (e.target as HTMLInputElement).select();
+                const target = e.target as HTMLInputElement;
+                setTimeout(() => {
+                  try {
+                    target.setSelectionRange(0, target.value.length);
+                  } catch (err) {
+                    target.select();
+                  }
+                }, 50);
               }
             }}
             className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-mono font-bold text-right"

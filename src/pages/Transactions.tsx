@@ -1209,14 +1209,28 @@ const Transactions = () => {
                         if (!editAmount || editAmount === '0' || editAmount === '0.000' || parseFloat(editAmount) === 0) {
                           setEditAmount('');
                         } else {
-                          e.target.select();
+                          const target = e.target;
+                          setTimeout(() => {
+                            try {
+                              target.setSelectionRange(0, target.value.length);
+                            } catch (err) {
+                              target.select();
+                            }
+                          }, 50);
                         }
                       }}
                       onClick={(e) => {
                         if (!editAmount || editAmount === '0' || editAmount === '0.000' || parseFloat(editAmount) === 0) {
                           setEditAmount('');
                         } else {
-                          (e.target as HTMLInputElement).select();
+                          const target = e.target as HTMLInputElement;
+                          setTimeout(() => {
+                            try {
+                              target.setSelectionRange(0, target.value.length);
+                            } catch (err) {
+                              target.select();
+                            }
+                          }, 50);
                         }
                       }}
                       className="w-full px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-mono font-black text-sm md:text-base"

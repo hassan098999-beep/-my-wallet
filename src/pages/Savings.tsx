@@ -21,7 +21,7 @@ const SavingsPage = () => {
   const { income, expenses, goals, updateGoal, currency, budget, categories, firstDayOfMonth, addIncome, accounts, autoRoundUpSetting } = useAppContext();
 
   const [savingsPercentage, setSavingsPercentage] = useState(10);
-  const [customAllocations, setCustomAllocations] = useState<Record<string, number>>({});
+  const [customAllocations, setCustomAllocations] = useState<Record<string, number | string>>({});
   const [isBabyModalOpen, setIsBabyModalOpen] = useState(false);
 
   const currentMonth = useMemo(() => getBudgetMonth(new Date(), firstDayOfMonth), [firstDayOfMonth]);
@@ -142,16 +142,16 @@ const SavingsPage = () => {
 
   const getEffectiveAllocation = (goal: Goal) => {
     if (customAllocations[goal.id] !== undefined) {
-      return customAllocations[goal.id];
+      const val = customAllocations[goal.id];
+      return typeof val === 'string' ? (parseFloat(val) || 0) : val;
     }
     return getSuggestedAllocation(goal);
   };
 
   const handleCustomAllocationChange = (goalId: string, value: string) => {
-    const numValue = parseFloat(value);
     setCustomAllocations(prev => ({
       ...prev,
-      [goalId]: isNaN(numValue) ? 0 : numValue
+      [goalId]: value
     }));
   };
 
@@ -600,6 +600,36 @@ const SavingsPage = () => {
                               type="number"
                               value={customAllocations[goal.id] !== undefined ? customAllocations[goal.id] : suggestedAllocation}
                               onChange={(e) => handleCustomAllocationChange(goal.id, e.target.value)}
+                              onFocus={(e) => {
+                                const currentVal = customAllocations[goal.id] !== undefined ? customAllocations[goal.id] : suggestedAllocation;
+                                if (!currentVal || currentVal === 0 || currentVal === '0') {
+                                  handleCustomAllocationChange(goal.id, '');
+                                } else {
+                                  const target = e.target;
+                                  setTimeout(() => {
+                                    try {
+                                      target.setSelectionRange(0, target.value.length);
+                                    } catch (err) {
+                                      target.select();
+                                    }
+                                  }, 50);
+                                }
+                              }}
+                              onClick={(e) => {
+                                const currentVal = customAllocations[goal.id] !== undefined ? customAllocations[goal.id] : suggestedAllocation;
+                                if (!currentVal || currentVal === 0 || currentVal === '0') {
+                                  handleCustomAllocationChange(goal.id, '');
+                                } else {
+                                  const target = e.target as HTMLInputElement;
+                                  setTimeout(() => {
+                                    try {
+                                      target.setSelectionRange(0, target.value.length);
+                                    } catch (err) {
+                                      target.select();
+                                    }
+                                  }, 50);
+                                }
+                              }}
                               className="w-24 p-1 text-lg font-black text-emerald-600 dark:text-emerald-400 bg-transparent border-b-2 border-slate-200 dark:border-slate-700 focus:border-emerald-500 outline-none text-center"
                               dir="ltr"
                             />

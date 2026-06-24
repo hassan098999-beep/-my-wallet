@@ -426,6 +426,34 @@ const IncomePage = () => {
                         className="w-full pl-14 pr-4 py-3 rounded-2xl border-2 border-slate-150 dark:border-slate-800 bg-white/90 dark:bg-slate-950 text-xs font-black text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-all font-mono"
                         placeholder="0.000"
                         onChange={(e) => setAmount(e.target.value)}
+                        onFocus={(e) => {
+                          if (!amount || amount === '0' || amount === '0.000' || parseFloat(amount) === 0) {
+                            setAmount('');
+                          } else {
+                            const target = e.target;
+                            setTimeout(() => {
+                              try {
+                                target.setSelectionRange(0, target.value.length);
+                              } catch (err) {
+                                target.select();
+                              }
+                            }, 50);
+                          }
+                        }}
+                        onClick={(e) => {
+                          if (!amount || amount === '0' || amount === '0.000' || parseFloat(amount) === 0) {
+                            setAmount('');
+                          } else {
+                            const target = e.target as HTMLInputElement;
+                            setTimeout(() => {
+                              try {
+                                target.setSelectionRange(0, target.value.length);
+                              } catch (err) {
+                                target.select();
+                              }
+                            }, 50);
+                          }
+                        }}
                         required
                         dir="ltr"
                       />

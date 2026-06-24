@@ -127,14 +127,28 @@ const OnboardingModal: React.FC = () => {
                             if (!initialBalances.cash || initialBalances.cash === '0' || parseFloat(initialBalances.cash) === 0) {
                               setInitialBalances(prev => ({ ...prev, cash: '' }));
                             } else {
-                              e.target.select();
+                              const target = e.target;
+                              setTimeout(() => {
+                                try {
+                                  target.setSelectionRange(0, target.value.length);
+                                } catch (err) {
+                                  target.select();
+                                }
+                              }, 50);
                             }
                           }}
                           onClick={(e) => {
                             if (!initialBalances.cash || initialBalances.cash === '0' || parseFloat(initialBalances.cash) === 0) {
                               setInitialBalances(prev => ({ ...prev, cash: '' }));
                             } else {
-                              (e.target as HTMLInputElement).select();
+                              const target = e.target as HTMLInputElement;
+                              setTimeout(() => {
+                                try {
+                                  target.setSelectionRange(0, target.value.length);
+                                } catch (err) {
+                                  target.select();
+                                }
+                              }, 50);
                             }
                           }}
                           className={cn(
@@ -168,14 +182,28 @@ const OnboardingModal: React.FC = () => {
                             if (!initialBalances.bank || initialBalances.bank === '0' || parseFloat(initialBalances.bank) === 0) {
                               setInitialBalances(prev => ({ ...prev, bank: '' }));
                             } else {
-                              e.target.select();
+                              const target = e.target;
+                              setTimeout(() => {
+                                try {
+                                  target.setSelectionRange(0, target.value.length);
+                                } catch (err) {
+                                  target.select();
+                                }
+                              }, 50);
                             }
                           }}
                           onClick={(e) => {
                             if (!initialBalances.bank || initialBalances.bank === '0' || parseFloat(initialBalances.bank) === 0) {
                               setInitialBalances(prev => ({ ...prev, bank: '' }));
                             } else {
-                              (e.target as HTMLInputElement).select();
+                              const target = e.target as HTMLInputElement;
+                              setTimeout(() => {
+                                try {
+                                  target.setSelectionRange(0, target.value.length);
+                                } catch (err) {
+                                  target.select();
+                                }
+                              }, 50);
                             }
                           }}
                           className={cn(

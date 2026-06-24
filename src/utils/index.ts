@@ -143,7 +143,14 @@ export function formatTunisianAmount(val: string): string {
   if (!val) return '';
   
   // If they are typing a dot, let them type it
-  if (val.endsWith('.')) return val;
+  if (val.endsWith('.')) {
+    // Only allow one dot
+    const firstDotIdx = val.indexOf('.');
+    if (val.lastIndexOf('.') !== firstDotIdx) {
+      return val.slice(0, firstDotIdx + 1);
+    }
+    return val;
+  }
   
   // Strip all non-digit characters except the first dot
   let clean = val.replace(/[^0-9.]/g, '');
@@ -160,10 +167,7 @@ export function formatTunisianAmount(val: string): string {
     return `${integerPart}.${decimalPart}`;
   }
   
-  // If it's a pure whole number (digits only), auto-format it as millimes!
-  const num = parseInt(clean, 10);
-  if (isNaN(num)) return '';
-  return (num / 1000).toFixed(3);
+  return clean;
 }
 
 

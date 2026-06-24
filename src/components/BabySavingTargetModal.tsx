@@ -189,14 +189,28 @@ const BabySavingTargetModal: React.FC<BabySavingTargetModalProps> = ({ isOpen, o
                     if (!monthlyTarget || monthlyTarget === '0' || parseFloat(monthlyTarget) === 0) {
                       setMonthlyTarget('');
                     } else {
-                      e.target.select();
+                      const target = e.target;
+                      setTimeout(() => {
+                        try {
+                          target.setSelectionRange(0, target.value.length);
+                        } catch (err) {
+                          target.select();
+                        }
+                      }, 50);
                     }
                   }}
                   onClick={(e) => {
                     if (!monthlyTarget || monthlyTarget === '0' || parseFloat(monthlyTarget) === 0) {
                       setMonthlyTarget('');
                     } else {
-                      (e.target as HTMLInputElement).select();
+                      const target = e.target as HTMLInputElement;
+                      setTimeout(() => {
+                        try {
+                          target.setSelectionRange(0, target.value.length);
+                        } catch (err) {
+                          target.select();
+                        }
+                      }, 50);
                     }
                   }}
                   className="w-full pl-14 pr-4 py-3 bg-slate-50 dark:bg-slate-800/20 border-2 border-slate-100 dark:border-slate-800/80 rounded-2xl text-slate-900 dark:text-white font-black text-lg outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all font-mono shadow-inner"
@@ -244,14 +258,28 @@ const BabySavingTargetModal: React.FC<BabySavingTargetModalProps> = ({ isOpen, o
                     if (!overallTarget || overallTarget === '0' || parseFloat(overallTarget) === 0) {
                       setOverallTarget('');
                     } else {
-                      e.target.select();
+                      const target = e.target;
+                      setTimeout(() => {
+                        try {
+                          target.setSelectionRange(0, target.value.length);
+                        } catch (err) {
+                          target.select();
+                        }
+                      }, 50);
                     }
                   }}
                   onClick={(e) => {
                     if (!overallTarget || overallTarget === '0' || parseFloat(overallTarget) === 0) {
                       setOverallTarget('');
                     } else {
-                      (e.target as HTMLInputElement).select();
+                      const target = e.target as HTMLInputElement;
+                      setTimeout(() => {
+                        try {
+                          target.setSelectionRange(0, target.value.length);
+                        } catch (err) {
+                          target.select();
+                        }
+                      }, 50);
                     }
                   }}
                   className="w-full pl-14 pr-4 py-3 bg-slate-50 dark:bg-slate-800/20 border-2 border-slate-100 dark:border-slate-800/80 rounded-2xl text-slate-900 dark:text-white font-black text-lg outline-none focus:border-cyan-500 dark:focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 transition-all font-mono shadow-inner"

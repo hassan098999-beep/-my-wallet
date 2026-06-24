@@ -393,6 +393,34 @@ const GoalsPage = () => {
                       setSimGoalAmount(Number(e.target.value));
                       if (simGoalId !== 'custom') setSimGoalId('custom');
                     }}
+                    onFocus={(e) => {
+                      if (!simGoalAmount || simGoalAmount === 0) {
+                        setSimGoalAmount(0);
+                      } else {
+                        const target = e.target;
+                        setTimeout(() => {
+                          try {
+                            target.setSelectionRange(0, target.value.length);
+                          } catch (err) {
+                            target.select();
+                          }
+                        }, 50);
+                      }
+                    }}
+                    onClick={(e) => {
+                      if (!simGoalAmount || simGoalAmount === 0) {
+                        setSimGoalAmount(0);
+                      } else {
+                        const target = e.target as HTMLInputElement;
+                        setTimeout(() => {
+                          try {
+                            target.setSelectionRange(0, target.value.length);
+                          } catch (err) {
+                            target.select();
+                          }
+                        }, 50);
+                      }
+                    }}
                     className="w-20 text-center bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-lg py-1 px-2 text-xs font-black font-mono text-slate-800 dark:text-white"
                   />
                 </div>
@@ -425,6 +453,34 @@ const GoalsPage = () => {
                       setSimSavedAmount(Number(e.target.value));
                       if (simGoalId !== 'custom') setSimGoalId('custom');
                     }}
+                    onFocus={(e) => {
+                      if (!simSavedAmount || simSavedAmount === 0) {
+                        setSimSavedAmount(0);
+                      } else {
+                        const target = e.target;
+                        setTimeout(() => {
+                          try {
+                            target.setSelectionRange(0, target.value.length);
+                          } catch (err) {
+                            target.select();
+                          }
+                        }, 50);
+                      }
+                    }}
+                    onClick={(e) => {
+                      if (!simSavedAmount || simSavedAmount === 0) {
+                        setSimSavedAmount(0);
+                      } else {
+                        const target = e.target as HTMLInputElement;
+                        setTimeout(() => {
+                          try {
+                            target.setSelectionRange(0, target.value.length);
+                          } catch (err) {
+                            target.select();
+                          }
+                        }, 50);
+                      }
+                    }}
                     className="w-20 text-center bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-lg py-1 px-2 text-xs font-black font-mono text-slate-800 dark:text-white"
                   />
                 </div>
@@ -454,6 +510,34 @@ const GoalsPage = () => {
                     value={simMonthlySavings || ''}
                     onChange={(e) => {
                       setSimMonthlySavings(Number(e.target.value));
+                    }}
+                    onFocus={(e) => {
+                      if (!simMonthlySavings || simMonthlySavings === 0) {
+                        setSimMonthlySavings(0);
+                      } else {
+                        const target = e.target;
+                        setTimeout(() => {
+                          try {
+                            target.setSelectionRange(0, target.value.length);
+                          } catch (err) {
+                            target.select();
+                          }
+                        }, 50);
+                      }
+                    }}
+                    onClick={(e) => {
+                      if (!simMonthlySavings || simMonthlySavings === 0) {
+                        setSimMonthlySavings(0);
+                      } else {
+                        const target = e.target as HTMLInputElement;
+                        setTimeout(() => {
+                          try {
+                            target.setSelectionRange(0, target.value.length);
+                          } catch (err) {
+                            target.select();
+                          }
+                        }, 50);
+                      }
                     }}
                     className="w-20 text-center bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-lg py-1 px-2 text-xs font-black font-mono text-slate-800 dark:text-white"
                   />

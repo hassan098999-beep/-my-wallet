@@ -153,7 +153,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
 
   const handleAmountChange = (val: string) => {
     const formatted = formatTunisianAmount(val);
-    setExpression(formatted || '0');
+    setExpression(formatted);
   };
 
   const handleSpeedAdd = (val: number) => {
@@ -557,14 +557,28 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                           if (!expression || expression === '0' || expression === '0.000' || expression === '0.00' || parseFloat(expression) === 0) {
                             setExpression('');
                           } else {
-                            e.target.select();
+                            const target = e.target;
+                            setTimeout(() => {
+                              try {
+                                target.setSelectionRange(0, target.value.length);
+                              } catch (err) {
+                                target.select();
+                              }
+                            }, 50);
                           }
                         }}
                         onClick={(e) => {
                           if (!expression || expression === '0' || expression === '0.000' || expression === '0.00' || parseFloat(expression) === 0) {
                             setExpression('');
                           } else {
-                            (e.target as HTMLInputElement).select();
+                            const target = e.target as HTMLInputElement;
+                            setTimeout(() => {
+                              try {
+                                target.setSelectionRange(0, target.value.length);
+                              } catch (err) {
+                                target.select();
+                              }
+                            }, 50);
                           }
                         }}
                         placeholder="0.00"
