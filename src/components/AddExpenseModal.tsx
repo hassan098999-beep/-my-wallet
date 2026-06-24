@@ -4,7 +4,7 @@ import { useAppContext } from '../store/AppContext';
 import { PaymentMethod, Expense } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Check, ChevronLeft, Calendar, Layers, Building2, AlignLeft, Search, Sparkles, Zap, Coins } from 'lucide-react';
-import { formatCurrency, cn, hapticFeedback } from '../utils';
+import { formatCurrency, cn, hapticFeedback, formatTunisianAmount } from '../utils';
 import { DynamicIcon } from './DynamicIcon';
 import CalculatorKeypad from './CalculatorKeypad';
 import { format, parseISO } from 'date-fns';
@@ -152,12 +152,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   }, [isOpen, categories, accounts, editExpenseData, initialGoalId, initialMode]);
 
   const handleAmountChange = (val: string) => {
-    let clean = val.replace(/[^0-9.]/g, '');
-    const parts = clean.split('.');
-    if (parts.length > 2) {
-      clean = parts[0] + '.' + parts.slice(1).join('');
-    }
-    setExpression(clean || '0');
+    const formatted = formatTunisianAmount(val);
+    setExpression(formatted || '0');
   };
 
   const handleSpeedAdd = (val: number) => {

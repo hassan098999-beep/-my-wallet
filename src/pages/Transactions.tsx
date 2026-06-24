@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useAppContext } from "../store/AppContext";
-import { cn, formatCurrency, hapticFeedback } from "../utils";
+import { cn, formatCurrency, hapticFeedback, formatTunisianAmount } from "../utils";
 import {
   Skeleton,
   TransactionSkeleton,
@@ -1201,10 +1201,10 @@ const Transactions = () => {
                       المبلغ ({currency})
                     </label>
                     <input
-                      type="number"
-                      step="0.001"
+                      type="text"
+                      inputMode="decimal"
                       value={editAmount}
-                      onChange={(e) => setEditAmount(e.target.value)}
+                      onChange={(e) => setEditAmount(formatTunisianAmount(e.target.value))}
                       className="w-full px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-mono font-black text-sm md:text-base"
                       required
                     />

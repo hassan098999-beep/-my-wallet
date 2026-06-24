@@ -139,3 +139,31 @@ export async function hashPin(pin: string): Promise<string> {
   return hashHex;
 }
 
+export function formatTunisianAmount(val: string): string {
+  if (!val) return '';
+  
+  // If they are typing a dot, let them type it
+  if (val.endsWith('.')) return val;
+  
+  // Strip all non-digit characters except the first dot
+  let clean = val.replace(/[^0-9.]/g, '');
+  
+  // If it has a dot, let's keep the user's custom dot placement
+  if (clean.includes('.')) {
+    const parts = clean.split('.');
+    const integerPart = parts[0];
+    let decimalPart = parts.slice(1).join('');
+    // Limit decimal part to 3 digits for TND
+    if (decimalPart.length > 3) {
+      decimalPart = decimalPart.slice(0, 3);
+    }
+    return `${integerPart}.${decimalPart}`;
+  }
+  
+  // If it's a pure whole number (digits only), auto-format it as millimes!
+  const num = parseInt(clean, 10);
+  if (isNaN(num)) return '';
+  return (num / 1000).toFixed(3);
+}
+
+

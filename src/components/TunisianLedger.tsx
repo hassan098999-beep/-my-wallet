@@ -11,7 +11,7 @@ import {
   BusFront 
 } from 'lucide-react';
 import { Category, Account } from '../types';
-import { formatCurrency, cn, hapticFeedback } from '../utils';
+import { formatCurrency, cn, hapticFeedback, formatTunisianAmount } from '../utils';
 
 interface TunisianLedgerProps {
   categories: Category[];
@@ -149,13 +149,12 @@ const TunisianLedger: React.FC<TunisianLedgerProps> = ({
         <div className="space-y-1.5 md:col-span-3 text-right">
           <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block text-right">المبلغ (د.ت)</label>
           <input
-            type="number"
-            step="0.001"
-            min="0.001"
+            type="text"
+            inputMode="decimal"
             required
             placeholder="مثال: 15.500"
             value={quickAmount}
-            onChange={(e) => setQuickAmount(e.target.value)}
+            onChange={(e) => setQuickAmount(formatTunisianAmount(e.target.value))}
             className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-mono font-bold text-right"
           />
         </div>

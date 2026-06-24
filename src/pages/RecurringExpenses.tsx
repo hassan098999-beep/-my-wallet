@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
-import { cn, formatCurrency, hapticFeedback } from '../utils';
+import { cn, formatCurrency, hapticFeedback, formatTunisianAmount } from '../utils';
 import { Skeleton, TransactionSkeleton } from '../components/Skeleton';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -421,10 +421,10 @@ const RecurringExpenses = () => {
                     <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">المبلغ ({currency})</label>
                     <div className="relative group">
                       <input
-                        type="number"
-                        step="0.001"
+                        type="text"
+                        inputMode="decimal"
                         value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        onChange={(e) => setAmount(formatTunisianAmount(e.target.value))}
                         placeholder="0.000"
                         className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono font-black"
                         required
@@ -872,9 +872,10 @@ const RecurringExpenses = () => {
                       <div className="space-y-2">
                         <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2">مساهمتك الشهرية ({currency})</label>
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="decimal"
                           value={gamaeyaAmount}
-                          onChange={(e) => setGamaeyaAmount(e.target.value)}
+                          onChange={(e) => setGamaeyaAmount(formatTunisianAmount(e.target.value))}
                           className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono font-black"
                           required
                         />
