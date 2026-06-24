@@ -374,6 +374,20 @@ const BudgetPage = () => {
                     inputMode="decimal"
                     value={globalBudget}
                     onChange={(e) => setGlobalBudget(e.target.value)}
+                    onFocus={(e) => {
+                      if (!globalBudget || globalBudget === '0' || globalBudget === '0.00' || parseFloat(globalBudget) === 0) {
+                        setGlobalBudget('');
+                      } else {
+                        e.target.select();
+                      }
+                    }}
+                    onClick={(e) => {
+                      if (!globalBudget || globalBudget === '0' || globalBudget === '0.00' || parseFloat(globalBudget) === 0) {
+                        setGlobalBudget('');
+                      } else {
+                        (e.target as HTMLInputElement).select();
+                      }
+                    }}
                     className="w-full bg-slate-50 dark:bg-slate-950/50 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-3xl font-black text-center font-mono text-slate-800 dark:text-white transition-all focus:border-emerald-500 outline-none"
                     placeholder="0.00"
                   />
@@ -833,6 +847,20 @@ const BudgetPage = () => {
                               inputMode="decimal"
                               value={catBudgetStr}
                               onChange={(e) => handleCategoryBudgetChange(cat.id, e.target.value)}
+                              onFocus={(e) => {
+                                if (!catBudgetStr || catBudgetStr === '0' || catBudgetStr === '0.00' || parseFloat(catBudgetStr) === 0) {
+                                  handleCategoryBudgetChange(cat.id, '');
+                                } else {
+                                  e.target.select();
+                                }
+                              }}
+                              onClick={(e) => {
+                                if (!catBudgetStr || catBudgetStr === '0' || catBudgetStr === '0.00' || parseFloat(catBudgetStr) === 0) {
+                                  handleCategoryBudgetChange(cat.id, '');
+                                } else {
+                                  (e.target as HTMLInputElement).select();
+                                }
+                              }}
                               className="w-full bg-slate-50 dark:bg-slate-950/40 border border-slate-250 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs font-black text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-all text-center font-mono"
                               placeholder="حدد الميزانية"
                             />

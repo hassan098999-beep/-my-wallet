@@ -426,10 +426,17 @@ const RecurringExpenses = () => {
                         value={amount}
                         onChange={(e) => setAmount(formatTunisianAmount(e.target.value))}
                         onFocus={(e) => {
-                          if (amount === '0' || amount === '0.000' || parseFloat(amount) === 0) {
+                          if (!amount || amount === '0' || amount === '0.000' || parseFloat(amount) === 0) {
                             setAmount('');
                           } else {
                             e.target.select();
+                          }
+                        }}
+                        onClick={(e) => {
+                          if (!amount || amount === '0' || amount === '0.000' || parseFloat(amount) === 0) {
+                            setAmount('');
+                          } else {
+                            (e.target as HTMLInputElement).select();
                           }
                         }}
                         placeholder="0.000"
@@ -884,10 +891,17 @@ const RecurringExpenses = () => {
                           value={gamaeyaAmount}
                           onChange={(e) => setGamaeyaAmount(formatTunisianAmount(e.target.value))}
                           onFocus={(e) => {
-                            if (gamaeyaAmount === '0' || gamaeyaAmount === '0.000' || parseFloat(gamaeyaAmount) === 0) {
+                            if (!gamaeyaAmount || gamaeyaAmount === '0' || gamaeyaAmount === '0.000' || parseFloat(gamaeyaAmount) === 0) {
                               setGamaeyaAmount('');
                             } else {
                               e.target.select();
+                            }
+                          }}
+                          onClick={(e) => {
+                            if (!gamaeyaAmount || gamaeyaAmount === '0' || gamaeyaAmount === '0.000' || parseFloat(gamaeyaAmount) === 0) {
+                              setGamaeyaAmount('');
+                            } else {
+                              (e.target as HTMLInputElement).select();
                             }
                           }}
                           className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-base outline-none focus:ring-8 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono font-black"

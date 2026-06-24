@@ -185,6 +185,20 @@ const BabySavingTargetModal: React.FC<BabySavingTargetModalProps> = ({ isOpen, o
                   inputMode="decimal"
                   value={monthlyTarget}
                   onChange={(e) => setMonthlyTarget(e.target.value)}
+                  onFocus={(e) => {
+                    if (!monthlyTarget || monthlyTarget === '0' || parseFloat(monthlyTarget) === 0) {
+                      setMonthlyTarget('');
+                    } else {
+                      e.target.select();
+                    }
+                  }}
+                  onClick={(e) => {
+                    if (!monthlyTarget || monthlyTarget === '0' || parseFloat(monthlyTarget) === 0) {
+                      setMonthlyTarget('');
+                    } else {
+                      (e.target as HTMLInputElement).select();
+                    }
+                  }}
                   className="w-full pl-14 pr-4 py-3 bg-slate-50 dark:bg-slate-800/20 border-2 border-slate-100 dark:border-slate-800/80 rounded-2xl text-slate-900 dark:text-white font-black text-lg outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all font-mono shadow-inner"
                   dir="ltr"
                   placeholder="50"
@@ -226,6 +240,20 @@ const BabySavingTargetModal: React.FC<BabySavingTargetModalProps> = ({ isOpen, o
                   inputMode="decimal"
                   value={overallTarget}
                   onChange={(e) => setOverallTarget(e.target.value)}
+                  onFocus={(e) => {
+                    if (!overallTarget || overallTarget === '0' || parseFloat(overallTarget) === 0) {
+                      setOverallTarget('');
+                    } else {
+                      e.target.select();
+                    }
+                  }}
+                  onClick={(e) => {
+                    if (!overallTarget || overallTarget === '0' || parseFloat(overallTarget) === 0) {
+                      setOverallTarget('');
+                    } else {
+                      (e.target as HTMLInputElement).select();
+                    }
+                  }}
                   className="w-full pl-14 pr-4 py-3 bg-slate-50 dark:bg-slate-800/20 border-2 border-slate-100 dark:border-slate-800/80 rounded-2xl text-slate-900 dark:text-white font-black text-lg outline-none focus:border-cyan-500 dark:focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 transition-all font-mono shadow-inner"
                   dir="ltr"
                   placeholder="1000"

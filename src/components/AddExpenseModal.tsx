@@ -554,10 +554,17 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                         value={expression}
                         onChange={(e) => handleAmountChange(e.target.value)}
                         onFocus={(e) => {
-                          if (expression === '0' || expression === '0.000' || expression === '0.00' || parseFloat(expression) === 0) {
+                          if (!expression || expression === '0' || expression === '0.000' || expression === '0.00' || parseFloat(expression) === 0) {
                             setExpression('');
                           } else {
                             e.target.select();
+                          }
+                        }}
+                        onClick={(e) => {
+                          if (!expression || expression === '0' || expression === '0.000' || expression === '0.00' || parseFloat(expression) === 0) {
+                            setExpression('');
+                          } else {
+                            (e.target as HTMLInputElement).select();
                           }
                         }}
                         placeholder="0.00"

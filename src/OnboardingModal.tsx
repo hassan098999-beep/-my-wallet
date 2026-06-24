@@ -123,6 +123,20 @@ const OnboardingModal: React.FC = () => {
                           autoComplete="off"
                           value={initialBalances.cash}
                           onChange={(e) => setInitialBalances(prev => ({ ...prev, cash: e.target.value }))}
+                          onFocus={(e) => {
+                            if (!initialBalances.cash || initialBalances.cash === '0' || parseFloat(initialBalances.cash) === 0) {
+                              setInitialBalances(prev => ({ ...prev, cash: '' }));
+                            } else {
+                              e.target.select();
+                            }
+                          }}
+                          onClick={(e) => {
+                            if (!initialBalances.cash || initialBalances.cash === '0' || parseFloat(initialBalances.cash) === 0) {
+                              setInitialBalances(prev => ({ ...prev, cash: '' }));
+                            } else {
+                              (e.target as HTMLInputElement).select();
+                            }
+                          }}
                           className={cn(
                             "w-full px-6 py-4 rounded-2xl border-2 bg-slate-50/50 dark:bg-slate-800/30 text-slate-900 dark:text-white font-black text-xl outline-none transition-all",
                             initialBalances.cash !== '0' 
@@ -150,6 +164,20 @@ const OnboardingModal: React.FC = () => {
                           autoComplete="off"
                           value={initialBalances.bank}
                           onChange={(e) => setInitialBalances(prev => ({ ...prev, bank: e.target.value }))}
+                          onFocus={(e) => {
+                            if (!initialBalances.bank || initialBalances.bank === '0' || parseFloat(initialBalances.bank) === 0) {
+                              setInitialBalances(prev => ({ ...prev, bank: '' }));
+                            } else {
+                              e.target.select();
+                            }
+                          }}
+                          onClick={(e) => {
+                            if (!initialBalances.bank || initialBalances.bank === '0' || parseFloat(initialBalances.bank) === 0) {
+                              setInitialBalances(prev => ({ ...prev, bank: '' }));
+                            } else {
+                              (e.target as HTMLInputElement).select();
+                            }
+                          }}
                           className={cn(
                             "w-full px-6 py-4 rounded-2xl border-2 bg-slate-50/50 dark:bg-slate-800/30 text-slate-900 dark:text-white font-black text-xl outline-none transition-all",
                             initialBalances.bank !== '0' 

@@ -156,10 +156,17 @@ const TunisianLedger: React.FC<TunisianLedgerProps> = ({
             value={quickAmount}
             onChange={(e) => setQuickAmount(formatTunisianAmount(e.target.value))}
             onFocus={(e) => {
-              if (quickAmount === '0' || quickAmount === '0.000' || parseFloat(quickAmount) === 0) {
+              if (!quickAmount || quickAmount === '0' || quickAmount === '0.000' || parseFloat(quickAmount) === 0) {
                 setQuickAmount('');
               } else {
                 e.target.select();
+              }
+            }}
+            onClick={(e) => {
+              if (!quickAmount || quickAmount === '0' || quickAmount === '0.000' || parseFloat(quickAmount) === 0) {
+                setQuickAmount('');
+              } else {
+                (e.target as HTMLInputElement).select();
               }
             }}
             className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-mono font-bold text-right"
