@@ -17,12 +17,12 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: "autoUpdate",
         injectRegister: "auto",
-        includeAssets: ["icon-192.png", "icon-512.png", "icon.svg"],
+        includeAssets: ["icon-192.png", "icon-512.png", "icon.svg", "screenshot-mobile.jpg", "screenshot-desktop.jpg"],
         devOptions: {
           enabled: false,
         },
         workbox: {
-          globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,webmanifest}"],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           cleanupOutdatedCaches: true,
           skipWaiting: true,
@@ -30,15 +30,35 @@ export default defineConfig(({ mode }) => {
           navigateFallback: isGithubPages ? '/-my-wallet/index.html' : '/index.html',
         },
         manifest: {
+          id: isGithubPages ? '/-my-wallet/' : '/',
+          start_url: isGithubPages ? '/-my-wallet/' : '/',
           name: "مصاريفي - إدارة المصاريف الشخصية",
           short_name: "مصاريفي",
-          description: "تطبيق لإدارة المصاريف الشخصية وتتبع الميزانية",
+          description: "تطبيق لإدارة المصاريف الشخصية وتتبع الميزانية وتخطيط الأهداف المالية في تونس",
           theme_color: "#10b981",
           background_color: "#ffffff",
           display: "standalone",
           orientation: "portrait",
           lang: "ar",
           dir: "rtl",
+          categories: ["finance", "utilities"],
+          iarc_rating_id: "e840a1b8-20dd-4cb9-91bc-0e42d765b263",
+          screenshots: [
+            {
+              src: "screenshot-mobile.jpg",
+              sizes: "1080x1920",
+              type: "image/jpeg",
+              form_factor: "narrow",
+              label: "تطبيق مصاريفي على الهاتف - تتبع المصاريف والتحكم بالميزانية"
+            },
+            {
+              src: "screenshot-desktop.jpg",
+              sizes: "1920x1080",
+              type: "image/jpeg",
+              form_factor: "wide",
+              label: "تطبيق مصاريفي على الحاسوب - لوحة تحكم تفصيلية للميزانية والمدخرات"
+            }
+          ],
           share_target: {
             action: "/share-add",
             method: "GET",
