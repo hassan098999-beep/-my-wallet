@@ -7,7 +7,7 @@ import { cn } from '../utils';
 import toast from 'react-hot-toast';
 
 const NotificationBell = () => {
-  const { notifications, removeNotification, recurringExpenses, expenses, currency, categories } = useAppContext();
+  const { notifications, removeNotification, recurringExpenses, expenses, income, currency, categories } = useAppContext();
   const { overallPercentage, totalSpent, globalBudgetNum, categoryStatuses, remainingDays } = useBudgetStatus();
   const [isOpen, setIsOpen] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
@@ -115,6 +115,39 @@ const NotificationBell = () => {
     };
   }, [expenses, currency]);
 
+  // 5. Daily 24h reminder at end of day
+  const dailyReminderAlert = useMemo(() => {
+    const isEnabled = localStorage.getItem('masarifi_daily_reminder_enabled') !== 'false';
+    if (!isEnabled) return null;
+
+    const now = new Date();
+    const oneDayInMs = 24 * 60 * 60 * 1000;
+
+    // Filter to see if any expenses or incomes exist from the last 24 hours
+    const hasRecentExpense = expenses.some(e => {
+      const d = new Date(e.createdAt || e.date);
+      return (now.getTime() - d.getTime()) < oneDayInMs;
+    });
+    const hasRecentIncome = (expenses.length === 0 && (income || []).some(i => {
+      const d = new Date(i.createdAt || i.date);
+      return (now.getTime() - d.getTime()) < oneDayInMs;
+    }));
+
+    const hasRecent = hasRecentExpense || hasRecentIncome;
+    const currentHour = now.getHours();
+    const isEndOfDay = currentHour >= 20; // 8:00 PM onwards
+
+    if (!hasRecent && isEndOfDay) {
+      return {
+        id: 'virtual-daily-reminder-24h',
+        message: `تذكير نهاية اليوم: لم تقم بتسجيل أي مصروفات أو دخل خلال الـ 24 ساعة الماضية. يرجى تسجيل معاملاتك الآن لترشيد ميزانيتك اليومية والحفاظ على دقتها! 📝🔔`,
+        type: 'unusual_expense' as const,
+        createdAt: now.toISOString()
+      };
+    }
+    return null;
+  }, [expenses, income]);
+
   // Toast dynamic weekly report on load if Sunday
   useEffect(() => {
     const today = new Date();
@@ -133,6 +166,50 @@ const NotificationBell = () => {
     }
   }, [weeklySummaryAlert]);
 
+  // Toast and Push Notification for Daily 24h Reminder
+  useEffect(() => {
+    if (!dailyReminderAlert) return;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const hasNotifiedToday = localStorage.getItem(`masarifi_daily_reminder_toast_${todayStr}`);
+    
+    if (!hasNotifiedToday) {
+      // 1. Show nice in-app toast
+      toast(dailyReminderAlert.message, {
+        icon: '🔔',
+        duration: 8000,
+        position: 'top-center',
+        style: {
+          border: '1px solid #fecaca',
+          padding: '16px',
+          color: '#991b1b',
+          background: '#fef2f2',
+          fontWeight: '900',
+        }
+      });
+
+      // 2. Trigger browser notification if allowed
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification("تذكير ميزانية مساريفي 🇹🇳", {
+            body: "لم تقم بتسجيل أي مصروف اليوم. اضغط لتسجيل معاملاتك ومتابعة ميزانيتك!",
+            icon: '/icon-192.png'
+          });
+        } catch (e) {
+          navigator.serviceWorker?.ready.then(registration => {
+            registration.showNotification("تذكير ميزانية مساريفي 🇹🇳", {
+              body: "لم تقم بتسجيل أي مصروف اليوم. اضغط لتسجيل معاملاتك ومتابعة ميزانيتك!",
+              icon: '/icon-192.png'
+            });
+          });
+        }
+      }
+
+      // Mark as notified today
+      localStorage.setItem(`masarifi_daily_reminder_toast_${todayStr}`, 'true');
+    }
+  }, [dailyReminderAlert]);
+
   // Combine real notifications with local virtual alerts
   const visibleNotifications = useMemo(() => {
     const list = [...notifications];
@@ -140,9 +217,10 @@ const NotificationBell = () => {
     recurringAlerts.forEach(re => list.unshift(re));
     subBudgetAlerts.forEach(sba => list.unshift(sba));
     if (weeklySummaryAlert) list.unshift(weeklySummaryAlert);
+    if (dailyReminderAlert) list.unshift(dailyReminderAlert);
 
     return list.filter(n => !dismissedIds.includes(n.id));
-  }, [notifications, budgetAlert, recurringAlerts, subBudgetAlerts, weeklySummaryAlert, dismissedIds]);
+  }, [notifications, budgetAlert, recurringAlerts, subBudgetAlerts, weeklySummaryAlert, dailyReminderAlert, dismissedIds]);
 
   const handleDismiss = (id: string) => {
     if (id.startsWith('virtual-')) {

@@ -40,6 +40,9 @@ const ProfileManager = () => {
   const { userName, setUserName, dailyBudget, setDailyBudget, achievements, currency, rollingBudgetEnabled, setRollingBudgetEnabled } = useAppContext();
   const [name, setName] = useState(userName || '');
   const [budget, setBudget] = useState(dailyBudget?.toString() || '14');
+  const [dailyReminderEnabled, setDailyReminderEnabled] = useState(() => {
+    return localStorage.getItem('masarifi_daily_reminder_enabled') !== 'false';
+  });
 
   useEffect(() => {
     setName(userName || '');
@@ -66,6 +69,7 @@ const ProfileManager = () => {
     hapticFeedback('success');
     setUserName(name.trim());
     setDailyBudget(budgetNum);
+    localStorage.setItem('masarifi_daily_reminder_enabled', dailyReminderEnabled ? 'true' : 'false');
     toast.success('تم حفظ الإعدادات بنجاح');
   };
 
@@ -139,6 +143,34 @@ const ProfileManager = () => {
                   className={cn(
                     "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
                     rollingBudgetEnabled ? "translate-x-6" : "translate-x-1"
+                  )}
+                />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+              <div className="space-y-0.5 text-right" dir="rtl">
+                <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5 justify-start">
+                  التذكير اليومي الذكي 🔔
+                </h3>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[200px]">
+                  تلقي تنبيه للتذكير في نهاية اليوم (8 مساءً) في حال لم تقم بتسجيل أي معاملة خلال الـ 24 ساعة الماضية.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  hapticFeedback('light');
+                  setDailyReminderEnabled(!dailyReminderEnabled);
+                }}
+                className={cn(
+                  "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2",
+                  dailyReminderEnabled ? "bg-primary-600" : "bg-slate-300 dark:bg-slate-700"
+                )}
+              >
+                <span
+                  className={cn(
+                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                    dailyReminderEnabled ? "translate-x-6" : "translate-x-1"
                   )}
                 />
               </button>

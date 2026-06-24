@@ -25,6 +25,7 @@ import {
 import { DynamicIcon } from '../components/DynamicIcon';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
+import { BudgetAlerts } from '../components/BudgetAlerts';
 
 // Import unified design system components
 import PageHeader from '../components/ui/PageHeader';
@@ -281,6 +282,9 @@ const BudgetPage = () => {
           </div>
         }
       />
+
+      {/* Category smart budget warnings */}
+      <BudgetAlerts />
 
       {/* Main Intelligent Budget Dashboard Dashboard and Progress */}
       <motion.div variants={itemVariants}>

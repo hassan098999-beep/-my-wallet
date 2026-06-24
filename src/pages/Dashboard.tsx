@@ -32,6 +32,7 @@ import HeroSlidingDeck from '../components/HeroSlidingDeck';
 import FinancialRadar from '../components/FinancialRadar';
 import BehavioralAdvisor from '../components/BehavioralAdvisor';
 import { SmartSavingChallengeCard } from '../components/SmartSavingChallengeCard';
+import { BudgetAlerts } from '../components/BudgetAlerts';
 
 // Import unified design system components
 import PageHeader from '../components/ui/PageHeader';
@@ -406,6 +407,9 @@ const Dashboard = () => {
         title={`مرحباً، ${userName || 'صديقي'} 👋`}
         subtitle={`${format(new Date(), 'EEEE، d MMMM', { locale: ar })} • دورة الميزانية النشطة`}
       />
+
+      {/* Category and global smart budget alerts */}
+      <BudgetAlerts />
 
       {/* 2. Cozy View Mode Switcher */}
       <motion.div 
