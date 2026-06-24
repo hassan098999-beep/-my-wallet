@@ -46,14 +46,14 @@ export default defineConfig(({ mode }) => {
           screenshots: [
             {
               src: `${basePath}screenshot-mobile.jpg`,
-              sizes: "1080x1920",
+              sizes: "768x1376",
               type: "image/jpeg",
               form_factor: "narrow",
               label: "تطبيق مصاريفي على الهاتف - تتبع المصاريف والتحكم بالميزانية"
             },
             {
               src: `${basePath}screenshot-desktop.jpg`,
-              sizes: "1920x1080",
+              sizes: "1376x768",
               type: "image/jpeg",
               form_factor: "wide",
               label: "تطبيق مصاريفي على الحاسوب - لوحة تحكم تفصيلية للميزانية والمدخرات"
