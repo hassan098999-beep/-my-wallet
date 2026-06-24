@@ -553,6 +553,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                         type="text"
                         value={expression}
                         onChange={(e) => handleAmountChange(e.target.value)}
+                        onFocus={(e) => {
+                          if (expression === '0' || expression === '0.000' || expression === '0.00' || parseFloat(expression) === 0) {
+                            setExpression('');
+                          } else {
+                            e.target.select();
+                          }
+                        }}
                         placeholder="0.00"
                         className="w-full pl-16 pr-4 py-3.5 bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-200 dark:border-slate-800/80 focus:border-amber-400 focus:outline-[#f59e0b] rounded-xl text-center text-3xl font-black text-slate-800 dark:text-white transition-all font-mono"
                         dir="ltr"
