@@ -45,14 +45,14 @@ export default defineConfig(({ mode }) => {
           iarc_rating_id: "e840a1b8-20dd-4cb9-91bc-0e42d765b263",
           screenshots: [
             {
-              src: "screenshot-mobile.jpg",
+              src: `${basePath}screenshot-mobile.jpg`,
               sizes: "1080x1920",
               type: "image/jpeg",
               form_factor: "narrow",
               label: "تطبيق مصاريفي على الهاتف - تتبع المصاريف والتحكم بالميزانية"
             },
             {
-              src: "screenshot-desktop.jpg",
+              src: `${basePath}screenshot-desktop.jpg`,
               sizes: "1920x1080",
               type: "image/jpeg",
               form_factor: "wide",
@@ -60,7 +60,7 @@ export default defineConfig(({ mode }) => {
             }
           ],
           share_target: {
-            action: "/share-add",
+            action: `${basePath}share-add`,
             method: "GET",
             enctype: "application/x-www-form-urlencoded",
             params: {
@@ -74,10 +74,10 @@ export default defineConfig(({ mode }) => {
               name: "إضافة مصروف",
               short_name: "إضافة مصروف",
               description: "تسجيل مصروف جديد بسرعة وسلاسة",
-              url: "/?action=add",
+              url: `${basePath}?action=add`,
               icons: [
                 {
-                  src: "icon-192.png",
+                  src: `${basePath}icon-192.png`,
                   sizes: "192x192",
                   type: "image/png"
                 }
@@ -86,25 +86,25 @@ export default defineConfig(({ mode }) => {
           ],
           icons: [
             {
-              src: "icon-192.png",
+              src: `${basePath}icon-192.png`,
               sizes: "192x192",
               type: "image/png",
               purpose: "any",
             },
             {
-              src: "icon-192.png",
+              src: `${basePath}icon-192.png`,
               sizes: "192x192",
               type: "image/png",
               purpose: "maskable",
             },
             {
-              src: "icon-512.png",
+              src: `${basePath}icon-512.png`,
               sizes: "512x512",
               type: "image/png",
               purpose: "any",
             },
             {
-              src: "icon-512.png",
+              src: `${basePath}icon-512.png`,
               sizes: "512x512",
               type: "image/png",
               purpose: "maskable",
