@@ -226,7 +226,7 @@ const BudgetPage = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-8 p-4 pb-32 max-w-5xl mx-auto text-right font-tajawal rtl"
+      className="space-y-8 p-4 pb-32 w-full max-w-full text-right font-tajawal rtl"
     >
       {/* Header Section */}
       <PageHeader

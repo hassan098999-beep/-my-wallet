@@ -97,7 +97,7 @@ const Settings = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="max-w-6xl mx-auto p-4 pb-32 space-y-8"
+      className="w-full max-w-full p-4 pb-32 space-y-8"
     >
       <PageHeader
         title="الإعدادات والتحكم الذكي"

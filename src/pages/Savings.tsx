@@ -231,11 +231,6 @@ const SavingsPage = () => {
         isTransfer: true
       });
 
-      // 2. Direct goal balance adjustment (handled in AppContext, but we ensure goal currentAmount increments)
-      await updateGoal(activePhysicalGoal.id, {
-        currentAmount: activePhysicalGoal.currentAmount + amount
-      });
-
       setSweepSuccessMessage({
         amount: amount,
         accountName: accountName,
@@ -306,10 +301,6 @@ const SavingsPage = () => {
           note: `تفريغ الفكة اليومية لحصالة الواقع (${acc.name}) 🪙`,
           paymentMethod: acc.id === 'bank' ? 'card' : 'cash',
           isTransfer: true
-        });
-
-        await updateGoal(activePhysicalGoal.id, {
-          currentAmount: activePhysicalGoal.currentAmount + amount
         });
 
         totalSwept += amount;
@@ -515,7 +506,7 @@ const SavingsPage = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6 p-4 pb-32 max-w-5xl mx-auto"
+      className="space-y-6 p-4 pb-32 w-full max-w-full"
     >
       <PageHeader
         title="تخصيص الادخار"

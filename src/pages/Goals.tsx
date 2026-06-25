@@ -265,7 +265,7 @@ const GoalsPage = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-8 max-w-5xl mx-auto p-4 pb-32 relative"
+      className="space-y-8 w-full max-w-full p-4 pb-32 relative"
     >
       {/* Atmospheric Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">

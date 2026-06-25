@@ -206,7 +206,7 @@ const SavingsIndicators = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6 pb-16 max-w-5xl mx-auto px-2"
+      className="space-y-6 pb-16 w-full max-w-full px-2"
     >
       {/* Header and Context Title */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">

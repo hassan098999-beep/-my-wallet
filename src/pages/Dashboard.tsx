@@ -262,10 +262,6 @@ const Dashboard = () => {
         isTransfer: true
       });
 
-      await updateGoal(activePhysicalGoal.id, {
-        currentAmount: activePhysicalGoal.currentAmount + amount
-      });
-
       setSweepSuccessMessage({
         amount: amount,
         accountName: accountName,
@@ -336,10 +332,6 @@ const Dashboard = () => {
           note: `تفريغ الفكة اليومية لحصالة الواقع (${acc.name}) 🪙`,
           paymentMethod: acc.id === 'bank' ? 'card' : 'cash',
           isTransfer: true
-        });
-
-        await updateGoal(activePhysicalGoal.id, {
-          currentAmount: activePhysicalGoal.currentAmount + amount
         });
 
         totalSwept += amount;

@@ -259,7 +259,7 @@ const RecurringExpenses = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-8 p-4 pb-32 max-w-5xl mx-auto"
+      className="space-y-8 p-4 pb-32 w-full max-w-full"
     >
       <PageHeader
         title={activeTab === 'recurring' ? "المصاريف المتكررة" : "الجمعيات الادخارية"}

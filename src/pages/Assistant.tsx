@@ -427,7 +427,7 @@ export default function Assistant() {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto p-4 pb-32 flex flex-col"
+      className="w-full max-w-full p-4 pb-32 flex flex-col"
     >
       <PageHeader
         title="المستشار الذكي"
