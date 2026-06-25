@@ -3,10 +3,12 @@ import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { PaymentMethod, Expense } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Check, ChevronLeft, Calendar, Layers, Building2, AlignLeft, Search, Sparkles, Zap, Coins } from 'lucide-react';
+import { X, Check, ChevronLeft, Calendar, Layers, Building2, AlignLeft, Search, Sparkles, Zap, Coins, Plus } from 'lucide-react';
 import { formatCurrency, cn, hapticFeedback, formatTunisianAmount } from '../utils';
 import { DynamicIcon } from './DynamicIcon';
 import CalculatorKeypad from './CalculatorKeypad';
+import { ColorPicker } from './ColorPicker';
+import { IconSelect } from './IconSelect';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
@@ -19,7 +21,7 @@ interface AddExpenseModalProps {
 }
 
 const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, editExpenseData, initialGoalId, initialMode }) => {
-  const { categories, accounts, expenses, income, goals, addExpense, addIncome, updateExpense, updateIncome, transferAccount, currency } = useAppContext();
+  const { categories, accounts, expenses, income, goals, addExpense, addIncome, updateExpense, updateIncome, transferAccount, addCategory, currency } = useAppContext();
 
   const [inputMode, setInputMode] = useState<'quick' | 'calculator'>('quick');
   const [type, setType] = useState<'expense' | 'income' | 'transfer'>('expense');
@@ -35,6 +37,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   const [loading, setLoading] = useState(false);
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
   const [goalId, setGoalId] = useState('');
+
+  // States for custom category creation
+  const [isAddingCustomCategory, setIsAddingCustomCategory] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatColor, setNewCatColor] = useState('#ef4444');
+  const [newCatIcon, setNewCatIcon] = useState('Circle');
+  const [newCatType, setNewCatType] = useState<'need' | 'want' | 'saving'>('need');
 
   // Sub-modals state
   const [activeView, setActiveView] = useState<'main' | 'category' | 'account' | 'toAccount' | 'details'>('main');
@@ -154,6 +163,40 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   const handleAmountChange = (val: string) => {
     const formatted = formatTunisianAmount(val);
     setExpression(formatted);
+  };
+
+  const handleCreateCustomCategory = async () => {
+    if (!newCatName.trim()) return;
+    hapticFeedback('success');
+    const loadingToast = toast.loading('جاري إنشاء التصنيف المخصص...');
+    try {
+      const newCat = await addCategory({
+        name: newCatName.trim(),
+        color: newCatColor,
+        icon: newCatIcon,
+        type: newCatType,
+        subcategories: []
+      });
+      toast.dismiss(loadingToast);
+      toast.success('تم إنشاء التصنيف بنجاح! 🎉');
+      
+      // Auto-select the newly created category
+      if (newCat && newCat.id) {
+        setCategoryId(newCat.id);
+        setSubcategoryId('');
+      }
+      
+      // Reset state
+      setNewCatName('');
+      setNewCatColor('#ef4444');
+      setNewCatIcon('Circle');
+      setNewCatType('need');
+      setIsAddingCustomCategory(false);
+    } catch (err) {
+      console.error(err);
+      toast.dismiss(loadingToast);
+      toast.error('حدث خطأ أثناء إنشاء التصنيف');
+    }
   };
 
   const handleSpeedAdd = (val: number) => {
@@ -946,6 +989,85 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                       />
                       <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     </div>
+
+                    {/* Inline Form to add custom category */}
+                    {isAddingCustomCategory ? (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60 p-4 rounded-2xl space-y-3 shrink-0"
+                        dir="rtl"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black text-slate-800 dark:text-slate-200">إنشاء تصنيف مخصص جديد 🎨</span>
+                          <button 
+                            type="button"
+                            onClick={() => setIsAddingCustomCategory(false)}
+                            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 gap-2.5">
+                            <input 
+                              type="text" 
+                              value={newCatName} 
+                              onChange={(e) => setNewCatName(e.target.value)} 
+                              placeholder="اسم التصنيف (مثل: مدرسة، سيارة)..."
+                              className="w-full px-3 py-2.5 text-xs font-bold rounded-xl border-2 border-slate-150 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-white outline-none focus:border-rose-500 transition-all text-right"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <span className="text-[9px] font-black text-slate-400 block text-right">النوع</span>
+                              <select 
+                                value={newCatType}
+                                onChange={(e) => setNewCatType(e.target.value as any)}
+                                className="w-full px-2 py-2 text-xs font-bold rounded-xl border-2 border-slate-150 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-white outline-none text-right"
+                              >
+                                <option value="need">احتياجات (50%)</option>
+                                <option value="want">رغبات (30%)</option>
+                                <option value="saving">ادخار (20%)</option>
+                              </select>
+                            </div>
+
+                            <div className="space-y-1">
+                              <span className="text-[9px] font-black text-slate-400 block text-right">اللون</span>
+                              <ColorPicker value={newCatColor} onChange={setNewCatColor} />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-black text-slate-400 block text-right">الأيقونة</span>
+                            <IconSelect value={newCatIcon} onChange={setNewCatIcon} className="w-full !h-[36px]" />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={handleCreateCustomCategory}
+                            disabled={!newCatName.trim()}
+                            className="w-full py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-black text-xs rounded-xl shadow-md shadow-rose-500/10 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                          >
+                            <Check size={14} />
+                            <span>تأكيد وإنشاء التصنيف</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => { hapticFeedback('light'); setIsAddingCustomCategory(true); }}
+                        className="w-full py-2.5 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-black text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all flex items-center justify-center gap-1.5 shrink-0"
+                        dir="rtl"
+                      >
+                        <Plus size={14} />
+                        <span>إنشاء تصنيف مخصص جديد ✨</span>
+                      </button>
+                    )}
 
                     {/* Favorite Categories Quick Grid */}
                     {type === 'expense' && favoriteCategories.length > 0 && !categorySearchQuery && (

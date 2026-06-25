@@ -159,7 +159,7 @@ interface AppContextProps extends AppState {
   deleteGamaeya: (id: string) => void;
   payGamaeyaMonth: (gamaeyaId: string, monthIndex: number) => void;
   receiveGamaeyaPayout: (gamaeyaId: string) => void;
-  addCategory: (category: Omit<Category, 'id'>) => void;
+  addCategory: (category: Omit<Category, 'id'>) => Promise<Category>;
   updateCategory: (id: string, category: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
   reorderCategories: (categories: Category[]) => void;
@@ -1209,6 +1209,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { ...prev, categories: [...prev.categories, newCategory] };
       });
     }
+    return newCategory;
   };
 
   const updateCategory = async (id: string, updates: Partial<Category>) => {
