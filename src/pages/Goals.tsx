@@ -21,6 +21,7 @@ import Badge from '../components/ui/Badge';
 
 const GoalsPage = () => {
   const { goals, addGoal, deleteGoal, updateGoal, currency, expenses, income, categories, budget, firstDayOfMonth, addIncome, addExpense, accounts, setIsAddModalOpen, setInitialGoalId } = useAppContext();
+  const standardGoals = useMemo(() => (goals || []).filter(g => !g.isPhysicalPiggyBank), [goals]);
   const [name, setName] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
   const [currentAmount, setCurrentAmount] = useState('');
@@ -103,7 +104,7 @@ const GoalsPage = () => {
   const handleSimGoalChange = (value: string) => {
     setSimGoalId(value);
     if (value !== 'custom') {
-      const selected = goals.find(g => g.id === value);
+      const selected = standardGoals.find(g => g.id === value);
       if (selected) {
         setSimGoalAmount(selected.targetAmount);
         setSimSavedAmount(selected.currentAmount);
@@ -294,25 +295,25 @@ const GoalsPage = () => {
       />
 
       {/* Goals Summary Stats */}
-      {goals.length > 0 && (
+      {standardGoals.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <motion.div variants={itemVariants} className="card text-center group hover:shadow-md transition-all">
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">إجمالي المستهدف</p>
             <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter group-hover:scale-110 transition-transform">
-              {formatCurrency(goals.reduce((sum, g) => sum + g.targetAmount, 0), currency)}
+              {formatCurrency(standardGoals.reduce((sum, g) => sum + g.targetAmount, 0), currency)}
             </p>
           </motion.div>
           <motion.div variants={itemVariants} className="card text-center group hover:shadow-md transition-all">
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">إجمالي المدخرات</p>
             <p className="text-3xl font-black text-emerald-500 tracking-tighter group-hover:scale-110 transition-transform">
-              {formatCurrency(goals.reduce((sum, g) => sum + g.currentAmount, 0), currency)}
+              {formatCurrency(standardGoals.reduce((sum, g) => sum + g.currentAmount, 0), currency)}
             </p>
           </motion.div>
           <motion.div variants={itemVariants} className="card text-center group hover:shadow-md transition-all">
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">نسبة الإنجاز الكلية</p>
             <p className="text-3xl font-black text-emerald-500 tracking-tighter group-hover:scale-110 transition-transform">
-              {goals.reduce((sum, g) => sum + g.targetAmount, 0) > 0 
-                ? Math.round((goals.reduce((sum, g) => sum + g.currentAmount, 0) / goals.reduce((sum, g) => sum + g.targetAmount, 0)) * 100) 
+              {standardGoals.reduce((sum, g) => sum + g.targetAmount, 0) > 0 
+                ? Math.round((standardGoals.reduce((sum, g) => sum + g.currentAmount, 0) / standardGoals.reduce((sum, g) => sum + g.targetAmount, 0)) * 100) 
                 : 0}%
             </p>
           </motion.div>
@@ -353,7 +354,7 @@ const GoalsPage = () => {
                 className="bg-transparent text-xs font-black text-slate-800 dark:text-white outline-none cursor-pointer"
               >
                 <option value="custom">✍️ هَدَف مخصص (حرّ)</option>
-                {goals.map(g => (
+                {standardGoals.map(g => (
                   <option key={g.id} value={g.id}>🎯 {g.name}</option>
                 ))}
               </select>
@@ -895,8 +896,8 @@ const GoalsPage = () => {
 
       {/* Goals List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {goals.length > 0 ? (
-          goals.map(goal => {
+        {standardGoals.length > 0 ? (
+          standardGoals.map(goal => {
             const percentage = goal.targetAmount > 0 ? Math.min(100, (goal.currentAmount / goal.targetAmount) * 100) : 0;
             const isCompleted = percentage >= 100;
             

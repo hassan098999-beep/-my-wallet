@@ -23,7 +23,8 @@ import {
   X,
   Info,
   HelpCircle,
-  ArrowDown
+  ArrowDown,
+  Trash
 } from 'lucide-react';
 import { Expense, Category } from '../types';
 import { motion, AnimatePresence, Variants } from 'motion/react';
@@ -79,6 +80,14 @@ const Dashboard = () => {
   const [sweepSuccessMessage, setSweepSuccessMessage] = useState<{ amount: number; accountName: string; date: string } | null>(null);
   const [isSweeping, setIsSweeping] = useState(false);
 
+  // Standalone piggy bank manual deposit and reset states
+  const [isManualDepositOpen, setIsManualDepositOpen] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('');
+  const [depositSource, setDepositSource] = useState<'account' | 'external'>('account');
+  const [selectedDepositAccountId, setSelectedDepositAccountId] = useState('cash');
+  const [depositNote, setDepositNote] = useState('');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
   // Find or determine the physical piggy bank goal
   const physicalGoal = useMemo(() => {
     return (goals || []).find(g => 
@@ -87,6 +96,86 @@ const Dashboard = () => {
       g.name.includes('الحصالة الفعلية')
     );
   }, [goals]);
+
+  // Filter history of deposits/sweeps for this specific piggy bank
+  const piggyBankHistory = useMemo(() => {
+    if (!physicalGoal) return [];
+    return (expenses || [])
+      .filter(e => e.goalId === physicalGoal.id)
+      .slice(0, 5);
+  }, [expenses, physicalGoal]);
+
+  // Handler for manual piggy bank deposit (manual injection)
+  const handleManualDeposit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!physicalGoal) return;
+    const amount = parseFloat(depositAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('الرجاء إدخال مبلغ صحيح للضخ');
+      return;
+    }
+
+    hapticFeedback('success');
+    setIsSweeping(true);
+
+    try {
+      const selectedAcc = depositSource === 'account' ? accounts.find(a => a.id === selectedDepositAccountId) : null;
+      
+      if (depositSource === 'account' && selectedAcc && selectedAcc.balance < amount) {
+        toast.error('رصيد الحساب غير كافٍ للضخ');
+        setIsSweeping(false);
+        return;
+      }
+
+      await addExpense({
+        amount: amount,
+        categoryId: categories.find(c => c.type === 'saving')?.id || categories[0]?.id || 'saving',
+        accountId: depositSource === 'account' ? selectedDepositAccountId : undefined,
+        goalId: physicalGoal.id,
+        date: new Date().toISOString().split('T')[0],
+        note: depositNote.trim() || (depositSource === 'account' ? `ضخ يدوِي من حساب ${selectedAcc?.name}` : 'ضخ يدوي خارجي مستقل 🪙'),
+        paymentMethod: depositSource === 'account' ? (selectedDepositAccountId === 'cash' ? 'cash' : 'card') : 'cash'
+      });
+
+      toast.success(
+        <div className="flex flex-col gap-1 text-right" dir="rtl">
+          <span className="font-bold">تم ضخ الأموال بنجاح! 🪙🎉</span>
+          <span className="text-xs">
+            {depositSource === 'account' 
+              ? `تم الخصم رقمياً من حساب "${selectedAcc?.name}". اسحب الآن ${formatCurrency(amount, currency)} نقداً وضعها في حصالتك المادية!`
+              : `تم تسجيل إدخال مالي خارجي بقيمة ${formatCurrency(amount, currency)}. ضع المبلغ الآن في حصالتك المادية!`}
+          </span>
+        </div>,
+        { duration: 5500 }
+      );
+
+      setDepositAmount('');
+      setDepositNote('');
+      setIsManualDepositOpen(false);
+    } catch (err) {
+      toast.error('فشل ضخ الأموال في الحصالة');
+    } finally {
+      setIsSweeping(false);
+    }
+  };
+
+  // Handler for resetting piggy bank
+  const handleResetPiggyBank = async () => {
+    if (!physicalGoal) return;
+    hapticFeedback('warning');
+    try {
+      await updateGoal(physicalGoal.id, { currentAmount: 0 });
+      toast.success(
+        <div className="flex flex-col gap-1 text-right" dir="rtl">
+          <span className="font-bold">تم تفريغ (كسر) الحصالة بنجاح! 🔨💰</span>
+          <span className="text-xs">تم تصفير الرصيد رقمياً بالتطبيق، يمكنك الآن الاستمتاع بمدخراتك المادية في الواقع! 🎉</span>
+        </div>
+      );
+      setShowResetConfirm(false);
+    } catch (err) {
+      toast.error('فشل تفريغ الحصالة');
+    }
+  };
 
   // Helper to calculate "fakka" based on mode
   const calculateFakka = (balance: number, mode: 'decimals' | 'nearest5' | 'nearest10'): number => {
@@ -618,12 +707,12 @@ const Dashboard = () => {
       {/* Category and global smart budget alerts */}
       <BudgetAlerts />
 
-      {/* 🇹🇳 Smart Vaults & Physical Piggy Bank Board (لوحة الأرصدة الذكية وحصالة الواقع) */}
+      {/* 🇹🇳 Standalone Physical Piggy Bank Board (لوحة الحصالة المستقلة وأرصدة الخزائن) */}
       <motion.div
         variants={itemVariants}
         initial="hidden"
         animate="visible"
-        className="border border-slate-150 dark:border-slate-800/85 rounded-[2.5rem] bg-gradient-to-br from-white via-slate-50/50 to-slate-100/30 dark:from-slate-900/60 dark:via-slate-900/30 dark:to-slate-950/40 p-5 md:p-8 shadow-xs overflow-hidden relative"
+        className="border border-slate-150 dark:border-slate-800/85 rounded-[2.5rem] bg-gradient-to-br from-white via-slate-50/50 to-slate-100/30 dark:from-slate-900/60 dark:via-slate-900/30 dark:to-slate-950/40 p-5 md:p-8 shadow-xs overflow-hidden relative animate-fade-in"
       >
         <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -635,18 +724,18 @@ const Dashboard = () => {
             </div>
             <div className="text-right">
               <h3 className="text-sm md:text-base font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                أرصدة الخزائن وحصالة الواقع الذكية 🪙🏡
+                حصالة الواقع الذكية المستقلة 🪙🏡
                 <Badge variant="success" className="text-[9px] font-black">
-                  مزامنة لحظية
+                  مستقلة وتراكمية
                 </Badge>
               </h3>
-              <p className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 font-bold">رصد الأموال الحقيقية، مطابقة الأرصدة الرقمية، وتحدي حصالة الواقع بالمنزل</p>
+              <p className="text-[10px] md:text-xs text-slate-400 dark:text-slate-500 font-bold">تحدي حصالة ملموسة في منزلك، تفريغ الفكة اليومية وضخ مالي رقمي يطابق واقعك</p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="text-left md:text-right">
-              <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 block">إجمالي الثروة والسيولة</span>
+              <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 block">إجمالي الثروة الرقمية</span>
               <span className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-mono">
                 {formatCurrency(totalNetWorth, currency)}
               </span>
@@ -659,7 +748,7 @@ const Dashboard = () => {
           <div className="lg:col-span-7 space-y-4">
             <div className="flex justify-between items-center px-1">
               <span className="text-xs font-black text-slate-800 dark:text-slate-200">الخزائن الرقمية والحسابات النشطة 💳💵</span>
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">اختر حساباً للتحكم الفردي</span>
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">اختر تفريغ الفكة اليومية لمطابقة الكاش</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -721,14 +810,20 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Column 2: Physical Piggy Bank Status & Challenge (lg:col-span-5) */}
+          {/* Column 2: Independent Piggy Bank Panel (lg:col-span-5) */}
           <div className="lg:col-span-5 space-y-4">
             <div className="flex justify-between items-center px-1">
-              <span className="text-xs font-black text-slate-800 dark:text-slate-200">وضعية حصالة الواقع والتفريغ الذكي 🏡</span>
+              <span className="text-xs font-black text-slate-800 dark:text-slate-200">وضعية الحصالة المادية الحقيقية بالمنزل 🏡</span>
               {physicalGoal && (
-                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full font-mono">
-                  {((physicalGoal.currentAmount / physicalGoal.targetAmount) * 100).toFixed(0)}% مكتمل
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setShowResetConfirm(!showResetConfirm)}
+                    className="p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/25 text-rose-500 transition-all tooltip cursor-pointer"
+                    title="تفريغ الحصالة وتصفيرها بالكامل"
+                  >
+                    <Trash size={14} />
+                  </button>
+                </div>
               )}
             </div>
 
@@ -737,33 +832,65 @@ const Dashboard = () => {
                 <Sparkles size={28} className="mx-auto text-amber-500 animate-pulse" />
                 <h4 className="text-xs font-black text-slate-800 dark:text-slate-200">ابدأ تحدي حصالة الواقع الملموسة! 🪙🏡</h4>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold leading-normal max-w-sm mx-auto">
-                  قم بإنشاء حصالة حقيقية في غرفتك بالمنزل. عند تفريغ الفكة آخر اليوم، يتم خصمها رقمياً لتطابق أرصدتك الحقيقية وتوضع ملموسة بيدك في الحصالة الحقيقية!
+                  الحصالة الآن مستقلة تماماً ومفتوحة بدون سقف أهداف محدد! قم بإنشائها لتجميع مدخراتك المادية يدوياً وتفريغ الفكة اليومية.
                 </p>
                 <button
                   onClick={handleCreatePhysicalGoal}
                   className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-black text-xs rounded-xl shadow-md shadow-amber-500/10 hover:opacity-95 transition-all flex items-center gap-1.5 mx-auto cursor-pointer"
                 >
                   <Plus size={14} />
-                  <span>تفعيل وإنشاء حصالة الواقع الآن</span>
+                  <span>تفعيل الحصالة المستقلة الآن</span>
                 </button>
               </div>
             ) : (
-              <div className="p-5 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl space-y-4 text-right">
-                {/* Simulated Glass Piggy Bank Visual Container */}
+              <div className="p-5 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl space-y-4 text-right relative overflow-hidden">
+                {/* Reset Confirmation Overlay */}
+                <AnimatePresence>
+                  {showResetConfirm && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="absolute inset-0 bg-white/95 dark:bg-slate-950/95 z-35 flex flex-col justify-center items-center p-4 text-center rounded-2xl"
+                    >
+                      <span className="text-3xl">🔨🪙</span>
+                      <h4 className="text-xs font-black text-slate-900 dark:text-white mt-2">تفريغ وكسر الحصالة؟</h4>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-xs font-bold leading-normal">
+                        هل تريد تصفير رصيد الحصالة بالتطبيق؟ هذا الإجراء لا يمس حساباتك الرقمية الأخرى ويجعل الحصالة جاهزة للتجميع من جديد.
+                      </p>
+                      <div className="flex gap-2.5 mt-4">
+                        <button
+                          onClick={handleResetPiggyBank}
+                          className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] rounded-lg cursor-pointer"
+                        >
+                          نعم، تفريغ وتصفير 🔨
+                        </button>
+                        <button
+                          onClick={() => setShowResetConfirm(false)}
+                          className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black text-[10px] rounded-lg cursor-pointer"
+                        >
+                          إلغاء
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Standalone Visual Container */}
                 <div className="bg-gradient-to-b from-slate-100/50 to-slate-200/20 dark:from-slate-950/50 dark:to-slate-950/10 p-4 rounded-xl border border-slate-100 dark:border-slate-850/40 relative overflow-hidden flex items-center justify-between gap-4">
                   <div className="text-right">
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 block">رصيد حصالة الغرفة الحالية</span>
-                    <span className="text-lg font-black text-amber-600 dark:text-amber-400 font-mono mt-0.5 block">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 block">رصيد الحصالة الحالي (في غرفتك) 🏡</span>
+                    <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1 block">
                       {formatCurrency(physicalGoal.currentAmount, currency)}
                     </span>
-                    <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 block mt-1">
-                      المستهدف المخطط: {formatCurrency(physicalGoal.targetAmount, currency)}
+                    <span className="text-[9px] font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-md inline-block mt-1">
+                      حصالة مفتوحة غير مقيدة 📈
                     </span>
                   </div>
 
                   <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-full border border-slate-100 dark:border-slate-800 flex items-center justify-center relative shrink-0">
                     <PiggyBank size={28} className="text-amber-500" />
-                    <div className="absolute inset-0.5 rounded-full border-2 border-dashed border-amber-500/20" />
+                    <div className="absolute inset-0.5 rounded-full border-2 border-dashed border-amber-500/20 animate-spin-slow" />
                   </div>
                 </div>
 
@@ -794,11 +921,134 @@ const Dashboard = () => {
                   </motion.div>
                 )}
 
-                {/* Sweep configuration */}
-                <div className="space-y-3 pt-1 border-t border-slate-100 dark:border-slate-800/40">
+                {/* Interactive Manual Deposit Form Button & Form */}
+                <div className="border-t border-slate-100 dark:border-slate-800/40 pt-3">
+                  <button
+                    onClick={() => { setIsManualDepositOpen(!isManualDepositOpen); hapticFeedback('light'); }}
+                    className="w-full py-2.5 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-black flex items-center justify-center gap-1.5 bg-white dark:bg-slate-900/20 hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-all cursor-pointer"
+                  >
+                    <Coins size={14} className="text-amber-500" />
+                    <span>{isManualDepositOpen ? 'إغلاق نافذة الإيداع' : 'ضخ ودفع مبالغ يدوية 💰➕'}</span>
+                  </button>
+
+                  <AnimatePresence>
+                    {isManualDepositOpen && (
+                      <motion.form
+                        onSubmit={handleManualDeposit}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden mt-3 space-y-3 pt-2 text-right"
+                      >
+                        {/* Source selector */}
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-slate-400 block">مصدر الأموال المدفوعة يدوياً:</label>
+                          <div className="grid grid-cols-2 gap-2 bg-slate-100/60 dark:bg-slate-950 p-1 rounded-xl">
+                            <button
+                              type="button"
+                              onClick={() => setDepositSource('account')}
+                              className={cn(
+                                "py-1.5 rounded-lg font-black text-[9px] transition-all cursor-pointer",
+                                depositSource === 'account' ? "bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-xs" : "text-slate-400"
+                              )}
+                            >
+                              خصم من حسابي بالتطبيق
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDepositSource('external')}
+                              className={cn(
+                                "py-1.5 rounded-lg font-black text-[9px] transition-all cursor-pointer",
+                                depositSource === 'external' ? "bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-xs" : "text-slate-400"
+                              )}
+                            >
+                              مال خارجي (نقدي إضافي)
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Account select (if source is account) */}
+                        {depositSource === 'account' && (
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 block">اختر الحساب الرقمي للخصم:</label>
+                            <select
+                              value={selectedDepositAccountId}
+                              onChange={(e) => setSelectedDepositAccountId(e.target.value)}
+                              className="w-full p-2 text-xs font-black bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none"
+                            >
+                              {accounts.map(acc => (
+                                <option key={acc.id} value={acc.id}>
+                                  {acc.name} ({formatCurrency(acc.balance, currency)})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        {/* Amount & Tunisian quick buttons */}
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black text-slate-400 block">قيمة المبلغ المراد ضخه:</label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              step="any"
+                              value={depositAmount}
+                              onChange={(e) => setDepositAmount(e.target.value)}
+                              placeholder="0.000"
+                              className="w-full pl-12 pr-4 py-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-left font-mono font-black text-sm outline-none focus:ring-1 focus:ring-amber-500"
+                              required
+                            />
+                            <span className="absolute left-4 top-2.5 font-mono text-xs text-slate-400">{currency}</span>
+                          </div>
+
+                          {/* Quick Tunisian buttons (+1, +5, +10, +20 TND) */}
+                          <div className="grid grid-cols-4 gap-1">
+                            {[1, 5, 10, 20].map((val) => (
+                              <button
+                                key={val}
+                                type="button"
+                                onClick={() => {
+                                  const current = parseFloat(depositAmount) || 0;
+                                  setDepositAmount((current + val).toString());
+                                  hapticFeedback('light');
+                                }}
+                                className="py-1 bg-slate-100 dark:bg-slate-950 hover:bg-amber-100 dark:hover:bg-amber-950/40 text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 text-[10px] font-bold rounded-lg transition-all border border-transparent hover:border-amber-200 cursor-pointer"
+                              >
+                                +{val} د.ت
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Note */}
+                        <div className="space-y-1">
+                          <input
+                            type="text"
+                            value={depositNote}
+                            onChange={(e) => setDepositNote(e.target.value)}
+                            placeholder="ملاحظة اختيارية (مثال: توفير قهوة اليوم ☕)"
+                            className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                        </div>
+
+                        {/* Submit */}
+                        <button
+                          type="submit"
+                          disabled={isSweeping || !depositAmount}
+                          className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white font-black text-xs shadow-md shadow-amber-500/10 hover:opacity-95 transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                        >
+                          <Check size={14} />
+                          <span>ضخ الأموال الآن في الحصالة 🪙</span>
+                        </button>
+                      </motion.form>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Sweep configuration (Rounding precision) */}
+                <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800/40">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500">قوة تفريغ الفكة المفضلة:</span>
-                    <span className="text-[9px] font-bold text-indigo-500">اختر من الأزر</span>
+                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500">ميزة تفريغ الفكة (التقريب التلقائي للكسور):</span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-1.5 bg-slate-100/60 dark:bg-slate-950 p-1 rounded-xl">
@@ -857,6 +1107,26 @@ const Dashboard = () => {
                     <span>تفريغ الفكة المحددة دفعة واحدة 🚀</span>
                   </button>
                 </div>
+
+                {/* History Ledger specifically for this piggy bank */}
+                {piggyBankHistory.length > 0 && (
+                  <div className="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800/40 text-right">
+                    <span className="text-[10px] font-black text-slate-400 block mb-1">سجل الحركات الأخيرة للحصالة 📜</span>
+                    <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
+                      {piggyBankHistory.map((hist) => (
+                        <div key={hist.id} className="flex justify-between items-center bg-slate-100/30 dark:bg-slate-950/20 p-2 rounded-lg text-[10px]">
+                          <div className="text-right">
+                            <span className="font-black text-slate-700 dark:text-slate-300 block">{hist.note}</span>
+                            <span className="text-[8px] text-slate-400">{hist.date}</span>
+                          </div>
+                          <span className="font-mono font-black text-amber-600 dark:text-amber-400">
+                            + {formatCurrency(hist.amount, currency)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
