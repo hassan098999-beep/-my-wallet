@@ -6,7 +6,7 @@ import { formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } from '
 import { parseISO } from 'date-fns';
 import { Skeleton } from '../components/Skeleton';
 import { motion } from 'motion/react';
-import { PiggyBank, Target, ArrowRight, TrendingUp, Percent, Sparkles, Link as LinkIcon, Baby, CalendarDays, Coins, HeartPulse, Activity } from 'lucide-react';
+import { PiggyBank, Target, ArrowRight, TrendingUp, Percent, Sparkles, Link as LinkIcon, Baby, CalendarDays, Coins, HeartPulse, Activity, Check, Plus, X, Info, Wallet } from 'lucide-react';
 import { Goal } from '../types';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import BabySavingTargetModal from '../components/BabySavingTargetModal';
@@ -18,11 +18,227 @@ import EmptyState from '../components/ui/EmptyState';
 import Badge from '../components/ui/Badge';
 
 const SavingsPage = () => {
-  const { income, expenses, goals, updateGoal, currency, budget, categories, firstDayOfMonth, addIncome, accounts, autoRoundUpSetting } = useAppContext();
+  const { 
+    income, 
+    expenses, 
+    goals, 
+    updateGoal, 
+    currency, 
+    budget, 
+    categories, 
+    firstDayOfMonth, 
+    addIncome, 
+    addExpense, 
+    addGoal, 
+    accounts, 
+    autoRoundUpSetting 
+  } = useAppContext();
 
   const [savingsPercentage, setSavingsPercentage] = useState(10);
   const [customAllocations, setCustomAllocations] = useState<Record<string, number | string>>({});
   const [isBabyModalOpen, setIsBabyModalOpen] = useState(false);
+
+  // States for Physical Piggy Bank (حصالة الواقع)
+  const [fakkaPrecision, setFakkaPrecision] = useState<'decimals' | 'nearest5' | 'nearest10'>('decimals');
+  const [selectedSweepAccounts, setSelectedSweepAccounts] = useState<Record<string, boolean>>({ cash: true, bank: false });
+  const [sweepSuccessMessage, setSweepSuccessMessage] = useState<{ amount: number; accountName: string; date: string } | null>(null);
+  const [isSweeping, setIsSweeping] = useState(false);
+
+  // Find or determine the physical piggy bank goal
+  const physicalGoal = useMemo(() => {
+    return (goals || []).find(g => 
+      g.isPhysicalPiggyBank === true || 
+      g.name.includes('حصالة الواقع') || 
+      g.name.includes('الحصالة الفعلية')
+    );
+  }, [goals]);
+
+  // Helper to calculate "fakka" based on mode
+  const calculateFakka = (balance: number, mode: 'decimals' | 'nearest5' | 'nearest10'): number => {
+    if (balance <= 0) return 0;
+    if (mode === 'decimals') {
+      const remainder = balance - Math.floor(balance);
+      return Number(remainder.toFixed(3));
+    } else if (mode === 'nearest5') {
+      const remainder = balance % 5;
+      return Number(remainder.toFixed(3));
+    } else { // 'nearest10'
+      const remainder = balance % 10;
+      return Number(remainder.toFixed(3));
+    }
+  };
+
+  // Create Physical Goal automatically if it doesn't exist
+  const handleCreatePhysicalGoal = async () => {
+    hapticFeedback('success');
+    try {
+      await addGoal({
+        name: 'حصالة الواقع الفعلية 🪙',
+        targetAmount: 500, // target is 500 TND as standard
+        currentAmount: 0,
+        deadline: new Date(new Date().getFullYear(), 11, 31).toISOString(), // December 31 of current year
+        isPhysicalPiggyBank: true
+      });
+      toast.success('تم إنشاء حصالة الواقع الفعلية بنجاح! 🪙');
+    } catch (err) {
+      toast.error('حدث خطأ أثناء إنشاء الحصالة');
+    }
+  };
+
+  // Perform the sweep action
+  const handleSweepAccount = async (accountId: string, amount: number) => {
+    if (amount <= 0) return;
+    
+    let activePhysicalGoal = physicalGoal;
+    
+    // Auto-create physical goal if it does not exist
+    if (!activePhysicalGoal) {
+      hapticFeedback('light');
+      const confirmCreate = window.confirm('لم يتم العثور على حصالة واقع مخصصة. هل تريد إنشاء "حصالة الواقع الفعلية 🪙" تلقائياً لحفظ هذه المبالغ؟');
+      if (!confirmCreate) return;
+      
+      const newGoalId = crypto.randomUUID();
+      const newGoal: Goal = {
+        id: newGoalId,
+        name: 'حصالة الواقع الفعلية 🪙',
+        targetAmount: 500,
+        currentAmount: 0,
+        deadline: new Date(new Date().getFullYear(), 11, 31).toISOString(),
+        createdAt: new Date().toISOString(),
+        isPhysicalPiggyBank: true
+      };
+      
+      try {
+        await addGoal(newGoal);
+        activePhysicalGoal = newGoal;
+      } catch (err) {
+        toast.error('حدث خطأ أثناء إنشاء الحصالة');
+        return;
+      }
+    }
+
+    setIsSweeping(true);
+    hapticFeedback('success');
+
+    const account = accounts.find(a => a.id === accountId);
+    const accountName = account ? account.name : 'الحساب المالي';
+
+    // Find saving category
+    const savingCategory = categories.find(c => c.type === 'saving') || 
+                          categories.find(c => c.name.includes('ادخار')) || 
+                          categories[0];
+
+    try {
+      // 1. Add expense entry to deduct money from the account
+      await addExpense({
+        amount: amount,
+        categoryId: savingCategory.id,
+        accountId: accountId,
+        goalId: activePhysicalGoal.id,
+        date: new Date().toISOString().split('T')[0],
+        note: `تفريغ الفكة اليومية لحصالة الواقع (${accountName}) 🪙`,
+        paymentMethod: accountId === 'bank' ? 'card' : 'cash',
+        isTransfer: true
+      });
+
+      // 2. Direct goal balance adjustment (handled in AppContext, but we ensure goal currentAmount increments)
+      await updateGoal(activePhysicalGoal.id, {
+        currentAmount: activePhysicalGoal.currentAmount + amount
+      });
+
+      setSweepSuccessMessage({
+        amount: amount,
+        accountName: accountName,
+        date: new Date().toLocaleTimeString('ar-TN', { hour: '2-digit', minute: '2-digit' })
+      });
+      
+      toast.success(`تم تفريغ الفكة بقيمة ${formatCurrency(amount, currency)} بنجاح! 🎉`);
+    } catch (err) {
+      console.error(err);
+      toast.error('فشلت عملية تفريغ الفكة');
+    } finally {
+      setIsSweeping(false);
+    }
+  };
+
+  const handleSweepSelected = async () => {
+    let activePhysicalGoal = physicalGoal;
+    
+    // Check if any change exists
+    const accountsToSweep = accounts.filter(acc => selectedSweepAccounts[acc.id] && calculateFakka(acc.balance, fakkaPrecision) > 0);
+    if (accountsToSweep.length === 0) {
+      toast.error('لا توجد فكة متبقية في الحسابات المحددة لتفريغها!');
+      return;
+    }
+
+    if (!activePhysicalGoal) {
+      hapticFeedback('light');
+      const confirmCreate = window.confirm('لم يتم العثور على حصالة واقع مخصصة. هل تريد إنشاء "حصالة الواقع الفعلية 🪙" تلقائياً لحفظ هذه المبالغ؟');
+      if (!confirmCreate) return;
+      
+      const newGoalId = crypto.randomUUID();
+      const newGoal: Goal = {
+        id: newGoalId,
+        name: 'حصالة الواقع الفعلية 🪙',
+        targetAmount: 500,
+        currentAmount: 0,
+        deadline: new Date(new Date().getFullYear(), 11, 31).toISOString(),
+        createdAt: new Date().toISOString(),
+        isPhysicalPiggyBank: true
+      };
+      
+      try {
+        await addGoal(newGoal);
+        activePhysicalGoal = newGoal;
+      } catch (err) {
+        toast.error('حدث خطأ أثناء إنشاء الحصالة');
+        return;
+      }
+    }
+
+    setIsSweeping(true);
+    hapticFeedback('success');
+
+    const savingCategory = categories.find(c => c.type === 'saving') || 
+                          categories.find(c => c.name.includes('ادخار')) || 
+                          categories[0];
+
+    let totalSwept = 0;
+    try {
+      for (const acc of accountsToSweep) {
+        const amount = calculateFakka(acc.balance, fakkaPrecision);
+        await addExpense({
+          amount: amount,
+          categoryId: savingCategory.id,
+          accountId: acc.id,
+          goalId: activePhysicalGoal.id,
+          date: new Date().toISOString().split('T')[0],
+          note: `تفريغ الفكة اليومية لحصالة الواقع (${acc.name}) 🪙`,
+          paymentMethod: acc.id === 'bank' ? 'card' : 'cash',
+          isTransfer: true
+        });
+
+        await updateGoal(activePhysicalGoal.id, {
+          currentAmount: activePhysicalGoal.currentAmount + amount
+        });
+
+        totalSwept += amount;
+      }
+
+      setSweepSuccessMessage({
+        amount: totalSwept,
+        accountName: accountsToSweep.map(a => a.name).join(' و '),
+        date: new Date().toLocaleTimeString('ar-TN', { hour: '2-digit', minute: '2-digit' })
+      });
+      
+      toast.success(`تم تفريغ الفكة الكلية بقيمة ${formatCurrency(totalSwept, currency)} بنجاح! 🎉`);
+    } catch (err) {
+      console.error(err);
+      toast.error('فشلت العملية المتعددة');
+    } finally {
+      setIsSweeping(false);
+    }
+  };
 
   const currentMonth = useMemo(() => getBudgetMonth(new Date(), firstDayOfMonth), [firstDayOfMonth]);
   const { start: monthStart, end: monthEnd } = useMemo(() => getBudgetRange(currentMonth, firstDayOfMonth), [currentMonth, firstDayOfMonth]);
@@ -453,6 +669,181 @@ const SavingsPage = () => {
               </p>
             </div>
           </div>
+        </motion.div>
+
+        {/* Real-world Physical Piggy Bank (حصالة الواقع الملموسة) */}
+        <motion.div 
+          variants={itemVariants}
+          className="mt-6 border border-amber-100 dark:border-amber-950/40 rounded-3xl bg-gradient-to-br from-amber-50/20 via-white to-orange-50/10 dark:from-slate-900/40 dark:via-slate-900/20 dark:to-slate-900/30 p-5 md:p-6 shadow-sm overflow-hidden relative"
+        >
+          <div className="absolute top-0 left-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl -ml-6 -mt-6 pointer-events-none" />
+          <div className="absolute bottom-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-3xl -mr-8 -mb-8 pointer-events-none" />
+          
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10" dir="rtl">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-md shadow-amber-500/10 shrink-0">
+                <PiggyBank size={24} className="shrink-0" />
+              </div>
+              <div className="text-right">
+                <h3 className="text-xs md:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                  حصالة الواقع الملموسة (تفريغ الفكة اليومية) 🪙🏡
+                  {physicalGoal && (
+                    <Badge variant="success" className="text-[8px] font-black">
+                      مفعّلة ونشطة
+                    </Badge>
+                  )}
+                </h3>
+                <p className="text-[9px] text-slate-400 font-bold">تطابق الرصيد الرقمي بطرح الفكة المتبقية يدوياً ونقلها للحصالة الفعلية في غرفتك</p>
+              </div>
+            </div>
+
+            {physicalGoal && (
+              <div className="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-100/30 text-[10px] md:text-xs font-black text-amber-600 dark:text-amber-400 shrink-0">
+                رصيد الحصالة بالتطبيق: <span className="font-mono">{formatCurrency(physicalGoal.currentAmount, currency)}</span>
+              </div>
+            )}
+          </div>
+
+          {!physicalGoal ? (
+            <div className="mt-5 p-5 bg-amber-50/50 dark:bg-amber-950/20 border border-dashed border-amber-200 dark:border-amber-900/50 rounded-2xl text-center relative z-10" dir="rtl">
+              <Sparkles size={28} className="mx-auto text-amber-500 mb-2 animate-pulse" />
+              <h4 className="text-xs font-black text-slate-800 dark:text-slate-200">ابدأ تحدي حصالة الواقع الملموسة! 🪙</h4>
+              <p className="text-[10px] text-slate-400 font-bold mt-1 max-w-md mx-auto">
+                عند تفريغ الفكة آخر اليوم، يقوم التطبيق بخصم الفكة من أرصدتك لتبقى مطابقة لواقع محفظتك، ويذكرك بوضع تلك الفكة (القطع النقدية) في حصالتك الحقيقية بالمنزل!
+              </p>
+              <button
+                onClick={handleCreatePhysicalGoal}
+                className="mt-4 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs shadow-md shadow-amber-500/10 hover:opacity-90 transition-all flex items-center gap-1.5 mx-auto"
+              >
+                <Plus size={16} />
+                <span>إنشاء وتفعيل حصالة الواقع الآن</span>
+              </button>
+            </div>
+          ) : (
+            <div className="mt-5 relative z-10 space-y-4" dir="rtl">
+              {/* Sweep success feedback instructions */}
+              {sweepSuccessMessage && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl text-slate-800 dark:text-slate-200 relative"
+                >
+                  <button 
+                    onClick={() => setSweepSuccessMessage(null)}
+                    className="absolute top-3 left-3 p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all"
+                  >
+                    <X size={14} />
+                  </button>
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-600 shrink-0">
+                      <Check size={18} />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[11px] font-black text-emerald-700 dark:text-emerald-400">تم تحديث الأرصدة الرقمية بالتطبيق! 🎉</p>
+                      <h4 className="text-xs font-black text-slate-800 dark:text-slate-100 mt-1">
+                        توجيه الغرفة الهام 🏡:
+                      </h4>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-1 leading-relaxed">
+                        قم الآن فوراً بسحب <span className="text-emerald-600 dark:text-emerald-400 font-black font-mono text-xs">{formatCurrency(sweepSuccessMessage.amount, currency)}</span> نقداً من محفظة جيبك الحقيقية وضعها ملموسة بيدك داخل حصالتك الفعلية في الغرفة!
+                      </p>
+                      <span className="text-[8px] text-slate-400 font-mono mt-1 block">توقيت الحركة: {sweepSuccessMessage.date}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Rounding precision controls */}
+              <div className="flex flex-col gap-2">
+                <p className="text-[9px] text-slate-400 font-bold">اختر قوة إفراغ وتفريغ الفكة المفضلة:</p>
+                <div className="grid grid-cols-3 gap-2 bg-slate-100/60 dark:bg-slate-900/60 p-1 rounded-xl">
+                  <button
+                    onClick={() => { setFakkaPrecision('decimals'); hapticFeedback('light'); }}
+                    className={`py-1.5 rounded-lg font-black text-[10px] transition-all ${fakkaPrecision === 'decimals' ? 'bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                  >
+                    الكسور والمليمات (فقط)
+                  </button>
+                  <button
+                    onClick={() => { setFakkaPrecision('nearest5'); hapticFeedback('light'); }}
+                    className={`py-1.5 rounded-lg font-black text-[10px] transition-all ${fakkaPrecision === 'nearest5' ? 'bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                  >
+                    أقرب 5 د.ت
+                  </button>
+                  <button
+                    onClick={() => { setFakkaPrecision('nearest10'); hapticFeedback('light'); }}
+                    className={`py-1.5 rounded-lg font-black text-[10px] transition-all ${fakkaPrecision === 'nearest10' ? 'bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                  >
+                    أقرب 10 د.ت
+                  </button>
+                </div>
+              </div>
+
+              {/* Accounts list with calculated change */}
+              <div className="space-y-2.5">
+                {accounts.map(acc => {
+                  const fakka = calculateFakka(acc.balance, fakkaPrecision);
+                  const isSelected = selectedSweepAccounts[acc.id] || false;
+                  
+                  return (
+                    <div 
+                      key={acc.id} 
+                      className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${fakka > 0 ? 'bg-white/75 dark:bg-slate-900/60 border-slate-100 dark:border-slate-800/60' : 'bg-slate-50/50 dark:bg-slate-900/20 border-slate-100/40 dark:border-slate-800/20 opacity-70'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {fakka > 0 && (
+                          <input 
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => setSelectedSweepAccounts(prev => ({ ...prev, [acc.id]: e.target.checked }))}
+                            className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300 dark:border-slate-700 cursor-pointer"
+                          />
+                        )}
+                        <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: acc.color }}>
+                          <Wallet size={16} />
+                        </div>
+                        <div className="text-right">
+                          <h4 className="text-xs font-black text-slate-700 dark:text-slate-200">{acc.name}</h4>
+                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">الرصيد: {formatCurrency(acc.balance, currency)}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="text-left">
+                          <p className="text-[9px] text-slate-400 font-bold">الفكة المتبقية</p>
+                          <p className="text-xs font-black font-mono text-amber-600 dark:text-amber-400 mt-0.5">
+                            {fakka > 0 ? `+ ${formatCurrency(fakka, currency)}` : '0.000'}
+                          </p>
+                        </div>
+
+                        {fakka > 0 ? (
+                          <button
+                            disabled={isSweeping}
+                            onClick={() => handleSweepAccount(acc.id, fakka)}
+                            className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 font-black text-[10px] hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all border border-amber-100/20"
+                          >
+                            تفريغ الفردي 🪙
+                          </button>
+                        ) : (
+                          <div className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-black text-[9px]">
+                            نظيف ✨
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Master sweep action */}
+              <button
+                disabled={isSweeping || accounts.filter(acc => selectedSweepAccounts[acc.id] && calculateFakka(acc.balance, fakkaPrecision) > 0).length === 0}
+                onClick={handleSweepSelected}
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs shadow-md shadow-amber-500/10 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
+              >
+                <Coins size={16} />
+                <span>تفريغ الفكة المحددة دفعة واحدة 🚀</span>
+              </button>
+            </div>
+          )}
         </motion.div>
 
         {/* Target Allocation Visual Breakdown */}

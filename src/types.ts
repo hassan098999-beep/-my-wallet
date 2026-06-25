@@ -40,6 +40,7 @@ export interface Goal {
   isLinkedToOverallBudget?: boolean;
   monthlySavingsTarget?: number;
   isEmergencyFund?: boolean;
+  isPhysicalPiggyBank?: boolean;
 }
 
 export type Mood = 'happy' | 'neutral' | 'sad' | 'stressed' | 'excited';
