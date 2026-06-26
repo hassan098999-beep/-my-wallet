@@ -739,7 +739,7 @@ const SavingsPage = () => {
             </div>
 
             <div className="p-3 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/10 rounded-2xl">
-              <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">مجموع الفكة الموفرة تلقائياً</p>
+              <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">إجمالي التوفير التلقائي (التاريخي)</p>
               <p className="text-xs font-sans font-black text-emerald-600 dark:text-emerald-400 mt-1">
                 {formatCurrency(
                   expenses

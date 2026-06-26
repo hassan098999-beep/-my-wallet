@@ -38,6 +38,15 @@ const RoundUpManager = () => {
     0
   );
 
+  // Find the physical piggy bank goal or target goal
+  const physicalGoal = (goals || []).find(g => 
+    g.isPhysicalPiggyBank === true || 
+    g.name.includes('حصالة الواقع') || 
+    g.name.includes('الحصالة الفعلية')
+  );
+
+  const targetGoal = (goals || []).find(g => g.id === targetGoalId) || physicalGoal;
+
   const handleToggle = () => {
     hapticFeedback('medium');
     if (!enabled && savingGoals.length === 0) {
@@ -260,17 +269,17 @@ const RoundUpManager = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           
           {/* Accumulated card */}
-          <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-500/15 rounded-2xl flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-              <PiggyBank size={24} />
+          <div className="p-4 bg-amber-50/40 dark:bg-amber-950/10 border border-amber-500/15 rounded-2xl flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <PiggyBank size={24} className="text-amber-500" />
             </div>
             <div className="flex-1 text-right">
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">إجمالي فكة التوفير المحققة</p>
-              <p className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-sans mt-0.5">
-                {formatCurrency(totalSavedViaRoundUp, currency)}
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">رصيد الحصالة الحالي (في غرفتك) 🏡</p>
+              <p className="text-lg font-black text-amber-600 dark:text-amber-400 font-sans mt-0.5">
+                {formatCurrency(targetGoal ? targetGoal.currentAmount : 0, currency)}
               </p>
               <p className="text-[9px] text-slate-400 font-bold mt-1">
-                من إجمالي {roundUpTransactions.length} عمليات تقريب ناجحة 🎉
+                إجمالي التوفير التلقائي: <span className="font-sans text-emerald-600 dark:text-emerald-400 font-bold">{formatCurrency(totalSavedViaRoundUp, currency)}</span> (من {roundUpTransactions.length} عملية تقريب)
               </p>
             </div>
           </div>
