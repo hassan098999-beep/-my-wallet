@@ -41,6 +41,7 @@ import FinancialRadar from '../components/FinancialRadar';
 import BehavioralAdvisor from '../components/BehavioralAdvisor';
 import { SmartSavingChallengeCard } from '../components/SmartSavingChallengeCard';
 import { BudgetAlerts } from '../components/BudgetAlerts';
+import { WeeklyAnalysis } from '../components/WeeklyAnalysis';
 
 // Import unified design system components
 import PageHeader from '../components/ui/PageHeader';
@@ -402,16 +403,10 @@ const Dashboard = () => {
       .reduce((sum, e) => sum + e.amount, 0);
   }, [expenses]);
 
-  // View Mode switcher ('daily' = simple mode, 'pro' = advanced mode)
-  const [viewMode, setViewMode] = useState<'daily' | 'pro'>(() => {
-    return (safeStorage.getItem('dashboard_view_mode') as 'daily' | 'pro') || 'daily';
+  // Active Tab for refactored clutter-free dashboard
+  const [activeDashboardTab, setActiveDashboardTab] = useState<'daily' | 'vaults' | 'insights' | 'history'>(() => {
+    return (safeStorage.getItem('dashboard_active_tab') as 'daily' | 'vaults' | 'insights' | 'history') || 'daily';
   });
-
-  const handleViewChange = (mode: 'daily' | 'pro') => {
-    hapticFeedback('medium');
-    setViewMode(mode);
-    safeStorage.setItem('dashboard_view_mode', mode);
-  };
 
   const handleQuickPresetClick = async (preset: { label: string; amount: string; desc: string; categoryName: string; }) => {
     const amountNum = parseFloat(preset.amount);
@@ -709,13 +704,85 @@ const Dashboard = () => {
       {/* Category and global smart budget alerts */}
       <BudgetAlerts />
 
-      {/* 🇹🇳 Standalone Physical Piggy Bank Board (لوحة الحصالة المستقلة وأرصدة الخزائن) */}
-      <motion.div
+      {/* 2. Intelligent Segmented KPI Row */}
+      <motion.div 
         variants={itemVariants}
         initial="hidden"
         animate="visible"
-        className="border border-slate-150 dark:border-slate-800/85 rounded-[2.5rem] bg-gradient-to-br from-white via-slate-50/50 to-slate-100/30 dark:from-slate-900/60 dark:via-slate-900/30 dark:to-slate-950/40 p-5 md:p-8 shadow-xs overflow-hidden relative animate-fade-in"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-3.5"
+        dir="rtl"
       >
+        <div className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl shadow-3xs flex flex-col justify-between text-right">
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold block mb-1">الرصيد الإجمالي الحالي 💵</span>
+          <span className="text-sm md:text-base font-black text-slate-900 dark:text-white font-mono truncate">
+            {formatCurrency(totalNetWorth, currency)}
+          </span>
+        </div>
+        <div className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl shadow-3xs flex flex-col justify-between text-right">
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold block mb-1">المتبقي الآمن اليوم ⚡</span>
+          <span className={cn(
+            "text-sm md:text-base font-black font-mono truncate",
+            remainingToday > 0 ? "text-emerald-500" : "text-rose-500"
+          )}>
+            {formatCurrency(remainingToday, currency)}
+          </span>
+        </div>
+        <div className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl shadow-3xs flex flex-col justify-between text-right">
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold block mb-1">مصاريف الشهر 📈</span>
+          <span className="text-sm md:text-base font-black text-slate-900 dark:text-white font-mono truncate">
+            {formatCurrency(totalMonthlyExpense, currency)}
+          </span>
+        </div>
+        <div className="p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl shadow-3xs flex flex-col justify-between text-right">
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold block mb-1">الميزانية الإجمالية 🎯</span>
+          <span className="text-sm md:text-base font-black text-indigo-500 font-mono truncate">
+            {formatCurrency(globalBudgetNum, currency)}
+          </span>
+        </div>
+      </motion.div>
+
+      {/* 3. Intelligent Segmented Tab Switcher */}
+      <motion.div 
+        variants={itemVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex p-1 bg-slate-100/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-200/40 dark:border-slate-800/40 w-full max-w-4xl mx-auto transition-all text-right select-none"
+        dir="rtl"
+      >
+        {[
+          { id: 'daily', label: 'اليوم والسريع ⚡', icon: <Zap size={14} className="text-amber-500" /> },
+          { id: 'vaults', label: 'الخزائن والحصالة 💳', icon: <PiggyBank size={14} className="text-emerald-500" /> },
+          { id: 'insights', label: 'الذكاء والتحليل 📊', icon: <Activity size={14} className="text-indigo-500" /> },
+          { id: 'history', label: 'سجل المعاملات 📜', icon: <Clock size={14} className="text-slate-500" /> },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => {
+              hapticFeedback('light');
+              setActiveDashboardTab(tab.id as any);
+              safeStorage.setItem('dashboard_active_tab', tab.id);
+            }}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-[11px] md:text-xs font-black transition-all cursor-pointer",
+              activeDashboardTab === tab.id 
+                ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs border border-slate-200/5" 
+                : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+            )}
+          >
+            {tab.icon}
+            <span className="hidden md:inline">{tab.label}</span>
+            <span className="md:hidden">{tab.label.split(' ')[0]}</span>
+          </button>
+        ))}
+      </motion.div>
+
+      {activeDashboardTab === 'vaults' && (
+        <motion.div
+          variants={itemVariants}
+          initial="hidden"
+          animate="visible"
+          className="border border-slate-150 dark:border-slate-800/85 rounded-[2.5rem] bg-gradient-to-br from-white via-slate-50/50 to-slate-100/30 dark:from-slate-900/60 dark:via-slate-900/30 dark:to-slate-950/40 p-5 md:p-8 shadow-xs overflow-hidden relative animate-fade-in"
+        >
         <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         
@@ -1134,47 +1201,11 @@ const Dashboard = () => {
           </div>
         </div>
       </motion.div>
-
-      {/* 2. Cozy View Mode Switcher */}
-      <motion.div 
-        variants={itemVariants}
-        initial="hidden"
-        animate="visible"
-        className="flex justify-center"
-      >
-        <div className="bg-slate-100 dark:bg-slate-800/85 p-1 rounded-2xl flex items-center gap-1 shadow-inner border border-slate-200/20 w-full max-w-md">
-          <button
-            type="button"
-            onClick={() => handleViewChange('daily')}
-            className={cn(
-              "flex-1 py-3 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer",
-              viewMode === 'daily'
-                ? "bg-white dark:bg-slate-700 text-slate-950 dark:text-white shadow-md border border-slate-200/5"
-                : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-            )}
-          >
-            <Zap size={14} className={cn(viewMode === 'daily' ? "text-amber-500 fill-amber-500 animate-pulse" : "text-slate-400")} />
-            <span>الاستخدام اليومي المبسط ⚡</span>
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => handleViewChange('pro')}
-            className={cn(
-              "flex-1 py-3 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer",
-              viewMode === 'pro'
-                ? "bg-white dark:bg-slate-700 text-slate-950 dark:text-white shadow-md border border-slate-200/5"
-                : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-            )}
-          >
-            <Activity size={14} className={cn(viewMode === 'pro' ? "text-emerald-500" : "text-slate-400")} />
-            <span>لوحة التحكم الشاملة 📊</span>
-          </button>
-        </div>
-      </motion.div>
-
-      {/* 3. Today Panel ("لوحة اليوم") */}
-      <motion.div
+      )}
+      {activeDashboardTab === 'daily' && (
+        <>
+          {/* 3. Today Panel ("لوحة اليوم") */}
+          <motion.div
         variants={itemVariants}
         initial="hidden"
         animate="visible"
@@ -1416,45 +1447,71 @@ const Dashboard = () => {
         </div>
       </motion.div>
 
-      {/* Conditional Rendering of Dashboard Mode */}
-      {viewMode === 'daily' ? (
-        <DailySimpleView
-          categories={categories}
-          accounts={accounts}
-          expenses={expenses}
-          goals={goals}
-          currency={currency}
-          remainingDailyBudget={remainingDailyBudget}
-          todaySpending={todaySpending}
-          dailyBudget={dailyBudget}
-          rollingBudget={rollingBudget}
-          totalNetWorth={totalNetWorth}
-          totalMonthlyExpense={totalMonthlyExpense}
-          dailyAverage={dailyAverage}
-          recentTransactions={recentTransactions}
-          budgetStatus={budgetStatus}
-          handleQuickPresetClick={handleQuickPresetClick}
-          handleQuickAddSubmit={handleQuickAddSubmit}
-          quickAmount={quickAmount}
-          setQuickAmount={setQuickAmount}
-          quickDescription={quickDescription}
-          setQuickDescription={setQuickDescription}
-          quickCategoryId={quickCategoryId}
-          setQuickCategoryId={setQuickCategoryId}
-          setIsAddModalOpen={setIsAddModalOpen}
-          handleEdit={handleEdit}
-          deleteExpense={deleteExpense}
-          repeatExpense={repeatExpense}
-        />
-      ) : (
-        <div className="space-y-6">
-          {/* Promo banner for Savings Indicators */}
-          <motion.div
-            variants={itemVariants}
-            initial="hidden"
-            animate="visible"
-            className="bg-emerald-505/10 bg-emerald-500/10 dark:bg-emerald-500/5 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/10 border-2 border-emerald-500/20 rounded-3xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
-          >
+      <DailySimpleView
+        categories={categories}
+        accounts={accounts}
+        expenses={expenses}
+        goals={goals}
+        currency={currency}
+        remainingDailyBudget={remainingDailyBudget}
+        todaySpending={todaySpending}
+        dailyBudget={dailyBudget}
+        rollingBudget={rollingBudget}
+        totalNetWorth={totalNetWorth}
+        totalMonthlyExpense={totalMonthlyExpense}
+        dailyAverage={dailyAverage}
+        recentTransactions={recentTransactions}
+        budgetStatus={budgetStatus}
+        handleQuickPresetClick={handleQuickPresetClick}
+        handleQuickAddSubmit={handleQuickAddSubmit}
+        quickAmount={quickAmount}
+        setQuickAmount={setQuickAmount}
+        quickDescription={quickDescription}
+        setQuickDescription={setQuickDescription}
+        quickCategoryId={quickCategoryId}
+        setQuickCategoryId={setQuickCategoryId}
+        setIsAddModalOpen={setIsAddModalOpen}
+        handleEdit={handleEdit}
+        deleteExpense={deleteExpense}
+        repeatExpense={repeatExpense}
+      />
+
+      {/* 🇹🇳 Quick Tunisian Family Ledger Form */}
+      <TunisianLedger
+        categories={categories}
+        accounts={accounts}
+        currency={currency}
+        quickAmount={quickAmount}
+        setQuickAmount={setQuickAmount}
+        quickCategoryId={quickCategoryId}
+        setQuickCategoryId={setQuickCategoryId}
+        quickDescription={quickDescription}
+        setQuickDescription={setQuickDescription}
+        quickSubcategory={quickSubcategory}
+        setQuickSubcategory={setQuickSubcategory}
+        quickAccountId={quickAccountId}
+        setQuickAccountId={setQuickAccountId}
+        handleQuickAddSubmit={handleQuickAddSubmit}
+      />
+    </>
+  )}
+
+  {activeDashboardTab === 'insights' && (
+    <div className="space-y-6">
+      {/* Dynamic Weekly Spending Comparison and Smart Tips */}
+      <WeeklyAnalysis 
+        expenses={expenses}
+        categories={categories}
+        currency={currency}
+      />
+
+      {/* Promo banner for Savings Indicators */}
+      <motion.div
+        variants={itemVariants}
+        initial="hidden"
+        animate="visible"
+        className="bg-emerald-500/10 dark:bg-emerald-500/5 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/10 border-2 border-emerald-500/20 rounded-3xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
+      >
         <div className="flex items-start sm:items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
             <Percent size={18} />
@@ -1543,9 +1600,11 @@ const Dashboard = () => {
         setActiveInsightIdx={setActiveInsightIdx}
         itemVariants={itemVariants}
       />
+    </div>
+  )}
 
-      {/* 4. Interactive Transaction List with live Filters */}
-      <motion.div variants={itemVariants}>
+  {activeDashboardTab === 'history' && (
+    <motion.div variants={itemVariants}>
         <Card className="flex flex-col min-h-[500px] p-6 sm:p-7">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800/65">
             <div className="flex items-center gap-3">
@@ -1641,8 +1700,7 @@ const Dashboard = () => {
           </div>
         </Card>
       </motion.div>
-        </div>
-      )}
+    )}
 
     </div>
   );
