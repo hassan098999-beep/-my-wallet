@@ -4,7 +4,7 @@ import { cn, formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } fr
 import { format, parseISO, eachDayOfInterval, startOfYear, endOfYear, eachMonthOfInterval, subDays } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'motion/react';
-import { Calendar, Activity, Target, ChartPie as PieChartIcon } from 'lucide-react';
+import { Calendar, Activity, Target, ChartPie as PieChartIcon, Sparkles } from 'lucide-react';
 import { useWindowSize } from '../hooks/useWindowSize';
 import { useBehavioralEngine } from '../hooks/useBehavioralEngine';
 
@@ -12,6 +12,7 @@ import PageHeader from '../components/ui/PageHeader';
 import { OverviewSection } from '../components/analytics/OverviewSection';
 import { BudgetSection } from '../components/analytics/BudgetSection';
 import { ChartsSection } from '../components/analytics/ChartsSection';
+import { WeeklySection } from '../components/analytics/WeeklySection';
 
 const Analytics = () => {
   const { expenses, income = [], categories, currency, budget, dailyBudget, firstDayOfMonth, aiInsights } = useAppContext();
@@ -22,7 +23,7 @@ const Analytics = () => {
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [isReady, setIsReady] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'budget' | 'charts'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'budget' | 'charts' | 'weekly'>('overview');
   const [chartSubTab, setChartSubTab] = useState<'daily' | 'monthly'>('daily');
 
   useEffect(() => {
@@ -323,7 +324,7 @@ const Analytics = () => {
       {/* Segmented Tab Switche Controls */}
       <motion.div 
         variants={itemVariants} 
-        className="flex p-1 bg-slate-100/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-200/40 dark:border-slate-800/40 max-w-md mx-auto w-full transition-all"
+        className="flex p-1 bg-slate-100/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-200/40 dark:border-slate-800/40 max-w-lg mx-auto w-full transition-all"
       >
         <button
           onClick={() => { hapticFeedback('light'); setActiveTab('overview'); }}
@@ -354,6 +355,16 @@ const Analytics = () => {
         >
           <PieChartIcon size={14} />
           <span>التحليل البياني</span>
+        </button>
+        <button
+          onClick={() => { hapticFeedback('light'); setActiveTab('weekly'); }}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-black transition-all",
+            activeTab === 'weekly' ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
+          )}
+        >
+          <Sparkles size={14} />
+          <span>التحليل الأسبوعي</span>
         </button>
       </motion.div>
 
@@ -418,6 +429,15 @@ const Analytics = () => {
                 dailyBudget={dailyBudget}
                 currency={currency}
                 width={width}
+                itemVariants={itemVariants}
+              />
+            )}
+
+            {activeTab === 'weekly' && (
+              <WeeklySection
+                expenses={expenses}
+                categories={categories}
+                currency={currency}
                 itemVariants={itemVariants}
               />
             )}
