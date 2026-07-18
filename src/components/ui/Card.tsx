@@ -15,9 +15,9 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div 
       className={cn(
-        "bg-white dark:bg-slate-900/80 backdrop-blur-xl border border-slate-100 dark:border-slate-800/80 shadow-sm p-4 md:p-6 transition-all duration-200",
-        "rounded-card", // CSS variable defined in index.css
-        interactive && "cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/30 hover:shadow-md motion-safe:hover:scale-[1.01] active:scale-[0.99] motion-reduce:transform-none",
+        "bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-850/80 shadow-sm md:shadow-md p-4 md:p-6 transition-all duration-300",
+        "rounded-3xl", // CSS premium standard rounded-3xl
+        interactive && "cursor-pointer hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-black/25 active:scale-[0.99]",
         className
       )}
       {...props}

@@ -51,12 +51,14 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
         <motion.div 
           variants={itemVariants} 
           className={cn(
-            "rounded-3xl p-6 text-white shadow-sm relative overflow-hidden group border",
+            "rounded-3xl p-6 text-white shadow-md relative overflow-hidden group border transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
             netBalance >= 0 ? "bg-slate-950 dark:bg-black border-slate-900" : "bg-gradient-to-br from-rose-600 to-red-700 border-rose-500"
           )}
         >
-          {netBalance >= 0 && (
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-transparent to-transparent opacity-40 pointer-events-none" />
+          {netBalance >= 0 ? (
+            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
+          ) : (
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
           )}
           <div className="relative z-10 flex flex-col justify-between h-full min-h-[120px]">
             <div className="flex items-center gap-2 opacity-60">
@@ -76,8 +78,9 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
         {/* Total Income */}
         <motion.div 
           variants={itemVariants} 
-          className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-850 shadow-sm relative overflow-hidden group"
+          className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-150 dark:border-slate-850/80 shadow-md dark:shadow-black/5 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
         >
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
           <div className="relative z-10 flex flex-col justify-between h-full min-h-[120px]">
             <div className="flex items-center gap-2 text-slate-400">
               <ArrowDownRight size={16} className="text-emerald-500 shrink-0" />
@@ -101,8 +104,9 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
         {/* Total Expense */}
         <motion.div 
           variants={itemVariants} 
-          className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-850 shadow-sm relative overflow-hidden group"
+          className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-150 dark:border-slate-850/80 shadow-md dark:shadow-black/5 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
         >
+          <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 dark:bg-rose-500/10 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
           <div className="relative z-10 flex flex-col justify-between h-full min-h-[120px]">
             <div className="flex items-center gap-2 text-slate-400">
               <ArrowUpRight size={16} className="text-rose-500 shrink-0" />
@@ -127,18 +131,21 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
       {/* 2. Secondary Mini KPI Items */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'متوسط الأيام', value: formatCurrency(averageDailyExpense, currency), color: 'text-indigo-500' },
-          { label: 'الأعلى صرفاً', value: highestExpenseDay.date !== '-' ? highestExpenseDay.fullDate : '-', color: 'text-rose-500' },
-          { label: 'الفئة الأكثر', value: categoryData.length > 0 ? categoryData[0].name : '-', color: 'text-amber-500' },
-          { label: 'نسبة التوفير', value: `${savingsRate}%`, color: 'text-emerald-500' }
+          { label: 'متوسط الأيام', value: formatCurrency(averageDailyExpense, currency), color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50/40 dark:bg-indigo-950/10 border-indigo-100/50 dark:border-indigo-900/30' },
+          { label: 'الأعلى صرفاً', value: highestExpenseDay.date !== '-' ? highestExpenseDay.fullDate : '-', color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50/40 dark:bg-rose-950/10 border-rose-100/50 dark:border-rose-900/30' },
+          { label: 'الفئة الأكثر', value: categoryData.length > 0 ? categoryData[0].name : '-', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50/40 dark:bg-amber-950/10 border-amber-100/50 dark:border-amber-900/30' },
+          { label: 'نسبة التوفير', value: `${savingsRate}%`, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50/40 dark:bg-emerald-950/10 border-emerald-100/50 dark:border-emerald-900/30' }
         ].map((insight, idx) => (
           <motion.div 
             key={idx}
             variants={itemVariants} 
-            className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-850 flex flex-col items-center justify-center text-center shadow-xs"
+            className={cn(
+              "p-4 rounded-2xl border flex flex-col items-center justify-center text-center shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
+              insight.bg
+            )}
           >
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{insight.label}</span>
-            <span className={cn("text-sm md:text-base font-black tracking-tight", insight.color)}>{insight.value}</span>
+            <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{insight.label}</span>
+            <span className={cn("text-xs md:text-sm font-black tracking-tight truncate w-full", insight.color)}>{insight.value}</span>
           </motion.div>
         ))}
       </div>

@@ -341,58 +341,58 @@ const RecurringExpenses = () => {
         <>
           {/* Commitment Metric Dashboard */}
           <motion.div 
-        variants={itemVariants} 
-        className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 px-2"
-      >
-        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-5 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm relative overflow-hidden group">
-          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-colors" />
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-500 flex items-center justify-center">
-              <Receipt size={22} />
+            variants={itemVariants} 
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 px-2"
+          >
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-850/80 shadow-sm md:shadow-md rounded-3xl p-6 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer">
+              <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-colors" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-500 flex items-center justify-center">
+                  <Receipt size={22} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">العبء المالي الشهري</p>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none mt-1 font-mono">
+                    {formatCurrency(summaryStats.monthlyBurden, currency)}
+                  </h3>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">العبء المالي الشهري</p>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none mt-1">
-                {formatCurrency(summaryStats.monthlyBurden, currency)}
-              </h3>
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-5 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm relative overflow-hidden group">
-          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors" />
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 flex items-center justify-center">
-              <BarChart3 size={22} />
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-850/80 shadow-sm md:shadow-md rounded-3xl p-6 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer">
+              <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 flex items-center justify-center">
+                  <BarChart3 size={22} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">الالتزامات النشطة</p>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none mt-1">
+                    {summaryStats.activeCount} {summaryStats.activeCount === 1 ? 'التزام' : summaryStats.activeCount >= 3 && summaryStats.activeCount <= 10 ? 'التزامات' : 'التزاماً'}
+                  </h3>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">الالتزامات النشطة</p>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none mt-1">
-                {summaryStats.activeCount} {summaryStats.activeCount === 1 ? 'التزام' : summaryStats.activeCount >= 3 && summaryStats.activeCount <= 10 ? 'التزامات' : 'التزاماً'}
-              </h3>
-            </div>
-          </div>
-        </div>
 
-        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-5 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm relative overflow-hidden group">
-          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-colors" />
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/40 text-amber-500 flex items-center justify-center">
-              <Calendar size={22} />
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-850/80 shadow-sm md:shadow-md rounded-3xl p-6 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer">
+              <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-colors" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/40 text-amber-500 flex items-center justify-center">
+                  <Calendar size={22} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">أقرب دفعة قادمة</p>
+                  <h3 className="text-sm md:text-base font-black text-slate-900 dark:text-white leading-none mt-2 truncate max-w-[180px]">
+                    {summaryStats.soonest ? (
+                      format(parseISO(summaryStats.soonest.nextDate), 'dd MMMM yyyy', { locale: ar })
+                    ) : (
+                      'لا توجد مدفوعات'
+                    )}
+                  </h3>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">أقرب دفعة قادمة</p>
-              <h3 className="text-sm md:text-base font-black text-slate-900 dark:text-white leading-none mt-2 truncate max-w-[180px]">
-                {summaryStats.soonest ? (
-                  format(parseISO(summaryStats.soonest.nextDate), 'dd MMMM yyyy', { locale: ar })
-                ) : (
-                  'لا توجد مدفوعات'
-                )}
-              </h3>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+          </motion.div>
 
       <AnimatePresence>
         {isAdding && (
@@ -815,7 +815,7 @@ const RecurringExpenses = () => {
             variants={itemVariants} 
             className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 px-2"
           >
-            <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-5 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm relative overflow-hidden group">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-850/80 shadow-sm md:shadow-md rounded-3xl p-6 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer">
               <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-primary-500/5 rounded-full blur-2xl group-hover:bg-primary-500/10 transition-colors" />
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-primary-100 dark:bg-primary-950/40 text-primary-600 flex items-center justify-center">
@@ -830,7 +830,7 @@ const RecurringExpenses = () => {
               </div>
             </div>
 
-            <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-5 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm relative overflow-hidden group">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-850/80 shadow-sm md:shadow-md rounded-3xl p-6 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer">
               <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-rose-500/5 rounded-full blur-2xl group-hover:bg-rose-500/10 transition-colors" />
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 flex items-center justify-center">
@@ -838,14 +838,14 @@ const RecurringExpenses = () => {
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">تدفع كل شهر للجمعيات</p>
-                  <h3 className="text-xl font-black text-rose-600 dark:text-rose-400 leading-none mt-1">
+                  <h3 className="text-xl font-black text-rose-600 dark:text-rose-400 leading-none mt-1 font-mono">
                     {formatCurrency((gamaeyas || []).filter(g => g.status === 'active').reduce((sum, g) => sum + g.monthlyAmount, 0), currency)}
                   </h3>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl p-5 rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm relative overflow-hidden group">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-850/80 shadow-sm md:shadow-md rounded-3xl p-6 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer">
               <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-colors" />
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/40 text-amber-500 flex items-center justify-center">
@@ -853,7 +853,7 @@ const RecurringExpenses = () => {
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">العوائد المستهدفة للقبض</p>
-                  <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400 leading-none mt-1">
+                  <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400 leading-none mt-1 font-mono">
                     {formatCurrency((gamaeyas || []).filter(g => g.status === 'active').reduce((sum, g) => sum + (g.monthlyAmount * g.memberCount), 0), currency)}
                   </h3>
                 </div>

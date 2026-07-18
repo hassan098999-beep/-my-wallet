@@ -290,7 +290,7 @@ const FamilyReport: React.FC = () => {
         
         {/* CARD 1: Essentials vs Luxuries (Needs vs Wants) */}
         <motion.div variants={itemVariants} className="lg:col-span-8 flex flex-col space-y-6">
-          <div className="card relative overflow-hidden flex-1 flex flex-col justify-between">
+          <Card className="relative overflow-hidden flex-1 flex flex-col justify-between">
             {/* Ambient Background Glow */}
             <div className="absolute left-0 top-0 -ml-20 -mt-20 w-64 h-64 bg-indigo-500/5 dark:bg-indigo-400/5 rounded-full blur-3xl pointer-events-none" />
             
@@ -376,12 +376,12 @@ const FamilyReport: React.FC = () => {
                 )}
               </p>
             </div>
-          </div>
+          </Card>
         </motion.div>
 
         {/* CARD 2: Baby/Child Expenses (قرة عيني) */}
         <motion.div variants={itemVariants} className="lg:col-span-4 flex flex-col">
-          <div className="card border-primary-500/20 bg-gradient-to-br from-emerald-50/20 to-white dark:from-emerald-950/10 dark:to-slate-900 border relative overflow-hidden flex-1 flex flex-col justify-between p-6">
+          <Card className="border-primary-500/20 bg-gradient-to-br from-emerald-50/20 to-white dark:from-emerald-950/10 dark:to-slate-900 border relative overflow-hidden flex-1 flex flex-col justify-between p-6">
             {/* Sparkle effects */}
             <div className="absolute right-0 top-0 -mr-12 -mt-12 w-48 h-48 bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
             
@@ -443,12 +443,12 @@ const FamilyReport: React.FC = () => {
                 {babyStats.last > 0 ? formatCurrency(babyStats.last, currency) : 'لم يتم تسجيل أي نفقات الشهر الماضي.'}
               </p>
             </div>
-          </div>
+          </Card>
         </motion.div>
 
         {/* CARD 3: Family Sub-Budgets (الميزانيات الفرعية الذكية) */}
         <motion.div variants={itemVariants} className="lg:col-span-12">
-          <div className="card p-6 md:p-8 space-y-6">
+          <Card className="p-6 md:p-8 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-100 dark:border-slate-800/60 pb-4 gap-4">
               <div>
                 <h3 className="text-base font-black text-slate-800 dark:text-white flex items-center gap-2">
@@ -532,7 +532,7 @@ const FamilyReport: React.FC = () => {
                 <p className="text-[10px] text-slate-400">اذهب لصفحة الموازنة وقم بتوزيع جزء من الميزانية الإجمالية على الفئات الأساسية لإثراء تقارير عائلتك.</p>
               </div>
             )}
-          </div>
+          </Card>
         </motion.div>
 
       </motion.div>

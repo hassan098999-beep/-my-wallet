@@ -288,7 +288,7 @@ const BudgetPage = () => {
 
       {/* Main Intelligent Budget Dashboard Dashboard and Progress */}
       <motion.div variants={itemVariants}>
-        <div className="card relative overflow-hidden p-6 md:p-8 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800/85 rounded-3xl relative overflow-hidden p-6 md:p-8 shadow-md dark:shadow-black/10 transition-all duration-300">
           
           {/* Subtle decorative background light */}
           <div className="absolute right-0 top-0 -mr-20 -mt-20 w-80 h-80 bg-emerald-500/5 dark:bg-emerald-400/5 rounded-full blur-3xl pointer-events-none" />
@@ -310,7 +310,7 @@ const BudgetPage = () => {
             <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setShowRuleInfo(!showRuleInfo)}
-                className="flex items-center gap-1 text-[11px] font-bold text-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/10 px-3 py-1.5 rounded-lg border border-indigo-150/15"
+                className="flex items-center gap-1 text-[11px] font-bold text-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/10 px-3 py-1.5 rounded-lg border border-indigo-150/15 cursor-pointer"
               >
                 <HelpCircle size={13} />
                 <span>شرح قاعدة 50/30/20</span>
@@ -411,15 +411,15 @@ const BudgetPage = () => {
 
               {/* Dynamic summary counts */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50 dark:bg-slate-950/30 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
-                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">ما تم صرفه فعلياً</p>
-                  <p className="text-sm font-black text-rose-500">{formatCurrency(totalSpent, currency)}</p>
+                <div className="bg-rose-50/20 dark:bg-rose-950/5 rounded-2xl p-4 border border-rose-100/30 dark:border-rose-900/20 transition-all hover:shadow-xs">
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-1">ما تم صرفه فعلياً</p>
+                  <p className="text-sm font-black text-rose-500 dark:text-rose-400 font-mono">{formatCurrency(totalSpent, currency)}</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-950/30 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
-                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">المبلغ المتبقي</p>
+                <div className="bg-emerald-50/20 dark:bg-emerald-950/5 rounded-2xl p-4 border border-emerald-100/30 dark:border-emerald-900/20 transition-all hover:shadow-xs">
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-1">المبلغ المتبقي</p>
                   <p className={cn(
-                    "text-sm font-black",
-                    remainingBudget > 0 ? "text-emerald-500" : "text-rose-500"
+                    "text-sm font-black font-mono",
+                    remainingBudget > 0 ? "text-emerald-500 dark:text-emerald-400" : "text-rose-500 dark:text-rose-400"
                   )}>{formatCurrency(remainingBudget, currency)}</p>
                 </div>
               </div>
@@ -456,18 +456,18 @@ const BudgetPage = () => {
 
               {/* Auxiliary calculation summary */}
               <div className="grid grid-cols-2 gap-4 pt-1">
-                <div className="bg-white dark:bg-slate-900/60 rounded-xl p-3 shadow-xs border border-slate-100/30">
-                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">الميزانية اليومية المقترحة ⚡</p>
-                  <p className="text-base font-black text-slate-800 dark:text-white">{formatCurrency(dailyLimit, currency)}</p>
+                <div className="bg-white dark:bg-slate-900/60 rounded-2xl p-4 shadow-sm border border-slate-150 dark:border-slate-800/80 transition-all hover:-translate-y-0.5">
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-1">الميزانية اليومية المقترحة ⚡</p>
+                  <p className="text-sm md:text-base font-black text-slate-800 dark:text-white font-mono">{formatCurrency(dailyLimit, currency)}</p>
                   <p className="text-[8px] text-slate-400 font-medium mt-0.5">
                     {rollingBudgetEnabled ? "تتكيف يومياً بناءً على ما أنفقته" : "موزعة بالتساوي على الأيام"}
                   </p>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900/60 rounded-xl p-3 shadow-xs border border-slate-100/30">
-                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1">دورتك المالية المتبقية ⏳</p>
-                  <p className="text-base font-black text-slate-800 dark:text-white">{remainingDays} <span className="text-xs text-slate-400">أيّام</span></p>
-                  <p className="text-[8px] text-slate-400 font-medium mt-0.5">من أصل {daysInMonth} يوم في دورتك</p>
+                <div className="bg-white dark:bg-slate-900/60 rounded-2xl p-4 shadow-sm border border-slate-150 dark:border-slate-800/80 transition-all hover:-translate-y-0.5">
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-1">دورتك المالية المتبقية ⏳</p>
+                  <p className="text-sm md:text-base font-black text-slate-800 dark:text-white font-mono">{remainingDays} <span className="text-xs text-slate-400">أيّام</span></p>
+                  <p className="text-[8px] text-slate-400 font-medium mt-0.5 font-tajawal">من أصل {daysInMonth} يوم في دورتك</p>
                 </div>
               </div>
             </div>

@@ -297,21 +297,30 @@ const GoalsPage = () => {
       {/* Goals Summary Stats */}
       {standardGoals.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <motion.div variants={itemVariants} className="card text-center group hover:shadow-md transition-all">
+          <motion.div 
+            variants={itemVariants} 
+            className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-850/80 shadow-sm md:shadow-md rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg text-center group cursor-pointer"
+          >
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">إجمالي المستهدف</p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter group-hover:scale-110 transition-transform">
+            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter group-hover:scale-105 transition-transform font-mono">
               {formatCurrency(standardGoals.reduce((sum, g) => sum + g.targetAmount, 0), currency)}
             </p>
           </motion.div>
-          <motion.div variants={itemVariants} className="card text-center group hover:shadow-md transition-all">
+          <motion.div 
+            variants={itemVariants} 
+            className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-850/80 shadow-sm md:shadow-md rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg text-center group cursor-pointer"
+          >
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">إجمالي المدخرات</p>
-            <p className="text-3xl font-black text-emerald-500 tracking-tighter group-hover:scale-110 transition-transform">
+            <p className="text-3xl font-black text-emerald-500 tracking-tighter group-hover:scale-105 transition-transform font-mono">
               {formatCurrency(standardGoals.reduce((sum, g) => sum + g.currentAmount, 0), currency)}
             </p>
           </motion.div>
-          <motion.div variants={itemVariants} className="card text-center group hover:shadow-md transition-all">
+          <motion.div 
+            variants={itemVariants} 
+            className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-850/80 shadow-sm md:shadow-md rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg text-center group cursor-pointer"
+          >
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">نسبة الإنجاز الكلية</p>
-            <p className="text-3xl font-black text-emerald-500 tracking-tighter group-hover:scale-110 transition-transform">
+            <p className="text-3xl font-black text-emerald-500 tracking-tighter group-hover:scale-105 transition-transform font-mono">
               {standardGoals.reduce((sum, g) => sum + g.targetAmount, 0) > 0 
                 ? Math.round((standardGoals.reduce((sum, g) => sum + g.currentAmount, 0) / standardGoals.reduce((sum, g) => sum + g.targetAmount, 0)) * 100) 
                 : 0}%
