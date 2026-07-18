@@ -24,6 +24,7 @@
   --radius-md: 1rem;         /* بطاقات ثانوية */
   --radius-lg: 1.5rem;       /* بطاقات رئيسية */
   --radius-xl: 2rem;         /* البطاقة البطلة (HeroSlidingDeck) */
+  --radius-card: 1.5rem;     /* بطاقات مخصصة */
 
   /* ألوان سطحية للعمق */
   --color-surface-0: #ffffff;
