@@ -212,6 +212,48 @@ const CategoryManager = () => {
           </div>
         </div>
         
+        {/* Quick Suggestions Block */}
+        <div className="mb-5 bg-slate-50/50 dark:bg-slate-900/40 p-4 rounded-2xl border border-dashed border-slate-200/60 dark:border-slate-800/80">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-right mb-2.5">💡 اقتراحات سريعة لإنشاء تصنيفات مخصصة:</span>
+          <div className="flex flex-wrap gap-2.5 justify-start md:justify-end" dir="rtl">
+            {[
+              { name: 'مدرسة', icon: 'Book', color: '#3b82f6', type: 'need', label: '🏫 مدرسة' },
+              { name: 'سيارة', icon: 'Car', color: '#ef4444', type: 'need', label: '🚗 سيارة' },
+              { name: 'ديون', icon: 'Wallet', color: '#10b981', type: 'saving', label: '💸 ديون' },
+              { name: 'صحة', icon: 'HeartPulse', color: '#ec4899', type: 'need', label: '🏥 صحة' },
+              { name: 'سفر', icon: 'Plane', color: '#8b5cf6', type: 'want', label: '✈️ سفر' },
+              { name: 'تسوق', icon: 'ShoppingBag', color: '#f59e0b', type: 'want', label: '🛍️ تسوق' },
+            ].map((tmpl) => {
+              const exists = categories.some(c => c.name === tmpl.name);
+              return (
+                <button
+                  type="button"
+                  key={tmpl.name}
+                  disabled={exists}
+                  onClick={() => {
+                    hapticFeedback('light');
+                    setNewCatName(tmpl.name);
+                    setNewCatIcon(tmpl.icon);
+                    setNewCatColor(tmpl.color);
+                    setNewCatType(tmpl.type as any);
+                  }}
+                  className={cn(
+                    "px-3.5 py-2 rounded-xl border text-[11px] font-black transition-all flex items-center gap-1.5 cursor-pointer relative",
+                    exists 
+                      ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800/50 border-transparent text-slate-400 dark:text-slate-500"
+                      : newCatName === tmpl.name
+                      ? "bg-primary-600 border-primary-600 text-white shadow-sm"
+                      : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-850 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  )}
+                >
+                  <span>{tmpl.label}</span>
+                  {exists && <span className="text-[8px] font-bold text-emerald-500">(مضافة)</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end relative z-10">
           <div className="space-y-1.5">
             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">اسم الفئة</label>

@@ -1021,6 +1021,41 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                             />
                           </div>
 
+                          {/* Quick Suggestion Templates */}
+                          <div className="space-y-1.5">
+                            <span className="text-[9px] font-black text-slate-400 block text-right">💡 اقتراحات سريعة جاهزة:</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {[
+                                { name: 'مدرسة', icon: 'Book', color: '#3b82f6', type: 'need', label: '🏫 مدرسة' },
+                                { name: 'سيارة', icon: 'Car', color: '#ef4444', type: 'need', label: '🚗 سيارة' },
+                                { name: 'ديون', icon: 'Wallet', color: '#10b981', type: 'saving', label: '💸 ديون' },
+                                { name: 'صحة', icon: 'HeartPulse', color: '#ec4899', type: 'need', label: '🏥 صحة' },
+                                { name: 'سفر', icon: 'Plane', color: '#8b5cf6', type: 'want', label: '✈️ سفر' },
+                                { name: 'تسوق', icon: 'ShoppingBag', color: '#f59e0b', type: 'want', label: '🛍️ تسوق' },
+                              ].map((tmpl) => (
+                                <button
+                                  type="button"
+                                  key={tmpl.name}
+                                  onClick={() => {
+                                    hapticFeedback('light');
+                                    setNewCatName(tmpl.name);
+                                    setNewCatIcon(tmpl.icon);
+                                    setNewCatColor(tmpl.color);
+                                    setNewCatType(tmpl.type as any);
+                                  }}
+                                  className={cn(
+                                    "px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer",
+                                    newCatName === tmpl.name
+                                      ? "bg-rose-500 border-rose-500 text-white shadow-sm"
+                                      : "bg-white dark:bg-slate-900 border-slate-150 dark:border-slate-850 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                  )}
+                                >
+                                  {tmpl.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
                           <div className="grid grid-cols-2 gap-2">
                             <div className="space-y-1">
                               <span className="text-[9px] font-black text-slate-400 block text-right">النوع</span>
