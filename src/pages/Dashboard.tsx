@@ -35,7 +35,6 @@ import DailySimpleView from '../components/DailySimpleView';
 
 // Import newly refactored modular components for smart architecture
 import SwipeableTransactionItem from '../components/SwipeableTransactionItem';
-import TunisianLedger from '../components/TunisianLedger';
 import HeroSlidingDeck from '../components/HeroSlidingDeck';
 import FinancialRadar from '../components/FinancialRadar';
 import BehavioralAdvisor from '../components/BehavioralAdvisor';
@@ -1475,24 +1474,6 @@ const Dashboard = () => {
         deleteExpense={deleteExpense}
         repeatExpense={repeatExpense}
       />
-
-      {/* 🇹🇳 Quick Tunisian Family Ledger Form */}
-      <TunisianLedger
-        categories={categories}
-        accounts={accounts}
-        currency={currency}
-        quickAmount={quickAmount}
-        setQuickAmount={setQuickAmount}
-        quickCategoryId={quickCategoryId}
-        setQuickCategoryId={setQuickCategoryId}
-        quickDescription={quickDescription}
-        setQuickDescription={setQuickDescription}
-        quickSubcategory={quickSubcategory}
-        setQuickSubcategory={setQuickSubcategory}
-        quickAccountId={quickAccountId}
-        setQuickAccountId={setQuickAccountId}
-        handleQuickAddSubmit={handleQuickAddSubmit}
-      />
     </>
   )}
 
@@ -1531,24 +1512,6 @@ const Dashboard = () => {
           <ArrowRight size={12} className="rotate-180" />
         </Link>
       </motion.div>
-
-      {/* 🇹🇳 Quick Tunisian Family Ledger Form */}
-      <TunisianLedger
-        categories={categories}
-        accounts={accounts}
-        currency={currency}
-        quickAmount={quickAmount}
-        setQuickAmount={setQuickAmount}
-        quickCategoryId={quickCategoryId}
-        setQuickCategoryId={setQuickCategoryId}
-        quickDescription={quickDescription}
-        setQuickDescription={setQuickDescription}
-        quickSubcategory={quickSubcategory}
-        setQuickSubcategory={setQuickSubcategory}
-        quickAccountId={quickAccountId}
-        setQuickAccountId={setQuickAccountId}
-        handleQuickAddSubmit={handleQuickAddSubmit}
-      />
 
       {/* 2. Bento Grid Layout - Main Container */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
