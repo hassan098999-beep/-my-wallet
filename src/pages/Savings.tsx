@@ -16,6 +16,8 @@ import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import Badge from '../components/ui/Badge';
+import GoalsPage from './Goals';
+import SavingsIndicators from './SavingsIndicators';
 
 const SavingsPage = () => {
   const { 
@@ -34,6 +36,7 @@ const SavingsPage = () => {
     autoRoundUpSetting 
   } = useAppContext();
 
+  const [activeTab, setActiveTab] = useState<'savings' | 'goals' | 'indicators'>('savings');
   const standardGoals = useMemo(() => (goals || []).filter(g => !g.isPhysicalPiggyBank), [goals]);
 
   const [savingsPercentage, setSavingsPercentage] = useState(10);
@@ -501,6 +504,67 @@ const SavingsPage = () => {
     visible: { opacity: 1, y: 0 }
   };
 
+  const renderTabSwitcher = () => (
+    <div className="w-full max-w-4xl mx-auto mb-6">
+      <div className="bg-slate-100 dark:bg-slate-900/60 p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between" dir="rtl">
+        <button
+          onClick={() => { hapticFeedback('light'); setActiveTab('savings'); }}
+          className={cn(
+            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer",
+            activeTab === 'savings'
+              ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md font-bold scale-[1.02]"
+              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          )}
+        >
+          <PiggyBank size={16} />
+          <span>حصالة الواقع والادخار 🪙</span>
+        </button>
+        <button
+          onClick={() => { hapticFeedback('light'); setActiveTab('goals'); }}
+          className={cn(
+            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer",
+            activeTab === 'goals'
+              ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md font-bold scale-[1.02]"
+              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          )}
+        >
+          <Target size={16} />
+          <span>الأهداف المالية للأسرة 🎯</span>
+        </button>
+        <button
+          onClick={() => { hapticFeedback('light'); setActiveTab('indicators'); }}
+          className={cn(
+            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer",
+            activeTab === 'indicators'
+              ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md font-bold scale-[1.02]"
+              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          )}
+        >
+          <Percent size={16} />
+          <span>مؤشرات وتحديات التوفير 📈</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  if (activeTab === 'goals') {
+    return (
+      <div className="space-y-6">
+        {renderTabSwitcher()}
+        <GoalsPage />
+      </div>
+    );
+  }
+
+  if (activeTab === 'indicators') {
+    return (
+      <div className="space-y-6">
+        {renderTabSwitcher()}
+        <SavingsIndicators />
+      </div>
+    );
+  }
+
   return (
     <motion.div 
       variants={containerVariants}
@@ -508,6 +572,7 @@ const SavingsPage = () => {
       animate="visible"
       className="space-y-6 p-4 pb-32 w-full max-w-full"
     >
+      {renderTabSwitcher()}
       <PageHeader
         title="تخصيص الادخار"
         subtitle="احسب ووزع مدخراتك تلقائياً وبأمان على أهدافك المالية والأسئلة العائلية"

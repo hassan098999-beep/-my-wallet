@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useAppContext } from '../store/AppContext';
-import { formatCurrency, hapticFeedback } from '../utils';
+import { formatCurrency, hapticFeedback, cn } from '../utils';
 import { format, subMonths, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { 
@@ -18,9 +18,11 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
+import Analytics from './Analytics';
 
 const FamilyReport: React.FC = () => {
   const { expenses, income, categories, budget, currency = 'TND' } = useAppContext();
+  const [activeTab, setActiveTab] = React.useState<'report' | 'analytics'>('report');
   
   const categoryBudgets = useMemo(() => budget?.categoryBudgets || {}, [budget]);
 
@@ -223,10 +225,51 @@ const FamilyReport: React.FC = () => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
   };
 
+  const renderTabSwitcher = () => (
+    <div className="w-full max-w-4xl mx-auto mb-6">
+      <div className="bg-slate-100 dark:bg-slate-900/60 p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between" dir="rtl">
+        <button
+          onClick={() => { hapticFeedback('light'); setActiveTab('report'); }}
+          className={cn(
+            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer",
+            activeTab === 'report'
+              ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md font-bold scale-[1.02]"
+              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          )}
+        >
+          <Baby size={16} />
+          <span>تفريرة العيلة والتقارير المعيشية 👶</span>
+        </button>
+        <button
+          onClick={() => { hapticFeedback('light'); setActiveTab('analytics'); }}
+          className={cn(
+            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer",
+            activeTab === 'analytics'
+              ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md font-bold scale-[1.02]"
+              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          )}
+        >
+          <Activity size={16} />
+          <span>الرسوم والتحليلات البيانية الذكية 📊</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  if (activeTab === 'analytics') {
+    return (
+      <div className="space-y-6">
+        {renderTabSwitcher()}
+        <Analytics />
+      </div>
+    );
+  }
+
   // Render welcome EmptyState if we have less than 7 days of transactions
   if (hasUnder7Days) {
     return (
       <div className="space-y-6 p-4 pb-32 text-right">
+        {renderTabSwitcher()}
         <PageHeader 
           title="تفريرة العيلة" 
           subtitle="تقرير معيشي ومتابعة ميزانية عائلتك لموازنة الاحتياجات وحماية رضيعك" 
@@ -276,6 +319,7 @@ const FamilyReport: React.FC = () => {
 
   return (
     <div className="space-y-6 p-4 pb-32 text-right">
+      {renderTabSwitcher()}
       <PageHeader 
         title="تفريرة العيلة" 
         subtitle="متابعة مالية ومعيشية منسقة للتحكم بقفة الشهر وسقف مصاريف الرضيع" 

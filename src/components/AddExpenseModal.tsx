@@ -21,7 +21,7 @@ interface AddExpenseModalProps {
 }
 
 const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, editExpenseData, initialGoalId, initialMode }) => {
-  const { categories, accounts, expenses, income, goals, addExpense, addIncome, updateExpense, updateIncome, transferAccount, addCategory, currency } = useAppContext();
+  const { categories, accounts, expenses, income, goals, addExpense, addIncome, updateExpense, updateIncome, transferAccount, addCategory, currency, budget } = useAppContext();
 
   const [inputMode, setInputMode] = useState<'quick' | 'calculator'>('quick');
   const [type, setType] = useState<'expense' | 'income' | 'transfer'>('expense');
@@ -98,6 +98,30 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
       .filter((c): c is NonNullable<typeof c> => !!c)
       .slice(0, 4);
   }, [expenses, categories, type]);
+
+  const currentCategoryBudgetInsight = useMemo(() => {
+    if (type !== 'expense' || !categoryId) return null;
+    const limit = budget?.categoryBudgets?.[categoryId] || 0;
+    if (limit <= 0) return null;
+
+    // Filter current month expenses for this category
+    const currentMonthStr = new Date().toISOString().substring(0, 7); // yyyy-MM
+    const spentThisMonth = expenses
+      .filter(e => e.categoryId === categoryId && e.date && e.date.startsWith(currentMonthStr))
+      .reduce((sum, e) => sum + e.amount, 0);
+
+    const enteredAmount = evaluateExpression(expression);
+    const remainingBefore = limit - spentThisMonth;
+    const remainingAfter = remainingBefore - enteredAmount;
+
+    return {
+      limit,
+      spentThisMonth,
+      remainingBefore,
+      remainingAfter,
+      enteredAmount
+    };
+  }, [type, categoryId, expression, expenses, budget]);
 
   useEffect(() => {
     if (isOpen) {
@@ -888,6 +912,54 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                       />
                     </div>
                   </div>
+
+                  {/* Smart Budget Insight Widget */}
+                  {currentCategoryBudgetInsight && (
+                    <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 space-y-2.5 text-right font-sans" dir="rtl">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full animate-pulse",
+                            currentCategoryBudgetInsight.remainingAfter < 0 ? "bg-rose-500" : "bg-emerald-500"
+                          )} />
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">مؤشر الميزانية الذكي 📊</span>
+                        </div>
+                        {currentCategoryBudgetInsight.remainingAfter < 0 ? (
+                          <span className="text-[10px] font-extrabold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full">تنبيه بالخروج عن السقف ⚠️</span>
+                        ) : (
+                          <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">المصروف آمن وضمن الحدود ✅</span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-center">
+                        <div className="p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-150 dark:border-slate-850">
+                          <p className="text-[8px] font-black text-slate-400 mb-0.5">المتبقي حالياً</p>
+                          <p className="text-xs font-black text-slate-700 dark:text-slate-300 font-mono">
+                            {formatCurrency(currentCategoryBudgetInsight.remainingBefore, currency)}
+                          </p>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-150 dark:border-slate-850">
+                          <p className="text-[8px] font-black text-slate-400 mb-0.5">المتبقي بعد العملية</p>
+                          <p className={cn(
+                            "text-xs font-black font-mono",
+                            currentCategoryBudgetInsight.remainingAfter < 0 ? "text-rose-500" : "text-emerald-500"
+                          )}>
+                            {formatCurrency(currentCategoryBudgetInsight.remainingAfter, currency)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {currentCategoryBudgetInsight.remainingAfter < 0 ? (
+                        <p className="text-[9px] text-rose-500 font-black pr-1 leading-relaxed">
+                          ⚠️ الميزانية المقدرة لهذا الشهر لن تغطي كامل هذا المصروف. فكر في تأجيله أو تقليله لحماية مدخراتك.
+                        </p>
+                      ) : (
+                        <p className="text-[9px] text-slate-550 dark:text-slate-400 font-bold pr-1 leading-relaxed">
+                          💡 ممتاز! هذا المصروف يتناسب تماماً مع سقف الميزانية التونسية المخططة لعائلتك.
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Done button specifically for Quick mode at bottom */}
                   <button

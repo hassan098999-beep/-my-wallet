@@ -32,6 +32,8 @@ import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import Badge from '../components/ui/Badge';
+import IncomePage from './settings/Income';
+import RecurringExpenses from './RecurringExpenses';
 
 const BudgetPage = () => {
   const { 
@@ -46,6 +48,7 @@ const BudgetPage = () => {
     setRollingBudgetEnabled 
   } = useAppContext();
 
+  const [activeTab, setActiveTab] = useState<'budget' | 'income' | 'recurring'>('budget');
   const [globalBudget, setGlobalBudget] = useState(budget?.amount.toString() || '');
   const [selectedMonth, setSelectedMonth] = useState(budget?.month || getBudgetMonth(new Date(), firstDayOfMonth));
   const [isSaved, setIsSaved] = useState(false);
@@ -221,6 +224,67 @@ const BudgetPage = () => {
     },
   ];
 
+  const renderTabSwitcher = () => (
+    <div className="w-full max-w-4xl mx-auto mb-6">
+      <div className="bg-slate-100 dark:bg-slate-900/60 p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between" dir="rtl">
+        <button
+          onClick={() => { hapticFeedback('light'); setActiveTab('budget'); }}
+          className={cn(
+            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer",
+            activeTab === 'budget'
+              ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md font-bold scale-[1.02]"
+              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          )}
+        >
+          <Activity size={16} />
+          <span>الميزانية الذكية 📊</span>
+        </button>
+        <button
+          onClick={() => { hapticFeedback('light'); setActiveTab('income'); }}
+          className={cn(
+            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer",
+            activeTab === 'income'
+              ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md font-bold scale-[1.02]"
+              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          )}
+        >
+          <Wallet size={16} />
+          <span>إدارة الدخل الوارد 💰</span>
+        </button>
+        <button
+          onClick={() => { hapticFeedback('light'); setActiveTab('recurring'); }}
+          className={cn(
+            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer",
+            activeTab === 'recurring'
+              ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md font-bold scale-[1.02]"
+              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          )}
+        >
+          <RefreshCw size={16} />
+          <span>المصاريف المتكررة والجمعيات 🔄</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  if (activeTab === 'income') {
+    return (
+      <div className="space-y-6">
+        {renderTabSwitcher()}
+        <IncomePage />
+      </div>
+    );
+  }
+
+  if (activeTab === 'recurring') {
+    return (
+      <div className="space-y-6">
+        {renderTabSwitcher()}
+        <RecurringExpenses />
+      </div>
+    );
+  }
+
   return (
     <motion.div 
       variants={containerVariants}
@@ -228,6 +292,7 @@ const BudgetPage = () => {
       animate="visible"
       className="space-y-8 p-4 pb-32 w-full max-w-full text-right font-tajawal rtl"
     >
+      {renderTabSwitcher()}
       {/* Header Section */}
       <PageHeader
         title="مخطط الميزانية الذكي"

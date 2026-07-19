@@ -6,21 +6,16 @@ import { motion } from 'motion/react';
 import { useAppContext } from '../store/AppContext';
 
 const mainNavItems = [
-  { path: '/', name: 'الرئيسية', icon: Home },
-  { path: '/analytics', name: 'الإحصائيات', icon: ChartPie },
-  { path: '/transactions', name: 'السجل', icon: History },
-  { path: '/assistant', name: 'الذكاء الاصطناعي', icon: Sparkles },
+  { path: '/', name: 'الرئيسية العائلية', icon: Home },
+  { path: '/budget', name: 'الميزانية والالتزامات', icon: ChartPie },
+  { path: '/savings', name: 'منصة الادخار الذكي', icon: PiggyBank },
+  { path: '/family', name: 'التقارير والتحليلات', icon: Baby },
 ];
 
 const subNavItems = [
-  { path: '/family', name: 'تفريرة العيلة', icon: Baby },
-  { path: '/budget', name: 'الميزانيات', icon: ChartPie },
-  { path: '/income', name: 'إدارة الدخل', icon: Wallet },
-  { path: '/recurring', name: 'المصاريف المتكررة', icon: RefreshCcw },
-  { path: '/goals', name: 'الأهداف المالية', icon: Target },
-  { path: '/savings', name: 'الادخار', icon: PiggyBank },
-  { path: '/savings-indicators', name: 'مؤشرات التوفير', icon: Percent },
-  { path: '/settings', name: 'الإعدادات', icon: SlidersHorizontal },
+  { path: '/transactions', name: 'سجل العمليات الكامل', icon: History },
+  { path: '/assistant', name: 'المساعد الذكي AI', icon: Sparkles },
+  { path: '/settings', name: 'إعدادات النظام', icon: SlidersHorizontal },
 ];
 
 interface SidebarProps {
@@ -51,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddClick }) => {
 
       <div className="p-4 flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-6">
         <div>
-          <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">القائمة الرئيسية</p>
+          <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">القائمة والتحليلات</p>
           <nav className="space-y-1">
             {mainNavItems.map((item) => (
               <NavItem key={item.path} item={item} />
@@ -60,7 +55,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onAddClick }) => {
         </div>
 
         <div>
-          <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">إدارة الأموال</p>
+          <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">الأدوات والسجل</p>
           <nav className="space-y-1">
             {subNavItems.map((item) => (
               <NavItem key={item.path} item={item} isSubItem />

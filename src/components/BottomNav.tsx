@@ -1,14 +1,14 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, ChartPie, History, Settings, Plus, Zap } from 'lucide-react';
+import { Home, ChartPie, PiggyBank, Baby, Plus } from 'lucide-react';
 import { cn, hapticFeedback } from '../utils';
 import { motion } from 'motion/react';
 
 const mainNavItems = [
   { path: '/', name: 'الرئيسية', icon: Home },
-  { path: '/analytics', name: 'الإحصائيات', icon: ChartPie },
-  { path: '/transactions', name: 'السجل', icon: History },
-  { path: '/settings', name: 'الإعدادات', icon: Settings },
+  { path: '/budget', name: 'الميزانية', icon: ChartPie },
+  { path: '/savings', name: 'الادخار', icon: PiggyBank },
+  { path: '/family', name: 'العائلة', icon: Baby },
 ];
 
 interface BottomNavProps {
