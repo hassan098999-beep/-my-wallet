@@ -184,6 +184,123 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
     }
   }, [isOpen, categories, accounts, editExpenseData, initialGoalId, initialMode]);
 
+  const [isAutoMatched, setIsAutoMatched] = useState(false);
+
+  // Automatic Category Matching based on Note content
+  useEffect(() => {
+    if (!note || type !== 'expense') {
+      setIsAutoMatched(false);
+      return;
+    }
+    
+    const noteLower = note.toLowerCase();
+    
+    // Find Baby category
+    const babyCat = categories.find(c => 
+      c.id === '2' || 
+      c.name.includes('رضيع') || 
+      c.name.includes('طفل') || 
+      c.name.includes('أطفال') || 
+      c.name.toLowerCase().includes('baby')
+    );
+    
+    // Find Food/Groceries category
+    const foodCat = categories.find(c => 
+      c.id === '1' || 
+      c.name.includes('مأكل') || 
+      c.name.includes('مشرب') || 
+      c.name.includes('قفة') || 
+      c.name.includes('خضار') || 
+      c.name.toLowerCase().includes('food') || 
+      c.name.toLowerCase().includes('grocery')
+    );
+
+    // Find Transport category
+    const transportCat = categories.find(c => 
+      c.name.includes('نقل') || 
+      c.name.includes('سيارة') || 
+      c.name.includes('بنزين') || 
+      c.name.toLowerCase().includes('trans') || 
+      c.name.toLowerCase().includes('car')
+    );
+
+    // Find Bills / Commitments category
+    const billsCat = categories.find(c => 
+      c.name.includes('التزام') || 
+      c.name.includes('فاتورة') || 
+      c.name.includes('كراء') || 
+      c.name.includes('إنترنت') || 
+      c.name.toLowerCase().includes('bill') || 
+      c.name.toLowerCase().includes('rent')
+    );
+
+    // Find Health/Care category (if separate from baby)
+    const healthCat = categories.find(c => 
+      c.name.includes('صحة') || 
+      c.name.includes('دواء') || 
+      c.name.includes('طبيب') || 
+      c.name.toLowerCase().includes('health') || 
+      c.name.toLowerCase().includes('medical')
+    );
+
+    // 1. Check for Baby terms
+    const babyTerms = ['حفاظ', 'حفاض', 'كوش', 'حليب', 'يحيى', 'رضيع', 'بيبي', 'baby', 'pampers', 'peaudouce', 'libero', 'ابتاميل', 'بريمالاك', 'العاب يحيى', 'لهاية'];
+    if (babyTerms.some(term => noteLower.includes(term)) && babyCat) {
+      if (categoryId !== babyCat.id) {
+        setCategoryId(babyCat.id);
+        setSubcategoryId('');
+        setIsAutoMatched(true);
+      }
+      return;
+    }
+
+    // 2. Check for Food terms
+    const foodTerms = ['لحم', 'دجاج', 'خضار', 'مغازة', 'عشاء', 'غداء', 'قهوة', 'حوت', 'خبز', 'حليب كامل', 'فرينة', 'روز', 'سكر', 'زيت نباتي', 'مقرونة', 'كسكسي', 'تن', 'طماطم', 'دلاع', 'مطبخ', 'مطعم'];
+    if (foodTerms.some(term => noteLower.includes(term)) && foodCat) {
+      if (categoryId !== foodCat.id) {
+        setCategoryId(foodCat.id);
+        setSubcategoryId('');
+        setIsAutoMatched(true);
+      }
+      return;
+    }
+
+    // 3. Check for Transport terms
+    const transportTerms = ['بنزين', 'تاكسي', 'كيران', 'مترو', 'لوام', 'كار', 'مازوت', 'كيوسك', 'شل', 'عجلة', 'تصليح سيارة', 'شهادة فحص', 'عمار لوان'];
+    if (transportTerms.some(term => noteLower.includes(term)) && transportCat) {
+      if (categoryId !== transportCat.id) {
+        setCategoryId(transportCat.id);
+        setSubcategoryId('');
+        setIsAutoMatched(true);
+      }
+      return;
+    }
+
+    // 4. Check for Bills terms
+    const billsTerms = ['كراء', 'فاتورة', 'انترنت', 'اوريدو', 'اتصالات', 'اورنج', 'تيليكوم', 'ماء', 'ضو', 'ستاغ', 'صوناد', 'غاز', 'بلدية', 'اداءات'];
+    if (billsTerms.some(term => noteLower.includes(term)) && billsCat) {
+      if (categoryId !== billsCat.id) {
+        setCategoryId(billsCat.id);
+        setSubcategoryId('');
+        setIsAutoMatched(true);
+      }
+      return;
+    }
+
+    // 5. Check for Health terms
+    const healthTerms = ['صيدلية', 'دواء', 'طبيب', 'عيادة', 'تحليل', 'دوا', 'فيزيتا'];
+    if (healthTerms.some(term => noteLower.includes(term)) && healthCat) {
+      if (categoryId !== healthCat.id) {
+        setCategoryId(healthCat.id);
+        setSubcategoryId('');
+        setIsAutoMatched(true);
+      }
+      return;
+    }
+
+    setIsAutoMatched(false);
+  }, [note, type, categories, categoryId]);
+
   const handleAmountChange = (val: string) => {
     const formatted = formatTunisianAmount(val);
     setExpression(formatted);
@@ -227,6 +344,27 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
     hapticFeedback('light');
     const currentAmount = evaluateExpression(expression);
     setExpression((currentAmount + val).toString());
+  };
+
+  const handleSelectShortcut = (amount: number, noteText: string, searchKey: string) => {
+    hapticFeedback('medium');
+    setExpression(amount.toString());
+    setNote(noteText);
+    
+    // Find matching category
+    const foundCat = categories.find(c => 
+      c.name.toLowerCase().includes(searchKey.toLowerCase()) ||
+      (searchKey === 'baby' && (c.id === '2' || c.name.includes('رضيع') || c.name.includes('طفل'))) ||
+      (searchKey === 'food' && (c.id === '1' || c.name.includes('مأكل') || c.name.includes('مشرب') || c.name.includes('قفة'))) ||
+      (searchKey === 'transport' && (c.name.includes('نقل') || c.name.includes('سيارة') || c.name.includes('بنزين'))) ||
+      (searchKey === 'bills' && (c.name.includes('فاتورة') || c.name.includes('كراء') || c.name.includes('التزام')))
+    );
+
+    if (foundCat) {
+      setCategoryId(foundCat.id);
+      setSubcategoryId('');
+    }
+    toast.success(`تم ملء بيانات: ${noteText} ⚡`);
   };
 
   const evaluateExpression = (expr: string): number => {
@@ -870,19 +1008,26 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                       <div className="grid grid-cols-3 gap-2">
                         {(['cash', 'card', 'transfer'] as PaymentMethod[]).map((method) => {
                           const isSelected = paymentMethod === method;
+                          const labels = {
+                            cash: { text: 'نقداً', icon: 'Coins' },
+                            card: { text: 'بطاقة', icon: 'CreditCard' },
+                            transfer: { text: 'تحويل', icon: 'ArrowRightLeft' }
+                          };
+                          const info = labels[method];
                           return (
                             <button
+                              key={method}
                               type="button"
-                              key={`quick-pay-${method}`}
                               onClick={() => { hapticFeedback('light'); setPaymentMethod(method); }}
                               className={cn(
-                                "py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer border text-center flex items-center justify-center gap-1.5",
+                                "py-2 px-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer",
                                 isSelected
-                                  ? "bg-rose-500 border-rose-500 text-white shadow-sm"
-                                  : "bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-850 text-slate-500 hover:bg-slate-100"
+                                  ? "border-amber-400 bg-amber-400/10 text-amber-500"
+                                  : "border-slate-100 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-950 text-slate-500 hover:border-slate-200"
                               )}
                             >
-                              {method === 'cash' ? '💵 كاش' : method === 'card' ? '💳 بطاقة' : '🏦 تحويل'}
+                              <DynamicIcon name={info.icon} size={14} />
+                              <span className="text-[10px] font-black">{info.text}</span>
                             </button>
                           );
                         })}
@@ -891,31 +1036,69 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                   )}
 
                   {/* 5. Date & Memo/Note combined in a single card row */}
-                  <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5 flex flex-col justify-start items-stretch">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block text-right pr-1">تاريخ المعاملة</label>
-                      <input
-                        type="date"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 rounded-xl text-[11px] font-bold text-slate-700 dark:text-slate-300 outline-none transition-all cursor-pointer text-center"
-                      />
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5 flex flex-col justify-start items-stretch">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block text-right pr-1">تاريخ المعاملة</label>
+                        <input
+                          type="date"
+                          value={date}
+                          onChange={(e) => setDate(e.target.value)}
+                          className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 rounded-xl text-[11px] font-bold text-slate-700 dark:text-slate-300 outline-none transition-all cursor-pointer text-center"
+                        />
+                      </div>
+                      <div className="space-y-1.5 flex flex-col justify-start items-stretch">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block text-right pr-1">بيان أو مذكرات</label>
+                        <input
+                          type="text"
+                          value={note}
+                          onChange={(e) => setNote(e.target.value)}
+                          placeholder="ملاحظات توضيحية..."
+                          className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-955 rounded-xl text-[11px] font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-amber-400 transition-all text-right"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-1.5 flex flex-col justify-start items-stretch">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block text-right pr-1">بيان أو مذكرات</label>
-                      <input
-                        type="text"
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        placeholder="ملاحظات توضيحية..."
-                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-955 rounded-xl text-[11px] font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-amber-400 transition-all text-right"
-                      />
-                    </div>
+                    {isAutoMatched && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-extrabold bg-amber-500/10 px-3 py-1.5 rounded-xl justify-center animate-pulse mt-1">
+                        <Sparkles size={11} className="fill-amber-500 shrink-0" />
+                        <span>تم التعرف على الفئة وتحديدها تلقائياً بذكاء 🪄</span>
+                      </div>
+                    )}
                   </div>
+
+                  {/* 6. Smart Family Templates Panel */}
+                  {type === 'expense' && (
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-2.5">
+                      <div className="flex justify-between items-center px-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">مجموعات سريعة جاهزة لعائلتك 🏡</span>
+                        <span className="text-[9px] font-black text-amber-500">توفير الوقت والجهد</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { label: '🧷 حفاظات يحيى', amount: 36, note: 'حفاظات يحيى الرضيع', key: 'baby' },
+                          { label: '🍼 حليب يحيى', amount: 26, note: 'علبة حليب يحيى', key: 'baby' },
+                          { label: '🥦 قفة الخضار', amount: 45, note: 'قفة الخضار والغلال الأسبوعية', key: 'food' },
+                          { label: '🛒 المغازة العامة', amount: 65, note: 'مقتنيات المغازة العامة', key: 'food' },
+                          { label: '🚗 بنزين سيارة', amount: 30, note: 'بنزين سيارة العائلة', key: 'transport' },
+                          { label: '⚡ فاتورة ستاغ', amount: 55, note: 'فاتورة كهرباء وغاز STEG', key: 'bills' }
+                        ].map((sh, idx) => (
+                          <button
+                            type="button"
+                            key={`fam-sh-${idx}`}
+                            onClick={() => handleSelectShortcut(sh.amount, sh.note, sh.key)}
+                            className="p-2 bg-slate-50 dark:bg-slate-955 hover:bg-amber-500/10 dark:hover:bg-amber-500/10 border border-slate-150 dark:border-slate-850 hover:border-amber-400/50 rounded-xl text-right transition-all flex flex-col justify-start gap-1 cursor-pointer"
+                          >
+                            <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">{sh.label}</span>
+                            <span className="text-[9px] font-black text-slate-400 font-mono">{sh.amount} د.ت</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Smart Budget Insight Widget */}
                   {currentCategoryBudgetInsight && (
-                    <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 space-y-2.5 text-right font-sans" dir="rtl">
+                    <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 space-y-3 text-right font-sans" dir="rtl">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
                           <div className={cn(
@@ -930,6 +1113,44 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                           <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">المصروف آمن وضمن الحدود ✅</span>
                         )}
                       </div>
+
+                      {/* Real-time Category Budget Progress Bar */}
+                      {(() => {
+                        const limit = currentCategoryBudgetInsight.limit;
+                        const spentThisMonth = currentCategoryBudgetInsight.spentThisMonth;
+                        const enteredAmount = currentCategoryBudgetInsight.enteredAmount;
+                        
+                        const percentUsedBefore = limit > 0 ? Math.min(100, (spentThisMonth / limit) * 100) : 0;
+                        const percentUsedAfter = limit > 0 ? Math.min(100, ((spentThisMonth + enteredAmount) / limit) * 100) : 0;
+                        
+                        return (
+                          <div className="space-y-1.5 bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-150 dark:border-slate-850">
+                            <div className="flex justify-between text-[9px] font-black text-slate-500">
+                              <span>معدل استهلاك ميزانية الفئة ({selectedCategory?.name})</span>
+                              <span className="font-mono">{percentUsedAfter.toFixed(0)}%</span>
+                            </div>
+                            <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-850 rounded-full overflow-hidden relative">
+                              {/* Before amount */}
+                              <div 
+                                className="h-full bg-slate-350 dark:bg-slate-755 absolute top-0 right-0 rounded-full transition-all duration-300"
+                                style={{ width: `${percentUsedBefore}%` }}
+                              />
+                              {/* After amount with color shift */}
+                              <div 
+                                className={cn(
+                                  "h-full absolute top-0 right-0 rounded-full transition-all duration-300",
+                                  currentCategoryBudgetInsight.remainingAfter < 0 ? "bg-rose-500" : "bg-emerald-500"
+                                )}
+                                style={{ width: `${percentUsedAfter}%` }}
+                              />
+                            </div>
+                            <div className="flex justify-between text-[8px] text-slate-400 font-extrabold pt-0.5">
+                              <span>المستهلك: {spentThisMonth + enteredAmount} د.ت</span>
+                              <span>السقف الأقصى: {limit} د.ت</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       <div className="grid grid-cols-2 gap-2 text-center">
                         <div className="p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-150 dark:border-slate-850">
