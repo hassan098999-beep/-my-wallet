@@ -125,10 +125,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
 
   useEffect(() => {
     if (isOpen) {
-      if (initialMode) {
+      if (editExpenseData) {
+        setInputMode('calculator');
+      } else if (initialMode) {
         setInputMode(initialMode);
       } else {
-        setInputMode(editExpenseData ? 'calculator' : 'quick');
+        const savedMode = localStorage.getItem('masarifi_input_mode') as 'quick' | 'calculator' | null;
+        setInputMode(savedMode || 'quick');
       }
 
       if (editExpenseData) {
@@ -559,7 +562,11 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                   <div className="inline-flex bg-black/20 p-0.5 rounded-xl border border-white/5 mx-auto shrink-0 select-none">
                     <button
                       type="button"
-                      onClick={() => { hapticFeedback('light'); setInputMode('quick'); }}
+                      onClick={() => { 
+                        hapticFeedback('light'); 
+                        setInputMode('quick'); 
+                        localStorage.setItem('masarifi_input_mode', 'quick'); 
+                      }}
                       className={cn(
                         "px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1 cursor-pointer",
                         inputMode === 'quick' 
@@ -572,7 +579,11 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                     </button>
                     <button
                       type="button"
-                      onClick={() => { hapticFeedback('light'); setInputMode('calculator'); }}
+                      onClick={() => { 
+                        hapticFeedback('light'); 
+                        setInputMode('calculator'); 
+                        localStorage.setItem('masarifi_input_mode', 'calculator'); 
+                      }}
                       className={cn(
                         "px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1 cursor-pointer",
                         inputMode === 'calculator' 
@@ -727,6 +738,61 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                       {note && <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
                     </button>
                   </div>
+
+                  {/* Real-time Category Budget Insight Bar (Calculator Mode) */}
+                  {type === 'expense' && currentCategoryBudgetInsight && (
+                    <div className={cn(
+                      "px-4 py-2 text-[10px] font-bold flex items-center justify-between border-t border-b border-slate-200/40 dark:border-slate-800/60 shrink-0",
+                      currentCategoryBudgetInsight.remainingAfter < 0 
+                        ? "bg-rose-500/10 text-rose-600 dark:text-rose-400" 
+                        : "bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
+                    )}>
+                      <div className="flex items-center gap-1.5">
+                        <span className={cn(
+                          "w-1.5 h-1.5 rounded-full",
+                          currentCategoryBudgetInsight.remainingAfter < 0 ? "bg-rose-500 animate-pulse" : "bg-emerald-500"
+                        )} />
+                        <span>ميزانية {selectedCategory?.name}: المتبقي بعد العملية</span>
+                      </div>
+                      <span className="font-mono">
+                        {formatCurrency(currentCategoryBudgetInsight.remainingAfter, currency)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Quick Payment Method Selector on main screen (only for expense) */}
+                  {type === 'expense' && (
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-slate-100 dark:bg-slate-950 border-b border-slate-200/60 dark:border-slate-800/80 shrink-0">
+                      <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">طريقة الدفع:</span>
+                      <div className="flex gap-1">
+                        {(['cash', 'card', 'transfer'] as PaymentMethod[]).map((method) => {
+                          const isSelected = paymentMethod === method;
+                          const labels = {
+                            cash: { text: 'نقداً', icon: 'Coins', color: 'text-amber-500 bg-amber-500/10 border-amber-400/50' },
+                            card: { text: 'بطاقة', icon: 'CreditCard', color: 'text-blue-500 bg-blue-500/10 border-blue-400/50' },
+                            transfer: { text: 'تحويل', icon: 'ArrowRightLeft', color: 'text-indigo-500 bg-indigo-500/10 border-indigo-400/50' }
+                          };
+                          const info = labels[method];
+                          return (
+                            <button
+                              key={`calc-pm-${method}`}
+                              type="button"
+                              onClick={() => { hapticFeedback('light'); setPaymentMethod(method); }}
+                              className={cn(
+                                "flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer",
+                                isSelected 
+                                  ? info.color
+                                  : "border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-900"
+                              )}
+                            >
+                              <DynamicIcon name={info.icon} size={11} />
+                              <span>{info.text}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Keypad Section */}
                   <div className="flex-1 bg-slate-50 dark:bg-slate-900 pb-[env(safe-area-inset-bottom)]">

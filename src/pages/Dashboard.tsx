@@ -425,6 +425,17 @@ const Dashboard = () => {
     hapticFeedback('heavy');
     const loadingToast = toast.loading(`جاري تسجيل ${preset.label} فوراً...`);
 
+    let savedPaymentMethod: any = 'cash';
+    try {
+      const raw = localStorage.getItem('masarifi_last_used');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.paymentMethod) savedPaymentMethod = parsed.paymentMethod;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     try {
       await addExpense({
         amount: amountNum,
@@ -433,7 +444,7 @@ const Dashboard = () => {
         date: new Date().toISOString().split('T')[0],
         note: preset.label,
         subcategoryId: preset.desc || '',
-        paymentMethod: 'cash',
+        paymentMethod: savedPaymentMethod,
         isTransfer: false
       });
       
@@ -502,6 +513,17 @@ const Dashboard = () => {
     hapticFeedback('heavy');
     const loadingToast = toast.loading('جاري حفظ العملية فوراً...');
 
+    let savedPaymentMethod: any = 'cash';
+    try {
+      const raw = localStorage.getItem('masarifi_last_used');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.paymentMethod) savedPaymentMethod = parsed.paymentMethod;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     try {
       await addExpense({
         amount: amountNum,
@@ -510,7 +532,7 @@ const Dashboard = () => {
         date: new Date().toISOString().split('T')[0],
         note: quickDescription.trim() || 'تسجيل عائلي سريع',
         subcategoryId: quickSubcategory || '',
-        paymentMethod: 'cash',
+        paymentMethod: savedPaymentMethod,
         isTransfer: false
       });
       

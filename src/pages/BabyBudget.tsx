@@ -134,6 +134,17 @@ const BabyBudget: React.FC = () => {
     hapticFeedback('medium');
     setIsQuickLogLoading(true);
 
+    let savedPaymentMethod: any = 'cash';
+    try {
+      const raw = localStorage.getItem('masarifi_last_used');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.paymentMethod) savedPaymentMethod = parsed.paymentMethod;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     try {
       addExpense({
         amount: item.amount,
@@ -141,7 +152,7 @@ const BabyBudget: React.FC = () => {
         accountId: defaultAccount.id,
         date: new Date().toISOString().substring(0, 10),
         note: item.note,
-        paymentMethod: 'cash'
+        paymentMethod: savedPaymentMethod
       });
 
       toast.success(
