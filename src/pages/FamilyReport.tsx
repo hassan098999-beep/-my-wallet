@@ -275,6 +275,35 @@ const FamilyReport: React.FC = () => {
           subtitle="تقرير معيشي ومتابعة ميزانية عائلتك لموازنة الاحتياجات وحماية رضيعك" 
         />
         
+        {/* Personalized Family Profile Widget */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-4xl mx-auto p-5 rounded-3xl bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-500/20 dark:border-emerald-500/10 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm relative overflow-hidden mb-6"
+          dir="rtl"
+        >
+          <div className="absolute top-0 left-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
+          <div className="flex items-center gap-4 text-right">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+              <Heart className="size-8 animate-pulse text-rose-500" />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-slate-800 dark:text-white flex items-center gap-2">
+                <span>عائلة حسن الرياحي وسهير 🏡💖</span>
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-450 font-bold mt-1 leading-relaxed">
+                برفقة ابنهما الرضيع <span className="text-emerald-600 dark:text-emerald-400 font-black underline decoration-emerald-500/45">يحيى</span> البالغ من العمر <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full font-extrabold">شهراً واحداً</span> 👶🍼
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 p-2.5 rounded-2xl shrink-0">
+            <div className="text-right">
+              <p className="text-[9px] font-black text-slate-400">حالة دورة الميزانية 📊</p>
+              <p className="text-xs font-extrabold text-slate-700 dark:text-slate-300 mt-0.5">قفة تونسية آمنة وصحية ✅</p>
+            </div>
+          </div>
+        </motion.div>
+        
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -324,6 +353,35 @@ const FamilyReport: React.FC = () => {
         title="تفريرة العيلة" 
         subtitle="متابعة مالية ومعيشية منسقة للتحكم بقفة الشهر وسقف مصاريف الرضيع" 
       />
+
+      {/* Personalized Family Profile Widget */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-4xl mx-auto p-5 rounded-3xl bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-500/20 dark:border-emerald-500/10 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm relative overflow-hidden"
+        dir="rtl"
+      >
+        <div className="absolute top-0 left-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
+        <div className="flex items-center gap-4 text-right">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+            <Heart className="size-8 animate-pulse text-rose-500" />
+          </div>
+          <div>
+            <h3 className="text-base font-black text-slate-800 dark:text-white flex items-center gap-2">
+              <span>عائلة حسن الرياحي وسهير 🏡💖</span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-450 font-bold mt-1 leading-relaxed">
+              برفقة ابنهما الرضيع <span className="text-emerald-600 dark:text-emerald-400 font-black underline decoration-emerald-500/45">يحيى</span> البالغ من العمر <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full font-extrabold">شهراً واحداً</span> 👶🍼
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 p-2.5 rounded-2xl shrink-0">
+          <div className="text-right">
+            <p className="text-[9px] font-black text-slate-400">حالة دورة الميزانية 📊</p>
+            <p className="text-xs font-extrabold text-slate-700 dark:text-slate-300 mt-0.5">قفة تونسية آمنة وصحية ✅</p>
+          </div>
+        </div>
+      </motion.div>
 
       <motion.div 
         variants={containerVariants}
