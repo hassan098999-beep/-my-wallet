@@ -19,10 +19,11 @@ import { Link } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Analytics from './Analytics';
+import BabyBudget from './BabyBudget';
 
 const FamilyReport: React.FC = () => {
   const { expenses, income, categories, budget, currency = 'TND' } = useAppContext();
-  const [activeTab, setActiveTab] = React.useState<'report' | 'analytics'>('report');
+  const [activeTab, setActiveTab] = React.useState<'report' | 'analytics' | 'baby'>('report');
   
   const categoryBudgets = useMemo(() => budget?.categoryBudgets || {}, [budget]);
 
@@ -227,30 +228,42 @@ const FamilyReport: React.FC = () => {
 
   const renderTabSwitcher = () => (
     <div className="w-full max-w-4xl mx-auto mb-6">
-      <div className="bg-slate-100 dark:bg-slate-900/60 p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between" dir="rtl">
+      <div className="bg-slate-100 dark:bg-slate-900/60 p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between gap-1" dir="rtl">
         <button
           onClick={() => { hapticFeedback('light'); setActiveTab('report'); }}
           className={cn(
-            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer",
+            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer",
             activeTab === 'report'
               ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md font-bold scale-[1.02]"
               : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
           )}
         >
-          <Baby size={16} />
-          <span>تفريرة العيلة والتقارير المعيشية 👶</span>
+          <Baby size={15} />
+          <span>التقارير المعيشية 👶</span>
+        </button>
+        <button
+          onClick={() => { hapticFeedback('light'); setActiveTab('baby'); }}
+          className={cn(
+            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer",
+            activeTab === 'baby'
+              ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md font-bold scale-[1.02]"
+              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          )}
+        >
+          <span className="text-sm">🍼</span>
+          <span>ميزانية الرضيع يحيى</span>
         </button>
         <button
           onClick={() => { hapticFeedback('light'); setActiveTab('analytics'); }}
           className={cn(
-            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer",
+            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer",
             activeTab === 'analytics'
               ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md font-bold scale-[1.02]"
               : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
           )}
         >
-          <Activity size={16} />
-          <span>الرسوم والتحليلات البيانية الذكية 📊</span>
+          <Activity size={15} />
+          <span>التحليلات البيانية 📊</span>
         </button>
       </div>
     </div>
@@ -261,6 +274,19 @@ const FamilyReport: React.FC = () => {
       <div className="space-y-6">
         {renderTabSwitcher()}
         <Analytics />
+      </div>
+    );
+  }
+
+  if (activeTab === 'baby') {
+    return (
+      <div className="space-y-6 p-4 pb-32 text-right">
+        {renderTabSwitcher()}
+        <PageHeader 
+          title="ميزانية الرضيع يحيى" 
+          subtitle="مراقبة مخصصة للحفاضات، الحليب، الرعاية ومستلزمات العناية بطفلك" 
+        />
+        <BabyBudget />
       </div>
     );
   }
