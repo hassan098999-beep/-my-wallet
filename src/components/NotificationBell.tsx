@@ -47,24 +47,39 @@ const NotificationBell = () => {
     return null;
   }, [globalBudgetNum, overallPercentage, totalSpent, currency]);
 
-  // 2. Due recurring expenses within 24 hours
+  // 2. Due recurring expenses according to user local notification settings
   const recurringAlerts = useMemo(() => {
-    if (!recurringExpenses || recurringExpenses.length === 0) return [];
+    const isEnabled = localStorage.getItem('masarifi_recurring_notifications_enabled') !== 'false';
+    if (!isEnabled || !recurringExpenses || recurringExpenses.length === 0) return [];
+
+    const noticeDays = parseInt(localStorage.getItem('masarifi_recurring_notice_days') || '1', 10);
     const now = new Date();
-    const oneDayInMs = 24 * 60 * 60 * 1000;
+    const todayStr = now.toISOString().split('T')[0];
+    const todayMs = new Date(todayStr).getTime();
+    const noticeMs = noticeDays * 24 * 60 * 60 * 1000;
 
     return recurringExpenses
       .filter(re => {
-        const next = new Date(re.nextDate);
-        const diff = next.getTime() - now.getTime();
-        return diff > 0 && diff <= oneDayInMs;
+        try {
+          const nextMs = new Date(re.nextDate).getTime();
+          const diff = nextMs - todayMs;
+          return diff >= 0 && diff <= noticeMs;
+        } catch (e) {
+          return false;
+        }
       })
-      .map(re => ({
-        id: `virtual-recurring-${re.id}`,
-        message: `تنبيه مصروف دوري: المصروف المتكرر "${re.note}" بقيمة ${re.amount} ${currency} مستحق خلال الـ 24 ساعة القادمة (${new Date(re.nextDate).toLocaleDateString('ar-TN', { day: 'numeric', month: 'long' })}). ⏱️`,
-        type: 'budget' as const,
-        createdAt: re.nextDate
-      }));
+      .map(re => {
+        const nextDateObj = new Date(re.nextDate);
+        const daysDiff = Math.round((nextDateObj.getTime() - todayMs) / (1000 * 60 * 60 * 24));
+        const timeText = daysDiff === 0 ? 'اليوم' : daysDiff === 1 ? 'غداً' : `خلال ${daysDiff} أيام`;
+
+        return {
+          id: `virtual-recurring-${re.id}`,
+          message: `تنبيه مصروف دوري: المصروف المتكرر "${re.note || 'مصروف مجدول'}" بقيمة ${re.amount} ${currency} مستحق ${timeText} (${nextDateObj.toLocaleDateString('ar-TN', { day: 'numeric', month: 'long' })}). ⏱️`,
+          type: 'budget' as const,
+          createdAt: re.nextDate
+        };
+      });
   }, [recurringExpenses, currency]);
 
   // 3. Sunday weekly summary comparisons

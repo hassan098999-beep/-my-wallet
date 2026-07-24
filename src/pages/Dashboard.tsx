@@ -41,6 +41,7 @@ import BehavioralAdvisor from '../components/BehavioralAdvisor';
 import { SmartSavingChallengeCard } from '../components/SmartSavingChallengeCard';
 import { BudgetAlerts } from '../components/BudgetAlerts';
 import { WeeklyAnalysis } from '../components/WeeklyAnalysis';
+import DailySafeSpendCard from '../components/DailySafeSpendCard';
 
 // Import unified design system components
 import PageHeader from '../components/ui/PageHeader';
@@ -1279,135 +1280,19 @@ const Dashboard = () => {
           </h2>
         </div>
 
-        {/* Financial Progress Indicators */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-4 bg-emerald-50/40 dark:bg-emerald-950/10 border border-emerald-100/10 rounded-2xl flex justify-between items-center relative overflow-visible">
-            <div className="text-left font-sans">
-              <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(remainingToday, currency)}
-              </span>
-            </div>
-            <div className="text-right relative">
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">باقي مسموح الصرف لليوم ⚡</p>
-              <div className="text-xs text-slate-600 dark:text-slate-300 font-black mt-0.5 flex items-center justify-end gap-1 select-none">
-                <button
-                  type="button"
-                  onClick={() => {
-                    hapticFeedback('light');
-                    setShowBudgetCalcHelp(prev => !prev);
-                  }}
-                  className="text-slate-400 hover:text-emerald-500 focus:outline-none transition-colors cursor-pointer p-0.5"
-                  title="كيف يتم احتساب هذا المبلغ؟"
-                >
-                  <HelpCircle size={13} />
-                </button>
-                <span>المبلغ المتبقي الآمن</span>
-              </div>
-
-              <AnimatePresence>
-                {showBudgetCalcHelp && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute bottom-full mb-3 left-0 sm:left-auto sm:-right-4 z-50 w-72 sm:w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xl text-right text-xs space-y-3 font-sans"
-                  >
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
-                      <button
-                        type="button"
-                        onClick={() => setShowBudgetCalcHelp(false)}
-                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                      >
-                        <X size={14} />
-                      </button>
-                      <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1">
-                        <HelpCircle size={14} className="text-emerald-500" />
-                        كيف يتم حساب هذا المبلغ؟ 🤔
-                      </span>
-                    </div>
-
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-semibold">
-                      يتم احتساب هذا المبلغ ديناميكياً لضمان عدم تجاوز ميزانيتك الشهرية المقدرة بناءً على مداخيلك ومصاريفك المسجلة:
-                    </p>
-
-                    <div className="space-y-2 bg-slate-50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800/60 text-slate-700 dark:text-slate-300">
-                      {rollingBudgetEnabled ? (
-                        <>
-                          <div className="flex justify-between text-[11px] items-center">
-                            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(globalBudgetNum, currency)}</span>
-                            <span className="font-bold">1. الميزانية الإجمالية للشهر:</span>
-                          </div>
-                          <div className="flex justify-between text-[11px] items-center">
-                            <span className="font-mono font-bold text-rose-500">{formatCurrency(totalSpent, currency)}</span>
-                            <span className="font-bold">2. إجمالي المصاريف حتى الآن:</span>
-                          </div>
-                          <div className="flex justify-between text-[11px] border-t border-slate-200/50 dark:border-slate-800/50 pt-1 mt-1 items-center">
-                            <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{formatCurrency(remainingBudget, currency)}</span>
-                            <span className="font-bold">الميزانية المتبقية للشهر:</span>
-                          </div>
-                          <div className="flex justify-between text-[11px] border-b border-slate-200/50 dark:border-slate-800/50 pb-1 mb-1 items-center">
-                            <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{remainingDays} يوم</span>
-                            <span className="font-bold">الأيام المتبقية في الشهر:</span>
-                          </div>
-                          <div className="flex justify-between text-[11px] items-center">
-                            <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{formatCurrency(dailyLimit, currency)}</span>
-                            <span className="font-bold">3. مسموح الصرف اليومي الذكي:</span>
-                          </div>
-                          <div className="flex justify-between text-[11px] items-center">
-                            <span className="font-mono font-bold text-slate-600 dark:text-slate-400">{formatCurrency(todaySpent, currency)}</span>
-                            <span className="font-bold">4. مصروفاتك اليوم:</span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex justify-between text-[11px] items-center">
-                            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(globalBudgetNum, currency)}</span>
-                            <span className="font-bold">1. الميزانية الإجمالية للشهر:</span>
-                          </div>
-                          <div className="flex justify-between text-[11px] items-center">
-                            <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{budgetDaysInMonth} يوم</span>
-                            <span className="font-bold">2. إجمالي أيام الشهر:</span>
-                          </div>
-                          <div className="flex justify-between text-[11px] border-t border-slate-200/50 dark:border-slate-800/50 pt-1 mt-1 items-center">
-                            <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{formatCurrency(dailyLimit, currency)}</span>
-                            <span className="font-bold">مسموح الصرف اليومي بالتساوي:</span>
-                          </div>
-                          <div className="flex justify-between text-[11px] items-center">
-                            <span className="font-mono font-bold text-slate-600 dark:text-slate-400">{formatCurrency(todaySpent, currency)}</span>
-                            <span className="font-bold">3. مصروفاتك اليوم:</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    <div className="text-[11px] bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/10 p-2.5 rounded-xl text-center">
-                      <span className="text-slate-500 dark:text-slate-400 font-bold block mb-1">المعادلة النهائية:</span>
-                      <p className="font-black text-emerald-600 dark:text-emerald-400 text-sm font-mono" dir="ltr">
-                        {formatCurrency(dailyLimit, currency)} - {formatCurrency(todaySpent, currency)} = {formatCurrency(remainingToday, currency)}
-                      </p>
-                      <span className="text-[9px] text-slate-400 block mt-1">
-                        (مسموح اليوم - مصاريف اليوم = المتبقي الآمن اليوم)
-                      </span>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          <div className="p-4 bg-slate-50 dark:bg-slate-800/40 border border-slate-100/5 rounded-2xl flex justify-between items-center">
-            <div className="text-left font-sans">
-              <span className="text-lg font-black text-slate-800 dark:text-white">
-                {formatCurrency(todaySpent, currency)}
-              </span>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">ما تم صرفه اليوم 💸</p>
-              <p className="text-xs text-slate-600 dark:text-slate-300 font-black mt-0.5">مجموع المعاملات</p>
-            </div>
-          </div>
-        </div>
+        {/* Visual Safe to Spend Daily Budget Progress Indicator */}
+        <DailySafeSpendCard
+          dailyLimit={dailyLimit}
+          todaySpent={todaySpent}
+          remainingToday={remainingToday}
+          globalBudgetNum={globalBudgetNum}
+          currency={currency}
+          remainingDays={remainingDays}
+          daysInMonth={budgetDaysInMonth}
+          rollingBudgetEnabled={rollingBudgetEnabled}
+          totalSpentMonth={totalSpent}
+          onOpenAddExpense={() => setIsAddModalOpen(true)}
+        />
 
         {/* Transaction list for today */}
         <div className="space-y-2">
@@ -1514,6 +1399,10 @@ const Dashboard = () => {
         dailyAverage={dailyAverage}
         recentTransactions={recentTransactions}
         budgetStatus={budgetStatus}
+        globalBudgetNum={globalBudgetNum}
+        remainingDays={remainingDays}
+        daysInMonth={budgetDaysInMonth}
+        totalSpentMonth={totalSpent}
         handleQuickPresetClick={handleQuickPresetClick}
         handleQuickAddSubmit={handleQuickAddSubmit}
         quickAmount={quickAmount}

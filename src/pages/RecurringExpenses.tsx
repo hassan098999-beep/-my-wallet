@@ -16,6 +16,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import Badge from '../components/ui/Badge';
+import { RecurringNotificationManager } from '../components/RecurringNotificationManager';
 
 const RecurringExpenses = () => {
   const { 
@@ -339,6 +340,11 @@ const RecurringExpenses = () => {
 
       {activeTab === 'recurring' && (
         <>
+          {/* Local Notification System for Recurring Expenses */}
+          <motion.div variants={itemVariants} className="px-2">
+            <RecurringNotificationManager />
+          </motion.div>
+
           {/* Commitment Metric Dashboard */}
           <motion.div 
             variants={itemVariants} 

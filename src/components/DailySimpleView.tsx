@@ -23,6 +23,7 @@ import { Category, Account, Expense, Goal } from '../types';
 import { DynamicIcon } from './DynamicIcon';
 import { parseISO, format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { DailySafeSpendCard } from './DailySafeSpendCard';
 
 interface DailySimpleViewProps {
   categories: Category[];
@@ -39,6 +40,10 @@ interface DailySimpleViewProps {
   dailyAverage: number;
   recentTransactions: Expense[];
   budgetStatus: 'red' | 'orange' | 'green';
+  globalBudgetNum?: number;
+  remainingDays?: number;
+  daysInMonth?: number;
+  totalSpentMonth?: number;
   handleQuickPresetClick: (preset: any) => void;
   handleQuickAddSubmit: (e: React.FormEvent) => void;
   quickAmount: string;
@@ -65,6 +70,10 @@ const DailySimpleView: React.FC<DailySimpleViewProps> = ({
   totalMonthlyExpense,
   recentTransactions,
   budgetStatus,
+  globalBudgetNum = 0,
+  remainingDays = 30,
+  daysInMonth = 30,
+  totalSpentMonth = 0,
   handleQuickPresetClick,
   handleQuickAddSubmit,
   quickAmount,
@@ -94,66 +103,22 @@ const DailySimpleView: React.FC<DailySimpleViewProps> = ({
   return (
     <div className="space-y-6 max-w-3xl mx-auto text-right" dir="rtl">
       
-      {/* A. Elegant Daily Budget Capsule */}
+      {/* A. Visual Safe To Spend Progress Indicator */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-indigo-950 via-slate-900 to-emerald-950 text-white rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-xl border border-white/5"
       >
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 flex-1">
-            <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2.5 py-1 rounded-full inline-block">
-              الميزانية اليومية النشطة
-            </span>
-            <p className="text-xs text-slate-400 font-bold leading-none mt-2">المبلغ المتبقي المتاح للصرف اليوم دون قلق:</p>
-            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter pt-1 font-mono">
-              {formatCurrency(remainingDailyBudget, currency)}
-            </h2>
-            <div className="text-[10px] text-slate-400 font-bold flex items-center gap-1.5 mt-1 justify-start">
-              <span className={cn(
-                "w-2 h-2 rounded-full",
-                budgetStatus === 'red' ? "bg-rose-500" : budgetStatus === 'orange' ? "bg-amber-500" : "bg-emerald-500"
-              )} />
-              <span>تَم صرف {formatCurrency(todaySpending, currency)} من أصل {formatCurrency(dailyBudget, currency)}</span>
-            </div>
-          </div>
-
-          <div className="space-y-4 md:border-r md:border-white/10 md:pr-8 md:rtl:border-r md:rtl:pr-8 md:rtl:border-l-0 md:rtl:pl-0 flex-1">
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold">
-                <span>معدل الصرف اليومي</span>
-                <span>{Math.min(100, Math.round((todaySpending / (rollingBudget || 1)) * 100))}%</span>
-              </div>
-              <div className="w-full bg-slate-900/60 h-2 rounded-full overflow-hidden border border-white/5 shadow-inner animate-pulse-soft">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(100, (todaySpending / (rollingBudget || 1)) * 100)}%` }}
-                  className={cn(
-                    "h-full rounded-full transition-all duration-500",
-                    budgetStatus === 'red' ? "bg-rose-500 animate-pulse" : budgetStatus === 'orange' ? "bg-amber-500" : "bg-emerald-555"
-                  )}
-                  style={{
-                    backgroundColor: budgetStatus === 'red' ? '#ef4444' : budgetStatus === 'orange' ? '#f59e0b' : '#10b981'
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 pt-1 text-right">
-              <div>
-                <span className="text-[9px] font-black text-slate-400 block uppercase">الرصيد الجملي المتوفر</span>
-                <p className="text-sm font-black text-white font-mono mt-0.5">{formatCurrency(totalNetWorth, currency)}</p>
-              </div>
-              <div>
-                <span className="text-[9px] font-black text-slate-400 block uppercase">المصروف الشهري</span>
-                <p className="text-sm font-black text-rose-300 font-mono mt-0.5">{formatCurrency(totalMonthlyExpense, currency)}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DailySafeSpendCard
+          dailyLimit={dailyBudget || rollingBudget}
+          todaySpent={todaySpending}
+          remainingToday={remainingDailyBudget}
+          globalBudgetNum={globalBudgetNum}
+          currency={currency}
+          remainingDays={remainingDays}
+          daysInMonth={daysInMonth}
+          totalSpentMonth={totalSpentMonth}
+          onOpenAddExpense={() => setIsAddModalOpen(true)}
+        />
       </motion.div>
 
       {/* C. Clean Recent Transactions */}
