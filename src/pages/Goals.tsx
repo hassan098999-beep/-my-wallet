@@ -1007,20 +1007,57 @@ const GoalsPage = () => {
                     </div>
                   </div>
                     
-                    <div className="relative h-6 md:h-8 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner p-1.5 mb-10">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${percentage}%` }}
-                        transition={{ duration: 1.5, ease: "circOut" }}
-                        className={cn(
-                          "h-full rounded-full relative",
-                          isCompleted 
-                            ? "bg-gradient-to-r from-emerald-500 to-teal-400" 
-                            : "bg-gradient-to-r from-primary-600 to-primary-400"
-                        )}
-                      >
-                        <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:24px_24px] animate-[shimmer_2s_linear_infinite]" />
-                      </motion.div>
+                    <div className="relative mt-8 mb-12">
+                      <div className="flex justify-between items-end mb-2 px-2">
+                        <div className="text-right">
+                          <span className="text-[10px] font-bold text-slate-400 block mb-0.5">المنجز</span>
+                          <span className="text-sm font-black text-slate-700 dark:text-slate-300">{Math.round(percentage)}%</span>
+                        </div>
+                        <div className="text-left">
+                          <span className="text-[10px] font-bold text-slate-400 block mb-0.5">المتبقي</span>
+                          <span className="text-sm font-black text-primary-500">{Math.round(100 - percentage)}%</span>
+                        </div>
+                      </div>
+                      
+                      <div className="relative h-4 md:h-5 bg-slate-100 dark:bg-slate-800/80 rounded-full overflow-visible shadow-inner">
+                        {/* Target line markers */}
+                        <div className="absolute top-0 bottom-0 left-1/4 w-px bg-slate-200/50 dark:bg-slate-700/50 z-0"></div>
+                        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-slate-200/50 dark:bg-slate-700/50 z-0"></div>
+                        <div className="absolute top-0 bottom-0 left-3/4 w-px bg-slate-200/50 dark:bg-slate-700/50 z-0"></div>
+
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${percentage}%` }}
+                          transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
+                          className={cn(
+                            "h-full rounded-full relative z-10",
+                            isCompleted 
+                              ? "bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-400" 
+                              : "bg-gradient-to-r from-indigo-500 via-primary-500 to-purple-500"
+                          )}
+                        >
+                          <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:16px_16px] animate-[shimmer_2s_linear_infinite]" />
+                          
+                          {/* Creative moving element at the tip */}
+                          <div className="absolute top-1/2 -left-3 md:-left-4 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-slate-800 rounded-full shadow-lg border-4 border-slate-50 dark:border-slate-900 flex items-center justify-center z-20">
+                            {isCompleted ? (
+                              <motion.div
+                                animate={{ scale: [1, 1.2, 1] }}
+                                transition={{ repeat: Infinity, duration: 2 }}
+                              >
+                                <Trophy size={14} className="text-emerald-500 md:w-5 md:h-5" />
+                              </motion.div>
+                            ) : (
+                              <motion.div
+                                animate={{ rotate: [0, 10, -10, 0] }}
+                                transition={{ repeat: Infinity, duration: 1.5 }}
+                              >
+                                <Sparkles size={14} className="text-primary-500 md:w-5 md:h-5" />
+                              </motion.div>
+                            )}
+                          </div>
+                        </motion.div>
+                      </div>
                     </div>
 
                     {/* Linked Info & Action */}
