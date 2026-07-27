@@ -6,8 +6,8 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
-  const isGithubPages = env.VITE_GITHUB_PAGES === 'true';
-  const basePath = isGithubPages ? '/-my-wallet/' : '/';
+  const isGithubPages = env.VITE_GITHUB_PAGES === 'true' || process.env.GITHUB_PAGES === 'true';
+  const basePath = isGithubPages ? '/-my-wallet/' : './';
 
   return {
     base: basePath,
@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
         injectRegister: "auto",
         includeAssets: ["icon-192.png", "icon-512.png", "icon.svg", "screenshot-mobile.jpg", "screenshot-desktop.jpg"],
         devOptions: {
-          enabled: false,
+          enabled: true,
         },
         workbox: {
           globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,webmanifest}"],
@@ -28,19 +28,49 @@ export default defineConfig(({ mode }) => {
           skipWaiting: true,
           clientsClaim: true,
           navigateFallback: isGithubPages ? '/-my-wallet/index.html' : '/index.html',
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-cache',
+                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] }
+              }
+            },
+            {
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|ico|webp)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'images-cache',
+                expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 }
+              }
+            },
+            {
+              urlPattern: /\.(?:js|css)$/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'static-resources'
+              }
+            }
+          ]
         },
         manifest: {
-          id: isGithubPages ? '/-my-wallet/' : '/',
-          start_url: isGithubPages ? '/-my-wallet/' : '/',
+          id: isGithubPages ? '/-my-wallet/' : 'masarifi-pwa-app',
+          start_url: isGithubPages ? '/-my-wallet/' : './',
+          scope: isGithubPages ? '/-my-wallet/' : './',
           name: "مصاريفي - إدارة المصاريف الشخصية",
           short_name: "مصاريفي",
-          description: "تطبيق لإدارة المصاريف الشخصية وتتبع الميزانية وتخطيط الأهداف المالية في تونس",
+          description: "تطبيق لإدارة المصاريف الشخصية وتتبع الميزانية وتخطيط الأهداف المالية",
           theme_color: "#10b981",
-          background_color: "#ffffff",
+          background_color: "#0f172a",
           display: "standalone",
+          display_override: ["standalone", "minimal-ui", "window-controls-overlay"],
           orientation: "portrait",
           lang: "ar",
           dir: "rtl",
+          prefer_related_applications: false,
+          related_applications: [],
           categories: ["finance", "utilities"],
           iarc_rating_id: "e840a1b8-20dd-4cb9-91bc-0e42d765b263",
           screenshots: [
