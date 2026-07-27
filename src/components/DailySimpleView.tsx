@@ -23,7 +23,6 @@ import { Category, Account, Expense, Goal } from '../types';
 import { DynamicIcon } from './DynamicIcon';
 import { parseISO, format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { DailySafeSpendCard } from './DailySafeSpendCard';
 
 interface DailySimpleViewProps {
   categories: Category[];
@@ -103,24 +102,6 @@ const DailySimpleView: React.FC<DailySimpleViewProps> = ({
   return (
     <div className="space-y-6 max-w-3xl mx-auto text-right" dir="rtl">
       
-      {/* A. Visual Safe To Spend Progress Indicator */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <DailySafeSpendCard
-          dailyLimit={dailyBudget || rollingBudget}
-          todaySpent={todaySpending}
-          remainingToday={remainingDailyBudget}
-          globalBudgetNum={globalBudgetNum}
-          currency={currency}
-          remainingDays={remainingDays}
-          daysInMonth={daysInMonth}
-          totalSpentMonth={totalSpentMonth}
-          onOpenAddExpense={() => setIsAddModalOpen(true)}
-        />
-      </motion.div>
-
       {/* C. Clean Recent Transactions */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
