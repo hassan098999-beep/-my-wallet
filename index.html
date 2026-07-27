@@ -7,22 +7,23 @@
     <meta name="description" content="تطبيق لإدارة المصاريف الشخصية وتتبع الميزانية" />
     <meta name="application-name" content="مصاريفي">
     <meta name="mobile-web-app-capable" content="yes">
-    <link rel="icon" href="/-my-wallet/icon.svg" type="image/svg+xml" />
-    <link rel="icon" href="/-my-wallet/icon-192.png" type="image/png" />
-    <link rel="apple-touch-icon" href="/-my-wallet/icon-192.png" />
-    <link rel="manifest" href="/-my-wallet/manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="مصاريفي">
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/-my-wallet/sw.js', { scope: '/-my-wallet/' })
+          var swUrl = 'sw.js';
+          navigator.serviceWorker.register(swUrl)
             .then(function(reg) {
-              console.log('✅ Service Worker registered statically: ', reg.scope);
+              console.log('✅ Service Worker registered successfully: ', reg.scope);
             })
             .catch(function(err) {
-              console.error('❌ Service Worker static registration failed: ', err);
+              console.warn('⚠️ Service Worker registration note: ', err);
             });
         });
       }
@@ -53,8 +54,8 @@
       }(window.location))
     </script>
     <!-- End Single Page Apps for GitHub Pages -->
-    <script type="module" crossorigin src="/-my-wallet/assets/index-CNWc4Mfx.js"></script>
-    <link rel="stylesheet" crossorigin href="/-my-wallet/assets/index-DBSCNOYT.css">
+    <script type="module" crossorigin src="/-my-wallet/assets/index-Cfe41dUG.js"></script>
+    <link rel="stylesheet" crossorigin href="/-my-wallet/assets/index-DCvO2cL0.css">
   <link rel="manifest" href="/-my-wallet/manifest.webmanifest"></head>
   <body class="font-tajawal bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-50">
     <div id="root"></div>
