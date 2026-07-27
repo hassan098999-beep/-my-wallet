@@ -23,6 +23,8 @@ import SavingsPage from './pages/Savings';
 import SavingsIndicatorsPage from './pages/SavingsIndicators';
 import FamilyReport from './pages/FamilyReport';
 
+import ChallengesPage from './pages/Challenges';
+
 function AppContent() {
   const { isLocked } = useAppContext();
 
@@ -46,6 +48,7 @@ function AppContent() {
               <Route path="goals" element={<GoalsPage />} />
               <Route path="income" element={<IncomePage />} />
               <Route path="savings" element={<SavingsPage />} />
+              <Route path="challenges" element={<ChallengesPage />} />
               <Route path="savings-indicators" element={<SavingsIndicatorsPage />} />
               <Route path="family" element={<FamilyReport />} />
               <Route path="settings" element={<Settings />} />

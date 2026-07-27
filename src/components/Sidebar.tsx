@@ -9,6 +9,7 @@ const mainNavItems = [
   { path: '/', name: 'الرئيسية العائلية', icon: Home },
   { path: '/budget', name: 'الميزانية والالتزامات', icon: ChartPie },
   { path: '/savings', name: 'منصة الادخار الذكي', icon: PiggyBank },
+  { path: '/challenges', name: 'التحديات والمكافآت', icon: Target },
   { path: '/family', name: 'التقارير والتحليلات', icon: Baby },
 ];
 

@@ -32,6 +32,7 @@ import { Link } from 'react-router-dom';
 import { useBehavioralEngine } from '../hooks/useBehavioralEngine';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import DailySimpleView from '../components/DailySimpleView';
+import Challenges from './Challenges';
 
 // Import newly refactored modular components for smart architecture
 import SwipeableTransactionItem from '../components/SwipeableTransactionItem';
@@ -404,7 +405,7 @@ const Dashboard = () => {
   }, [expenses]);
 
   // Active Tab for refactored clutter-free dashboard
-  const [activeDashboardTab, setActiveDashboardTab] = useState<'daily' | 'vaults' | 'insights' | 'history'>(() => {
+  const [activeDashboardTab, setActiveDashboardTab] = useState<'daily' | 'vaults' | 'challenges' | 'insights' | 'history'>(() => {
     return (safeStorage.getItem('dashboard_active_tab') as 'daily' | 'vaults' | 'insights' | 'history') || 'daily';
   });
 
@@ -805,6 +806,7 @@ const Dashboard = () => {
         {[
           { id: 'daily', label: 'اليوم والسريع ⚡', icon: <Zap size={14} className="text-amber-500" /> },
           { id: 'vaults', label: 'الخزائن والحصالة 💳', icon: <PiggyBank size={14} className="text-emerald-500" /> },
+          { id: 'challenges', label: 'التحديات 🏆', icon: <Target size={14} className="text-rose-500" /> },
           { id: 'insights', label: 'الذكاء والتحليل 📊', icon: <Activity size={14} className="text-indigo-500" /> },
           { id: 'history', label: 'سجل المعاملات 📜', icon: <Clock size={14} className="text-slate-500" /> },
         ].map((tab) => (
@@ -1417,6 +1419,10 @@ const Dashboard = () => {
         repeatExpense={repeatExpense}
       />
     </>
+  )}
+
+  {activeDashboardTab === 'challenges' && (
+    <Challenges />
   )}
 
   {activeDashboardTab === 'insights' && (
