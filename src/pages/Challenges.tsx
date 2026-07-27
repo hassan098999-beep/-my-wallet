@@ -1,14 +1,21 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { Award, Target, Zap, Medal, Star, CheckCircle, TrendingUp, Sparkles, Flame } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Award, Target, Zap, Medal, Star, CheckCircle, TrendingUp, Sparkles, Flame, Loader2, Bot } from 'lucide-react';
 import { cn, formatCurrency, hapticFeedback } from '../utils';
 import { useAppContext } from '../store/AppContext';
+import toast from 'react-hot-toast';
 
 export default function Challenges() {
-  const { currency } = useAppContext();
+  const { currency, expenses } = useAppContext();
   
-  // Fake state for challenges
   const [activeChallenges, setActiveChallenges] = useState<string[]>(['c1']);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  
+  const [challenges, setChallenges] = useState([
+    { id: 'c1', title: 'تحدي 30 يوم بدون مطاعم', desc: 'وفر مصاريف الأكل بالخارج واطبخ في المنزل', reward: '50 نقطة', progress: 40 },
+    { id: 'c2', title: 'توفير 10% من الراتب', desc: 'اقتطع 10% فور استلام الراتب هذا الشهر', reward: 'شارة المتسوق', progress: 0 },
+    { id: 'c3', title: 'أسبوع القهوة المنزلية', desc: 'استبدل قهوة الكافيه بقهوة من صنع يديك', reward: '20 نقطة', progress: 80 },
+  ]);
 
   const toggleChallenge = (id: string) => {
     hapticFeedback('light');
@@ -19,17 +26,49 @@ export default function Challenges() {
     }
   };
 
+  const generateAIChallenges = async () => {
+    hapticFeedback('medium');
+    setIsLoadingAI(true);
+    try {
+      // Create a simplified expenses array to send
+      const recentExpenses = expenses.slice(0, 50).map(e => ({
+        amount: e.amount,
+        category: e.categoryId,
+        note: e.note,
+        date: e.date
+      }));
+
+      const res = await fetch('/api/suggest-challenges', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expenses: recentExpenses })
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch AI challenges');
+      
+      const data = await res.json();
+      
+      if (data.challenges && Array.isArray(data.challenges)) {
+        setChallenges(prev => {
+          // Keep existing active challenges and add the new ones
+          const activeExisting = prev.filter(c => activeChallenges.includes(c.id));
+          return [...activeExisting, ...data.challenges];
+        });
+        toast.success('تم إنشاء تحديات ذكية بناءً على مصاريفك!');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('لم نتمكن من توليد تحديات ذكية حالياً. جرب لاحقاً.');
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
+
   const badges = [
     { id: 'b1', title: 'بطل التوفير', desc: 'وفرت 500 دينار', icon: Award, color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', unlocked: true },
     { id: 'b2', title: 'نينجا الميزانية', desc: 'شهر بدون تجاوز الميزانية', icon: Medal, color: 'text-indigo-500', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20', unlocked: true },
     { id: 'b3', title: 'نار الادخار', desc: 'سجل ادخار متتالي لـ 3 أشهر', icon: Flame, color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/20', unlocked: false },
     { id: 'b4', title: 'المتسوق الذكي', desc: 'أقل صرف على الرفاهية', icon: Star, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', unlocked: false },
-  ];
-
-  const challenges = [
-    { id: 'c1', title: 'تحدي 30 يوم بدون مطاعم', desc: 'وفر مصاريف الأكل بالخارج واطبخ في المنزل', reward: '50 نقطة', progress: 40 },
-    { id: 'c2', title: 'توفير 10% من الراتب', desc: 'اقتطع 10% فور استلام الراتب هذا الشهر', reward: 'شارة المتسوق', progress: 0 },
-    { id: 'c3', title: 'أسبوع القهوة المنزلية', desc: 'استبدل قهوة الكافيه بقهوة من صنع يديك', reward: '20 نقطة', progress: 80 },
   ];
 
   return (
@@ -77,9 +116,23 @@ export default function Challenges() {
 
       {/* Active Challenges Section */}
       <section className="mt-8">
-        <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="text-emerald-500" size={20} />
-          <h2 className="text-lg font-black text-slate-800 dark:text-slate-100">تحديات الادخار المتاحة</h2>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="text-emerald-500" size={20} />
+            <h2 className="text-lg font-black text-slate-800 dark:text-slate-100">تحديات الادخار المتاحة</h2>
+          </div>
+          <button
+            onClick={generateAIChallenges}
+            disabled={isLoadingAI}
+            className="bg-indigo-500/10 hover:bg-indigo-500 text-indigo-600 dark:text-indigo-400 hover:text-white transition-all px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed border border-indigo-500/20 active:scale-95"
+          >
+            {isLoadingAI ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Bot size={16} />
+            )}
+            تحديات مخصصة بالذكاء الاصطناعي
+          </button>
         </div>
         <div className="space-y-4">
           {challenges.map(challenge => {

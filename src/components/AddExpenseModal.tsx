@@ -20,6 +20,20 @@ interface AddExpenseModalProps {
   initialMode?: 'quick' | 'calculator';
 }
 
+const evaluateExpression = (expr: string): number => {
+  try {
+    let cleanExpr = expr.replace(/[^0-9+\-*/.]/g, '');
+    // Remove trailing operators
+    cleanExpr = cleanExpr.replace(/[+\-*/.]+$/, '');
+    if (!cleanExpr) return 0;
+    // eslint-disable-next-line no-new-func
+    const result = new Function(`return ${cleanExpr}`)();
+    return isNaN(result) || !isFinite(result) ? 0 : result;
+  } catch {
+    return 0;
+  }
+};
+
 const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, editExpenseData, initialGoalId, initialMode }) => {
   const { categories, accounts, expenses, income, goals, addExpense, addIncome, updateExpense, updateIncome, transferAccount, addCategory, currency, budget } = useAppContext();
 
@@ -368,20 +382,6 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
       setSubcategoryId('');
     }
     toast.success(`تم ملء بيانات: ${noteText} ⚡`);
-  };
-
-  const evaluateExpression = (expr: string): number => {
-    try {
-      let cleanExpr = expr.replace(/[^0-9+\-*/.]/g, '');
-      // Remove trailing operators
-      cleanExpr = cleanExpr.replace(/[+\-*/.]+$/, '');
-      if (!cleanExpr) return 0;
-      // eslint-disable-next-line no-new-func
-      const result = new Function(`return ${cleanExpr}`)();
-      return isNaN(result) || !isFinite(result) ? 0 : result;
-    } catch {
-      return 0;
-    }
   };
 
   const handleKeyPress = (key: string) => {
