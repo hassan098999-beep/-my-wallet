@@ -50,7 +50,7 @@ const BudgetPage = () => {
 
   const [activeTab, setActiveTab] = useState<'budget' | 'income' | 'recurring'>('budget');
   const [globalBudget, setGlobalBudget] = useState(budget?.amount.toString() || '');
-  const [selectedMonth, setSelectedMonth] = useState(budget?.month || getBudgetMonth(new Date(), firstDayOfMonth));
+  const [selectedMonth, setSelectedMonth] = useState(getBudgetMonth(new Date(), firstDayOfMonth));
   const [isSaved, setIsSaved] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showRuleInfo, setShowRuleInfo] = useState(false);
@@ -64,8 +64,8 @@ const BudgetPage = () => {
   // Sync state if budget changes externally
   useEffect(() => {
     if (budget) {
-      setGlobalBudget(budget.amount.toString());
-      setCategoryBudgets(Object.fromEntries(Object.entries(budget.categoryBudgets).map(([k, v]) => [k, v.toString()])));
+      setGlobalBudget(budget.amount?.toString() || '');
+      setCategoryBudgets(Object.fromEntries(Object.entries(budget.categoryBudgets || {}).map(([k, v]) => [k, v.toString()])));
     }
   }, [budget]);
 
