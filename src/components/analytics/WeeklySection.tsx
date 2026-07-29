@@ -391,7 +391,7 @@ export const WeeklySection: React.FC<WeeklySectionProps> = ({
                   direction: 'rtl',
                   boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
                 }}
-                formatter={(value: any, name: string) => {
+                formatter={(value: any, name: any) => {
                   const label = name === 'thisWeek' ? 'الأسبوع الحالي' : 'الأسبوع الماضي';
                   return [formatCurrency(Number(value), currency), label];
                 }}
@@ -560,7 +560,7 @@ export const WeeklySection: React.FC<WeeklySectionProps> = ({
 
               <div className="p-3 bg-slate-50 dark:bg-slate-950/40 border border-slate-100/50 dark:border-slate-900/50 rounded-2xl text-[10px] font-bold text-slate-600 dark:text-slate-300">
                 <span className="text-indigo-600 dark:text-indigo-400 block mb-1">💡 الإجراء المقترح:</span>
-                <p className="leading-relaxed font-semibold">{advice.actionItem || advice.action}</p>
+                <p className="leading-relaxed font-semibold">{(advice as any).actionItem || advice.action}</p>
               </div>
             </motion.div>
           ))}

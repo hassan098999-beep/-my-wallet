@@ -25,7 +25,7 @@ export const getFinancialAdvice = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.5-flash",
       contents: `
         بصفتك مستشاراً مالياً ذكياً وخبيراً في الاقتصاد التونسي ومتخصصاً في مساعدة عائلة تونسية شابة تتكون من (أب وأم وطفل رضيع)، قم بتحليل البيانات المالية التالية وقدم 3 نصائح عملية ومخصصة لهذه العائلة التونسية.
         العملة المستخدمة: الدينار التونسي (TND) - تذكر أن 1 دينار = 1000 مليم (المليمات مهمة جداً في تونس).
@@ -98,7 +98,7 @@ export const getFinancialForecast = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.5-flash",
       contents: `
         بصفتك خبيراً في التنبؤ المالي بالسوق التونسي، قم بتحليل البيانات التاريخية وتوقع الرصيد الإجمالي للأشهر الثلاثة القادمة بالدينار التونسي (TND).
         العملة المستخدمة: TND (1 دينار = 1000 مليم).
@@ -183,7 +183,7 @@ export const chatWithFinancialAdvisor = async (
 
   try {
     const chat = ai.chats.create({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash",
       config: {
         systemInstruction,
         temperature: 0.7,
@@ -213,7 +213,7 @@ export const scanReceipt = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash",
       contents: {
         parts: [
           {
@@ -277,7 +277,7 @@ export const getSmartSavingChallenge = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.5-flash",
       contents: `
         بصفتك مستشاراً مالياً ذكياً خبيراً في الاقتصاد التونسي ومخطط ميزانيات مبتكر، قم بتحليل نمط الإنفاق الشهري للمستخدم واقتراح "تحدي توفير ذكي ومخصص" (Smart Saving Challenge) لمساعدته على توفير المال بذكاء خلال الفترة القادمة.
         

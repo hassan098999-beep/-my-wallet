@@ -90,7 +90,7 @@ export default function Assistant() {
     hapticFeedback('medium');
     setQuery('');
     setSelectedImage(null);
-    setMessages(prev => [...prev, { role: 'user', content: userQuery, image: userImage }]);
+    setMessages(prev => [...prev, { role: 'user', content: userQuery, image: userImage || undefined }]);
     setIsLoading(true);
 
     try {
@@ -279,7 +279,7 @@ export default function Assistant() {
       chatHistoryRef.current.push({ role: 'user', parts: userParts });
 
       let response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-2.5-flash',
         contents: [
           { role: 'user', parts: [{ text: context }] },
           { role: 'model', parts: [{ text: 'فهمت السياق والتعليمات. أنا مستعد للمساعدة.' }] },

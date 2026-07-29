@@ -290,7 +290,7 @@ export const AIAdvisor: React.FC = () => {
                         }}
                         itemStyle={{ color: '#fff', fontWeight: 900, fontSize: '12px' }}
                         labelStyle={{ color: '#64748b', marginBottom: '4px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase' }}
-                        formatter={(value: number) => [formatCurrency(value, currency), 'الرصيد المتوقع']}
+                        formatter={(value: any) => [formatCurrency(value, currency), 'الرصيد المتوقع']}
                       />
                       <Area 
                         type="monotone" 

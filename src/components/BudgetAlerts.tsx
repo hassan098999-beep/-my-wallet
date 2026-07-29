@@ -155,7 +155,7 @@ export const BudgetAlerts = () => {
                     ? "bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400"
                     : "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400"
                 )}>
-                  <DynamicIcon name={alert.icon} size={22} />
+                  <DynamicIcon name={alert.icon || "AlertCircle"} size={22} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
