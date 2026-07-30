@@ -356,13 +356,6 @@ const SavingsPage = () => {
     hapticFeedback('success');
     
     // Add real transaction stream
-    await addIncome({
-      source: `ادخار شهري: طوارئ وصحة الرضيع`,
-      amount: amountToSave,
-      goalId: babyGoal.id,
-      accountId: accounts[0]?.id || 'cash',
-      date: new Date().toISOString().split('T')[0],
-    });
     
     // Update goal balance directly
     await updateGoal(babyGoal.id, {

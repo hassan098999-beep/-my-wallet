@@ -583,6 +583,10 @@ const Dashboard = () => {
     accounts.reduce((sum, acc) => sum + acc.balance, 0),
   [accounts]);
 
+  const totalGoals = useMemo(() => 
+    (goals || []).reduce((sum, g) => sum + (g.currentAmount || 0), 0),
+  [goals]);
+
   // Expense Anatomy 50-30-20
   const typeSpent = useMemo(() => {
     const totals = { need: 0, want: 0, saving: 0 };
@@ -655,6 +659,7 @@ const Dashboard = () => {
       {/* 2. Intelligent Segmented KPI Row */}
       <SummaryKpiRow
         totalNetWorth={totalNetWorth}
+        totalGoals={totalGoals}
         remainingToday={remainingToday}
         totalMonthlyExpense={totalMonthlyExpense}
         globalBudgetNum={globalBudgetNum}

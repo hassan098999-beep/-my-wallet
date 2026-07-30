@@ -5,6 +5,7 @@ import { formatCurrency, cn } from '../../utils';
 
 interface SummaryKpiRowProps {
   totalNetWorth: number;
+  totalGoals?: number;
   remainingToday: number;
   totalMonthlyExpense: number;
   globalBudgetNum: number;
@@ -14,6 +15,7 @@ interface SummaryKpiRowProps {
 
 export const SummaryKpiRow: React.FC<SummaryKpiRowProps> = ({
   totalNetWorth,
+  totalGoals = 0,
   remainingToday,
   totalMonthlyExpense,
   globalBudgetNum,
@@ -37,9 +39,16 @@ export const SummaryKpiRow: React.FC<SummaryKpiRowProps> = ({
           </div>
           <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black tracking-wide">الرصيد الإجمالي 💳</span>
         </div>
-        <span className="text-sm md:text-lg font-black text-slate-900 dark:text-white font-mono truncate">
-          {formatCurrency(totalNetWorth, currency)}
-        </span>
+        <div className="flex flex-col">
+          <span className="text-sm md:text-lg font-black text-slate-900 dark:text-white font-mono truncate">
+            {formatCurrency(totalNetWorth, currency)}
+          </span>
+          {totalGoals > 0 && (
+            <span className="text-[9px] text-slate-400 font-bold mt-0.5 border-t border-slate-100 dark:border-slate-800 pt-1">
+              متاح للإنفاق: {formatCurrency(Math.max(0, totalNetWorth - totalGoals), currency)}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Card 2: Safe Remaining Today */}
