@@ -1,0 +1,246 @@
+import React from 'react';
+import { motion } from 'motion/react';
+import { Sparkles } from 'lucide-react';
+import { formatCurrency, cn, hapticFeedback } from '../../utils';
+import { DynamicIcon } from '../DynamicIcon';
+import CalculatorKeypad from '../CalculatorKeypad';
+import { format, parseISO } from 'date-fns';
+import { ar } from 'date-fns/locale';
+import { PaymentMethod, Expense, Category, Account } from '../../types';
+import { evaluateExpression } from './utils';
+
+interface CalculatorViewProps {
+  type: 'expense' | 'income' | 'transfer';
+  expression: string;
+  setExpression: React.Dispatch<React.SetStateAction<string>>;
+  currency: string;
+  bgColor: string;
+  lastExpense: Expense | null;
+  lastExpenseCategory: Category | null | undefined;
+  selectedCategory: Category | undefined;
+  selectedAccount: Account | undefined;
+  selectedToAccount: Account | undefined;
+  subcategoryId: string;
+  setSubcategoryId: (sub: string) => void;
+  setCategoryId: (catId: string) => void;
+  setAccountId: (accId: string) => void;
+  setPaymentMethod: (pm: PaymentMethod) => void;
+  setNote: (note: string) => void;
+  setActiveView: (view: 'main' | 'category' | 'account' | 'toAccount' | 'details') => void;
+  date: string;
+  source: string;
+  note: string;
+  currentCategoryBudgetInsight: {
+    limit: number;
+    spentThisMonth: number;
+    remainingBefore: number;
+    remainingAfter: number;
+    enteredAmount: number;
+  } | null;
+  paymentMethod: PaymentMethod;
+  handleKeyPress: (key: string) => void;
+  handleDelete: () => void;
+  handleCalculate: () => void;
+}
+
+export const CalculatorView: React.FC<CalculatorViewProps> = ({
+  type,
+  expression,
+  setExpression,
+  currency,
+  bgColor,
+  lastExpense,
+  lastExpenseCategory,
+  selectedCategory,
+  selectedAccount,
+  selectedToAccount,
+  subcategoryId,
+  setSubcategoryId,
+  setCategoryId,
+  setAccountId,
+  setPaymentMethod,
+  setNote,
+  setActiveView,
+  date,
+  source,
+  note,
+  currentCategoryBudgetInsight,
+  paymentMethod,
+  handleKeyPress,
+  handleDelete,
+  handleCalculate,
+}) => {
+  return (
+    <>
+      {/* Amount Display (Calculator Style) */}
+      <div className={cn("flex-1 flex flex-col items-center justify-center px-6 py-4 text-white min-h-[140px] max-h-[220px]", bgColor)}>
+        <div className="flex items-baseline gap-2 w-full justify-center overflow-hidden drop-shadow-sm">
+          <span className="text-4xl sm:text-5xl font-light opacity-80 shrink-0">
+            {type === 'expense' ? '-' : type === 'income' ? '+' : ''}
+          </span>
+          <span 
+            className={cn(
+              "font-light tracking-tighter truncate dir-ltr transition-all duration-200", 
+              expression.length > 8 ? "text-5xl sm:text-6xl" : "text-7xl sm:text-8xl"
+            )}
+          >
+            {expression}
+          </span>
+          <span className="text-2xl sm:text-3xl font-light opacity-80 shrink-0">{currency}</span>
+        </div>
+        {/* Subtle info if expression has operators */}
+        {/[+\-*/]/.test(expression) && (
+          <div className="text-sm font-bold bg-white/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm animate-pulse">
+            ={formatCurrency(evaluateExpression(expression), currency)}
+          </div>
+        )}
+
+        {/* Duplicate Last Transaction Button */}
+        {lastExpense && type === 'expense' && (
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              hapticFeedback('medium');
+              setExpression(lastExpense.amount.toString());
+              setCategoryId(lastExpense.categoryId);
+              setSubcategoryId(lastExpense.subcategoryId || '');
+              if (lastExpense.accountId) {
+                setAccountId(lastExpense.accountId);
+              }
+              setPaymentMethod(lastExpense.paymentMethod || 'cash');
+              setNote(lastExpense.note || '');
+            }}
+            className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-md text-white text-[11px] font-semibold rounded-full transition-all border border-white/10 shadow-md select-none cursor-pointer"
+          >
+            <Sparkles size={11} className="text-amber-300 fill-amber-300 animate-pulse" />
+            <span>تكرار آخر مصروف: {lastExpenseCategory?.name || 'مصروف'} ({lastExpense.amount} {currency})</span>
+          </motion.button>
+        )}
+      </div>
+
+      {/* Subcategories (if applicable) */}
+      {type === 'expense' && selectedCategory?.subcategories && selectedCategory.subcategories.length > 0 && (
+        <div className={cn("px-6 pb-4 flex gap-2 overflow-x-auto custom-scrollbar shrink-0", bgColor)}>
+          {selectedCategory.subcategories.map(sub => (
+            <button
+              key={sub}
+              onClick={() => { hapticFeedback('light'); setSubcategoryId(subcategoryId === sub ? '' : sub); }}
+              className={cn(
+                "px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors border border-transparent shrink-0",
+                subcategoryId === sub 
+                  ? "bg-white text-rose-600 shadow-sm" 
+                  : "bg-black/10 text-white hover:bg-black/20"
+              )}
+            >
+              {sub}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Selectors */}
+      <div className="grid grid-cols-3 gap-px bg-slate-250 dark:bg-slate-800 shrink-0">
+        <button 
+          onClick={() => { hapticFeedback('light'); setActiveView('account'); }}
+          className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        >
+          <span className="text-[10px] text-slate-400 mb-1">الحساب</span>
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{selectedAccount?.name || 'اختر الحساب'}</span>
+        </button>
+        
+        {type === 'transfer' ? (
+          <button 
+            onClick={() => { hapticFeedback('light'); setActiveView('toAccount'); }}
+            className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <span className="text-[10px] text-slate-400 mb-1">إلى حساب</span>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{selectedToAccount?.name || 'اختر الحساب'}</span>
+          </button>
+        ) : (
+          <button 
+            onClick={() => { hapticFeedback('light'); setActiveView('category'); }}
+            className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <span className="text-[10px] text-slate-400 mb-1">{type === 'income' ? 'المصدر' : 'الفئة'}</span>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{type === 'income' ? (source || 'اختر المصدر') : (selectedCategory?.name || 'اختر الفئة')}</span>
+          </button>
+        )}
+
+        <button 
+          onClick={() => { hapticFeedback('light'); setActiveView('details'); }}
+          className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative cursor-pointer"
+        >
+          <span className="text-[10px] text-slate-400 mb-1">تفاصيل</span>
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{format(parseISO(date), 'dd MMM', { locale: ar })}</span>
+          {note && <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
+        </button>
+      </div>
+
+      {/* Real-time Category Budget Insight Bar (Calculator Mode) */}
+      {type === 'expense' && currentCategoryBudgetInsight && (
+        <div className={cn(
+          "px-4 py-2 text-[10px] font-bold flex items-center justify-between border-t border-b border-slate-200/40 dark:border-slate-800/60 shrink-0",
+          currentCategoryBudgetInsight.remainingAfter < 0 
+            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400" 
+            : "bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
+        )}>
+          <div className="flex items-center gap-1.5">
+            <span className={cn(
+              "w-1.5 h-1.5 rounded-full",
+              currentCategoryBudgetInsight.remainingAfter < 0 ? "bg-rose-500 animate-pulse" : "bg-emerald-500"
+            )} />
+            <span>ميزانية {selectedCategory?.name}: المتبقي بعد العملية</span>
+          </div>
+          <span className="font-mono">
+            {formatCurrency(currentCategoryBudgetInsight.remainingAfter, currency)}
+          </span>
+        </div>
+      )}
+
+      {/* Quick Payment Method Selector on main screen (only for expense) */}
+      {type === 'expense' && (
+        <div className="flex items-center justify-between px-4 py-2.5 bg-slate-100 dark:bg-slate-950 border-b border-slate-200/60 dark:border-slate-800/80 shrink-0">
+          <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">طريقة الدفع:</span>
+          <div className="flex gap-1">
+            {(['cash', 'card', 'transfer'] as PaymentMethod[]).map((method) => {
+              const isSelected = paymentMethod === method;
+              const labels = {
+                cash: { text: 'نقداً', icon: 'Coins', color: 'text-amber-500 bg-amber-500/10 border-amber-400/50' },
+                card: { text: 'بطاقة', icon: 'CreditCard', color: 'text-blue-500 bg-blue-500/10 border-blue-400/50' },
+                transfer: { text: 'تحويل', icon: 'ArrowRightLeft', color: 'text-indigo-500 bg-indigo-500/10 border-indigo-400/50' }
+              };
+              const info = labels[method];
+              return (
+                <button
+                  key={`calc-pm-${method}`}
+                  type="button"
+                  onClick={() => { hapticFeedback('light'); setPaymentMethod(method); }}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer",
+                    isSelected 
+                      ? info.color
+                      : "border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-900"
+                  )}
+                >
+                  <DynamicIcon name={info.icon} size={11} />
+                  <span>{info.text}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Keypad Section */}
+      <div className="flex-1 bg-slate-50 dark:bg-slate-900 pb-[env(safe-area-inset-bottom)]">
+        <CalculatorKeypad 
+          onPress={handleKeyPress}
+          onDelete={handleDelete}
+          onCalculate={handleCalculate}
+        />
+      </div>
+    </>
+  );
+};

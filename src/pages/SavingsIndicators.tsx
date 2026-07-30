@@ -95,7 +95,7 @@ const SavingsIndicators = () => {
 
   // Generate recommendations based on the actual spending distribution
   const diagnostics = useMemo(() => {
-    const list = [];
+    const list: any[] = [];
     if (totalIncome === 0) return [];
 
     // Food diagnostic

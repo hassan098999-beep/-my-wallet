@@ -143,7 +143,7 @@ export const WeeklySection: React.FC<WeeklySectionProps> = ({
 
   // Smart advice compilation based on spending behaviors
   const smartAdvices = useMemo(() => {
-    const list = [];
+    const list: any[] = [];
 
     // 1. Overall Trend Advice
     if (totalThisWeek < totalLastWeek && totalLastWeek > 0) {

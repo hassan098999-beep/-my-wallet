@@ -6,8 +6,8 @@ import { safeParseISO } from '../../utils';
 import toast from 'react-hot-toast';
 
 export function useGamaeyas({ state, setState, user, evaluateAchievements, addNotification }: any) {
-const addGamaeya = async (gamaeya: Omit<import('../types').Gamaeya, 'id' | 'createdAt' | 'status' | 'payments'>) => {
-    const payments: import('../types').GamaeyaPayment[] = [];
+const addGamaeya = async (gamaeya: Omit<import('../../types').Gamaeya, 'id' | 'createdAt' | 'status' | 'payments'>) => {
+    const payments: import('../../types').GamaeyaPayment[] = [];
     let baseDate: Date;
     try {
       baseDate = new Date(gamaeya.startDate + '-15');
@@ -26,7 +26,7 @@ const addGamaeya = async (gamaeya: Omit<import('../types').Gamaeya, 'id' | 'crea
       });
     }
 
-    const newGamaeya: import('../types').Gamaeya = {
+    const newGamaeya: import('../../types').Gamaeya = {
       ...gamaeya,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
@@ -45,7 +45,7 @@ const addGamaeya = async (gamaeya: Omit<import('../types').Gamaeya, 'id' | 'crea
     }
   };
 
-const updateGamaeya = async (id: string, updates: Partial<import('../types').Gamaeya>) => {
+const updateGamaeya = async (id: string, updates: Partial<import('../../types').Gamaeya>) => {
     if (user) {
       try {
         await updateDoc(doc(db, 'users', user.uid, 'gamaeyas', id), updates);
@@ -144,7 +144,7 @@ const payGamaeyaMonth = async (gamaeyaId: string, monthIndex: number) => {
     });
 
     const isAllPaid = updatedPayments.every((p: any) => p.paid);
-    const updates: Partial<import('../types').Gamaeya> = {
+    const updates: Partial<import('../../types').Gamaeya> = {
       payments: updatedPayments,
       status: isAllPaid ? 'completed' : gamaeya.status
     };
@@ -218,7 +218,7 @@ const receiveGamaeyaPayout = async (gamaeyaId: string) => {
     });
 
     const isAllPaid = updatedPayments.every((p: any) => p.paid);
-    const updates: Partial<import('../types').Gamaeya> = {
+    const updates: Partial<import('../../types').Gamaeya> = {
       payments: updatedPayments,
       status: isAllPaid ? 'completed' : gamaeya.status
     };
