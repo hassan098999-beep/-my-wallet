@@ -6,9 +6,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { DynamicIcon } from './DynamicIcon';
 
 export const BudgetAlerts = () => {
-  const { expenses, budget, currency, removeNotification, notifications = [], firstDayOfMonth, categories = [] } = useAppContext();
+  const { expenses, budgets, currency, removeNotification, notifications = [], firstDayOfMonth, categories = [] } = useAppContext();
 
   const currentMonth = useMemo(() => getBudgetMonth(new Date(), firstDayOfMonth), [firstDayOfMonth]);
+  const budget = useMemo(() => budgets?.find(b => b.month === currentMonth), [budgets, currentMonth]);
   
   const { start: rangeStart, end: rangeEnd } = useMemo(() => getBudgetRange(currentMonth, firstDayOfMonth), [currentMonth, firstDayOfMonth]);
 

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useAppContext } from '../store/AppContext';
-import { formatCurrency, hapticFeedback, cn } from '../utils';
+import { formatCurrency, hapticFeedback, cn, getBudgetMonth } from '../utils';
 import { format, subMonths, parseISO, startOfDay, differenceInDays } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { 
@@ -22,9 +22,11 @@ import Analytics from './Analytics';
 import BabyBudget from './BabyBudget';
 
 const FamilyReport: React.FC = () => {
-  const { expenses, income, categories, budget, currency = 'TND' } = useAppContext();
+  const { expenses, income, categories, budgets, firstDayOfMonth, currency = 'TND' } = useAppContext();
   const [activeTab, setActiveTab] = React.useState<'report' | 'analytics' | 'baby'>('report');
   
+  const currentMonth = getBudgetMonth(new Date(), firstDayOfMonth || 1);
+  const budget = budgets?.find(b => b.month === currentMonth) || null;
   const categoryBudgets = useMemo(() => budget?.categoryBudgets || {}, [budget]);
 
   const currentMonthStr = useMemo(() => format(new Date(), 'yyyy-MM'), []);

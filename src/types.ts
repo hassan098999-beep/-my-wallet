@@ -170,7 +170,7 @@ export interface AppState {
   recurringExpenses: RecurringExpense[];
   categories: Category[];
   accounts: Account[];
-  budget: Budget | null;
+  budgets: Budget[];
   dailyBudget: number;
   rollingBudgetEnabled: boolean;
   theme: 'light' | 'dark';

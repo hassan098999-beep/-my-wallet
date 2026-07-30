@@ -15,7 +15,9 @@ import Badge from '../components/ui/Badge';
 import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export default function Assistant() {
-  const { accounts, expenses, budget, currency, categories, addExpense, addIncome, deleteExpense, deleteIncome, setBudget, updateAccount, addGoal, goals, firstDayOfMonth, transferAccount, addCategory } = useAppContext();
+  const { accounts, expenses, budgets, currency, categories, addExpense, addIncome, deleteExpense, deleteIncome, setBudget, updateAccount, addGoal, goals, firstDayOfMonth, transferAccount, addCategory } = useAppContext();
+  const currentMonth = getBudgetMonth(new Date(), firstDayOfMonth);
+  const budget = budgets?.find(b => b.month === currentMonth);
   const [query, setQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string, image?: string, isKeyError?: boolean, chart?: { type: string, title: string, data: any[] }}[]>([

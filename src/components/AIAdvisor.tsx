@@ -4,18 +4,21 @@ import { Sparkles, TrendingUp, CircleAlert, CircleCheckBig, ChevronRight, Loader
 import { useAppContext } from '../store/AppContext';
 import { getFinancialAdvice, getFinancialForecast } from '../services/geminiService';
 import { FinancialAdvice, FinancialForecast } from '../types';
-import { formatCurrency, cn } from '../utils';
+import { formatCurrency, cn, getBudgetMonth } from '../utils';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Link } from 'react-router-dom';
 
 import { isSameDay } from 'date-fns';
 
 export const AIAdvisor: React.FC = () => {
-  const { expenses, income, budget, goals, accounts, currency, dailyBudget, aiInsights, updateAIInsights } = useAppContext();
+  const { expenses, income, budgets, firstDayOfMonth, goals, accounts, currency, dailyBudget, aiInsights, updateAIInsights } = useAppContext();
   const [advice, setAdvice] = useState<FinancialAdvice[]>([]);
   const [forecast, setForecast] = useState<FinancialForecast[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const currentMonth = getBudgetMonth(new Date(), firstDayOfMonth || 1);
+  const budget = budgets?.find(b => b.month === currentMonth) || null;
   const [warning, setWarning] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [lastAttempted, setLastAttempted] = useState<Date | null>(null);

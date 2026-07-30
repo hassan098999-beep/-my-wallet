@@ -53,11 +53,6 @@ export const evaluateAchievements = (state: AppState): Achievement[] => {
       }
 
       case 'budget_champion': {
-        if (!state.budget || state.budget.amount <= 0) {
-          progress = 0;
-          break;
-        }
-        
         const expensesByMonth = expenses.reduce((acc, e) => {
           const month = e.date.substring(0, 7); // YYYY-MM
           acc[month] = (acc[month] || 0) + e.amount;
@@ -67,7 +62,11 @@ export const evaluateAchievements = (state: AppState): Achievement[] => {
         const currentMonth = new Date().toISOString().substring(0, 7);
         const fullMonths = Object.keys(expensesByMonth).filter(m => m < currentMonth);
         
-        const keptWithinBudget = fullMonths.filter(m => expensesByMonth[m] <= (state.budget?.amount || 0));
+        const keptWithinBudget = fullMonths.filter(m => {
+          const mBudget = state.budgets?.find(b => b.month === m);
+          if (!mBudget || mBudget.amount <= 0) return false;
+          return expensesByMonth[m] <= mBudget.amount;
+        });
         progress = keptWithinBudget.length > 0 ? 1 : 0;
         break;
       }

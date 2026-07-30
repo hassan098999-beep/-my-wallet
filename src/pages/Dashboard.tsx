@@ -31,7 +31,7 @@ const Dashboard = () => {
     currency, 
     addExpense, 
     setIsAddModalOpen, 
-    budget, 
+    budgets, 
     income = [], 
     recurringExpenses = [], 
     userName, 

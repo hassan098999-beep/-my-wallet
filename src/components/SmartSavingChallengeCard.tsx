@@ -4,18 +4,22 @@ import { Sparkles, Trophy, Trash2, Calendar, Target, ShieldCheck, Flame, Chevron
 import { useAppContext } from '../store/AppContext';
 import { getSmartSavingChallenge } from '../services/geminiService';
 import { SmartSavingChallenge } from '../types';
-import { formatCurrency, hapticFeedback } from '../utils';
+import { formatCurrency, hapticFeedback, getBudgetMonth } from '../utils';
 import toast from 'react-hot-toast';
 
 export const SmartSavingChallengeCard: React.FC = () => {
   const { 
     expenses, 
     categories, 
-    budget, 
+    budgets, 
+    firstDayOfMonth,
     currency, 
     activeChallenge, 
     updateActiveChallenge 
   } = useAppContext();
+
+  const currentMonth = getBudgetMonth(new Date(), firstDayOfMonth || 1);
+  const budget = budgets?.find(b => b.month === currentMonth) || null;
 
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState('');

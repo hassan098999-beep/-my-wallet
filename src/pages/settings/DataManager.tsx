@@ -20,7 +20,7 @@ import { ar } from 'date-fns/locale';
 const DataManager = () => {
   const { 
     exportData, exportToPDF, importData, resetData, user,
-    expenses, recurringExpenses, categories, accounts, budget,
+    expenses, recurringExpenses, categories, accounts, budgets,
     dailyBudget, rollingBudgetEnabled, theme, currency, achievements,
     goals, income, notifications, hasCompletedOnboarding, userName,
     firstDayOfMonth, bestStreak, offlineMode, toggleOfflineMode,
@@ -90,7 +90,7 @@ const DataManager = () => {
     setIsCreatingBackup(true);
     hapticFeedback('medium');
     const currentData = {
-      expenses, recurringExpenses, categories, accounts, budget,
+      expenses, recurringExpenses, categories, accounts, budgets,
       dailyBudget, rollingBudgetEnabled, theme, currency, achievements,
       goals, income, notifications, hasCompletedOnboarding, userName,
       firstDayOfMonth, bestStreak

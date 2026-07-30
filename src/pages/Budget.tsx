@@ -37,7 +37,7 @@ import RecurringExpenses from './RecurringExpenses';
 
 const BudgetPage = () => {
   const { 
-    budget, 
+    budgets, 
     setBudget, 
     categories, 
     expenses, 
@@ -49,25 +49,31 @@ const BudgetPage = () => {
   } = useAppContext();
 
   const [activeTab, setActiveTab] = useState<'budget' | 'income' | 'recurring'>('budget');
-  const [globalBudget, setGlobalBudget] = useState(budget?.amount.toString() || '');
   const [selectedMonth, setSelectedMonth] = useState(getBudgetMonth(new Date(), firstDayOfMonth));
+  
+  const currentBudget = useMemo(() => budgets.find(b => b.month === selectedMonth), [budgets, selectedMonth]);
+
+  const [globalBudget, setGlobalBudget] = useState(currentBudget?.amount.toString() || '');
   const [isSaved, setIsSaved] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showRuleInfo, setShowRuleInfo] = useState(false);
   
   const [categoryBudgets, setCategoryBudgets] = useState<Record<string, string>>(
-    budget?.categoryBudgets 
-      ? Object.fromEntries(Object.entries(budget.categoryBudgets).map(([k, v]) => [k, v.toString()]))
+    currentBudget?.categoryBudgets 
+      ? Object.fromEntries(Object.entries(currentBudget.categoryBudgets).map(([k, v]) => [k, v.toString()]))
       : {}
   );
 
-  // Sync state if budget changes externally
+  // Sync state if budget changes externally or selected month changes
   useEffect(() => {
-    if (budget) {
-      setGlobalBudget(budget.amount?.toString() || '');
-      setCategoryBudgets(Object.fromEntries(Object.entries(budget.categoryBudgets || {}).map(([k, v]) => [k, v.toString()])));
+    if (currentBudget) {
+      setGlobalBudget(currentBudget.amount?.toString() || '');
+      setCategoryBudgets(Object.fromEntries(Object.entries(currentBudget.categoryBudgets || {}).map(([k, v]) => [k, v.toString()])));
+    } else {
+      setGlobalBudget('');
+      setCategoryBudgets({});
     }
-  }, [budget]);
+  }, [currentBudget]);
 
   const handleSave = () => {
     hapticFeedback('success');

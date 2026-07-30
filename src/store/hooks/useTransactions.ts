@@ -90,9 +90,10 @@ const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
 
         // Logic for budget alerts (User branch)
         const currentMonth = getBudgetMonth(new Date(), state.firstDayOfMonth);
+        const currentBudget = state.budgets?.find((b: any) => b.month === currentMonth);
         const monthlyExpenses = state.expenses.filter((e: any) => e.date.startsWith(currentMonth));
         const totalSpent = monthlyExpenses.reduce((sum: any, e: any) => sum + e.amount, 0) + newExpense.amount;
-        const budgetAmount = state.budget?.amount || 0;
+        const budgetAmount = currentBudget?.amount || 0;
 
         if (budgetAmount > 0) {
           if (totalSpent > budgetAmount && totalSpent - newExpense.amount <= budgetAmount) {
@@ -103,8 +104,8 @@ const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
         }
 
         // Category budget alerts (User branch)
-        if (state.budget?.categoryBudgets?.[newExpense.categoryId]) {
-          const catBudget = state.budget.categoryBudgets[newExpense.categoryId];
+        if (currentBudget?.categoryBudgets?.[newExpense.categoryId]) {
+          const catBudget = currentBudget.categoryBudgets[newExpense.categoryId];
           const catSpent = monthlyExpenses.filter((e: any) => e.categoryId === newExpense.categoryId).reduce((sum: any, e: any) => sum + e.amount, 0) + newExpense.amount;
           const categoryName = state.categories.find((c: any) => c.id === newExpense.categoryId)?.name || 'هذه الفئة';
 
@@ -153,20 +154,21 @@ const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
         
         // Logic for budget alerts
         const currentMonth = getBudgetMonth(new Date(), newState.firstDayOfMonth);
+        const currentBudget = newState.budgets?.find((b: any) => b.month === currentMonth);
         const monthlyExpenses = newState.expenses.filter((e: any) => e.date.startsWith(currentMonth));
         const totalSpent = monthlyExpenses.reduce((sum: any, e: any) => sum + e.amount, 0);
-        const budget = newState.budget?.amount || 0;
+        const budgetAmount = currentBudget?.amount || 0;
         
         const sendPushNotification = (title: string, body: string) => {
           addNotification(title, { body, icon: '/icon-192.png' });
         };
 
-        if (budget > 0) {
-          if (totalSpent > budget && totalSpent - newExpense.amount <= budget) {
+        if (budgetAmount > 0) {
+          if (totalSpent > budgetAmount && totalSpent - newExpense.amount <= budgetAmount) {
             const msg = "تنبيه: لقد تجاوزت ميزانيتك الشهرية!";
             newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
             sendPushNotification("تنبيه الميزانية", msg);
-          } else if (totalSpent > budget * 0.8 && totalSpent - newExpense.amount <= budget * 0.8) {
+          } else if (totalSpent > budgetAmount * 0.8 && totalSpent - newExpense.amount <= budgetAmount * 0.8) {
             const msg = "تنبيه: لقد قاربت على تجاوز ميزانيتك الشهرية!";
             newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
             sendPushNotification("تنبيه الميزانية", msg);
@@ -174,8 +176,8 @@ const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
         }
 
         // Category budget alerts
-        if (newState.budget?.categoryBudgets?.[newExpense.categoryId]) {
-          const catBudget = newState.budget.categoryBudgets[newExpense.categoryId];
+        if (currentBudget?.categoryBudgets?.[newExpense.categoryId]) {
+          const catBudget = currentBudget.categoryBudgets[newExpense.categoryId];
           const catSpent = monthlyExpenses.filter((e: any) => e.categoryId === newExpense.categoryId).reduce((sum: any, e: any) => sum + e.amount, 0);
           const categoryName = newState.categories.find((c: any) => c.id === newExpense.categoryId)?.name || 'هذه الفئة';
 

@@ -26,7 +26,7 @@ const SavingsPage = () => {
     goals, 
     updateGoal, 
     currency, 
-    budget, 
+    budgets, 
     categories, 
     firstDayOfMonth, 
     addIncome, 
@@ -35,6 +35,9 @@ const SavingsPage = () => {
     accounts, 
     autoRoundUpSetting 
   } = useAppContext();
+
+  const appCurrentMonth = getBudgetMonth(new Date(), firstDayOfMonth);
+  const budget = budgets?.find(b => b.month === appCurrentMonth);
 
   const [activeTab, setActiveTab] = useState<'savings' | 'goals' | 'indicators'>('savings');
   const standardGoals = useMemo(() => (goals || []).filter(g => !g.isPhysicalPiggyBank), [goals]);

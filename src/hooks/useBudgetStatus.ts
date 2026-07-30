@@ -4,11 +4,12 @@ import { getBudgetRange, getBudgetMonth } from '../utils';
 import { parseISO, differenceInDays, startOfDay } from 'date-fns';
 
 export function useBudgetStatus(overrideMonth?: string) {
-  const { budget, expenses, firstDayOfMonth, rollingBudgetEnabled } = useAppContext();
+  const { budgets, expenses, firstDayOfMonth, rollingBudgetEnabled } = useAppContext();
 
   return useMemo(() => {
     const today = new Date();
     const activeMonth = overrideMonth || getBudgetMonth(today, firstDayOfMonth);
+    const budget = budgets.find(b => b.month === activeMonth);
     const categoryBudgets = budget?.categoryBudgets || {};
     
     // Parse range for budget month
@@ -93,5 +94,5 @@ export function useBudgetStatus(overrideMonth?: string) {
       categoryStatuses,
       categoryStatusesLookup
     };
-  }, [budget, expenses, firstDayOfMonth, rollingBudgetEnabled]);
+  }, [budgets, expenses, firstDayOfMonth, rollingBudgetEnabled, overrideMonth]);
 }

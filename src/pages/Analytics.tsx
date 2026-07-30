@@ -15,7 +15,7 @@ import { ChartsSection } from '../components/analytics/ChartsSection';
 import { WeeklySection } from '../components/analytics/WeeklySection';
 
 const Analytics = () => {
-  const { expenses, income = [], categories, currency, budget, dailyBudget, firstDayOfMonth, aiInsights } = useAppContext();
+  const { expenses, income = [], categories, currency, budgets, dailyBudget, firstDayOfMonth, aiInsights } = useAppContext();
   const { width } = useWindowSize();
   const { insights } = useBehavioralEngine();
   const [rangeType, setRangeType] = useState<'monthly' | 'custom'>('monthly');
@@ -25,6 +25,7 @@ const Analytics = () => {
   const [isReady, setIsReady] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'budget' | 'charts' | 'weekly'>('overview');
   const [chartSubTab, setChartSubTab] = useState<'daily' | 'monthly'>('daily');
+  const budget = useMemo(() => budgets?.find(b => b.month === selectedMonth), [budgets, selectedMonth]);
 
   useEffect(() => {
     setIsReady(false);

@@ -20,7 +20,9 @@ import EmptyState from '../components/ui/EmptyState';
 import Badge from '../components/ui/Badge';
 
 const GoalsPage = () => {
-  const { goals, addGoal, deleteGoal, updateGoal, currency, expenses, income, categories, budget, firstDayOfMonth, addIncome, addExpense, accounts, setIsAddModalOpen, setInitialGoalId } = useAppContext();
+  const { goals, addGoal, deleteGoal, updateGoal, currency, expenses, income, categories, budgets, firstDayOfMonth, addIncome, addExpense, accounts, setIsAddModalOpen, setInitialGoalId } = useAppContext();
+  const appCurrentMonth = getBudgetMonth(new Date(), firstDayOfMonth);
+  const budget = budgets?.find(b => b.month === appCurrentMonth);
   const standardGoals = useMemo(() => (goals || []).filter(g => !g.isPhysicalPiggyBank), [goals]);
   const [name, setName] = useState('');
   const [targetAmount, setTargetAmount] = useState('');

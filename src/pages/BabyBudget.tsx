@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../store/AppContext';
-import { formatCurrency, hapticFeedback, cn } from '../utils';
+import { formatCurrency, hapticFeedback, cn, getBudgetMonth } from '../utils';
 import { 
   Baby, Calculator, Sparkles, ShoppingCart, Heart, Plus, Check, Info, ShieldCheck, HelpCircle, 
   ChevronLeft, AlertCircle, TrendingUp, TrendingDown, RefreshCcw, BookOpen
@@ -13,11 +13,15 @@ const BabyBudget: React.FC = () => {
     expenses, 
     categories, 
     accounts, 
-    budget, 
+    budgets, 
+    firstDayOfMonth,
     addExpense, 
     setBudget, 
     currency = 'TND' 
   } = useAppContext();
+
+  const currentMonth = getBudgetMonth(new Date(), firstDayOfMonth);
+  const budget = budgets?.find(b => b.month === currentMonth);
 
   // Find Baby Category in state
   const babyCategory = useMemo(() => {

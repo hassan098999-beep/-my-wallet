@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { useAppContext } from '../store/AppContext';
 import { PaymentMethod, Expense } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { formatTunisianAmount, hapticFeedback } from '../utils';
+import { formatTunisianAmount, hapticFeedback, getBudgetMonth } from '../utils';
 import { evaluateExpression } from './add-expense/utils';
 import { AddExpenseTypeSelector } from './add-expense/AddExpenseTypeSelector';
 import { CalculatorView } from './add-expense/CalculatorView';
@@ -21,7 +21,10 @@ interface AddExpenseModalProps {
 }
 
 const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, editExpenseData, initialGoalId, initialMode }) => {
-  const { categories, accounts, expenses, goals, addExpense, addIncome, updateExpense, updateIncome, transferAccount, addCategory, currency, budget } = useAppContext();
+  const { categories, accounts, expenses, goals, addExpense, addIncome, updateExpense, updateIncome, transferAccount, addCategory, currency, budgets, firstDayOfMonth } = useAppContext();
+  
+  const currentMonth = getBudgetMonth(new Date(), firstDayOfMonth || 1);
+  const budget = budgets?.find(b => b.month === currentMonth) || null;
 
   const [inputMode, setInputMode] = useState<'quick' | 'calculator'>('quick');
   const [type, setType] = useState<'expense' | 'income' | 'transfer'>('expense');

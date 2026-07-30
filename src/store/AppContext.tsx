@@ -86,7 +86,7 @@ const INITIAL_STATE: AppState = {
   recurringExpenses: [],
   categories: DEFAULT_CATEGORIES,
   accounts: DEFAULT_ACCOUNTS,
-  budget: null,
+  budgets: [],
   dailyBudget: 25, // default daily budget in Dinars is around 25 TND for a Tunisian family
   rollingBudgetEnabled: true,
   theme: 'light',
@@ -363,7 +363,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       { name: 'accounts', setter: (data: any[]) => setState(prev => ({ ...prev, accounts: data.length > 0 ? data : DEFAULT_ACCOUNTS })) },
       { name: 'goals', setter: (data: any[]) => setState(prev => ({ ...prev, goals: data })) },
       { name: 'recurringExpenses', setter: (data: any[]) => setState(prev => ({ ...prev, recurringExpenses: data })) },
-      { name: 'budgets', setter: (data: any[]) => setState(prev => ({ ...prev, budget: data[0] || null })) },
+      { name: 'budgets', setter: (data: any[]) => setState(prev => ({ ...prev, budgets: data })) },
       { name: 'achievements', setter: (data: any[]) => setState(prev => ({ ...prev, achievements: data })) },
       { name: 'gamaeyas', setter: (data: any[]) => setState(prev => ({ ...prev, gamaeyas: data })) },
     ];
@@ -480,7 +480,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       return prev;
     });
-  }, [state.expenses, state.categories, state.budget, isAuthReady, user]);
+  }, [state.expenses, state.categories, state.budgets, isAuthReady, user]);
 
   const login = async () => {
     try {
@@ -544,9 +544,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToBatch('goals', dataToSync.goals);
     addToBatch('recurringExpenses', dataToSync.recurringExpenses);
     addToBatch('achievements', dataToSync.achievements);
-    if (dataToSync.budget) {
-      const budgetRef = doc(collection(db, 'users', uid, 'budgets'), 'current');
-      batch.set(budgetRef, { ...dataToSync.budget, uid });
+    if (dataToSync.budgets && dataToSync.budgets.length > 0) {
+      dataToSync.budgets.forEach(budget => {
+        const budgetRef = doc(collection(db, 'users', uid, 'budgets'), budget.month);
+        batch.set(budgetRef, { ...budget, uid });
+      });
     }
 
     await batch.commit();
