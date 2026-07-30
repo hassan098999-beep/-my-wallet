@@ -157,6 +157,58 @@ const BudgetPage = () => {
     }, 700);
   };
 
+  const suggestFromHistory = () => {
+    setIsGenerating(true);
+    hapticFeedback('medium');
+    
+    setTimeout(() => {
+      const pastExpenses = expenses.filter(e => {
+        if (e.isTransfer) return false;
+        const eMonth = getBudgetMonth(parseISO(e.date), firstDayOfMonth);
+        return eMonth < selectedMonth;
+      });
+      
+      if (pastExpenses.length === 0) {
+        toast.error('لا يوجد تاريخ إنفاق سابق كافٍ لاقتراح ميزانية. 🤷‍♂️');
+        setIsGenerating(false);
+        return;
+      }
+
+      const monthGroups: Record<string, number> = {};
+      const categoryAverages: Record<string, number> = {};
+
+      pastExpenses.forEach(e => {
+        const monthKey = getBudgetMonth(parseISO(e.date), firstDayOfMonth);
+        monthGroups[monthKey] = (monthGroups[monthKey] || 0) + e.amount;
+        
+        categoryAverages[e.categoryId] = (categoryAverages[e.categoryId] || 0) + e.amount;
+      });
+
+      const numMonths = Object.keys(monthGroups).length;
+      const avgTotal = Object.values(monthGroups).reduce((a, b) => a + b, 0) / numMonths;
+
+      const newCategoryBudgets: Record<string, string> = {};
+      Object.entries(categoryAverages).forEach(([catId, total]) => {
+        const avg = Math.round(total / numMonths);
+        if (avg > 0) {
+          newCategoryBudgets[catId] = avg.toString();
+        }
+      });
+
+      setGlobalBudget(Math.round(avgTotal).toString());
+      setCategoryBudgets(newCategoryBudgets);
+      
+      setIsGenerating(false);
+      toast.success(
+        <div className="flex flex-col gap-1 text-right font-tajawal">
+          <span className="font-black text-sm">تم استلهام ميزانية من تاريخك 🧠📊</span>
+          <span className="text-xs opacity-90">استندنا على متوسط إنفاقك الفعلي في الأشهر الماضية لاقتراح ميزانية واقعية.</span>
+        </div>,
+        { duration: 4000 }
+      );
+    }, 700);
+  };
+
   const currentMonthExpenses = useMemo(() => {
     const { start, end } = getBudgetRange(selectedMonth, firstDayOfMonth);
     return expenses.filter(e => {
@@ -387,6 +439,15 @@ const BudgetPage = () => {
                 <span>شرح قاعدة 50/30/20</span>
               </button>
               
+              <button 
+                onClick={suggestFromHistory}
+                disabled={isGenerating}
+                className="flex items-center gap-1 text-[11px] font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 px-4 py-1.5 rounded-lg border border-blue-500/10 disabled:opacity-50 active:scale-95 transition-all cursor-pointer"
+              >
+                {isGenerating ? <Loader2 size={13} className="animate-spin" /> : <Lightbulb size={13} />}
+                اقتراح من التاريخ
+              </button>
+
               <button 
                 onClick={autoAllocate}
                 disabled={isGenerating || !globalBudget}
