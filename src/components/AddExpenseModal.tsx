@@ -7,7 +7,6 @@ import { formatTunisianAmount, hapticFeedback, getBudgetMonth } from '../utils';
 import { evaluateExpression } from './add-expense/utils';
 import { AddExpenseTypeSelector } from './add-expense/AddExpenseTypeSelector';
 import { CalculatorView } from './add-expense/CalculatorView';
-import { AddExpenseForm } from './add-expense/AddExpenseForm';
 import { CategorySelectionModal } from './add-expense/CategorySelectionModal';
 import { AccountSelectionModal } from './add-expense/AccountSelectionModal';
 import { DetailsModal } from './add-expense/DetailsModal';
@@ -26,7 +25,6 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   const currentMonth = getBudgetMonth(new Date(), firstDayOfMonth || 1);
   const budget = budgets?.find(b => b.month === currentMonth) || null;
 
-  const [inputMode, setInputMode] = useState<'quick' | 'calculator'>('quick');
   const [type, setType] = useState<'expense' | 'income' | 'transfer'>('expense');
   const [expression, setExpression] = useState('0');
   const [categoryId, setCategoryId] = useState('');
@@ -128,15 +126,6 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
 
   useEffect(() => {
     if (isOpen) {
-      if (editExpenseData) {
-        setInputMode('calculator');
-      } else if (initialMode) {
-        setInputMode(initialMode);
-      } else {
-        const savedMode = localStorage.getItem('masarifi_input_mode') as 'quick' | 'calculator' | null;
-        setInputMode(savedMode || 'quick');
-      }
-
       if (editExpenseData) {
         setType('expense');
         setExpression(editExpenseData.amount.toString());
@@ -307,11 +296,6 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
     setIsAutoMatched(false);
   }, [note, type, categories, categoryId]);
 
-  const handleAmountChange = (val: string) => {
-    const formatted = formatTunisianAmount(val);
-    setExpression(formatted);
-  };
-
   const handleCreateCustomCategory = async () => {
     if (!newCatName.trim()) return;
     hapticFeedback('success');
@@ -344,33 +328,6 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
       toast.dismiss(loadingToast);
       toast.error('حدث خطأ أثناء إنشاء التصنيف');
     }
-  };
-
-  const handleSpeedAdd = (val: number) => {
-    hapticFeedback('light');
-    const currentAmount = evaluateExpression(expression);
-    setExpression((currentAmount + val).toString());
-  };
-
-  const handleSelectShortcut = (amount: number, noteText: string, searchKey: string) => {
-    hapticFeedback('medium');
-    setExpression(amount.toString());
-    setNote(noteText);
-    
-    // Find matching category
-    const foundCat = categories.find(c => 
-      c.name.toLowerCase().includes(searchKey.toLowerCase()) ||
-      (searchKey === 'baby' && (c.id === '2' || c.name.includes('رضيع') || c.name.includes('طفل'))) ||
-      (searchKey === 'food' && (c.id === '1' || c.name.includes('مأكل') || c.name.includes('مشرب') || c.name.includes('قفة'))) ||
-      (searchKey === 'transport' && (c.name.includes('نقل') || c.name.includes('سيارة') || c.name.includes('بنزين'))) ||
-      (searchKey === 'bills' && (c.name.includes('فاتورة') || c.name.includes('كراء') || c.name.includes('التزام')))
-    );
-
-    if (foundCat) {
-      setCategoryId(foundCat.id);
-      setSubcategoryId('');
-    }
-    toast.success(`تم ملء بيانات: ${noteText} ⚡`);
   };
 
   const handleKeyPress = (key: string) => {
@@ -548,8 +505,6 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                 <AddExpenseTypeSelector
                   type={type}
                   setType={setType}
-                  inputMode={inputMode}
-                  setInputMode={setInputMode}
                   loading={loading}
                   onClose={onClose}
                   onSubmit={handleSubmit}
@@ -557,72 +512,37 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                   activeTabColor={activeTabColor}
                 />
 
-                {inputMode === 'calculator' ? (
-                  <CalculatorView
-                    type={type}
-                    expression={expression}
-                    setExpression={setExpression}
-                    currency={currency}
-                    bgColor={bgColor}
-                    lastExpense={lastExpense}
-                    lastExpenseCategory={lastExpenseCategory}
-                    selectedCategory={selectedCategory}
-                    selectedAccount={selectedAccount}
-                    selectedToAccount={selectedToAccount}
-                    subcategoryId={subcategoryId}
-                    setSubcategoryId={setSubcategoryId}
-                    setCategoryId={setCategoryId}
-                    setAccountId={setAccountId}
-                    setPaymentMethod={setPaymentMethod}
-                    setNote={setNote}
-                    setActiveView={setActiveView}
-                    date={date}
-                    source={source}
-                    setSource={setSource}
-                    note={note}
-                    currentCategoryBudgetInsight={currentCategoryBudgetInsight}
-                    paymentMethod={paymentMethod}
-                    handleKeyPress={handleKeyPress}
-                    handleDelete={handleDelete}
-                    handleCalculate={handleCalculate}
-                    categories={categories}
-                    accounts={accounts}
-                    favoriteCategories={favoriteCategories}
-                  />
-                ) : (
-                  <AddExpenseForm
-                    type={type}
-                    expression={expression}
-                    setExpression={setExpression}
-                    handleAmountChange={handleAmountChange}
-                    handleSpeedAdd={handleSpeedAdd}
-                    currency={currency}
-                    categories={categories}
-                    categoryId={categoryId}
-                    setCategoryId={setCategoryId}
-                    subcategoryId={subcategoryId}
-                    setSubcategoryId={setSubcategoryId}
-                    selectedCategory={selectedCategory}
-                    source={source}
-                    setSource={setSource}
-                    accounts={accounts}
-                    accountId={accountId}
-                    setAccountId={setAccountId}
-                    toAccountId={toAccountId}
-                    setToAccountId={setToAccountId}
-                    paymentMethod={paymentMethod}
-                    setPaymentMethod={setPaymentMethod}
-                    date={date}
-                    setDate={setDate}
-                    note={note}
-                    setNote={setNote}
-                    isAutoMatched={isAutoMatched}
-                    handleSelectShortcut={handleSelectShortcut}
-                    currentCategoryBudgetInsight={currentCategoryBudgetInsight}
-                    handleSubmit={handleSubmit}
-                    loading={loading}
-                  />
-                )}
+                <CalculatorView
+                  type={type}
+                  expression={expression}
+                  setExpression={setExpression}
+                  currency={currency}
+                  bgColor={bgColor}
+                  lastExpense={lastExpense}
+                  lastExpenseCategory={lastExpenseCategory}
+                  selectedCategory={selectedCategory}
+                  selectedAccount={selectedAccount}
+                  selectedToAccount={selectedToAccount}
+                  subcategoryId={subcategoryId}
+                  setSubcategoryId={setSubcategoryId}
+                  setCategoryId={setCategoryId}
+                  setAccountId={setAccountId}
+                  setPaymentMethod={setPaymentMethod}
+                  setNote={setNote}
+                  setActiveView={setActiveView}
+                  date={date}
+                  source={source}
+                  setSource={setSource}
+                  note={note}
+                  currentCategoryBudgetInsight={currentCategoryBudgetInsight}
+                  paymentMethod={paymentMethod}
+                  handleKeyPress={handleKeyPress}
+                  handleDelete={handleDelete}
+                  handleCalculate={handleCalculate}
+                  categories={categories}
+                  accounts={accounts}
+                  favoriteCategories={favoriteCategories}
+                />
               </div>
             )}
 
