@@ -124,25 +124,25 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
       {/* Amount Display (Calculator Style) */}
       <div 
         className={cn(
-          "flex-1 flex flex-col items-center justify-center px-6 py-6 text-white min-h-[100px] max-h-[160px] transition-all shrink", 
+          "flex-1 flex flex-col items-center justify-center px-6 py-4 text-white min-h-[80px] max-h-[120px] transition-all shrink", 
           bgColor,
           !(type === 'expense' && selectedCategory?.subcategories && selectedCategory.subcategories.length > 0) && "rounded-b-[2rem] shadow-sm mb-2"
         )} 
         onClick={() => setQuickSelect('none')}
       >
         <div className="flex items-baseline gap-2 w-full justify-center overflow-hidden drop-shadow-sm">
-          <span className="text-4xl sm:text-5xl font-light opacity-80 shrink-0">
+          <span className="text-3xl sm:text-4xl font-light opacity-80 shrink-0">
             {type === 'expense' ? '-' : type === 'income' ? '+' : ''}
           </span>
           <span 
             className={cn(
               "font-light tracking-tighter truncate dir-ltr transition-all duration-200", 
-              expression.length > 8 ? "text-5xl sm:text-6xl" : "text-7xl sm:text-8xl"
+              expression.length > 8 ? "text-4xl sm:text-5xl" : "text-6xl sm:text-7xl"
             )}
           >
             {expression}
           </span>
-          <span className="text-2xl sm:text-3xl font-light opacity-80 shrink-0">{currency}</span>
+          <span className="text-xl sm:text-2xl font-light opacity-80 shrink-0">{currency}</span>
         </div>
         {/* Subtle info if expression has operators */}
         {/[+\-*/]/.test(expression) && (
@@ -262,18 +262,18 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
               hapticFeedback('light');
               setQuickSelect(quickSelect === 'account' ? 'none' : 'account');
             }}
-            className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="flex flex-col items-center justify-center py-2 px-2 bg-slate-50 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
-            <span className="text-[10px] text-slate-400 mb-1 flex items-center gap-1">الحساب <ChevronUp size={10}/></span>
+            <span className="text-[10px] text-slate-400 mb-0.5 flex items-center gap-1">الحساب <ChevronUp size={10}/></span>
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{selectedAccount?.name || 'اختر الحساب'}</span>
           </button>
           
           {type === 'transfer' ? (
             <button 
               onClick={() => { hapticFeedback('light'); setActiveView('toAccount'); }}
-              className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="flex flex-col items-center justify-center py-2 px-2 bg-slate-50 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
-              <span className="text-[10px] text-slate-400 mb-1">إلى حساب</span>
+              <span className="text-[10px] text-slate-400 mb-0.5">إلى حساب</span>
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{selectedToAccount?.name || 'اختر الحساب'}</span>
             </button>
           ) : (
@@ -282,18 +282,18 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
                 hapticFeedback('light');
                 setQuickSelect(quickSelect === 'category' ? 'none' : 'category');
               }}
-              className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="flex flex-col items-center justify-center py-2 px-2 bg-slate-50 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
-              <span className="text-[10px] text-slate-400 mb-1 flex items-center gap-1">{type === 'income' ? 'المصدر' : 'الفئة'} <ChevronUp size={10}/></span>
+              <span className="text-[10px] text-slate-400 mb-0.5 flex items-center gap-1">{type === 'income' ? 'المصدر' : 'الفئة'} <ChevronUp size={10}/></span>
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{type === 'income' ? (source || 'اختر المصدر') : (selectedCategory?.name || 'اختر الفئة')}</span>
             </button>
           )}
 
           <button 
             onClick={() => { hapticFeedback('light'); setActiveView('details'); }}
-            className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative cursor-pointer"
+            className="flex flex-col items-center justify-center py-2 px-2 bg-slate-50 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative cursor-pointer"
           >
-            <span className="text-[10px] text-slate-400 mb-1">تفاصيل</span>
+            <span className="text-[10px] text-slate-400 mb-0.5">تفاصيل</span>
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{format(parseISO(date), 'dd MMM', { locale: ar })}</span>
             {note && <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
           </button>
