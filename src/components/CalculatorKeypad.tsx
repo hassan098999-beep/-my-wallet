@@ -36,9 +36,9 @@ const CalculatorKeypad: React.FC<CalculatorKeypadProps> = ({ onPress, onDelete, 
   };
 
   return (
-    <div className="w-full h-full bg-transparent px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] flex flex-col gap-2">
+    <div className="w-full h-full bg-transparent px-3 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex flex-col gap-1.5">
       {/* Container for grid */}
-      <div className={cn("grid gap-2 flex-1", showOperators ? "grid-cols-4" : "grid-cols-3")}>
+      <div className={cn("grid gap-1.5 flex-1", showOperators ? "grid-cols-4" : "grid-cols-3", "grid-rows-4")}>
         {/* Main numbers and operators */}
         {basicRows.map((row, rowIndex) => (
           <React.Fragment key={`row-${rowIndex}`}>
@@ -48,7 +48,7 @@ const CalculatorKeypad: React.FC<CalculatorKeypadProps> = ({ onPress, onDelete, 
                 type="button"
                 whileTap={{ scale: 0.9 }}
                 onClick={() => handlePress(key)}
-                className="flex items-center justify-center text-2xl font-semibold rounded-xl shadow-sm transition-all bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 aspect-[1.5]"
+                className="flex items-center justify-center text-2xl font-semibold rounded-xl shadow-sm transition-all bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
               >
                 {key}
               </motion.button>
@@ -61,7 +61,7 @@ const CalculatorKeypad: React.FC<CalculatorKeypadProps> = ({ onPress, onDelete, 
                 animate={{ opacity: 1, scale: 1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => handlePress(operators[rowIndex])}
-                className="flex items-center justify-center text-2xl font-semibold rounded-xl shadow-sm transition-all bg-white dark:bg-slate-800 text-indigo-500 aspect-[1.5]"
+                className="flex items-center justify-center text-2xl font-semibold rounded-xl shadow-sm transition-all bg-white dark:bg-slate-800 text-indigo-500"
               >
                 {operators[rowIndex] === '*' ? '×' : operators[rowIndex] === '/' ? '÷' : operators[rowIndex]}
               </motion.button>
@@ -70,9 +70,9 @@ const CalculatorKeypad: React.FC<CalculatorKeypadProps> = ({ onPress, onDelete, 
         ))}
 
         {/* 4th row */}
-        <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={() => handlePress('.')} className="flex items-center justify-center text-2xl font-semibold rounded-xl shadow-sm transition-all bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 aspect-[1.5]">.</motion.button>
-        <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={() => handlePress('0')} className="flex items-center justify-center text-2xl font-semibold rounded-xl shadow-sm transition-all bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 aspect-[1.5]">0</motion.button>
-        <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={handleDelete} className="flex items-center justify-center text-rose-500 rounded-xl shadow-sm transition-all bg-white dark:bg-slate-800 aspect-[1.5]"><Delete size={28} strokeWidth={2} /></motion.button>
+        <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={() => handlePress('.')} className="flex items-center justify-center text-2xl font-semibold rounded-xl shadow-sm transition-all bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">.</motion.button>
+        <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={() => handlePress('0')} className="flex items-center justify-center text-2xl font-semibold rounded-xl shadow-sm transition-all bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">0</motion.button>
+        <motion.button type="button" whileTap={{ scale: 0.9 }} onClick={handleDelete} className="flex items-center justify-center text-rose-500 rounded-xl shadow-sm transition-all bg-white dark:bg-slate-800"><Delete size={28} strokeWidth={2} /></motion.button>
         {showOperators && (
           <motion.button
             type="button"
@@ -80,7 +80,7 @@ const CalculatorKeypad: React.FC<CalculatorKeypadProps> = ({ onPress, onDelete, 
             animate={{ opacity: 1, scale: 1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => handlePress('+')}
-            className="flex items-center justify-center text-2xl font-semibold rounded-xl shadow-sm transition-all bg-white dark:bg-slate-800 text-indigo-500 aspect-[1.5]"
+            className="flex items-center justify-center text-2xl font-semibold rounded-xl shadow-sm transition-all bg-white dark:bg-slate-800 text-indigo-500"
           >
             +
           </motion.button>
@@ -88,7 +88,7 @@ const CalculatorKeypad: React.FC<CalculatorKeypadProps> = ({ onPress, onDelete, 
       </div>
 
       {/* 5th row: toggle operators & equals/save button */}
-      <div className="flex gap-2 h-14 shrink-0">
+      <div className="flex gap-1.5 h-12 shrink-0">
         <motion.button
           type="button"
           whileTap={{ scale: 0.95 }}

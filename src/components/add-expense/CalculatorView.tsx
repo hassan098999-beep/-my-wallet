@@ -124,7 +124,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
       {/* Amount Display (Calculator Style) */}
       <div 
         className={cn(
-          "flex-1 flex flex-col items-center justify-center px-6 py-6 text-white min-h-[140px] max-h-[220px] transition-all", 
+          "flex-1 flex flex-col items-center justify-center px-6 py-6 text-white min-h-[100px] max-h-[160px] transition-all shrink", 
           bgColor,
           !(type === 'expense' && selectedCategory?.subcategories && selectedCategory.subcategories.length > 0) && "rounded-b-[2rem] shadow-sm mb-2"
         )} 
@@ -355,7 +355,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
       )}
 
       {/* Keypad Section */}
-      <div className="flex-1 bg-white dark:bg-slate-900" onClick={() => setQuickSelect('none')}>
+      <div className="flex-1 bg-white dark:bg-slate-900 min-h-0 flex flex-col shrink" onClick={() => setQuickSelect('none')}>
         <CalculatorKeypad 
           onPress={handleKeyPress}
           onDelete={handleDelete}

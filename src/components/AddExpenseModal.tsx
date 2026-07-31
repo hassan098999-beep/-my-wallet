@@ -330,6 +330,16 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
     }
   };
 
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
   const handleKeyPress = (key: string) => {
     setExpression(prev => {
       if (prev === '0' && !['+', '-', '*', '/'].includes(key) && key !== '.') {
@@ -498,10 +508,10 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
               stiffness: 280,
               mass: 0.9
             }}
-            className="w-full h-full sm:h-[85vh] sm:max-h-[850px] sm:max-w-lg bg-white dark:bg-slate-900 flex flex-col overflow-hidden sm:rounded-3xl sm:shadow-2xl z-20 relative border-0 sm:border border-slate-100 dark:border-slate-800"
+            className="w-full h-[100dvh] sm:h-[85vh] sm:max-h-[850px] sm:max-w-lg bg-white dark:bg-slate-900 flex flex-col overflow-hidden sm:rounded-3xl sm:shadow-2xl z-20 relative border-0 sm:border border-slate-100 dark:border-slate-800 min-h-0"
           >
             {activeView === 'main' && (
-              <div className="flex flex-col h-full bg-white dark:bg-slate-900">
+              <div className="flex flex-col h-full bg-white dark:bg-slate-900 min-h-0">
                 <AddExpenseTypeSelector
                   type={type}
                   setType={setType}
