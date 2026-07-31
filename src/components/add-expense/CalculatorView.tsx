@@ -1,6 +1,6 @@
-import React from 'react';
-import { motion } from 'motion/react';
-import { Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Sparkles, ChevronUp } from 'lucide-react';
 import { formatCurrency, cn, hapticFeedback } from '../../utils';
 import { DynamicIcon } from '../DynamicIcon';
 import CalculatorKeypad from '../CalculatorKeypad';
@@ -29,6 +29,7 @@ interface CalculatorViewProps {
   setActiveView: (view: 'main' | 'category' | 'account' | 'toAccount' | 'details') => void;
   date: string;
   source: string;
+  setSource: (src: string) => void;
   note: string;
   currentCategoryBudgetInsight: {
     limit: number;
@@ -41,6 +42,9 @@ interface CalculatorViewProps {
   handleKeyPress: (key: string) => void;
   handleDelete: () => void;
   handleCalculate: () => void;
+  categories: Category[];
+  accounts: Account[];
+  favoriteCategories: Category[];
 }
 
 export const CalculatorView: React.FC<CalculatorViewProps> = ({
@@ -63,17 +67,62 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
   setActiveView,
   date,
   source,
+  setSource,
   note,
   currentCategoryBudgetInsight,
   paymentMethod,
   handleKeyPress,
   handleDelete,
   handleCalculate,
+  categories,
+  accounts,
+  favoriteCategories
 }) => {
+  const [quickSelect, setQuickSelect] = useState<'none' | 'account' | 'toAccount' | 'category'>('none');
+
+  const getQuickCategories = () => {
+    if (type === 'income') {
+      return ['راتب', 'عمل حر', 'مكافأة', 'هدية', 'استثمار', 'أخرى'].map((src, i) => ({
+        id: src,
+        name: src,
+        color: '#10b981', // emerald-500
+        icon: 'Briefcase'
+      }));
+    }
+    const list = [...favoriteCategories, ...categories].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i); // unique
+    return list.slice(0, 8);
+  };
+
+  const quickCategories = getQuickCategories();
+  const quickAccounts = accounts.slice(0, 8);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      const key = e.key;
+      if (/[0-9]/.test(key)) {
+        handleKeyPress(key);
+      } else if (['+', '-', '*', '/', '.'].includes(key)) {
+        handleKeyPress(key);
+      } else if (key === 'Enter' || key === '=') {
+        e.preventDefault();
+        handleCalculate();
+      } else if (key === 'Backspace') {
+        handleDelete();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyPress, handleCalculate, handleDelete]);
+
   return (
     <>
       {/* Amount Display (Calculator Style) */}
-      <div className={cn("flex-1 flex flex-col items-center justify-center px-6 py-4 text-white min-h-[140px] max-h-[220px]", bgColor)}>
+      <div className={cn("flex-1 flex flex-col items-center justify-center px-6 py-4 text-white min-h-[140px] max-h-[220px]", bgColor)} onClick={() => setQuickSelect('none')}>
         <div className="flex items-baseline gap-2 w-full justify-center overflow-hidden drop-shadow-sm">
           <span className="text-4xl sm:text-5xl font-light opacity-80 shrink-0">
             {type === 'expense' ? '-' : type === 'income' ? '+' : ''}
@@ -141,41 +190,107 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
       )}
 
       {/* Selectors */}
-      <div className="grid grid-cols-3 gap-px bg-slate-250 dark:bg-slate-800 shrink-0">
-        <button 
-          onClick={() => { hapticFeedback('light'); setActiveView('account'); }}
-          className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-        >
-          <span className="text-[10px] text-slate-400 mb-1">الحساب</span>
-          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{selectedAccount?.name || 'اختر الحساب'}</span>
-        </button>
-        
-        {type === 'transfer' ? (
-          <button 
-            onClick={() => { hapticFeedback('light'); setActiveView('toAccount'); }}
-            className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <span className="text-[10px] text-slate-400 mb-1">إلى حساب</span>
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{selectedToAccount?.name || 'اختر الحساب'}</span>
-          </button>
-        ) : (
-          <button 
-            onClick={() => { hapticFeedback('light'); setActiveView('category'); }}
-            className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <span className="text-[10px] text-slate-400 mb-1">{type === 'income' ? 'المصدر' : 'الفئة'}</span>
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{type === 'income' ? (source || 'اختر المصدر') : (selectedCategory?.name || 'اختر الفئة')}</span>
-          </button>
-        )}
+      <div className="relative">
+        <AnimatePresence>
+          {quickSelect !== 'none' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="absolute bottom-full left-0 right-0 bg-white dark:bg-slate-900 shadow-lg border-t border-slate-100 dark:border-slate-800 rounded-t-2xl z-10 max-h-60 overflow-y-auto"
+            >
+              <div className="p-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {(quickSelect === 'category' ? quickCategories : quickAccounts).map((item: any) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      hapticFeedback('light');
+                      if (quickSelect === 'category') {
+                        if (type === 'income') {
+                          setSource(item.id);
+                        } else {
+                          setCategoryId(item.id);
+                        }
+                      }
+                      if (quickSelect === 'account') setAccountId(item.id);
+                      if (quickSelect === 'toAccount') {
+                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                        // @ts-ignore
+                        setActiveView('toAccount');
+                      }
+                      setQuickSelect('none');
+                    }}
+                    className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-right"
+                  >
+                    {quickSelect === 'category' && item.color && (
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0" style={{ backgroundColor: item.color }}>
+                        <DynamicIcon name={item.icon || 'Circle'} size={14} />
+                      </div>
+                    )}
+                    {quickSelect !== 'category' && item.color && (
+                      <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                    )}
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{item.name}</span>
+                  </button>
+                ))}
+                
+                <button
+                  onClick={() => {
+                    hapticFeedback('light');
+                    setActiveView(quickSelect === 'category' ? 'category' : (quickSelect === 'account' ? 'account' : 'toAccount'));
+                    setQuickSelect('none');
+                  }}
+                  className="flex items-center justify-center gap-1 p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs font-bold"
+                >
+                  عرض المزيد...
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <button 
-          onClick={() => { hapticFeedback('light'); setActiveView('details'); }}
-          className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative cursor-pointer"
-        >
-          <span className="text-[10px] text-slate-400 mb-1">تفاصيل</span>
-          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{format(parseISO(date), 'dd MMM', { locale: ar })}</span>
-          {note && <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
-        </button>
+        <div className="grid grid-cols-3 gap-px bg-slate-250 dark:bg-slate-800 shrink-0">
+          <button 
+            onClick={() => {
+              hapticFeedback('light');
+              setQuickSelect(quickSelect === 'account' ? 'none' : 'account');
+            }}
+            className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <span className="text-[10px] text-slate-400 mb-1 flex items-center gap-1">الحساب <ChevronUp size={10}/></span>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{selectedAccount?.name || 'اختر الحساب'}</span>
+          </button>
+          
+          {type === 'transfer' ? (
+            <button 
+              onClick={() => { hapticFeedback('light'); setActiveView('toAccount'); }}
+              className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <span className="text-[10px] text-slate-400 mb-1">إلى حساب</span>
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{selectedToAccount?.name || 'اختر الحساب'}</span>
+            </button>
+          ) : (
+            <button 
+              onClick={() => {
+                hapticFeedback('light');
+                setQuickSelect(quickSelect === 'category' ? 'none' : 'category');
+              }}
+              className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <span className="text-[10px] text-slate-400 mb-1 flex items-center gap-1">{type === 'income' ? 'المصدر' : 'الفئة'} <ChevronUp size={10}/></span>
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{type === 'income' ? (source || 'اختر المصدر') : (selectedCategory?.name || 'اختر الفئة')}</span>
+            </button>
+          )}
+
+          <button 
+            onClick={() => { hapticFeedback('light'); setActiveView('details'); }}
+            className="flex flex-col items-center justify-center py-3 px-2 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative cursor-pointer"
+          >
+            <span className="text-[10px] text-slate-400 mb-1">تفاصيل</span>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate w-full text-center">{format(parseISO(date), 'dd MMM', { locale: ar })}</span>
+            {note && <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
+          </button>
+        </div>
       </div>
 
       {/* Real-time Category Budget Insight Bar (Calculator Mode) */}
@@ -234,7 +349,7 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
       )}
 
       {/* Keypad Section */}
-      <div className="flex-1 bg-slate-50 dark:bg-slate-900 pb-[env(safe-area-inset-bottom)]">
+      <div className="flex-1 bg-slate-50 dark:bg-slate-900 pb-[env(safe-area-inset-bottom)]" onClick={() => setQuickSelect('none')}>
         <CalculatorKeypad 
           onPress={handleKeyPress}
           onDelete={handleDelete}

@@ -392,8 +392,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
   };
 
   const handleCalculate = () => {
-    const result = evaluateExpression(expression);
-    setExpression(result.toString());
+    const hasOperator = /[+\-*/]/.test(expression);
+    if (hasOperator) {
+      const result = evaluateExpression(expression);
+      setExpression(result.toString());
+    } else {
+      handleSubmit();
+    }
   };
 
   const handleSubmit = async () => {
@@ -573,12 +578,16 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
                     setActiveView={setActiveView}
                     date={date}
                     source={source}
+                    setSource={setSource}
                     note={note}
                     currentCategoryBudgetInsight={currentCategoryBudgetInsight}
                     paymentMethod={paymentMethod}
                     handleKeyPress={handleKeyPress}
                     handleDelete={handleDelete}
                     handleCalculate={handleCalculate}
+                    categories={categories}
+                    accounts={accounts}
+                    favoriteCategories={favoriteCategories}
                   />
                 ) : (
                   <AddExpenseForm

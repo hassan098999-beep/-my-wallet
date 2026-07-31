@@ -73,19 +73,6 @@ export const AddExpenseTypeSelector: React.FC<AddExpenseTypeSelectorProps> = ({
             <span>آلة حاسبة</span>
           </button>
         </div>
-
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={loading}
-          className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer ml-1"
-        >
-          {loading ? (
-            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            <Check size={28} strokeWidth={3} />
-          )}
-        </button>
       </div>
 
       {/* Main Tabs (إيراد / مصروف / تحويل) */}
