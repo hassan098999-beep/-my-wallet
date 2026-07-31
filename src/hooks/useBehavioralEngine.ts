@@ -101,9 +101,9 @@ export const useBehavioralEngine = () => {
     });
 
     // 3. Trend Prediction
-    const thisWeek = expenses.filter(e => isWithinInterval(parseISO(e.date), { start: startOfWeek(new Date()), end: new Date() }))
+    const thisWeek = expenses.filter(e => !e.isTransfer && isWithinInterval(parseISO(e.date), { start: startOfWeek(new Date()), end: new Date() }))
       .reduce((sum, e) => sum + e.amount, 0);
-    const lastWeek = expenses.filter(e => isWithinInterval(parseISO(e.date), { start: startOfWeek(subWeeks(new Date(), 1)), end: endOfWeek(subWeeks(new Date(), 1)) }))
+    const lastWeek = expenses.filter(e => !e.isTransfer && isWithinInterval(parseISO(e.date), { start: startOfWeek(subWeeks(new Date(), 1)), end: endOfWeek(subWeeks(new Date(), 1)) }))
       .reduce((sum, e) => sum + e.amount, 0);
 
     if (thisWeek > lastWeek && lastWeek > 0) {
@@ -120,7 +120,7 @@ export const useBehavioralEngine = () => {
     const otherCategory = categories.find(c => c.name === 'أخرى' || c.name === 'اخرى' || c.name === 'Other');
     if (otherCategory) {
       const otherTotal = expenses
-        .filter(e => e.categoryId === otherCategory.id && isWithinInterval(parseISO(e.date), { start: last30Days, end: new Date() }))
+        .filter(e => !e.isTransfer && e.categoryId === otherCategory.id && isWithinInterval(parseISO(e.date), { start: last30Days, end: new Date() }))
         .reduce((sum, e) => sum + e.amount, 0);
       
       if (otherTotal > (dailyBudget * 30 * 0.1)) { // More than 10% of monthly budget
@@ -135,7 +135,7 @@ export const useBehavioralEngine = () => {
     }
 
     // 5. Large Single Expense Alert
-    const recentExpenses = expenses.filter(e => isWithinInterval(parseISO(e.date), { start: subDays(new Date(), 7), end: new Date() }));
+    const recentExpenses = expenses.filter(e => !e.isTransfer && isWithinInterval(parseISO(e.date), { start: subDays(new Date(), 7), end: new Date() }));
     if (recentExpenses.length > 0) {
       const largestExpense = recentExpenses.reduce((max, e) => e.amount > max.amount ? e : max, recentExpenses[0]);
       if (largestExpense.amount > (dailyBudget * 30 * 0.2)) { // More than 20% of monthly budget

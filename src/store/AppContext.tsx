@@ -877,7 +877,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       // Calculations
-      const totalExpenses = state.expenses.reduce((sum, e) => sum + e.amount, 0);
+      const totalExpenses = state.expenses.filter(e => !e.isTransfer).reduce((sum, e) => sum + e.amount, 0);
       const totalIncome = state.income.reduce((sum, i) => sum + i.amount, 0);
       const balance = totalIncome - totalExpenses;
       const currency = state.currency || 'د.ت';

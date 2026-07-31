@@ -17,7 +17,7 @@ export const BudgetAlerts = () => {
     expenses
       .filter(e => {
         const d = safeParseISO(e.date);
-        return d >= rangeStart && d <= rangeEnd;
+        return !e.isTransfer && d >= rangeStart && d <= rangeEnd;
       })
       .reduce((sum, e) => sum + e.amount, 0),
   [expenses, rangeStart, rangeEnd]);
