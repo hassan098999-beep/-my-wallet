@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'motion/react';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Trash, Pencil, Copy, Calendar, Building2, ArrowDown, ArrowRightLeft, ChevronRight, Check } from 'lucide-react';
+import { Trash, Pencil, Copy, ArrowDown, ArrowRightLeft, ChevronRight, Check } from 'lucide-react';
 import { DynamicIcon } from './DynamicIcon';
 import { formatCurrency, cn, hapticFeedback } from '../utils';
 import { PaymentMethod, Category, Account } from '../types';
@@ -123,34 +123,34 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
       </AnimatePresence>
 
       {/* Swipe Background (Action Buttons) */}
-      <div className="absolute inset-y-0 left-0 flex items-center justify-start pl-6 pr-4 gap-2 md:gap-3 bg-slate-50 dark:bg-slate-800/50 w-full z-0 border-b border-slate-100 dark:border-slate-800">
+      <div className="absolute inset-y-0 left-0 flex items-center justify-start pl-4 pr-3 gap-1.5 md:gap-2 bg-slate-50 dark:bg-slate-800/50 w-full z-0 border-b border-slate-100 dark:border-slate-800">
         {!isTransfer && isExpense && (
           <motion.button
             style={{ opacity, scale, x: repeatX }}
             onClick={handleDuplicate}
-            className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 active:scale-95 transition-transform"
+            className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform shrink-0"
             title="تكرار"
           >
-            <Copy size={18} />
+            <Copy size={15} />
           </motion.button>
         )}
         {!isTransfer && (
           <motion.button
             style={{ opacity, scale, x: editX }}
             onClick={handleEdit}
-            className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-blue-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20 active:scale-95 transition-transform"
+            className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform shrink-0"
             title="تعديل"
           >
-            <Pencil size={18} />
+            <Pencil size={15} />
           </motion.button>
         )}
         <motion.button
           style={{ opacity, scale, x: deleteX }}
           onClick={handleDeleteClick}
-          className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-md shadow-rose-500/20 active:scale-95 transition-transform"
+          className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform shrink-0"
           title="حذف"
         >
-          <Trash size={18} />
+          <Trash size={15} />
         </motion.button>
       </div>
 
@@ -158,12 +158,12 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
         style={{ x }}
         drag={isSelectionMode ? false : "x"}
         dragDirectionLock
-        dragConstraints={{ left: 0, right: 180 }}
+        dragConstraints={{ left: 0, right: 140 }}
         dragElastic={0.1}
         onDragEnd={(e, info) => {
-          if (!isSelectionMode && info.offset.x > 80) {
+          if (!isSelectionMode && info.offset.x > 60) {
             hapticFeedback('medium');
-            x.set(180);
+            x.set(140);
           } else {
             x.set(0);
           }
@@ -175,19 +175,19 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
           }
         }}
         className={cn(
-          "relative z-10 p-6 md:p-10 flex flex-col sm:flex-row sm:items-center justify-between gap-8 md:gap-12 transition-colors group bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 last:border-0",
+          "relative z-10 px-3.5 py-2.5 md:px-5 md:py-3 flex items-center justify-between gap-3 md:gap-4 transition-colors group bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 last:border-0 min-h-[56px]",
           isSelectionMode ? "cursor-pointer" : "cursor-grab active:cursor-grabbing",
           isSelected && isSelectionMode && "bg-indigo-50/40 dark:bg-indigo-950/20"
         )}
       >
         {/* Swipe Hint Indicator (Mobile only) */}
         {!isSelectionMode && (
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center sm:hidden opacity-30 text-slate-400 pointer-events-none">
-            <ChevronRight size={20} />
+          <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center sm:hidden opacity-20 text-slate-400 pointer-events-none">
+            <ChevronRight size={16} />
           </div>
         )}
 
-        <div className="flex items-start sm:items-center gap-6 md:gap-10 flex-1 min-w-0">
+        <div className="flex items-center gap-2.5 md:gap-3.5 flex-1 min-w-0">
           {isSelectionMode && (
             <div
               onClick={(e) => {
@@ -195,110 +195,113 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
                 hapticFeedback('light');
                 onToggleSelect?.(transaction);
               }}
-              className="flex items-center justify-center shrink-0 cursor-pointer p-1"
+              className="flex items-center justify-center shrink-0 cursor-pointer p-0.5"
             >
               <div
                 className={cn(
-                  "size-6 md:size-8 rounded-lg md:rounded-xl border-2 flex items-center justify-center transition-all",
+                  "size-5 md:size-6 rounded-md md:rounded-lg border-2 flex items-center justify-center transition-all",
                   isSelected
                     ? "bg-indigo-600 border-indigo-600 text-white shadow-sm scale-105"
                     : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:border-indigo-400"
                 )}
               >
-                {isSelected && <Check className="size-4 md:size-5 stroke-[3]" />}
+                {isSelected && <Check className="size-3 md:size-4 stroke-[3]" />}
               </div>
             </div>
           )}
 
           <div 
-            className={cn("w-14 h-14 md:w-24 md:h-24 rounded-2xl md:rounded-3xl flex items-center justify-center text-white shrink-0 shadow-sm transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 group-hover:shadow-emerald-500/20", typeColor.replace('text-', 'bg-'))}
+            className={cn("w-9 h-9 md:w-11 md:h-11 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm transition-all duration-300 group-hover:scale-105", typeColor.replace('text-', 'bg-'))}
             style={{ 
               backgroundColor: bgColor,
-              boxShadow: `0 20px 40px -10px ${bgColor}40`
             }}
           >
             {isTransfer ? (
-              <ArrowRightLeft className="size-7 md:size-12" />
+              <ArrowRightLeft className="size-4 md:size-5" />
             ) : !isExpense ? (
-              <ArrowDown className="size-7 md:size-12" />
+              <ArrowDown className="size-4 md:size-5" />
             ) : category?.icon ? (
-              <DynamicIcon name={category.icon} className="size-7 md:size-12" />
+              <DynamicIcon name={category.icon} className="size-4 md:size-5" />
             ) : (
-              <span className="text-2xl md:text-4xl font-bold">{category?.name?.charAt(0) || '?'}</span>
+              <span className="text-xs md:text-sm font-bold">{category?.name?.charAt(0) || '?'}</span>
             )}
           </div>
-          <div className="space-y-3 md:space-y-4 flex-1 min-w-0">
-            <div className="flex flex-col gap-1">
-              <h4 className="font-bold text-slate-900 dark:text-white text-lg md:text-3xl leading-tight truncate">
-                {isTransfer ? (isExpense ? (transaction as any).note : (transaction as any).source) : (!isExpense ? (transaction as any).source : ((transaction as any).note || ((transaction as any).subcategoryId ? `${category?.name} - ${(transaction as any).subcategoryId}` : category?.name)))}
+
+          <div className="flex flex-col min-w-0 flex-1 gap-0.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <h4 className="font-bold text-slate-900 dark:text-white text-xs md:text-sm leading-tight truncate">
+                {isTransfer 
+                  ? (isExpense ? (transaction as any).note : (transaction as any).source) 
+                  : (!isExpense 
+                      ? (transaction as any).source 
+                      : ((transaction as any).note || ((transaction as any).subcategoryId ? `${category?.name} - ${(transaction as any).subcategoryId}` : category?.name))
+                    )}
               </h4>
-              <div className="flex items-center gap-3">
-                <span className={cn("text-[10px] md:text-xs font-semibold", typeColor)}>
-                  {isTransfer ? 'تحويل مالي' : (!isExpense ? 'دخل' : category?.type === 'need' ? 'احتياجات' : category?.type === 'want' ? 'رغبات' : 'ادخار')}
-                </span>
-                {(transaction as any).subcategoryId && !isTransfer && (
-                  <span className="text-[9px] md:text-[11px] font-semibold text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
+            </div>
+
+            <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+              <span className={cn("font-bold shrink-0", typeColor)}>
+                {isTransfer ? 'تحويل مالي' : (!isExpense ? 'دخل' : category?.type === 'need' ? 'احتياجات' : category?.type === 'want' ? 'رغبات' : 'ادخار')}
+              </span>
+              {(transaction as any).subcategoryId && !isTransfer && (
+                <>
+                  <span className="opacity-40">·</span>
+                  <span className="shrink-0 text-emerald-600 dark:text-emerald-400 font-semibold">
                     {(transaction as any).subcategoryId}
                   </span>
+                </>
+              )}
+              <span className="opacity-40">·</span>
+              <span className="shrink-0 truncate max-w-[90px] sm:max-w-[140px]">
+                {transaction.accountId ? (
+                  accounts.find(a => a.id === transaction.accountId)?.name || 'حساب محذوف'
+                ) : (
+                  isExpense ? getPaymentLabel((transaction as any).paymentMethod) : 'بدون حساب'
                 )}
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 md:gap-x-8 gap-y-3 text-xs md:text-lg font-medium text-slate-400 dark:text-slate-500">
-              <span className="flex items-center gap-2.5 whitespace-nowrap">
-                <Calendar className="size-4 md:size-6 shrink-0 text-slate-300 dark:text-slate-600" />
-                {format(parseISO(transaction.date), 'dd MMM yyyy', { locale: ar })}
               </span>
-              <span className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800/30 px-4 md:px-6 py-2 rounded-2xl whitespace-nowrap truncate max-w-[180px] sm:max-w-none border border-slate-200/5 dark:border-slate-700/5">
-                {isTransfer ? <ArrowRightLeft size={18} className="shrink-0" /> : (isExpense ? getPaymentIcon((transaction as any).paymentMethod) : <Building2 size={18} className="shrink-0" />)}
-                <span className="truncate font-semibold text-[10px] md:text-sm">
-                  {transaction.accountId ? (
-                    accounts.find(a => a.id === transaction.accountId)?.name || 'حساب محذوف'
-                  ) : (
-                    isExpense ? getPaymentLabel((transaction as any).paymentMethod) : 'بدون حساب'
-                  )}
-                </span>
+              <span className="opacity-40">·</span>
+              <span className="shrink-0 text-slate-400 dark:text-slate-500">
+                {format(parseISO(transaction.date), 'dd MMM yyyy', { locale: ar })}
               </span>
             </div>
           </div>
         </div>
         
-        <div className="flex items-center justify-between sm:justify-center gap-8 md:gap-12 sm:w-auto w-full border-t sm:border-t-0 pt-6 md:pt-10 sm:pt-0 border-slate-100 dark:border-slate-800 shrink-0">
-          <div className="text-right sm:text-center">
-            <div className={cn(
-              "text-2xl md:text-5xl font-black tracking-tighter leading-none dir-ltr", 
-              isTransfer ? "text-slate-900 dark:text-white" : (!isExpense ? "text-emerald-500" : "text-rose-500")
-            )}>
-              {isTransfer ? '' : (!isExpense ? '+' : '-')} {formatCurrency(transaction.amount, currency)}
-            </div>
+        <div className="flex items-center gap-2 md:gap-4 shrink-0">
+          <div className={cn(
+            "text-sm md:text-base font-black tracking-tight leading-none font-mono dir-ltr", 
+            isTransfer ? "text-slate-900 dark:text-white" : (!isExpense ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")
+          )}>
+            {isTransfer ? '' : (!isExpense ? '+' : '-')} {formatCurrency(transaction.amount, currency)}
           </div>
 
-          <div className="hidden sm:flex items-center gap-3 md:gap-6">
+          <div className="hidden sm:flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             {!isTransfer && isExpense && (
               <button 
                 onClick={() => { hapticFeedback('light'); onDuplicate(transaction); }}
-                className="p-3 md:p-4 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl md:rounded-3xl transition-all opacity-0 group-hover:opacity-100 shadow-sm"
+                className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
                 title="تكرار"
               >
-                <Copy className="size-5 md:size-8" />
+                <Copy className="size-4" />
               </button>
             )}
 
             {!isTransfer && (
               <button 
                 onClick={() => { hapticFeedback('light'); onEdit(transaction); }}
-                className="p-3 md:p-4 text-slate-300 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-2xl md:rounded-3xl transition-all opacity-0 group-hover:opacity-100 shadow-sm"
+                className="p-1.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
                 title="تعديل"
               >
-                <Pencil className="size-5 md:size-8" />
+                <Pencil className="size-4" />
               </button>
             )}
             
             <button 
               onClick={handleDeleteClick}
-              className="p-3 md:p-4 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl md:rounded-3xl transition-all opacity-0 group-hover:opacity-100 shadow-sm"
+              className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all"
               title="حذف"
             >
-              <Trash className="size-5 md:size-8" />
+              <Trash className="size-4" />
             </button>
           </div>
         </div>
