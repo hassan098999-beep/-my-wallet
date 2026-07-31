@@ -28,7 +28,7 @@ const Transactions = () => {
   const [transactionType, setTransactionType] = useState<
     "all" | "expense" | "income"
   >("all");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
   const [typeFilter, setTypeFilter] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -109,8 +109,8 @@ const Transactions = () => {
         const matchesType =
           transactionType === "all" || t.type === transactionType;
         const matchesCategory =
-          !categoryFilter ||
-          (isExpense && (t as any).categoryId === categoryFilter);
+          categoryFilter.length === 0 ||
+          (isExpense && categoryFilter.includes((t as any).categoryId));
         const matchesTypeFilter =
           !typeFilter ||
           (isExpense &&
@@ -180,7 +180,7 @@ const Transactions = () => {
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
-    if (categoryFilter) count++;
+    if (categoryFilter.length > 0) count++;
     if (typeFilter) count++;
     if (startDate) count++;
     if (endDate) count++;
@@ -202,13 +202,18 @@ const Transactions = () => {
 
   const activeFiltersList = useMemo(() => {
     const list: { id: string; label: string; clear: () => void }[] = [];
-    if (categoryFilter) {
-      const catName =
-        categories.find((c) => c.id === categoryFilter)?.name || "فئة";
+    if (categoryFilter.length > 0) {
+      const selectedNames = categories
+        .filter((c) => categoryFilter.includes(c.id))
+        .map((c) => c.name);
+      const labelText =
+        selectedNames.length <= 2
+          ? selectedNames.join("، ")
+          : `${selectedNames.slice(0, 2).join("، ")} +${selectedNames.length - 2}`;
       list.push({
         id: "category",
-        label: `الفئة: ${catName}`,
-        clear: () => setCategoryFilter(""),
+        label: `الفئات: ${labelText || categoryFilter.length}`,
+        clear: () => setCategoryFilter([]),
       });
     }
     if (typeFilter) {
@@ -335,7 +340,7 @@ const Transactions = () => {
 
   const clearAllFilters = () => {
     setSearchTerm("");
-    setCategoryFilter("");
+    setCategoryFilter([]);
     setTypeFilter("");
     setStartDate("");
     setEndDate("");
@@ -347,10 +352,93 @@ const Transactions = () => {
     setPaymentMethodFilter("all");
   };
 
+  const prevDateRange = useMemo(() => {
+    if (!startDate || !endDate) return null;
+    const parsedStart = parseISO(startDate);
+    const parsedEnd = parseISO(endDate);
+    const duration = parsedEnd.getTime() - parsedStart.getTime();
+    const shift = duration + 24 * 60 * 60 * 1000;
+    return {
+      start: new Date(parsedStart.getTime() - shift),
+      end: new Date(parsedEnd.getTime() - shift),
+    };
+  }, [startDate, endDate]);
+
+  const { prevTotalIncome, prevTotalExpenses } = useMemo(() => {
+    if (!prevDateRange) return { prevTotalIncome: null, prevTotalExpenses: null };
+    const all = [
+      ...expenses.map((e) => ({ ...e, type: "expense" as const })),
+      ...income.map((i) => ({ ...i, type: "income" as const })),
+    ];
+    const lowerSearchTerm = debouncedSearchTerm.toLowerCase();
+
+    let pIncome = 0;
+    let pExpenses = 0;
+
+    all.forEach((t) => {
+      const isExpense = t.type === "expense";
+      
+      if (isExpense && (t as any).isTransfer) return;
+      if (!isExpense && (t as any).isTransfer) return;
+
+      const matchesSearch = isExpense
+        ? ((t as any).note || "").toLowerCase().includes(lowerSearchTerm) ||
+          (categories.find((c) => c.id === (t as any).categoryId)?.name || "")
+            .toLowerCase()
+            .includes(lowerSearchTerm)
+        : (t as any).source.toLowerCase().includes(lowerSearchTerm);
+
+      const matchesType = transactionType === "all" || t.type === transactionType;
+      const matchesCategory =
+        categoryFilter.length === 0 ||
+        (isExpense && categoryFilter.includes((t as any).categoryId));
+      const matchesTypeFilter = !typeFilter || (isExpense && categories.find((c) => c.id === (t as any).categoryId)?.type === typeFilter);
+      const matchesAccount = !accountFilter || t.accountId === accountFilter;
+      const matchesPaymentMethod = paymentMethodFilter === "all" || (isExpense && (t as any).paymentMethod === paymentMethodFilter);
+      const matchesMinAmount = !minAmount || t.amount >= parseFloat(minAmount);
+      const matchesMaxAmount = !maxAmount || t.amount <= parseFloat(maxAmount);
+
+      if (
+        matchesSearch &&
+        matchesType &&
+        matchesCategory &&
+        matchesTypeFilter &&
+        matchesAccount &&
+        matchesPaymentMethod &&
+        matchesMinAmount &&
+        matchesMaxAmount
+      ) {
+        const tDate = t.parsedDate || parseISO(t.date);
+        if (
+          (isBefore(prevDateRange.start, tDate) || isSameDay(prevDateRange.start, tDate)) &&
+          (isBefore(tDate, prevDateRange.end) || isSameDay(tDate, prevDateRange.end))
+        ) {
+          if (isExpense) pExpenses += t.amount;
+          else pIncome += t.amount;
+        }
+      }
+    });
+
+    return { prevTotalIncome: pIncome, prevTotalExpenses: pExpenses };
+  }, [
+    prevDateRange,
+    expenses,
+    income,
+    debouncedSearchTerm,
+    transactionType,
+    categoryFilter,
+    typeFilter,
+    minAmount,
+    maxAmount,
+    accountFilter,
+    paymentMethodFilter,
+    categories,
+  ]);
+
   const totalIncome = useMemo(
     () =>
       filteredTransactions
-        .filter((t) => t.type === "income")
+        .filter((t) => t.type === "income" && !(t as any).isTransfer)
         .reduce((sum, t) => sum + t.amount, 0),
     [filteredTransactions],
   );
@@ -358,10 +446,20 @@ const Transactions = () => {
   const totalExpenses = useMemo(
     () =>
       filteredTransactions
-        .filter((t) => t.type === "expense")
+        .filter((t) => t.type === "expense" && !(t as any).isTransfer)
         .reduce((sum, t) => sum + t.amount, 0),
     [filteredTransactions],
   );
+
+  const incomeDiff = useMemo(() => {
+    if (prevTotalIncome === null) return null;
+    return prevTotalIncome > 0 ? ((totalIncome - prevTotalIncome) / prevTotalIncome) * 100 : (totalIncome > 0 ? 100 : 0);
+  }, [totalIncome, prevTotalIncome]);
+
+  const expenseDiff = useMemo(() => {
+    if (prevTotalExpenses === null) return null;
+    return prevTotalExpenses > 0 ? ((totalExpenses - prevTotalExpenses) / prevTotalExpenses) * 100 : (totalExpenses > 0 ? 100 : 0);
+  }, [totalExpenses, prevTotalExpenses]);
 
   const categoryData = useMemo(() => {
     const data: { name: string; value: number; color: string }[] = [];
@@ -640,6 +738,8 @@ const Transactions = () => {
             totalIncome={totalIncome}
             totalExpenses={totalExpenses}
             currency={currency}
+            incomeDiff={incomeDiff}
+            expenseDiff={expenseDiff}
           />
 
           <TransactionsFilters

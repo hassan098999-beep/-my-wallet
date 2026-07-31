@@ -31,8 +31,8 @@ interface TransactionsFiltersProps {
   setStartDate: (date: string) => void;
   endDate: string;
   setEndDate: (date: string) => void;
-  categoryFilter: string;
-  setCategoryFilter: (category: string) => void;
+  categoryFilter: string[];
+  setCategoryFilter: React.Dispatch<React.SetStateAction<string[]>>;
   typeFilter: string;
   setTypeFilter: (type: string) => void;
   categories: any[];
@@ -329,22 +329,72 @@ export const TransactionsFilters: React.FC<TransactionsFiltersProps> = ({
                     </div>
 
                     <div className="space-y-3">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 pl-1">
-                          الفئة
-                        </label>
-                        <select
-                          value={categoryFilter}
-                          onChange={(e) => setCategoryFilter(e.target.value)}
-                          className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-150 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white appearance-none"
-                        >
-                          <option value="">كل الفئات</option>
-                          {categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </option>
-                          ))}
-                        </select>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 pl-1">
+                            الفئات {categoryFilter.length > 0 && `(${categoryFilter.length} مختارة)`}
+                          </label>
+                          {categoryFilter.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                hapticFeedback("light");
+                                setCategoryFilter([]);
+                              }}
+                              className="text-[10px] text-rose-500 hover:text-rose-600 font-bold hover:underline"
+                            >
+                              إلغاء التحديد
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 max-h-44 overflow-y-auto p-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-150 dark:border-slate-700/80 custom-scrollbar">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              hapticFeedback("light");
+                              setCategoryFilter([]);
+                            }}
+                            className={cn(
+                              "px-2.5 py-1 rounded-xl text-xs font-bold transition-all border",
+                              categoryFilter.length === 0
+                                ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
+                                : "bg-slate-50 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600/60 hover:bg-slate-100 dark:hover:bg-slate-700"
+                            )}
+                          >
+                            كل الفئات
+                          </button>
+                          {categories.map((cat) => {
+                            const isSelected = categoryFilter.includes(cat.id);
+                            return (
+                              <button
+                                key={cat.id}
+                                type="button"
+                                onClick={() => {
+                                  hapticFeedback("light");
+                                  setCategoryFilter((prev) =>
+                                    prev.includes(cat.id)
+                                      ? prev.filter((id) => id !== cat.id)
+                                      : [...prev, cat.id]
+                                  );
+                                }}
+                                className={cn(
+                                  "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all border",
+                                  isSelected
+                                    ? "bg-indigo-500 text-white border-indigo-500 shadow-sm"
+                                    : "bg-slate-50 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600/60 hover:bg-slate-100 dark:hover:bg-slate-700"
+                                )}
+                              >
+                                {cat.color && (
+                                  <span
+                                    className="size-2 rounded-full shrink-0 border border-white/40"
+                                    style={{ backgroundColor: cat.color }}
+                                  />
+                                )}
+                                <span>{cat.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
 
                       <div className="space-y-1">

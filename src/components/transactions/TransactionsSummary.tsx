@@ -7,13 +7,52 @@ interface TransactionsSummaryProps {
   totalIncome: number;
   totalExpenses: number;
   currency: string;
+  incomeDiff?: number | null;
+  expenseDiff?: number | null;
 }
 
 export const TransactionsSummary: React.FC<TransactionsSummaryProps> = ({
   totalIncome,
   totalExpenses,
   currency,
+  incomeDiff,
+  expenseDiff,
 }) => {
+  const formatDiff = (val?: number | null) => {
+    if (val === undefined || val === null) return <span className="text-xs font-black opacity-50">-</span>;
+    if (val === 0) return <span className="text-xs font-black">0%</span>;
+    
+    const isPositive = val > 0;
+    const absVal = Math.abs(val).toFixed(1);
+    const colorClass = isPositive ? "text-emerald-400" : "text-rose-400";
+    const Icon = isPositive ? ArrowUp : ArrowDown;
+    
+    return (
+      <span className={`text-xs font-black flex items-center gap-1 ${colorClass}`}>
+        <Icon size={12} strokeWidth={3} />
+        {absVal}%
+      </span>
+    );
+  };
+
+  // For expenses, a decrease (negative) is good (green), an increase (positive) is bad (red)
+  const formatExpenseDiff = (val?: number | null) => {
+    if (val === undefined || val === null) return <span className="text-xs font-black opacity-50">-</span>;
+    if (val === 0) return <span className="text-xs font-black">0%</span>;
+    
+    const isPositive = val > 0;
+    const absVal = Math.abs(val).toFixed(1);
+    const colorClass = isPositive ? "text-rose-400" : "text-emerald-400";
+    const Icon = isPositive ? ArrowUp : ArrowDown;
+    
+    return (
+      <span className={`text-xs font-black flex items-center gap-1 ${colorClass}`}>
+        <Icon size={12} strokeWidth={3} />
+        {absVal}%
+      </span>
+    );
+  };
+
   return (
     <div className="lg:col-span-1 flex flex-col gap-4 md:gap-6">
       <motion.div
@@ -41,7 +80,7 @@ export const TransactionsSummary: React.FC<TransactionsSummaryProps> = ({
           <span className="text-[10px] font-black uppercase tracking-widest">
             معدل النمو
           </span>
-          <span className="text-xs font-black">+12.5%</span>
+          {formatDiff(incomeDiff)}
         </div>
       </motion.div>
 
@@ -71,7 +110,7 @@ export const TransactionsSummary: React.FC<TransactionsSummaryProps> = ({
           <span className="text-[10px] font-black uppercase tracking-widest">
             معدل الإنفاق
           </span>
-          <span className="text-xs font-black">مرتفع</span>
+          {formatExpenseDiff(expenseDiff)}
         </div>
       </motion.div>
     </div>
