@@ -1,12 +1,12 @@
 import React, { useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { FileText, Search, Calendar } from "lucide-react";
+import { FileText, Search, Calendar, CheckSquare } from "lucide-react";
 import { parseISO, format, isToday, isYesterday } from "date-fns";
 import { ar } from "date-fns/locale";
 import { TransactionItem } from "../TransactionItem";
 import EmptyState from "../ui/EmptyState";
 import { PaymentMethod } from "../../types";
-import { formatCurrency } from "../../utils";
+import { formatCurrency, cn, hapticFeedback } from "../../utils";
 
 interface TransactionsListProps {
   filteredTransactions: any[];
@@ -22,6 +22,11 @@ interface TransactionsListProps {
   getPaymentIcon: (method: PaymentMethod) => React.ReactNode;
   getPaymentLabel: (method: PaymentMethod) => string;
   onResetFilters: () => void;
+  isSelectionMode?: boolean;
+  onToggleSelectionMode?: () => void;
+  selectedKeys?: Set<string>;
+  onToggleSelectTransaction?: (transaction: any) => void;
+  onSelectAllVisible?: () => void;
 }
 
 interface GroupedTransactions {
@@ -45,6 +50,11 @@ export const TransactionsList: React.FC<TransactionsListProps> = ({
   getPaymentIcon,
   getPaymentLabel,
   onResetFilters,
+  isSelectionMode,
+  onToggleSelectionMode,
+  selectedKeys,
+  onToggleSelectTransaction,
+  onSelectAllVisible,
 }) => {
   const groupedTransactions = useMemo(() => {
     const groups: GroupedTransactions[] = [];
@@ -128,7 +138,7 @@ export const TransactionsList: React.FC<TransactionsListProps> = ({
       transition={{ delay: 0.2 }}
       className="card p-0 overflow-hidden"
     >
-      <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl z-20">
+      <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 sticky top-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl z-20">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
             <FileText className="size-5 md:size-6" />
@@ -137,7 +147,39 @@ export const TransactionsList: React.FC<TransactionsListProps> = ({
             قائمة العمليات
           </h2>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center gap-2.5">
+          {onToggleSelectionMode && (
+            <button
+              type="button"
+              onClick={() => {
+                hapticFeedback("light");
+                onToggleSelectionMode();
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs md:text-sm font-bold transition-all border cursor-pointer",
+                isSelectionMode
+                  ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700"
+              )}
+            >
+              <CheckSquare size={16} />
+              <span>{isSelectionMode ? "إلغاء التحديد" : "تحديد"}</span>
+            </button>
+          )}
+
+          {isSelectionMode && onSelectAllVisible && visibleTransactions.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                hapticFeedback("light");
+                onSelectAllVisible();
+              }}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-800/50 hover:bg-indigo-100 transition-colors cursor-pointer"
+            >
+              تحديد الكل
+            </button>
+          )}
+
           <span className="px-3 py-1 rounded-full text-xs md:text-sm font-semibold bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60 font-mono">
             {filteredTransactions.length} <span className="font-sans">عملية</span>
           </span>
@@ -194,6 +236,9 @@ export const TransactionsList: React.FC<TransactionsListProps> = ({
                         onDuplicate={onDuplicate}
                         getPaymentIcon={getPaymentIcon}
                         getPaymentLabel={getPaymentLabel}
+                        isSelectionMode={isSelectionMode}
+                        isSelected={selectedKeys?.has(`${transaction.type}-${transaction.id}`)}
+                        onToggleSelect={onToggleSelectTransaction}
                       />
                     );
                   })}

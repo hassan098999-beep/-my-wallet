@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'motion/react';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Trash, Pencil, Copy, Calendar, Building2, ArrowDown, ArrowRightLeft, ChevronRight } from 'lucide-react';
+import { Trash, Pencil, Copy, Calendar, Building2, ArrowDown, ArrowRightLeft, ChevronRight, Check } from 'lucide-react';
 import { DynamicIcon } from './DynamicIcon';
 import { formatCurrency, cn, hapticFeedback } from '../utils';
 import { PaymentMethod, Category, Account } from '../types';
@@ -18,6 +18,9 @@ interface TransactionItemProps {
   onDuplicate: (t: any) => void;
   getPaymentIcon: (method: PaymentMethod) => React.ReactNode;
   getPaymentLabel: (method: PaymentMethod) => string;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (transaction: any) => void;
 }
 
 const TransactionItemComponent: React.FC<TransactionItemProps> = ({
@@ -31,6 +34,9 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
   onDuplicate,
   getPaymentIcon,
   getPaymentLabel,
+  isSelectionMode,
+  isSelected,
+  onToggleSelect,
 }) => {
   const isExpense = transaction.type === 'expense';
   const isTransfer = transaction.isTransfer;
@@ -150,28 +156,60 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
 
       <motion.div 
         style={{ x }}
-        drag="x"
+        drag={isSelectionMode ? false : "x"}
         dragDirectionLock
         dragConstraints={{ left: 0, right: 180 }}
         dragElastic={0.1}
         onDragEnd={(e, info) => {
-          if (info.offset.x > 80) {
+          if (!isSelectionMode && info.offset.x > 80) {
             hapticFeedback('medium');
             x.set(180);
           } else {
             x.set(0);
           }
         }}
+        onClick={() => {
+          if (isSelectionMode && onToggleSelect) {
+            hapticFeedback('light');
+            onToggleSelect(transaction);
+          }
+        }}
         className={cn(
-          "relative z-10 p-6 md:p-10 flex flex-col sm:flex-row sm:items-center justify-between gap-8 md:gap-12 transition-colors group bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 last:border-0 cursor-grab active:cursor-grabbing"
+          "relative z-10 p-6 md:p-10 flex flex-col sm:flex-row sm:items-center justify-between gap-8 md:gap-12 transition-colors group bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 last:border-0",
+          isSelectionMode ? "cursor-pointer" : "cursor-grab active:cursor-grabbing",
+          isSelected && isSelectionMode && "bg-indigo-50/40 dark:bg-indigo-950/20"
         )}
       >
         {/* Swipe Hint Indicator (Mobile only) */}
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center sm:hidden opacity-30 text-slate-400 pointer-events-none">
-          <ChevronRight size={20} />
-        </div>
+        {!isSelectionMode && (
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center sm:hidden opacity-30 text-slate-400 pointer-events-none">
+            <ChevronRight size={20} />
+          </div>
+        )}
 
         <div className="flex items-start sm:items-center gap-6 md:gap-10 flex-1 min-w-0">
+          {isSelectionMode && (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                hapticFeedback('light');
+                onToggleSelect?.(transaction);
+              }}
+              className="flex items-center justify-center shrink-0 cursor-pointer p-1"
+            >
+              <div
+                className={cn(
+                  "size-6 md:size-8 rounded-lg md:rounded-xl border-2 flex items-center justify-center transition-all",
+                  isSelected
+                    ? "bg-indigo-600 border-indigo-600 text-white shadow-sm scale-105"
+                    : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:border-indigo-400"
+                )}
+              >
+                {isSelected && <Check className="size-4 md:size-5 stroke-[3]" />}
+              </div>
+            </div>
+          )}
+
           <div 
             className={cn("w-14 h-14 md:w-24 md:h-24 rounded-2xl md:rounded-3xl flex items-center justify-center text-white shrink-0 shadow-sm transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 group-hover:shadow-emerald-500/20", typeColor.replace('text-', 'bg-'))}
             style={{ 
@@ -277,6 +315,8 @@ export const TransactionItem = React.memo(TransactionItemComponent, (prevProps, 
     prevProps.transaction.categoryId === nextProps.transaction.categoryId &&
     prevProps.transaction.note === nextProps.transaction.note &&
     prevProps.transaction.accountId === nextProps.transaction.accountId &&
-    prevProps.currency === nextProps.currency
+    prevProps.currency === nextProps.currency &&
+    prevProps.isSelectionMode === nextProps.isSelectionMode &&
+    prevProps.isSelected === nextProps.isSelected
   );
 });

@@ -3,8 +3,8 @@ import toast from "react-hot-toast";
 import { useAppContext } from "../store/AppContext";
 import { hapticFeedback } from "../utils";
 import { parseISO, isBefore, isSameDay, format } from "date-fns";
-import { DownloadCloud, Banknote, CreditCard, ArrowDownUp } from "lucide-react";
-import { motion } from "motion/react";
+import { DownloadCloud, Banknote, CreditCard, ArrowDownUp, Trash } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { PaymentMethod } from "../types";
 
 import { useWindowSize } from "../hooks/useWindowSize";
@@ -22,6 +22,10 @@ import { BackupModal } from "../components/transactions/BackupModal";
 const Transactions = () => {
   const { width } = useWindowSize();
   const [displayLimit, setDisplayLimit] = useState(20);
+
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -461,6 +465,77 @@ const Transactions = () => {
     return prevTotalExpenses > 0 ? ((totalExpenses - prevTotalExpenses) / prevTotalExpenses) * 100 : (totalExpenses > 0 ? 100 : 0);
   }, [totalExpenses, prevTotalExpenses]);
 
+  const { dailyAverageExpense, daysCount } = useMemo(() => {
+    const filteredExpensesList = filteredTransactions.filter(
+      (t) => t.type === "expense" && !(t as any).isTransfer
+    );
+    const totalExp = filteredExpensesList.reduce((sum, t) => sum + t.amount, 0);
+
+    if (filteredExpensesList.length === 0 || totalExp === 0) {
+      return { dailyAverageExpense: 0, daysCount: 1 };
+    }
+
+    let days = 1;
+    if (startDate && endDate) {
+      const startMs = parseISO(startDate).getTime();
+      const endMs = parseISO(endDate).getTime();
+      if (!isNaN(startMs) && !isNaN(endMs) && endMs >= startMs) {
+        days = Math.max(1, Math.ceil((endMs - startMs) / (1000 * 60 * 60 * 24)) + 1);
+      }
+    } else {
+      const timestamps = filteredExpensesList
+        .map((t) => {
+          const d = t.parsedDate || parseISO(t.date);
+          return d.getTime();
+        })
+        .filter((t) => !isNaN(t));
+
+      if (timestamps.length > 0) {
+        const minMs = Math.min(...timestamps);
+        const maxMs = Math.max(...timestamps);
+        const diffDays = Math.ceil((maxMs - minMs) / (1000 * 60 * 60 * 24)) + 1;
+        days = Math.max(1, diffDays);
+      }
+    }
+
+    return {
+      dailyAverageExpense: totalExp / days,
+      daysCount: days,
+    };
+  }, [filteredTransactions, startDate, endDate]);
+
+  const topTransaction = useMemo(() => {
+    if (filteredTransactions.length === 0) return null;
+
+    const nonTransfers = filteredTransactions.filter((t) => !(t as any).isTransfer);
+    const candidates = nonTransfers.length > 0 ? nonTransfers : filteredTransactions;
+
+    let maxTx: any = null;
+    for (const t of candidates) {
+      if (!maxTx || t.amount > maxTx.amount) {
+        maxTx = t;
+      }
+    }
+
+    if (!maxTx) return null;
+
+    const isExpense = maxTx.type === "expense";
+    let categoryName = "";
+    if (isExpense) {
+      const cat = categories.find((c) => c.id === maxTx.categoryId);
+      categoryName = cat ? cat.name : (maxTx.note || "مصروف");
+    } else {
+      categoryName = maxTx.source || "دخل";
+    }
+
+    return {
+      amount: maxTx.amount,
+      categoryName,
+      type: maxTx.type as "expense" | "income",
+      note: maxTx.note || "",
+    };
+  }, [filteredTransactions, categories]);
+
   const categoryData = useMemo(() => {
     const data: { name: string; value: number; color: string }[] = [];
     const relevantTransactions = filteredTransactions.filter(
@@ -591,6 +666,78 @@ const Transactions = () => {
     link.click();
     document.body.removeChild(link);
     toast.success("تم تصدير البيانات بنجاح");
+  };
+
+  const handleToggleSelectTransaction = (transaction: any) => {
+    const key = `${transaction.type}-${transaction.id}`;
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSelectionMode = () => {
+    hapticFeedback("medium");
+    if (isSelectionMode) {
+      setIsSelectionMode(false);
+      setSelectedKeys(new Set());
+    } else {
+      setIsSelectionMode(true);
+    }
+  };
+
+  const handleSelectAllVisible = () => {
+    hapticFeedback("light");
+    const visibleKeys = visibleTransactions.map((t) => `${t.type}-${t.id}`);
+    const allSelected = visibleKeys.every((k) => selectedKeys.has(k));
+
+    if (allSelected) {
+      setSelectedKeys((prev) => {
+        const next = new Set(prev);
+        visibleKeys.forEach((k) => next.delete(k));
+        return next;
+      });
+    } else {
+      setSelectedKeys((prev) => {
+        const next = new Set(prev);
+        visibleKeys.forEach((k) => next.add(k));
+        return next;
+      });
+    }
+  };
+
+  const selectedTransactionsToDelete = useMemo(() => {
+    if (selectedKeys.size === 0) return [];
+    const all = [
+      ...expenses.map((e) => ({ ...e, type: "expense" as const })),
+      ...income.map((i) => ({ ...i, type: "income" as const })),
+    ];
+    return all.filter((t) => selectedKeys.has(`${t.type}-${t.id}`));
+  }, [selectedKeys, expenses, income]);
+
+  const handleBulkDelete = async () => {
+    if (selectedTransactionsToDelete.length === 0) return;
+    try {
+      for (const item of selectedTransactionsToDelete) {
+        if (item.type === "expense") {
+          await deleteExpense(item.id);
+        } else {
+          await deleteIncome(item.id);
+        }
+      }
+      toast.success(`تم حذف ${selectedTransactionsToDelete.length} عملية بنجاح`);
+      setSelectedKeys(new Set());
+      setShowBulkDeleteConfirm(false);
+      setIsSelectionMode(false);
+      hapticFeedback("success");
+    } catch (error) {
+      toast.error("فشل حذف العمليات المحددة");
+    }
   };
 
   const handleDelete = async (id: string, type: "expense" | "income") => {
@@ -740,6 +887,9 @@ const Transactions = () => {
             currency={currency}
             incomeDiff={incomeDiff}
             expenseDiff={expenseDiff}
+            dailyAverageExpense={dailyAverageExpense}
+            daysCount={daysCount}
+            topTransaction={topTransaction}
           />
 
           <TransactionsFilters
@@ -805,6 +955,11 @@ const Transactions = () => {
             hapticFeedback("heavy");
             clearAllFilters();
           }}
+          isSelectionMode={isSelectionMode}
+          onToggleSelectionMode={handleToggleSelectionMode}
+          selectedKeys={selectedKeys}
+          onToggleSelectTransaction={handleToggleSelectTransaction}
+          onSelectAllVisible={handleSelectAllVisible}
         />
 
         {/* Edit Modal */}
@@ -839,10 +994,16 @@ const Transactions = () => {
         <DeleteConfirmModal
           showDeleteConfirm={showDeleteConfirm}
           transactionToDelete={transactionToDelete}
+          showBulkDeleteConfirm={showBulkDeleteConfirm}
+          bulkTransactionsToDelete={selectedTransactionsToDelete}
           categories={categories}
           currency={currency}
-          onClose={() => setShowDeleteConfirm(null)}
+          onClose={() => {
+            setShowDeleteConfirm(null);
+            setShowBulkDeleteConfirm(false);
+          }}
           onDelete={handleDelete}
+          onBulkDelete={handleBulkDelete}
         />
 
         {/* Backup & Import/Export Modal */}
@@ -855,6 +1016,47 @@ const Transactions = () => {
           handleJsonImport={handleJsonImport}
         />
       </motion.div>
+
+      {/* Fixed Floating Action Bar for Bulk Selection */}
+      <AnimatePresence>
+        {isSelectionMode && selectedKeys.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 dark:bg-slate-900/95 text-white shadow-2xl border border-slate-700/80 backdrop-blur-xl rounded-2xl px-5 py-3 flex items-center gap-3 md:gap-4 max-w-[90vw] sm:max-w-md"
+          >
+            <div className="text-xs md:text-sm font-bold text-slate-200 whitespace-nowrap">
+              محدد: <span className="text-indigo-400 font-mono text-base">{selectedKeys.size}</span>
+            </div>
+
+            <div className="h-5 w-px bg-slate-700" />
+
+            <button
+              type="button"
+              onClick={() => {
+                hapticFeedback("light");
+                setSelectedKeys(new Set());
+              }}
+              className="px-3 py-2 rounded-xl text-xs md:text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer"
+            >
+              إلغاء التحديد
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                hapticFeedback("medium");
+                setShowBulkDeleteConfirm(true);
+              }}
+              className="px-4 py-2 rounded-xl text-xs md:text-sm font-bold bg-rose-500 hover:bg-rose-600 text-white shadow-md shadow-rose-500/20 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+            >
+              <Trash size={15} />
+              <span>حذف المحدد ({selectedKeys.size})</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
