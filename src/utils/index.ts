@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-
+import currency from 'currency.js';
 import { parseISO, startOfMonth, endOfMonth, addMonths, subMonths, setDate, isWithinInterval, subDays, format } from 'date-fns';
 
 export function cn(...inputs: ClassValue[]) {
@@ -66,21 +66,34 @@ export function getBudgetMonth(date: Date, firstDay: number = 1): string {
   return `${year}-${String(month + 1).padStart(2, '0')}`;
 }
 
-const currencyFormatters: Record<string, Intl.NumberFormat> = {};
-
-export function formatCurrency(amount: number, currency: string = 'TND') {
+export function formatCurrency(amount: number, currencyCode: string = 'TND', customPrecision?: number) {
   const safeAmount = isNaN(amount) ? 0 : amount;
   
-  if (!currencyFormatters[currency]) {
-    currencyFormatters[currency] = new Intl.NumberFormat('ar-TN', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: currency === 'TND' ? 3 : 0,
-      maximumFractionDigits: currency === 'TND' ? 3 : 2,
-    });
+  let symbol = ' د.ت';
+  let precision = customPrecision ?? (currencyCode === 'TND' ? 3 : 2);
+
+  if (currencyCode === 'USD' || currencyCode === '$') {
+    symbol = ' $';
+  } else if (currencyCode === 'EUR' || currencyCode === '€') {
+    symbol = ' €';
+  } else if (currencyCode === 'SAR' || currencyCode === 'ر.س') {
+    symbol = ' ر.س';
+  } else if (currencyCode === 'AED' || currencyCode === 'د.إ') {
+    symbol = ' د.إ';
+  } else if (currencyCode === 'TND' || currencyCode === 'د.ت') {
+    symbol = ' د.ت';
+  } else if (currencyCode) {
+    symbol = ` ${currencyCode}`;
   }
-  
-  return currencyFormatters[currency].format(safeAmount);
+
+  const formattedNumber = currency(safeAmount, {
+    symbol: '',
+    separator: ',',
+    decimal: '.',
+    precision: precision,
+  }).format();
+
+  return `${formattedNumber}${symbol}`;
 }
 
 export function hapticFeedback(type: 'light' | 'medium' | 'heavy' | 'success' | 'error' | 'warning' = 'light') {
