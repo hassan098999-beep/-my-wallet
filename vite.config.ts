@@ -7,7 +7,7 @@ import { VitePWA } from "vite-plugin-pwa";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
   const isGithubPages = env.VITE_GITHUB_PAGES === 'true' || process.env.GITHUB_PAGES === 'true';
-  const basePath = isGithubPages ? '/-my-wallet/' : './';
+  const basePath = isGithubPages ? '/-my-wallet/' : '/';
 
   return {
     base: basePath,
@@ -158,6 +158,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
+      host: "0.0.0.0",
+      port: 3000,
       hmr: process.env.DISABLE_HMR !== "true",
     },
   };

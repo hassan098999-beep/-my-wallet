@@ -286,6 +286,68 @@ const DataManager = () => {
 
   return (
     <div className="space-y-4 md:space-y-6">
+      {/* Cloud Sync & Data Recovery Help Box */}
+      <div className="p-4 md:p-5 rounded-2xl md:rounded-3xl bg-gradient-to-br from-indigo-500/10 via-blue-500/5 to-transparent border border-indigo-500/20 space-y-4 shadow-sm text-right">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-indigo-500/20">
+            <Cloud className="size-5" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xs md:text-sm font-black text-slate-900 dark:text-white">
+              طريقة استرجاع البيانات المفقودة والمزامنة السحابية 🔄
+            </h3>
+            <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-bold leading-relaxed mt-1">
+              عند مسح بيانات المتصفح (Clear Cache)، تُحذف البيانات المحلية المؤقتة. يمكنك استعادة جميع بياناتك بدقة عبر الخيارين التاليين:
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+          {/* Option 1: Google Sign-in */}
+          <div className="p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 space-y-2">
+            <div className="flex items-center gap-2 font-black text-xs text-slate-900 dark:text-white">
+              <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[10px] shrink-0">1</span>
+              <span>تسجيل الدخول مع Google (المزامنة السحابية)</span>
+            </div>
+            <p className="text-[10px] text-slate-400 font-bold leading-normal">
+              إذا كنت قد استخدمت المزامنة سابقاً، اضغط هنا لتسجيل الدخول وسيقوم التطبيق بجلب كل مصاريفك وحساباتك من السحاب تلقائياً.
+            </p>
+            {user ? (
+              <div className="flex items-center justify-between p-2.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200/50 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-xs font-black">
+                <span className="truncate">متصل: {user.email}</span>
+                <button onClick={() => { hapticFeedback('medium'); useAppContext().logout(); }} className="text-[10px] underline text-rose-500 font-bold cursor-pointer shrink-0">
+                  خروج
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { hapticFeedback('medium'); useAppContext().login(); }}
+                className="w-full py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Cloud size={16} />
+                تسجيل الدخول مع Google للاستعادة
+              </button>
+            )}
+          </div>
+
+          {/* Option 2: Restore JSON Backup */}
+          <div className="p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 space-y-2">
+            <div className="flex items-center gap-2 font-black text-xs text-slate-900 dark:text-white">
+              <span className="w-5 h-5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-[10px] shrink-0">2</span>
+              <span>استيراد نسخة احتياطية (JSON)</span>
+            </div>
+            <p className="text-[10px] text-slate-400 font-bold leading-normal">
+              إذا قمت بتنزيل ملف نسخة احتياطية على جهازك سابقاً، يمكنك اختياره لإعادة كل البيانات فوراً.
+            </p>
+            <label className="w-full py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-xl shadow-md shadow-amber-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer text-center">
+              <UploadCloud size={16} />
+              اختر ملف JSON للرفع والاستعادة
+              <input type="file" accept=".json" onChange={handleImport} className="hidden" />
+            </label>
+          </div>
+        </div>
+      </div>
+
       <div className="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 md:gap-4">
           <button onClick={() => handleExport('json')} className="flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-4 rounded-xl font-black transition-all border border-slate-100 dark:border-slate-800 text-xs uppercase tracking-widest shadow-sm hover:shadow-md hover:scale-[1.02] cursor-pointer">
