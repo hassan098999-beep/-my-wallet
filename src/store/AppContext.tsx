@@ -11,7 +11,7 @@ import { evaluateAchievements } from '../utils/achievements';
 import { getBudgetMonth, safeStorage, safeParseISO, removeUndefinedFields, hashPin } from '../utils';
 import { addDays, addWeeks, addMonths, addYears, isBefore, isSameDay, subDays } from 'date-fns';
 import { ACHIEVEMENTS } from '../constants/achievements';
-import { auth, db, signInWithGoogle, logout as firebaseLogout, onAuthStateChanged } from '../firebase';
+import { auth, db, signInWithGoogle, logout as firebaseLogout, onAuthStateChanged, getRedirectResult } from '../firebase';
 import { 
   collection, 
   doc, 
@@ -305,8 +305,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return INITIAL_STATE;
   });
 
-  // Auth Listener
+  // Auth Listener & Redirect Result
   useEffect(() => {
+    // Check if returning from redirect sign-in
+    getRedirectResult(auth).then((result) => {
+      if (result?.user) {
+        toast.success('تم تسجيل الدخول بنجاح عبر Google');
+        if (state.expenses.length > 0) {
+          syncLocalDataToFirestore(result.user.uid);
+        }
+      }
+    }).catch((err) => {
+      console.error('Redirect sign-in error:', err);
+    });
+
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setIsAuthReady(true);
@@ -485,18 +497,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const login = async () => {
     try {
       const result = await signInWithGoogle();
-      toast.success('تم تسجيل الدخول بنجاح');
-      
-      // Check if we should sync local data
-      if (state.expenses.length > 0) {
-        const confirmSync = window.confirm('هل تود مزامنة بياناتك المحلية مع السحاب؟');
-        if (confirmSync) {
-          await syncLocalDataToFirestore(result.user.uid);
+      if (result && result.user) {
+        toast.success('تم تسجيل الدخول بنجاح');
+        
+        // Check if we should sync local data
+        if (state.expenses.length > 0) {
+          const confirmSync = window.confirm('هل تود مزامنة بياناتك المحلية مع السحاب؟');
+          if (confirmSync) {
+            await syncLocalDataToFirestore(result.user.uid);
+          }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed', error);
-      toast.error('فشل تسجيل الدخول');
+      
+      if (error?.code === 'auth/unauthorized-domain') {
+        toast.error('النطاق الحالي غير مسموح به في Firebase. يرجى إضافة hassan098999-beep.github.io في Authorized Domains في Firebase Console.', { duration: 8000 });
+      } else if (error?.code === 'auth/popup-blocked') {
+        toast.error('تم منع النافذة المنبثقة من قبل المتصفح. يرجى السماح بالنوافذ المنبثقة ثم المحاولة مجدداً.');
+      } else if (error?.code === 'auth/popup-closed-by-user') {
+        toast.error('تم إغلاق نافذة تسجيل الدخول قبل الاكتمل.');
+      } else if (error?.code === 'auth/cancelled-popup-request') {
+        // Ignored duplicate request
+      } else {
+        toast.error('فشل تسجيل الدخول: ' + (error?.message || 'حدث خطأ غير متوقع'));
+      }
     }
   };
 
