@@ -517,7 +517,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const userDocRef = doc(db, 'users', uid);
     batch.set(userDocRef, {
       uid,
-      email: auth.currentUser?.email,
+      email: auth.currentUser?.email || null,
       currency: dataToSync.currency,
       theme: dataToSync.theme,
       hasCompletedOnboarding: dataToSync.hasCompletedOnboarding,
@@ -525,11 +525,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       firstDayOfMonth: dataToSync.firstDayOfMonth || 1,
       dailyBudget: dataToSync.dailyBudget || 14,
       rollingBudgetEnabled: dataToSync.rollingBudgetEnabled ?? true,
-      bestStreak: dataToSync.bestStreak || 0
-    });
+      bestStreak: dataToSync.bestStreak || 0,
+      activeChallenge: dataToSync.activeChallenge || null,
+      autoRoundUpSetting: dataToSync.autoRoundUpSetting || null
+    }, { merge: true });
 
     // Helper to add to batch
     const addToBatch = (colName: string, items: any[]) => {
+      if (!items) return;
       items.forEach(item => {
         const { parsedDate, ...itemToStore } = item;
         const ref = doc(collection(db, 'users', uid, colName), itemToStore.id);
@@ -544,6 +547,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToBatch('goals', dataToSync.goals);
     addToBatch('recurringExpenses', dataToSync.recurringExpenses);
     addToBatch('achievements', dataToSync.achievements);
+    addToBatch('gamaeyas', dataToSync.gamaeyas || []);
     if (dataToSync.budgets && dataToSync.budgets.length > 0) {
       dataToSync.budgets.forEach(budget => {
         const budgetRef = doc(collection(db, 'users', uid, 'budgets'), budget.month);

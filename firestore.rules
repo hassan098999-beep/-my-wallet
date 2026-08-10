@@ -54,7 +54,7 @@ service cloud.firestore {
       return hasOnlyAllowedFields([
         'uid', 'email', 'currency', 'theme', 'hasCompletedOnboarding',
         'role', 'userName', 'firstDayOfMonth', 'dailyBudget',
-        'rollingBudgetEnabled', 'bestStreak'
+        'rollingBudgetEnabled', 'bestStreak', 'activeChallenge', 'autoRoundUpSetting'
       ]) &&
       data.uid is string &&
       (data.email == null || isValidEmail(data.email));
@@ -171,6 +171,20 @@ service cloud.firestore {
       }
 
       match /achievements/{achievementId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /gamaeyas/{gamaeyaId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /backups/{backupId} {
         allow read: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId);
         allow update: if isOwner(userId);
