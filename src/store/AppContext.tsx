@@ -11,7 +11,7 @@ import { evaluateAchievements } from '../utils/achievements';
 import { getBudgetMonth, safeStorage, safeParseISO, removeUndefinedFields, hashPin } from '../utils';
 import { addDays, addWeeks, addMonths, addYears, isBefore, isSameDay, subDays } from 'date-fns';
 import { ACHIEVEMENTS } from '../constants/achievements';
-import { auth, db, signInWithGoogle, logout as firebaseLogout, onAuthStateChanged, getRedirectResult } from '../firebase';
+import { auth, db, signInWithGoogle, logout as firebaseLogout, onAuthStateChanged, getRedirectResult } from '../lib/firebase';
 import { 
   collection, 
   doc, 
