@@ -37,7 +37,7 @@ const iconMap: Record<string, any> = {
 };
 
 const ProfileManager = () => {
-  const { userName, setUserName, dailyBudget, setDailyBudget, achievements, currency, rollingBudgetEnabled, setRollingBudgetEnabled } = useAppContext();
+  const { userName, setUserName, dailyBudget, setDailyBudget, achievements, currency, rollingBudgetEnabled, setRollingBudgetEnabled, user, login, logout } = useAppContext();
   const [name, setName] = useState(userName || '');
   const [budget, setBudget] = useState(dailyBudget?.toString() || '14');
   const [dailyReminderEnabled, setDailyReminderEnabled] = useState(() => {
@@ -79,6 +79,47 @@ const ProfileManager = () => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-3 md:space-y-4"
     >
+      {/* Account Cloud Sync Banner */}
+      <div className="p-4 rounded-2xl md:rounded-3xl bg-slate-900 text-white border border-slate-800 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+            <UserCircle className="size-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs md:text-sm font-black text-white">حساب المزامنة السحابية</h3>
+              <span className={cn(
+                "text-[9px] px-2 py-0.5 rounded-full font-black",
+                user ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+              )}>
+                {user ? 'نشط ومزامن' : 'غير متصل (حساب محلي)'}
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-400 font-bold mt-0.5 dir-ltr text-right">
+              {user ? user.email : 'سجل الدخول لحفظ بياناتك في السحاب ولعدم فقدانها عند مسح ذاكرة المتصفح'}
+            </p>
+          </div>
+        </div>
+
+        {user ? (
+          <button
+            type="button"
+            onClick={() => { hapticFeedback('medium'); logout(); }}
+            className="py-2 px-4 bg-slate-800 hover:bg-slate-700 text-rose-400 font-black text-xs rounded-xl transition-all cursor-pointer shrink-0 w-full md:w-auto text-center"
+          >
+            تسجيل الخروج
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => { hapticFeedback('medium'); login(); }}
+            className="py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-md shadow-blue-500/20 transition-all cursor-pointer shrink-0 w-full md:w-auto text-center"
+          >
+            تسجيل الدخول مع Google ⚡
+          </button>
+        )}
+      </div>
+
       <div className="glass-card p-3 md:p-5 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-3 mb-4 md:mb-6">
           <motion.div 

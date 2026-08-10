@@ -52,7 +52,10 @@ const Settings = () => {
     categories,
     expenses,
     autoRoundUpSetting,
-    offlineMode 
+    offlineMode,
+    user,
+    login,
+    logout
   } = useAppContext();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'categories' | 'accounts' | 'roundup' | 'data' | 'ai'>('profile');
@@ -103,17 +106,49 @@ const Settings = () => {
         title="الإعدادات والتحكم الذكي"
         subtitle="تخصيص الدفتر المالي لعائلتك التونسية. اضبط الميزانيات، حدّث الحسابات، المزامنة السحابية وضبط المساعد الذكي."
         action={
-          <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/40 rounded-2xl flex flex-col gap-1 w-full md:w-auto text-right min-w-[220px] shadow-xs">
-            <p className="text-[9px] font-bold text-slate-400">المستخدم الحالي النشط</p>
-            <p className="text-sm font-black text-slate-800 dark:text-white leading-tight">{userName || 'رب العائلة التونسية'}</p>
-            <div className="my-1.5 border-t border-slate-250 dark:border-slate-800" />
-            <div className="flex justify-between items-center text-[10px] font-bold">
-              <span className="text-emerald-600 dark:text-emerald-400 font-mono">{formatCurrency(dailyBudget || 14, currency)}</span>
-              <span className="text-slate-500 dark:text-slate-400 font-bold">الميزانية اليومية المقدرة:</span>
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/40 rounded-2xl flex flex-col gap-1.5 w-full md:w-auto text-right min-w-[240px] shadow-xs">
+            <div className="flex items-center justify-between gap-2">
+              <span className={cn(
+                "text-[9px] px-2 py-0.5 rounded-full font-black",
+                user 
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" 
+                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+              )}>
+                {user ? 'مزامنة سحابية نشطة ☁️' : 'حساب محلي 📱'}
+              </span>
+              <p className="text-[9px] font-bold text-slate-400">المستخدم النشط</p>
             </div>
-            <div className="flex justify-between items-center text-[10px] font-bold mt-1">
-              <span className="text-blue-600 dark:text-blue-400 font-mono">{accounts.length} حسابات</span>
-              <span className="text-slate-500 dark:text-slate-400 font-bold">الحقيبة المالية:</span>
+
+            <p className="text-sm font-black text-slate-800 dark:text-white leading-tight">
+              {user ? (user.displayName || user.email?.split('@')[0] || userName) : (userName || 'رب العائلة التونسية')}
+            </p>
+
+            {user?.email ? (
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold dir-ltr text-right truncate">
+                {user.email}
+              </p>
+            ) : null}
+
+            <div className="my-1 border-t border-slate-200 dark:border-slate-800" />
+
+            <div className="flex items-center justify-between gap-2">
+              {user ? (
+                <button
+                  type="button"
+                  onClick={() => { hapticFeedback('medium'); logout(); }}
+                  className="text-[10px] text-rose-500 hover:text-rose-600 font-black underline cursor-pointer"
+                >
+                  تسجيل الخروج
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => { hapticFeedback('medium'); login(); }}
+                  className="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-black text-[11px] rounded-xl shadow-xs transition-all cursor-pointer text-center"
+                >
+                  تسجيل الدخول مع Google ⚡
+                </button>
+              )}
             </div>
           </div>
         }

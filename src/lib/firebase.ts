@@ -6,7 +6,9 @@ import {
   signInWithRedirect, 
   getRedirectResult, 
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence
 } from 'firebase/auth';
 import { initializeFirestore } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -16,6 +18,11 @@ export const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Auth
 export const auth = getAuth(app);
+
+// Ensure local persistence is active so login session survives page refreshes & tab closes
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+  console.warn('Failed to set browserLocalPersistence:', err);
+});
 
 // Initialize Firestore DB
 export const db = initializeFirestore(app, {
@@ -28,24 +35,16 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-// Helper function to handle Google Sign-In (with popup and mobile redirect fallback)
+// Helper function to handle Google Sign-In
+// Uses signInWithPopup directly on all devices (mobile & desktop) as it preserves session state in-memory
+// without relying on cross-domain redirect storage that gets blocked on GitHub Pages or strict privacy browsers.
 export const signInWithGoogle = async () => {
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  
-  if (isMobile) {
-    try {
-      return await signInWithRedirect(auth, googleProvider);
-    } catch (err) {
-      console.warn('signInWithRedirect failed, trying popup fallback:', err);
-      return await signInWithPopup(auth, googleProvider);
-    }
-  }
-
   try {
     return await signInWithPopup(auth, googleProvider);
   } catch (error: any) {
-    if (error?.code === 'auth/popup-blocked' || error?.code === 'auth/popup-closed-by-user') {
-      console.warn('Popup blocked/closed, attempting redirect...');
+    console.warn('signInWithPopup error:', error);
+    if (error?.code === 'auth/popup-blocked') {
+      console.warn('Popup blocked, attempting redirect fallback...');
       return await signInWithRedirect(auth, googleProvider);
     }
     throw error;
@@ -55,3 +54,4 @@ export const signInWithGoogle = async () => {
 export const logout = () => signOut(auth);
 
 export { onAuthStateChanged, signInWithRedirect, getRedirectResult };
+

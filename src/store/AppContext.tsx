@@ -498,7 +498,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const result = await signInWithGoogle();
       if (result && result.user) {
-        toast.success('تم تسجيل الدخول بنجاح');
+        setUser(result.user);
+        toast.success(`أهلاً بك! تم تسجيل الدخول بنجاح (${result.user.email})`);
         
         // Check if we should sync local data
         if (state.expenses.length > 0) {
@@ -512,11 +513,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error('Login failed', error);
       
       if (error?.code === 'auth/unauthorized-domain') {
-        toast.error('النطاق الحالي غير مسموح به في Firebase. يرجى إضافة hassan098999-beep.github.io في Authorized Domains في Firebase Console.', { duration: 8000 });
+        toast.error('النطاق الحالي غير مسموح به في Firebase. يرجى إضافة hassan098999-beep.github.io في Authorized Domains في Firebase Console.', { duration: 10000 });
       } else if (error?.code === 'auth/popup-blocked') {
         toast.error('تم منع النافذة المنبثقة من قبل المتصفح. يرجى السماح بالنوافذ المنبثقة ثم المحاولة مجدداً.');
       } else if (error?.code === 'auth/popup-closed-by-user') {
-        toast.error('تم إغلاق نافذة تسجيل الدخول قبل الاكتمل.');
+        toast.error('تم إغلاق نافذة تسجيل الدخول قبل الاتمام.');
       } else if (error?.code === 'auth/cancelled-popup-request') {
         // Ignored duplicate request
       } else {
