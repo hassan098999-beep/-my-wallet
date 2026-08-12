@@ -394,6 +394,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [user]);
 
+  // Auto-sync account balances with recorded transactions (self-healing for zero or out-of-sync balances)
+  useEffect(() => {
+    if (!state.income || !state.accounts) return;
+
+    const currentAccounts = state.accounts.length > 0 ? state.accounts : DEFAULT_ACCOUNTS;
+
+    let needsUpdate = false;
+    const updatedAccounts = currentAccounts.map(acc => {
+      // Calculate net income for this account
+      const totalAccIncome = (state.income || [])
+        .filter(i => i.accountId === acc.id || (!i.accountId && acc.id === 'cash'))
+        .reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+
+      const totalAccExpense = (state.expenses || [])
+        .filter(e => e.accountId === acc.id || (!e.accountId && acc.id === 'cash'))
+        .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+
+      const computedBalance = totalAccIncome - totalAccExpense;
+
+      // If stored account balance is different from computed balance when income exists
+      if (totalAccIncome > 0 && acc.balance !== computedBalance) {
+        needsUpdate = true;
+        return { ...acc, balance: computedBalance };
+      }
+      return acc;
+    });
+
+    if (needsUpdate) {
+      setState(prev => ({ ...prev, accounts: updatedAccounts }));
+      if (user) {
+        updatedAccounts.forEach(acc => {
+          setDoc(doc(db, 'users', user.uid, 'accounts', acc.id), { ...acc, uid: user.uid }, { merge: true });
+        });
+      }
+    }
+  }, [state.income, state.expenses, user]);
+
   // Calculate streaks
   useEffect(() => {
     if (state.expenses.length === 0) return;

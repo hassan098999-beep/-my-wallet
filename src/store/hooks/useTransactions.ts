@@ -71,6 +71,79 @@ const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
       parsedDate: safeParseISO(expense.date),
     };
 
+    // Always update local React state optimistically
+    setState((prev: any) => {
+      let newState = { ...prev, expenses: [newExpense, ...prev.expenses] };
+      let newNotifications = [...(prev.notifications || [])];
+
+      // Update account balance
+      if (newExpense.accountId) {
+        newState.accounts = (newState.accounts || []).map((acc: any) => {
+          if (acc.id === newExpense.accountId) {
+            return { ...acc, balance: acc.balance - newExpense.amount };
+          }
+          return acc;
+        });
+      }
+
+      // Update linked goal progress
+      if (newExpense.goalId) {
+        newState.goals = (newState.goals || []).map((goal: any) => 
+          goal.id === newExpense.goalId ? { ...goal, currentAmount: goal.currentAmount + newExpense.amount } : goal
+        );
+      }
+      
+      // Logic for budget alerts
+      if (!newExpense.isTransfer) {
+        const currentMonth = getBudgetMonth(new Date(), newState.firstDayOfMonth);
+        const currentBudget = newState.budgets?.find((b: any) => b.month === currentMonth);
+        const monthlyExpenses = newState.expenses.filter((e: any) => !e.isTransfer && e.date.startsWith(currentMonth));
+        const totalSpent = monthlyExpenses.reduce((sum: any, e: any) => sum + e.amount, 0);
+        const budgetAmount = currentBudget?.amount || 0;
+        
+        const sendPushNotification = (title: string, body: string) => {
+          addNotification(title, { body, icon: '/icon-192.png' });
+        };
+
+        if (budgetAmount > 0) {
+          if (totalSpent > budgetAmount && totalSpent - newExpense.amount <= budgetAmount) {
+            const msg = "تنبيه: لقد تجاوزت ميزانيتك الشهرية!";
+            newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
+            sendPushNotification("تنبيه الميزانية", msg);
+          } else if (totalSpent > budgetAmount * 0.8 && totalSpent - newExpense.amount <= budgetAmount * 0.8) {
+            const msg = "تنبيه: لقد قاربت على تجاوز ميزانيتك الشهرية!";
+            newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
+            sendPushNotification("تنبيه الميزانية", msg);
+          }
+        }
+
+        // Category budget alerts
+        if (currentBudget?.categoryBudgets?.[newExpense.categoryId]) {
+          const catBudget = currentBudget.categoryBudgets[newExpense.categoryId];
+          const catSpent = monthlyExpenses.filter((e: any) => e.categoryId === newExpense.categoryId).reduce((sum: any, e: any) => sum + e.amount, 0);
+          const categoryName = newState.categories.find((c: any) => c.id === newExpense.categoryId)?.name || 'هذه الفئة';
+
+          if (catSpent > catBudget && catSpent - newExpense.amount <= catBudget) {
+            const msg = `تنبيه: لقد تجاوزت ميزانية فئة ${categoryName}!`;
+            newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
+            sendPushNotification("تنبيه الميزانية", msg);
+          } else if (catSpent > catBudget * 0.8 && catSpent - newExpense.amount <= catBudget * 0.8) {
+            const msg = `تنبيه: لقد قاربت على تجاوز ميزانية فئة ${categoryName}!`;
+            newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
+            sendPushNotification("تنبيه الميزانية", msg);
+          }
+        }
+      }
+
+      // Logic for unusual expense
+      const avg = prev.expenses.reduce((sum: any, e: any) => sum + e.amount, 0) / (prev.expenses.length || 1);
+      if (newExpense.amount > avg * 3) {
+        newNotifications.push({ id: crypto.randomUUID(), message: "تنبيه: مصروف غير معتاد!", type: 'unusual_expense', createdAt: new Date().toISOString() });
+      }
+
+      return { ...newState, notifications: newNotifications };
+    });
+
     if (user) {
       const batch = writeBatch(db);
       const expenseRef = doc(db, 'users', user.uid, 'expenses', newExpense.id);
@@ -89,109 +162,9 @@ const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
 
       try {
         await batch.commit();
-
-        // Logic for budget alerts (User branch)
-        const currentMonth = getBudgetMonth(new Date(), state.firstDayOfMonth);
-        const currentBudget = state.budgets?.find((b: any) => b.month === currentMonth);
-        const monthlyExpenses = state.expenses.filter((e: any) => !e.isTransfer && e.date.startsWith(currentMonth));
-        const totalSpent = monthlyExpenses.reduce((sum: any, e: any) => sum + e.amount, 0) + (newExpense.isTransfer ? 0 : newExpense.amount);
-        const budgetAmount = currentBudget?.amount || 0;
-
-        if (budgetAmount > 0) {
-          if (totalSpent > budgetAmount && totalSpent - newExpense.amount <= budgetAmount) {
-            addNotification("تنبيه: لقد تجاوزت ميزانيتك الشهرية!", 'budget');
-          } else if (totalSpent > budgetAmount * 0.8 && totalSpent - newExpense.amount <= budgetAmount * 0.8) {
-            addNotification("تنبيه: لقد قاربت على تجاوز ميزانيتك الشهرية!", 'budget');
-          }
-        }
-
-        // Category budget alerts (User branch)
-        if (!newExpense.isTransfer && currentBudget?.categoryBudgets?.[newExpense.categoryId]) {
-          const catBudget = currentBudget.categoryBudgets[newExpense.categoryId];
-          const catSpent = monthlyExpenses.filter((e: any) => e.categoryId === newExpense.categoryId).reduce((sum: any, e: any) => sum + e.amount, 0) + newExpense.amount;
-          const categoryName = state.categories.find((c: any) => c.id === newExpense.categoryId)?.name || 'هذه الفئة';
-
-          if (catSpent > catBudget && catSpent - newExpense.amount <= catBudget) {
-            addNotification(`تنبيه: لقد تجاوزت ميزانية فئة ${categoryName}!`, 'budget');
-          } else if (catSpent > catBudget * 0.8 && catSpent - newExpense.amount <= catBudget * 0.8) {
-            addNotification(`تنبيه: لقد قاربت على تجاوز ميزانية فئة ${categoryName}!`, 'budget');
-          }
-        }
       } catch (error) {
         toast.error('فشل حفظ المصروف في السحاب');
       }
-    } else {
-      setState((prev: any) => {
-        let newState = { ...prev, expenses: [newExpense, ...prev.expenses] };
-        let newNotifications = [...(prev.notifications || [])];
-
-        // Update account balance
-        if (newExpense.accountId) {
-          newState.accounts = (newState.accounts || []).map((acc: any) => {
-            if (acc.id === newExpense.accountId) {
-              return { ...acc, balance: acc.balance - newExpense.amount };
-            }
-            return acc;
-          });
-        }
-
-        // Update linked goal progress
-        if (newExpense.goalId) {
-          newState.goals = (newState.goals || []).map((goal: any) => 
-            goal.id === newExpense.goalId ? { ...goal, currentAmount: goal.currentAmount + newExpense.amount } : goal
-          );
-        }
-        
-        // Logic for budget alerts
-        if (!newExpense.isTransfer) {
-          const currentMonth = getBudgetMonth(new Date(), newState.firstDayOfMonth);
-          const currentBudget = newState.budgets?.find((b: any) => b.month === currentMonth);
-          const monthlyExpenses = newState.expenses.filter((e: any) => !e.isTransfer && e.date.startsWith(currentMonth));
-          const totalSpent = monthlyExpenses.reduce((sum: any, e: any) => sum + e.amount, 0);
-          const budgetAmount = currentBudget?.amount || 0;
-          
-          const sendPushNotification = (title: string, body: string) => {
-            addNotification(title, { body, icon: '/icon-192.png' });
-          };
-
-          if (budgetAmount > 0) {
-            if (totalSpent > budgetAmount && totalSpent - newExpense.amount <= budgetAmount) {
-              const msg = "تنبيه: لقد تجاوزت ميزانيتك الشهرية!";
-              newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
-              sendPushNotification("تنبيه الميزانية", msg);
-            } else if (totalSpent > budgetAmount * 0.8 && totalSpent - newExpense.amount <= budgetAmount * 0.8) {
-              const msg = "تنبيه: لقد قاربت على تجاوز ميزانيتك الشهرية!";
-              newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
-              sendPushNotification("تنبيه الميزانية", msg);
-            }
-          }
-
-          // Category budget alerts
-          if (currentBudget?.categoryBudgets?.[newExpense.categoryId]) {
-            const catBudget = currentBudget.categoryBudgets[newExpense.categoryId];
-            const catSpent = monthlyExpenses.filter((e: any) => e.categoryId === newExpense.categoryId).reduce((sum: any, e: any) => sum + e.amount, 0);
-            const categoryName = newState.categories.find((c: any) => c.id === newExpense.categoryId)?.name || 'هذه الفئة';
-
-            if (catSpent > catBudget && catSpent - newExpense.amount <= catBudget) {
-              const msg = `تنبيه: لقد تجاوزت ميزانية فئة ${categoryName}!`;
-              newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
-              sendPushNotification("تنبيه الميزانية", msg);
-            } else if (catSpent > catBudget * 0.8 && catSpent - newExpense.amount <= catBudget * 0.8) {
-              const msg = `تنبيه: لقد قاربت على تجاوز ميزانية فئة ${categoryName}!`;
-              newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
-              sendPushNotification("تنبيه الميزانية", msg);
-            }
-          }
-        }
-
-        // Logic for unusual expense
-        const avg = prev.expenses.reduce((sum: any, e: any) => sum + e.amount, 0) / (prev.expenses.length || 1);
-        if (newExpense.amount > avg * 3) {
-          newNotifications.push({ id: crypto.randomUUID(), message: "تنبيه: مصروف غير معتاد!", type: 'unusual_expense', createdAt: new Date().toISOString() });
-        }
-
-        return { ...newState, notifications: newNotifications };
-      });
     }
   };
 
@@ -367,6 +340,28 @@ const addIncome = async (income: Omit<Income, 'id' | 'createdAt'>) => {
       parsedDate: safeParseISO(income.date),
     };
 
+    // Optimistic local state update
+    setState((prev: any) => {
+      let newAccounts = [...(prev.accounts || [])];
+      if (newIncome.accountId) {
+        const accIndex = newAccounts.findIndex((acc: any) => acc.id === newIncome.accountId);
+        if (accIndex !== -1) {
+          newAccounts[accIndex] = { ...newAccounts[accIndex], balance: (newAccounts[accIndex].balance || 0) + newIncome.amount };
+        } else {
+          newAccounts.push({ id: newIncome.accountId, name: 'كاش', balance: newIncome.amount, color: '#10b981', icon: 'Banknote' });
+        }
+      }
+
+      let newGoals = [...(prev.goals || [])];
+      if (newIncome.goalId) {
+        newGoals = newGoals.map((goal: any) => 
+          goal.id === newIncome.goalId ? { ...goal, currentAmount: (goal.currentAmount || 0) + newIncome.amount } : goal
+        );
+      }
+
+      return { ...prev, income: [...(prev.income || []), newIncome], accounts: newAccounts, goals: newGoals };
+    });
+
     if (user) {
       const batch = writeBatch(db);
       const incomeRef = doc(db, 'users', user.uid, 'income', newIncome.id);
@@ -387,27 +382,6 @@ const addIncome = async (income: Omit<Income, 'id' | 'createdAt'>) => {
         console.error('Failed to commit income:', error);
         toast.error('فشل حفظ الدخل في السحاب');
       }
-    } else {
-      setState((prev: any) => {
-        let newAccounts = [...(prev.accounts || [])];
-        if (newIncome.accountId) {
-          const accIndex = newAccounts.findIndex((acc: any) => acc.id === newIncome.accountId);
-          if (accIndex !== -1) {
-            newAccounts[accIndex] = { ...newAccounts[accIndex], balance: newAccounts[accIndex].balance + newIncome.amount };
-          } else {
-            newAccounts.push({ id: newIncome.accountId, name: 'كاش', balance: newIncome.amount, color: '#10b981', icon: 'Banknote' });
-          }
-        }
-
-        let newGoals = [...(prev.goals || [])];
-        if (newIncome.goalId) {
-          newGoals = newGoals.map((goal: any) => 
-            goal.id === newIncome.goalId ? { ...goal, currentAmount: (goal.currentAmount || 0) + newIncome.amount } : goal
-          );
-        }
-
-        return { ...prev, income: [...(prev.income || []), newIncome], accounts: newAccounts, goals: newGoals };
-      });
     }
   };
 
