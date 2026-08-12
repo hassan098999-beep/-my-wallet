@@ -56,11 +56,13 @@ const IncomePage = () => {
       return;
     }
 
+    const selectedAccId = accountId || (accounts[0]?.id || 'cash');
+
     hapticFeedback('success');
     addIncome({
       source: source.trim(),
       amount: val,
-      accountId: accountId || undefined,
+      accountId: selectedAccId,
       goalId: goalId || undefined,
       date,
     });
@@ -470,7 +472,7 @@ const IncomePage = () => {
                         onChange={(e) => setAccountId(e.target.value)}
                         className="w-full px-4 py-3 rounded-2xl border border-slate-150 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs font-bold text-slate-900 dark:text-white focus:ring-8 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all appearance-none cursor-pointer"
                       >
-                        <option value="">بدون حساب (نقدي)</option>
+                        <option value="">حساب كاش (نقدي)</option>
                         {accounts.map(acc => (
                           <option key={acc.id} value={acc.id}>{acc.name} ({formatCurrency(acc.balance, currency)})</option>
                         ))}

@@ -4,7 +4,7 @@ import { cn, hapticFeedback, formatCurrency } from '../utils';
 import { 
   Layers, Wallet, Database, Sparkles, UserCircle, 
   ChevronLeft, Award, HelpCircle, CheckCircle, ShieldAlert,
-  Settings as SettingsIcon, Landmark, Info, Percent, Target, RefreshCw, PiggyBank
+  Settings as SettingsIcon, Landmark, Info, Percent, Target, RefreshCw, PiggyBank, Loader2
 } from 'lucide-react';
 import { useAppContext } from '../store/AppContext';
 import CategoryManager from './settings/CategoryManager';
@@ -55,7 +55,8 @@ const Settings = () => {
     offlineMode,
     user,
     login,
-    logout
+    logout,
+    isAuthReady
   } = useAppContext();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'categories' | 'accounts' | 'roundup' | 'data' | 'ai'>('profile');
@@ -107,49 +108,70 @@ const Settings = () => {
         subtitle="تخصيص الدفتر المالي لعائلتك التونسية. اضبط الميزانيات، حدّث الحسابات، المزامنة السحابية وضبط المساعد الذكي."
         action={
           <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/40 rounded-2xl flex flex-col gap-1.5 w-full md:w-auto text-right min-w-[240px] shadow-xs">
-            <div className="flex items-center justify-between gap-2">
-              <span className={cn(
-                "text-[9px] px-2 py-0.5 rounded-full font-black",
-                user 
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" 
-                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-              )}>
-                {user ? 'مزامنة سحابية نشطة ☁️' : 'حساب محلي 📱'}
-              </span>
-              <p className="text-[9px] font-bold text-slate-400">المستخدم النشط</p>
-            </div>
+            {!isAuthReady ? (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[9px] px-2 py-0.5 rounded-full font-black bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center gap-1">
+                    <Loader2 size={10} className="animate-spin" />
+                    جاري التحقق...
+                  </span>
+                  <p className="text-[9px] font-bold text-slate-400">المستخدم النشط</p>
+                </div>
+                <p className="text-sm font-black text-slate-800 dark:text-white leading-tight">
+                  جاري التثبت من الهوية...
+                </p>
+                <div className="my-1 border-t border-slate-200 dark:border-slate-800" />
+                <div className="flex items-center justify-center py-1">
+                  <Loader2 size={16} className="animate-spin text-blue-500" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <span className={cn(
+                    "text-[9px] px-2 py-0.5 rounded-full font-black",
+                    user 
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" 
+                      : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                  )}>
+                    {user ? 'مزامنة سحابية نشطة ☁️' : 'حساب محلي 📱'}
+                  </span>
+                  <p className="text-[9px] font-bold text-slate-400">المستخدم النشط</p>
+                </div>
 
-            <p className="text-sm font-black text-slate-800 dark:text-white leading-tight">
-              {user ? (user.displayName || user.email?.split('@')[0] || userName) : (userName || 'رب العائلة التونسية')}
-            </p>
+                <p className="text-sm font-black text-slate-800 dark:text-white leading-tight">
+                  {user ? (user.displayName || user.email?.split('@')[0] || userName) : (userName || 'رب العائلة التونسية')}
+                </p>
 
-            {user?.email ? (
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold dir-ltr text-right truncate">
-                {user.email}
-              </p>
-            ) : null}
+                {user?.email ? (
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold dir-ltr text-right truncate">
+                    {user.email}
+                  </p>
+                ) : null}
 
-            <div className="my-1 border-t border-slate-200 dark:border-slate-800" />
+                <div className="my-1 border-t border-slate-200 dark:border-slate-800" />
 
-            <div className="flex items-center justify-between gap-2">
-              {user ? (
-                <button
-                  type="button"
-                  onClick={() => { hapticFeedback('medium'); logout(); }}
-                  className="text-[10px] text-rose-500 hover:text-rose-600 font-black underline cursor-pointer"
-                >
-                  تسجيل الخروج
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => { hapticFeedback('medium'); login(); }}
-                  className="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-black text-[11px] rounded-xl shadow-xs transition-all cursor-pointer text-center"
-                >
-                  تسجيل الدخول مع Google ⚡
-                </button>
-              )}
-            </div>
+                <div className="flex items-center justify-between gap-2">
+                  {user ? (
+                    <button
+                      type="button"
+                      onClick={() => { hapticFeedback('medium'); logout(); }}
+                      className="text-[10px] text-rose-500 hover:text-rose-600 font-black underline cursor-pointer"
+                    >
+                      تسجيل الخروج
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { hapticFeedback('medium'); login(); }}
+                      className="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-black text-[11px] rounded-xl shadow-xs transition-all cursor-pointer text-center"
+                    >
+                      تسجيل الدخول مع Google ⚡
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         }
       />

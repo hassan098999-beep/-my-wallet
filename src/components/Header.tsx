@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings2, Target, RefreshCcw, Trophy, Flag, LogOut, LogIn, UserCircle, PlusCircle, PiggyBank, Moon, Sun, Wallet, SlidersHorizontal, ChartPie, Baby } from 'lucide-react';
+import { Settings2, Target, RefreshCcw, Trophy, Flag, LogOut, LogIn, UserCircle, PlusCircle, PiggyBank, Moon, Sun, Wallet, SlidersHorizontal, ChartPie, Baby, Loader2 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { motion, AnimatePresence } from 'motion/react';
@@ -19,7 +19,7 @@ const dropdownItems = [
 const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { theme, setTheme, user, login, logout } = useAppContext();
+  const { theme, setTheme, user, login, logout, isAuthReady } = useAppContext();
   const location = useLocation();
 
   const getPageName = () => {
@@ -98,7 +98,14 @@ const Header = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-slate-900 dark:text-white truncate">حسابي</p>
-                      <p className="text-[10px] font-semibold text-slate-400 truncate">{user ? user.email : 'حساب محلي (غير متصل)'}</p>
+                      {!isAuthReady ? (
+                        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-blue-500">
+                          <Loader2 size={12} className="animate-spin shrink-0" />
+                          <span>جاري التحقق من الهوية...</span>
+                        </div>
+                      ) : (
+                        <p className="text-[10px] font-semibold text-slate-400 truncate">{user ? user.email : 'حساب محلي (غير متصل)'}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -129,7 +136,12 @@ const Header = () => {
                 </div>
                 
                 <div className="p-2 border-t border-slate-100/50 dark:border-slate-700/50">
-                  {user ? (
+                  {!isAuthReady ? (
+                    <div className="flex items-center justify-center gap-2 px-4 py-3 text-xs font-semibold text-slate-400">
+                      <Loader2 size={16} className="animate-spin text-blue-500 shrink-0" />
+                      <span>جاري التحقق...</span>
+                    </div>
+                  ) : user ? (
                     <button 
                       onClick={() => { setIsDropdownOpen(false); logout(); }}
                       className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all w-full text-right cursor-pointer"

@@ -443,7 +443,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
         const incomeData = {
           source: source || (selectedCategory?.name ?? 'دخل'),
           amount: finalAmount,
-          accountId: accountId || undefined,
+          accountId: accountId || (accounts[0]?.id || 'cash'),
           goalId: goalId || undefined,
           date,
           note: note.trim(),

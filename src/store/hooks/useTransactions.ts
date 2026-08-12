@@ -6,6 +6,63 @@ import { safeParseISO } from '../../utils';
 import toast from 'react-hot-toast';
 
 export function useTransactions({ state, setState, user, evaluateAchievements, addNotification }: any) {
+  const updateAccountBalanceInBatch = async (
+    batch: any,
+    uid: string,
+    accountId: string,
+    delta: number
+  ) => {
+    const accRef = doc(db, 'users', uid, 'accounts', accountId);
+    const accDoc = await getDoc(accRef);
+    if (accDoc.exists()) {
+      const currentBalance = Number(accDoc.data().balance) || 0;
+      batch.update(accRef, { balance: currentBalance + delta });
+    } else {
+      const stateAcc = state.accounts?.find((a: any) => a.id === accountId);
+      const initialBalance = stateAcc ? Number(stateAcc.balance) || 0 : 0;
+      const defaultAccObj = stateAcc || {
+        id: accountId,
+        name: accountId === 'bank' ? 'بنك' : 'كاش',
+        balance: 0,
+        color: accountId === 'bank' ? '#3b82f6' : '#10b981',
+        icon: accountId === 'bank' ? 'Building2' : 'Banknote',
+      };
+      batch.set(
+        accRef,
+        { ...defaultAccObj, balance: initialBalance + delta, uid },
+        { merge: true }
+      );
+    }
+  };
+
+  const updateGoalAmountInBatch = async (
+    batch: any,
+    uid: string,
+    goalId: string,
+    delta: number
+  ) => {
+    const goalRef = doc(db, 'users', uid, 'goals', goalId);
+    const goalDoc = await getDoc(goalRef);
+    if (goalDoc.exists()) {
+      const currentAmount = Number(goalDoc.data().currentAmount) || 0;
+      batch.update(goalRef, { currentAmount: currentAmount + delta });
+    } else {
+      const stateGoal = state.goals?.find((g: any) => g.id === goalId);
+      const initialAmount = stateGoal ? Number(stateGoal.currentAmount) || 0 : 0;
+      const defaultGoalObj = stateGoal || {
+        id: goalId,
+        name: 'هدف',
+        currentAmount: 0,
+        targetAmount: 100,
+      };
+      batch.set(
+        goalRef,
+        { ...defaultGoalObj, currentAmount: initialAmount + delta, uid },
+        { merge: true }
+      );
+    }
+  };
+
 const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
     const newExpense: Expense = {
       ...expense,
@@ -22,21 +79,12 @@ const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
 
       // Update account balance for actual expense
       if (newExpense.accountId) {
-        const accRef = doc(db, 'users', user.uid, 'accounts', newExpense.accountId);
-        const accDoc = await getDoc(accRef);
-        if (accDoc.exists()) {
-          const newBalance = accDoc.data().balance - newExpense.amount;
-          batch.update(accRef, { balance: newBalance });
-        }
+        await updateAccountBalanceInBatch(batch, user.uid, newExpense.accountId, -newExpense.amount);
       }
 
       // Update linked goal progress
       if (newExpense.goalId) {
-        const goalRef = doc(db, 'users', user.uid, 'goals', newExpense.goalId);
-        const goalDoc = await getDoc(goalRef);
-        if (goalDoc.exists()) {
-          batch.update(goalRef, { currentAmount: goalDoc.data().currentAmount + newExpense.amount });
-        }
+        await updateGoalAmountInBatch(batch, user.uid, newExpense.goalId, newExpense.amount);
       }
 
       try {
@@ -162,39 +210,27 @@ const updateExpense = async (id: string, updates: Partial<Expense>) => {
         // Update account balance
         if (oldExpense.accountId !== newExpense.accountId) {
           if (oldExpense.accountId) {
-            const oldAccRef = doc(db, 'users', user.uid, 'accounts', oldExpense.accountId);
-            const oldAccDoc = await getDoc(oldAccRef);
-            if (oldAccDoc.exists()) batch.update(oldAccRef, { balance: oldAccDoc.data().balance + oldExpense.amount });
+            await updateAccountBalanceInBatch(batch, user.uid, oldExpense.accountId, oldExpense.amount);
           }
           if (newExpense.accountId) {
-            const newAccRef = doc(db, 'users', user.uid, 'accounts', newExpense.accountId);
-            const newAccDoc = await getDoc(newAccRef);
-            if (newAccDoc.exists()) batch.update(newAccRef, { balance: newAccDoc.data().balance - newExpense.amount });
+            await updateAccountBalanceInBatch(batch, user.uid, newExpense.accountId, -newExpense.amount);
           }
         } else if (oldExpense.accountId && oldExpense.amount !== newExpense.amount) {
           const diff = newExpense.amount - oldExpense.amount;
-          const accRef = doc(db, 'users', user.uid, 'accounts', oldExpense.accountId);
-          const accDoc = await getDoc(accRef);
-          if (accDoc.exists()) batch.update(accRef, { balance: accDoc.data().balance - diff });
+          await updateAccountBalanceInBatch(batch, user.uid, oldExpense.accountId, -diff);
         }
 
         // Update linked goal progress
         if (oldExpense.goalId !== newExpense.goalId) {
           if (oldExpense.goalId) {
-            const oldGoalRef = doc(db, 'users', user.uid, 'goals', oldExpense.goalId);
-            const oldGoalDoc = await getDoc(oldGoalRef);
-            if (oldGoalDoc.exists()) batch.update(oldGoalRef, { currentAmount: oldGoalDoc.data().currentAmount - oldExpense.amount });
+            await updateGoalAmountInBatch(batch, user.uid, oldExpense.goalId, -oldExpense.amount);
           }
           if (newExpense.goalId) {
-            const newGoalRef = doc(db, 'users', user.uid, 'goals', newExpense.goalId);
-            const newGoalDoc = await getDoc(newGoalRef);
-            if (newGoalDoc.exists()) batch.update(newGoalRef, { currentAmount: newGoalDoc.data().currentAmount + newExpense.amount });
+            await updateGoalAmountInBatch(batch, user.uid, newExpense.goalId, newExpense.amount);
           }
         } else if (oldExpense.goalId && oldExpense.amount !== newExpense.amount) {
           const diff = newExpense.amount - oldExpense.amount;
-          const goalRef = doc(db, 'users', user.uid, 'goals', oldExpense.goalId);
-          const goalDoc = await getDoc(goalRef);
-          if (goalDoc.exists()) batch.update(goalRef, { currentAmount: goalDoc.data().currentAmount + diff });
+          await updateGoalAmountInBatch(batch, user.uid, oldExpense.goalId, diff);
         }
 
         await batch.commit();
@@ -256,15 +292,11 @@ const deleteExpense = async (id: string) => {
         batch.delete(expenseRef);
 
         if (expense.accountId) {
-          const accRef = doc(db, 'users', user.uid, 'accounts', expense.accountId);
-          const accDoc = await getDoc(accRef);
-          if (accDoc.exists()) batch.update(accRef, { balance: accDoc.data().balance + expense.amount });
+          await updateAccountBalanceInBatch(batch, user.uid, expense.accountId, expense.amount);
         }
 
         if (expense.goalId) {
-          const goalRef = doc(db, 'users', user.uid, 'goals', expense.goalId);
-          const goalDoc = await getDoc(goalRef);
-          if (goalDoc.exists()) batch.update(goalRef, { currentAmount: goalDoc.data().currentAmount - expense.amount });
+          await updateGoalAmountInBatch(batch, user.uid, expense.goalId, -expense.amount);
         }
 
         if (expense.isTransfer && expense.transferId) {
@@ -275,9 +307,7 @@ const deleteExpense = async (id: string) => {
             const income = incDoc.data() as Income;
             batch.delete(incDoc.ref);
             if (income.accountId) {
-              const accRef = doc(db, 'users', user.uid, 'accounts', income.accountId);
-              const accDoc = await getDoc(accRef);
-              if (accDoc.exists()) batch.update(accRef, { balance: accDoc.data().balance - income.amount });
+              await updateAccountBalanceInBatch(batch, user.uid, income.accountId, -income.amount);
             }
           }
         }
@@ -326,8 +356,12 @@ const deleteExpense = async (id: string) => {
   };
 
 const addIncome = async (income: Omit<Income, 'id' | 'createdAt'>) => {
+    // Default to the first account or 'cash' if accountId was not provided or empty
+    const targetAccountId = income.accountId || (state.accounts && state.accounts.length > 0 ? state.accounts[0].id : 'cash');
+
     const newIncome: Income = {
       ...income,
+      accountId: targetAccountId,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       parsedDate: safeParseISO(income.date),
@@ -340,35 +374,35 @@ const addIncome = async (income: Omit<Income, 'id' | 'createdAt'>) => {
       batch.set(incomeRef, { ...incomeToStore, uid: user.uid });
 
       if (newIncome.accountId) {
-        const accRef = doc(db, 'users', user.uid, 'accounts', newIncome.accountId);
-        const accDoc = await getDoc(accRef);
-        if (accDoc.exists()) batch.update(accRef, { balance: accDoc.data().balance + newIncome.amount });
+        await updateAccountBalanceInBatch(batch, user.uid, newIncome.accountId, newIncome.amount);
       }
 
       if (newIncome.goalId) {
-        const goalRef = doc(db, 'users', user.uid, 'goals', newIncome.goalId);
-        const goalDoc = await getDoc(goalRef);
-        if (goalDoc.exists()) batch.update(goalRef, { currentAmount: goalDoc.data().currentAmount + newIncome.amount });
+        await updateGoalAmountInBatch(batch, user.uid, newIncome.goalId, newIncome.amount);
       }
 
       try {
         await batch.commit();
       } catch (error) {
+        console.error('Failed to commit income:', error);
         toast.error('فشل حفظ الدخل في السحاب');
       }
     } else {
       setState((prev: any) => {
         let newAccounts = [...(prev.accounts || [])];
         if (newIncome.accountId) {
-          newAccounts = newAccounts.map((acc: any) => 
-            acc.id === newIncome.accountId ? { ...acc, balance: acc.balance + newIncome.amount } : acc
-          );
+          const accIndex = newAccounts.findIndex((acc: any) => acc.id === newIncome.accountId);
+          if (accIndex !== -1) {
+            newAccounts[accIndex] = { ...newAccounts[accIndex], balance: newAccounts[accIndex].balance + newIncome.amount };
+          } else {
+            newAccounts.push({ id: newIncome.accountId, name: 'كاش', balance: newIncome.amount, color: '#10b981', icon: 'Banknote' });
+          }
         }
 
         let newGoals = [...(prev.goals || [])];
         if (newIncome.goalId) {
           newGoals = newGoals.map((goal: any) => 
-            goal.id === newIncome.goalId ? { ...goal, currentAmount: goal.currentAmount + newIncome.amount } : goal
+            goal.id === newIncome.goalId ? { ...goal, currentAmount: (goal.currentAmount || 0) + newIncome.amount } : goal
           );
         }
 
@@ -391,39 +425,27 @@ const updateIncome = async (id: string, updates: Partial<Income>) => {
 
         if (oldIncome.accountId !== newIncome.accountId) {
           if (oldIncome.accountId) {
-            const oldAccRef = doc(db, 'users', user.uid, 'accounts', oldIncome.accountId);
-            const oldAccDoc = await getDoc(oldAccRef);
-            if (oldAccDoc.exists()) batch.update(oldAccRef, { balance: oldAccDoc.data().balance - oldIncome.amount });
+            await updateAccountBalanceInBatch(batch, user.uid, oldIncome.accountId, -oldIncome.amount);
           }
           if (newIncome.accountId) {
-            const newAccRef = doc(db, 'users', user.uid, 'accounts', newIncome.accountId);
-            const newAccDoc = await getDoc(newAccRef);
-            if (newAccDoc.exists()) batch.update(newAccRef, { balance: newAccDoc.data().balance + newIncome.amount });
+            await updateAccountBalanceInBatch(batch, user.uid, newIncome.accountId, newIncome.amount);
           }
         } else if (oldIncome.accountId && oldIncome.amount !== newIncome.amount) {
           const diff = newIncome.amount - oldIncome.amount;
-          const accRef = doc(db, 'users', user.uid, 'accounts', oldIncome.accountId);
-          const accDoc = await getDoc(accRef);
-          if (accDoc.exists()) batch.update(accRef, { balance: accDoc.data().balance + diff });
+          await updateAccountBalanceInBatch(batch, user.uid, oldIncome.accountId, diff);
         }
 
         // Update linked goal progress
         if (oldIncome.goalId !== newIncome.goalId) {
           if (oldIncome.goalId) {
-            const oldGoalRef = doc(db, 'users', user.uid, 'goals', oldIncome.goalId);
-            const oldGoalDoc = await getDoc(oldGoalRef);
-            if (oldGoalDoc.exists()) batch.update(oldGoalRef, { currentAmount: oldGoalDoc.data().currentAmount - oldIncome.amount });
+            await updateGoalAmountInBatch(batch, user.uid, oldIncome.goalId, -oldIncome.amount);
           }
           if (newIncome.goalId) {
-            const newGoalRef = doc(db, 'users', user.uid, 'goals', newIncome.goalId);
-            const newGoalDoc = await getDoc(newGoalRef);
-            if (newGoalDoc.exists()) batch.update(newGoalRef, { currentAmount: newGoalDoc.data().currentAmount + newIncome.amount });
+            await updateGoalAmountInBatch(batch, user.uid, newIncome.goalId, newIncome.amount);
           }
         } else if (oldIncome.goalId && oldIncome.amount !== newIncome.amount) {
           const diff = newIncome.amount - oldIncome.amount;
-          const goalRef = doc(db, 'users', user.uid, 'goals', oldIncome.goalId);
-          const goalDoc = await getDoc(goalRef);
-          if (goalDoc.exists()) batch.update(goalRef, { currentAmount: goalDoc.data().currentAmount + diff });
+          await updateGoalAmountInBatch(batch, user.uid, oldIncome.goalId, diff);
         }
 
         await batch.commit();
@@ -485,15 +507,11 @@ const deleteIncome = async (id: string) => {
         batch.delete(incomeRef);
 
         if (income.accountId) {
-          const accRef = doc(db, 'users', user.uid, 'accounts', income.accountId);
-          const accDoc = await getDoc(accRef);
-          if (accDoc.exists()) batch.update(accRef, { balance: accDoc.data().balance - income.amount });
+          await updateAccountBalanceInBatch(batch, user.uid, income.accountId, -income.amount);
         }
 
         if (income.goalId) {
-          const goalRef = doc(db, 'users', user.uid, 'goals', income.goalId);
-          const goalDoc = await getDoc(goalRef);
-          if (goalDoc.exists()) batch.update(goalRef, { currentAmount: goalDoc.data().currentAmount - income.amount });
+          await updateGoalAmountInBatch(batch, user.uid, income.goalId, -income.amount);
         }
 
         if (income.isTransfer && income.transferId) {
@@ -504,9 +522,7 @@ const deleteIncome = async (id: string) => {
             const expense = expDoc.data() as Expense;
             batch.delete(expDoc.ref);
             if (expense.accountId) {
-              const accRef = doc(db, 'users', user.uid, 'accounts', expense.accountId);
-              const accDoc = await getDoc(accRef);
-              if (accDoc.exists()) batch.update(accRef, { balance: accDoc.data().balance + expense.amount });
+              await updateAccountBalanceInBatch(batch, user.uid, expense.accountId, expense.amount);
             }
           }
         }

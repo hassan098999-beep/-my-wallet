@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../../store/AppContext';
-import { DownloadCloud, UploadCloud, Smartphone, Trash, TriangleAlert, X, Save, Clock, Cloud, Database, WifiOff, FileText } from 'lucide-react';
+import { DownloadCloud, UploadCloud, Smartphone, Trash, TriangleAlert, X, Save, Clock, Cloud, Database, WifiOff, FileText, Loader2 } from 'lucide-react';
 import { cn, hapticFeedback, removeUndefinedFields } from '../../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { getBackupsFromDB, saveBackupToDB, deleteBackupFromDB } from '../../utils/indexedDB';
@@ -19,7 +19,7 @@ import { ar } from 'date-fns/locale';
 
 const DataManager = () => {
   const { 
-    exportData, exportToPDF, importData, resetData, user,
+    exportData, exportToPDF, importData, resetData, user, isAuthReady,
     expenses, recurringExpenses, categories, accounts, budgets,
     dailyBudget, rollingBudgetEnabled, theme, currency, achievements,
     goals, income, notifications, hasCompletedOnboarding, userName,
@@ -312,7 +312,12 @@ const DataManager = () => {
             <p className="text-[10px] text-slate-400 font-bold leading-normal">
               إذا كنت قد استخدمت المزامنة سابقاً، اضغط هنا لتسجيل الدخول وسيقوم التطبيق بجلب كل مصاريفك وحساباتك من السحاب تلقائياً.
             </p>
-            {user ? (
+            {!isAuthReady ? (
+              <div className="flex items-center justify-center gap-2 p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500 dark:text-slate-400 text-xs font-black">
+                <Loader2 size={16} className="animate-spin text-blue-500" />
+                <span>جاري التحقق من الهوية...</span>
+              </div>
+            ) : user ? (
               <div className="flex items-center justify-between p-2.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200/50 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-xs font-black">
                 <span className="truncate">متصل: {user.email}</span>
                 <button onClick={() => { hapticFeedback('medium'); useAppContext().logout(); }} className="text-[10px] underline text-rose-500 font-bold cursor-pointer shrink-0">

@@ -15,7 +15,8 @@ import {
   CheckCircle2,
   LayoutGrid,
   Zap,
-  CalendarClock
+  CalendarClock,
+  Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion } from 'motion/react';
@@ -37,7 +38,7 @@ const iconMap: Record<string, any> = {
 };
 
 const ProfileManager = () => {
-  const { userName, setUserName, dailyBudget, setDailyBudget, achievements, currency, rollingBudgetEnabled, setRollingBudgetEnabled, user, login, logout } = useAppContext();
+  const { userName, setUserName, dailyBudget, setDailyBudget, achievements, currency, rollingBudgetEnabled, setRollingBudgetEnabled, user, login, logout, isAuthReady } = useAppContext();
   const [name, setName] = useState(userName || '');
   const [budget, setBudget] = useState(dailyBudget?.toString() || '14');
   const [dailyReminderEnabled, setDailyReminderEnabled] = useState(() => {
@@ -88,20 +89,32 @@ const ProfileManager = () => {
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-xs md:text-sm font-black text-white">حساب المزامنة السحابية</h3>
-              <span className={cn(
-                "text-[9px] px-2 py-0.5 rounded-full font-black",
-                user ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-              )}>
-                {user ? 'نشط ومزامن' : 'غير متصل (حساب محلي)'}
-              </span>
+              {!isAuthReady ? (
+                <span className="text-[9px] px-2 py-0.5 rounded-full font-black bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
+                  <Loader2 size={10} className="animate-spin" />
+                  جاري التحقق...
+                </span>
+              ) : (
+                <span className={cn(
+                  "text-[9px] px-2 py-0.5 rounded-full font-black",
+                  user ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                )}>
+                  {user ? 'نشط ومزامن' : 'غير متصل (حساب محلي)'}
+                </span>
+              )}
             </div>
             <p className="text-[10px] text-slate-400 font-bold mt-0.5 dir-ltr text-right">
-              {user ? user.email : 'سجل الدخول لحفظ بياناتك في السحاب ولعدم فقدانها عند مسح ذاكرة المتصفح'}
+              {!isAuthReady ? 'جاري التثبت من حالة تسجيل الدخول...' : user ? user.email : 'سجل الدخول لحفظ بياناتك في السحاب ولعدم فقدانها عند مسح ذاكرة المتصفح'}
             </p>
           </div>
         </div>
 
-        {user ? (
+        {!isAuthReady ? (
+          <div className="py-2.5 px-4 bg-slate-800 text-slate-400 font-black text-xs rounded-xl flex items-center justify-center gap-2 shrink-0 w-full md:w-auto">
+            <Loader2 size={14} className="animate-spin text-blue-400" />
+            <span>جاري التحقق...</span>
+          </div>
+        ) : user ? (
           <button
             type="button"
             onClick={() => { hapticFeedback('medium'); logout(); }}
