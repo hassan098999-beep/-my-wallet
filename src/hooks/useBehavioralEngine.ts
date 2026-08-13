@@ -174,12 +174,17 @@ export const useBehavioralEngine = () => {
     const totalBudgetSoFar = dailyBudget * daysPassed;
     
     // Calculate total spent this month so far (excluding today)
-    const totalSpentThisMonth = expenses
-      .filter(e => {
-        const d = parseISO(e.date);
-        return isWithinInterval(d, { start: accumulationStartDate, end: subDays(today, 1) });
-      })
-      .reduce((sum, e) => sum + e.amount, 0);
+    const yesterday = subDays(today, 1);
+    let totalSpentThisMonth = 0;
+    if (accumulationStartDate <= yesterday) {
+      totalSpentThisMonth = expenses
+        .filter(e => {
+          if (e.isTransfer) return false;
+          const d = parseISO(e.date);
+          return isWithinInterval(d, { start: accumulationStartDate, end: yesterday });
+        })
+        .reduce((sum, e) => sum + e.amount, 0);
+    }
 
     // Adjusted budget for today = (Total budget so far) - (Total spent so far)
     // This effectively carries over the remaining balance from previous days

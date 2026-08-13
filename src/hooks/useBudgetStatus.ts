@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useAppContext } from '../store/AppContext';
 import { getBudgetRange, getBudgetMonth, getWeekRange } from '../utils';
-import { parseISO, differenceInDays, startOfDay, endOfDay } from 'date-fns';
+import { parseISO, differenceInDays, startOfDay, endOfDay, format } from 'date-fns';
 import { BudgetPeriod } from '../types';
 
 export function useBudgetStatus(overrideMonth?: string) {
@@ -125,9 +125,9 @@ export function useBudgetStatus(overrideMonth?: string) {
     }, {} as Record<string, typeof categoryStatuses[number]>);
 
     // Today's spending
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = format(today, 'yyyy-MM-dd');
     const todaySpent = expenses
-      .filter(e => !e.isTransfer && e.date === todayStr)
+      .filter(e => !e.isTransfer && (e.date || '').split('T')[0] === todayStr)
       .reduce((sum, e) => sum + e.amount, 0);
 
     const remainingToday = Math.max(0, dailyLimit - todaySpent);

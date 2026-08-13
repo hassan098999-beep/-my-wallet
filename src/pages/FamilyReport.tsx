@@ -32,13 +32,13 @@ const FamilyReport: React.FC = () => {
   const currentMonthStr = useMemo(() => format(new Date(), 'yyyy-MM'), []);
   const lastMonthStr = useMemo(() => format(subMonths(new Date(), 1), 'yyyy-MM'), []);
 
-  // Filter current and previous month transactions safely
+  // Filter current and previous month transactions safely (excluding transfers)
   const currentMonthExpenses = useMemo(() => {
-    return expenses.filter(e => e.date && e.date.startsWith(currentMonthStr));
+    return expenses.filter(e => !e.isTransfer && e.date && e.date.startsWith(currentMonthStr));
   }, [expenses, currentMonthStr]);
 
   const previousMonthExpenses = useMemo(() => {
-    return expenses.filter(e => e.date && e.date.startsWith(lastMonthStr));
+    return expenses.filter(e => !e.isTransfer && e.date && e.date.startsWith(lastMonthStr));
   }, [expenses, lastMonthStr]);
 
   // Determine if we have under 7 days of expenses
@@ -134,7 +134,7 @@ const FamilyReport: React.FC = () => {
 
     // Net actual savings calculated from overall income subtracting expenses plus saving assets
     const thisMonthIncome = income
-      .filter(i => i.date && i.date.startsWith(currentMonthStr))
+      .filter(i => !i.isTransfer && i.date && i.date.startsWith(currentMonthStr))
       .reduce((sum, i) => sum + i.amount, 0);
 
     const calculatedSavings = Math.max(0, thisMonthIncome - currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0));

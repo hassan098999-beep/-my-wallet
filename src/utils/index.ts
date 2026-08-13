@@ -36,10 +36,11 @@ export function getBudgetRange(monthStr: string, firstDay: number = 1) {
   const budgetMonthDate = new Date(year, month - 1, 1);
   
   if (firstDay === 1) {
-    return {
-      start: startOfMonth(budgetMonthDate),
-      end: endOfMonth(budgetMonthDate)
-    };
+    const start = startOfMonth(budgetMonthDate);
+    const end = endOfMonth(budgetMonthDate);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
   }
 
   // If firstDay = 25, and monthStr = 2026-03

@@ -45,6 +45,7 @@ const BabyBudget: React.FC = () => {
   
   const babyExpensesCurrentMonth = useMemo(() => {
     return expenses.filter(e => 
+      !e.isTransfer &&
       e.categoryId === babyCategory?.id && 
       e.date && 
       e.date.startsWith(currentMonthStr)
