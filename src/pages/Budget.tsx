@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../store/AppContext';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
-import { cn, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
+import { cn, hapticFeedback, getBudgetRange, getBudgetMonth, getWeekRange } from '../utils';
 import { parseISO } from 'date-fns';
 import { Save, Wallet, Activity, CircleCheckBig, Calendar, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 import { BudgetAlerts } from '../components/BudgetAlerts';
+import { BudgetPeriod } from '../types';
 
 // Import unified design system components
 import PageHeader from '../components/ui/PageHeader';
@@ -36,6 +37,7 @@ const BudgetPage = () => {
   const currentBudget = useMemo(() => budgets.find(b => b.month === selectedMonth), [budgets, selectedMonth]);
 
   const [globalBudget, setGlobalBudget] = useState(currentBudget?.amount.toString() || '');
+  const [overallPeriod, setOverallPeriod] = useState<BudgetPeriod>(currentBudget?.period || 'monthly');
   const [isSaved, setIsSaved] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showRuleInfo, setShowRuleInfo] = useState(false);
@@ -46,14 +48,22 @@ const BudgetPage = () => {
       : {}
   );
 
+  const [categoryPeriods, setCategoryPeriods] = useState<Record<string, BudgetPeriod>>(
+    currentBudget?.categoryPeriods || {}
+  );
+
   // Sync state if budget changes externally or selected month changes
   useEffect(() => {
     if (currentBudget) {
       setGlobalBudget(currentBudget.amount?.toString() || '');
+      setOverallPeriod(currentBudget.period || 'monthly');
       setCategoryBudgets(Object.fromEntries(Object.entries(currentBudget.categoryBudgets || {}).map(([k, v]) => [k, v.toString()])));
+      setCategoryPeriods(currentBudget.categoryPeriods || {});
     } else {
       setGlobalBudget('');
+      setOverallPeriod('monthly');
       setCategoryBudgets({});
+      setCategoryPeriods({});
     }
   }, [currentBudget]);
 
@@ -72,14 +82,16 @@ const BudgetPage = () => {
     setBudget({
       amount: parsedGlobal,
       month: selectedMonth,
-      categoryBudgets: parsedCategories
+      period: overallPeriod,
+      categoryBudgets: parsedCategories,
+      categoryPeriods: categoryPeriods
     });
     
     setIsSaved(true);
     toast.success(
       <div className="flex flex-col gap-1 text-right font-tajawal">
-        <span className="font-bold text-sm">تم حفظ الميزانية الذكية! 💾</span>
-        <span className="text-xs opacity-90">تم تحديث المخصصات والميزانية اليومية بنجاح.</span>
+        <span className="font-bold text-sm">تم حفظ الميزانية الذكية وتحديث الفترات! 💾</span>
+        <span className="text-xs opacity-90">تم تحديث المخصصات الشهرية والأسبوعية والميزانية اليومية بنجاح.</span>
       </div>,
       { duration: 3000 }
     );
@@ -88,6 +100,10 @@ const BudgetPage = () => {
 
   const handleCategoryBudgetChange = (id: string, value: string) => {
     setCategoryBudgets(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleCategoryPeriodChange = (id: string, period: BudgetPeriod) => {
+    setCategoryPeriods(prev => ({ ...prev, [id]: period }));
   };
 
   // One-click 50/30/20 Tuning
@@ -109,22 +125,25 @@ const BudgetPage = () => {
       const savings = categories.filter(c => c.type === 'saving');
 
       // 50% for Needs, 30% for Wants, 20% for Savings
-      const needsPool = totalBudget * 0.5;
-      const wantsPool = totalBudget * 0.3;
-      const savingsPool = totalBudget * 0.2;
+      // If overall budget is weekly, convert pools accordingly
+      const monthlyTotal = overallPeriod === 'weekly' ? totalBudget * 4.333 : totalBudget;
+      const needsPool = monthlyTotal * 0.5;
+      const wantsPool = monthlyTotal * 0.3;
+      const savingsPool = monthlyTotal * 0.2;
 
-      if (needs.length > 0) {
-        const perNeed = (needsPool / needs.length).toFixed(0);
-        needs.forEach(c => newBudgets[c.id] = perNeed);
-      }
-      if (wants.length > 0) {
-        const perWant = (wantsPool / wants.length).toFixed(0);
-        wants.forEach(c => newBudgets[c.id] = perWant);
-      }
-      if (savings.length > 0) {
-        const perSaving = (savingsPool / savings.length).toFixed(0);
-        savings.forEach(c => newBudgets[c.id] = perSaving);
-      }
+      const allocateGroup = (groupItems: typeof categories, groupPool: number) => {
+        if (groupItems.length === 0) return;
+        const perItemMonthly = groupPool / groupItems.length;
+        groupItems.forEach(c => {
+          const isWeeklyCat = categoryPeriods[c.id] === 'weekly';
+          const finalVal = isWeeklyCat ? Math.round(perItemMonthly / 4.333) : Math.round(perItemMonthly);
+          newBudgets[c.id] = finalVal > 0 ? finalVal.toString() : '';
+        });
+      };
+
+      allocateGroup(needs, needsPool);
+      allocateGroup(wants, wantsPool);
+      allocateGroup(savings, savingsPool);
 
       setCategoryBudgets(newBudgets);
       setIsGenerating(false);
@@ -132,7 +151,7 @@ const BudgetPage = () => {
       toast.success(
         <div className="flex flex-col gap-1 text-right font-tajawal">
           <span className="font-black text-sm">تم مواءمة الميزانية حسب قاعدة 50/30/20 ✨</span>
-          <span className="text-xs opacity-90">قمنا بتقسيم المجموع تلقائياً على فئات الاحتياجات، الكماليات والادخار.</span>
+          <span className="text-xs opacity-90">قمنا بتقسيم المجموع ومراعاة الفئات الأسبوعية والشهرية تلقائياً.</span>
         </div>,
         { duration: 4000 }
       );
@@ -167,24 +186,27 @@ const BudgetPage = () => {
       });
 
       const numMonths = Object.keys(monthGroups).length;
-      const avgTotal = Object.values(monthGroups).reduce((a, b) => a + b, 0) / numMonths;
+      const avgTotalMonthly = Object.values(monthGroups).reduce((a, b) => a + b, 0) / numMonths;
 
       const newCategoryBudgets: Record<string, string> = {};
       Object.entries(categoryAverages).forEach(([catId, total]) => {
-        const avg = Math.round(total / numMonths);
-        if (avg > 0) {
-          newCategoryBudgets[catId] = avg.toString();
+        const avgMonthly = Math.round(total / numMonths);
+        const isWeeklyCat = categoryPeriods[catId] === 'weekly';
+        const finalVal = isWeeklyCat ? Math.round(avgMonthly / 4.333) : avgMonthly;
+        if (finalVal > 0) {
+          newCategoryBudgets[catId] = finalVal.toString();
         }
       });
 
-      setGlobalBudget(Math.round(avgTotal).toString());
+      const finalGlobal = overallPeriod === 'weekly' ? Math.round(avgTotalMonthly / 4.333) : Math.round(avgTotalMonthly);
+      setGlobalBudget(finalGlobal.toString());
       setCategoryBudgets(newCategoryBudgets);
       
       setIsGenerating(false);
       toast.success(
         <div className="flex flex-col gap-1 text-right font-tajawal">
           <span className="font-black text-sm">تم استلهام ميزانية من تاريخك 🧠📊</span>
-          <span className="text-xs opacity-90">استندنا على متوسط إنفاقك الفعلي في الأشهر الماضية لاقتراح ميزانية واقعية.</span>
+          <span className="text-xs opacity-90">استندنا على متوسط إنفاقك الفعلي مع مراعاة التقسيم الأسبوعي والشهري.</span>
         </div>,
         { duration: 4000 }
       );
@@ -200,30 +222,44 @@ const BudgetPage = () => {
     });
   }, [expenses, selectedMonth, firstDayOfMonth]);
 
-  const chartData = useMemo(() => {
-    return categories.map(cat => {
-      const spent = currentMonthExpenses
-        .filter(e => e.categoryId === cat.id)
-        .reduce((sum, e) => sum + e.amount, 0);
-      const budgeted = Number(categoryBudgets[cat.id]) || 0;
-      return {
-        name: cat.name,
-        spent: Number(spent.toFixed(2)),
-        budgeted: Number(budgeted.toFixed(2)),
-        color: cat.color,
-      };
-    }).filter(item => item.spent > 0 || item.budgeted > 0);
-  }, [categories, currentMonthExpenses, categoryBudgets]);
+  const currentWeekExpenses = useMemo(() => {
+    const { start, end } = getWeekRange(new Date(), 1);
+    return expenses.filter(e => {
+      if (e.isTransfer) return false;
+      const d = parseISO(e.date);
+      return d >= start && d <= end;
+    });
+  }, [expenses]);
 
   const {
     totalSpent,
+    monthSpent,
+    weekSpent,
     globalBudgetNum,
     overallPercentage,
     remainingDays,
+    remainingDaysInWeek,
     remainingBudget,
     dailyLimit,
     daysInMonth
   } = useBudgetStatus(selectedMonth);
+
+  const chartData = useMemo(() => {
+    return categories.map(cat => {
+      const isWeeklyCat = categoryPeriods[cat.id] === 'weekly';
+      const catSpent = isWeeklyCat
+        ? currentWeekExpenses.filter(e => e.categoryId === cat.id).reduce((sum, e) => sum + e.amount, 0)
+        : currentMonthExpenses.filter(e => e.categoryId === cat.id).reduce((sum, e) => sum + e.amount, 0);
+
+      const budgeted = Number(categoryBudgets[cat.id]) || 0;
+      return {
+        name: isWeeklyCat ? `${cat.name} (أس)` : cat.name,
+        spent: Number(catSpent.toFixed(2)),
+        budgeted: Number(budgeted.toFixed(2)),
+        color: cat.color,
+      };
+    }).filter(item => item.spent > 0 || item.budgeted > 0);
+  }, [categories, currentMonthExpenses, currentWeekExpenses, categoryBudgets, categoryPeriods]);
 
   // Stagger Animations
   const containerVariants = {
@@ -308,7 +344,7 @@ const BudgetPage = () => {
       {/* Header Section */}
       <PageHeader
         title="مخطط الميزانية الذكي"
-        subtitle="وزّع ميزانيتك الشهرية بذكاء، فعّل الصرف المتدحرج، ورشّد نفقاتك لضمان عيش متوازن"
+        subtitle="وزّع ميزانيتك الشهرية أو الأسبوعية بذكاء، حدد فترات الفئات، فعّل الصرف المتدحرج، ورشّد نفقاتك"
         action={
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
             {/* Cycle day component */}
@@ -367,12 +403,17 @@ const BudgetPage = () => {
       <BudgetOverview
         globalBudget={globalBudget}
         setGlobalBudget={setGlobalBudget}
+        overallPeriod={overallPeriod}
+        setOverallPeriod={setOverallPeriod}
         currency={currency}
         totalSpent={totalSpent}
+        monthSpent={monthSpent}
+        weekSpent={weekSpent}
         remainingBudget={remainingBudget}
         overallPercentage={overallPercentage}
         dailyLimit={dailyLimit}
         remainingDays={remainingDays}
+        remainingDaysInWeek={remainingDaysInWeek}
         daysInMonth={daysInMonth}
         rollingBudgetEnabled={rollingBudgetEnabled}
         setRollingBudgetEnabled={setRollingBudgetEnabled}
@@ -391,9 +432,13 @@ const BudgetPage = () => {
       <BudgetCategoryList
         categories={categories}
         currentMonthExpenses={currentMonthExpenses}
+        currentWeekExpenses={currentWeekExpenses}
         categoryBudgets={categoryBudgets}
+        categoryPeriods={categoryPeriods}
         handleCategoryBudgetChange={handleCategoryBudgetChange}
+        handleCategoryPeriodChange={handleCategoryPeriodChange}
         remainingDays={remainingDays}
+        remainingDaysInWeek={remainingDaysInWeek}
         currency={currency}
       />
     </motion.div>
@@ -401,3 +446,4 @@ const BudgetPage = () => {
 };
 
 export default BudgetPage;
+

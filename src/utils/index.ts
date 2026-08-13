@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import currency from 'currency.js';
-import { parseISO, startOfMonth, endOfMonth, addMonths, subMonths, setDate, isWithinInterval, subDays, format } from 'date-fns';
+import { parseISO, startOfMonth, endOfMonth, addMonths, subMonths, setDate, isWithinInterval, subDays, format, startOfWeek, endOfWeek } from 'date-fns';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -21,6 +21,14 @@ export function safeParseISO(dateStr: any): Date {
     console.error('safeParseISO failed:', dateStr, err);
     return new Date();
   }
+}
+
+export function getWeekRange(date: Date = new Date(), weekStartsOn: 0 | 1 | 6 = 1) {
+  const start = startOfWeek(date, { weekStartsOn });
+  const end = endOfWeek(date, { weekStartsOn });
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
 }
 
 export function getBudgetRange(monthStr: string, firstDay: number = 1) {

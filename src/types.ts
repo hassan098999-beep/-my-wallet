@@ -98,10 +98,14 @@ export interface Gamaeya {
   createdAt: string;
 }
 
+export type BudgetPeriod = 'monthly' | 'weekly';
+
 export interface Budget {
   amount: number;
   month: string; // YYYY-MM
+  period?: BudgetPeriod;
   categoryBudgets?: Record<string, number>;
+  categoryPeriods?: Record<string, BudgetPeriod>;
 }
 
 export interface Income {

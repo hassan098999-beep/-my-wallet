@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 import { 
   Wallet, Sparkles, TrendingDown, Info, HelpCircle, 
-  ShieldCheck, Activity, TrendingUp 
+  ShieldCheck, Activity, TrendingUp, Calendar, Zap 
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -11,18 +11,23 @@ import {
 } from 'recharts';
 import Card from '../ui/Card';
 import BudgetAutoTune from './BudgetAutoTune';
-import { Category } from '../../types';
+import { Category, BudgetPeriod } from '../../types';
 import { cn, formatCurrency, hapticFeedback } from '../../utils';
 
 interface BudgetOverviewProps {
   globalBudget: string;
   setGlobalBudget: (val: string) => void;
+  overallPeriod: BudgetPeriod;
+  setOverallPeriod: (val: BudgetPeriod) => void;
   currency: string;
   totalSpent: number;
+  monthSpent: number;
+  weekSpent: number;
   remainingBudget: number;
   overallPercentage: number;
   dailyLimit: number;
   remainingDays: number;
+  remainingDaysInWeek: number;
   daysInMonth: number;
   rollingBudgetEnabled: boolean;
   setRollingBudgetEnabled: (enabled: boolean) => void;
@@ -40,12 +45,17 @@ interface BudgetOverviewProps {
 export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   globalBudget,
   setGlobalBudget,
+  overallPeriod,
+  setOverallPeriod,
   currency,
   totalSpent,
+  monthSpent,
+  weekSpent,
   remainingBudget,
   overallPercentage,
   dailyLimit,
   remainingDays,
+  remainingDaysInWeek,
   daysInMonth,
   rollingBudgetEnabled,
   setRollingBudgetEnabled,
@@ -59,9 +69,11 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   isGenerating,
   itemVariants,
 }) => {
+  const isWeekly = overallPeriod === 'weekly';
+
   return (
     <div className="space-y-8">
-      {/* Main Intelligent Budget Dashboard Dashboard and Progress */}
+      {/* Main Intelligent Budget Dashboard and Progress */}
       <motion.div variants={itemVariants}>
         <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800/85 rounded-3xl relative overflow-hidden p-6 md:p-8 shadow-md dark:shadow-black/10 transition-all duration-300">
           
@@ -76,20 +88,74 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                 <Wallet size={20} />
               </div>
               <div>
-                <h2 className="text-base font-black text-slate-800 dark:text-white">الميزانية الإجمالية وحالة الصرف</h2>
-                <p className="text-[10px] text-slate-400 font-bold">عيّن سقف مصروفاتك للشهر الحالي لتنظيم الميزانية الذكية</p>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-black text-slate-800 dark:text-white">
+                    {isWeekly ? 'الميزانية الأسبوعية الإجمالية وحالة الصرف' : 'الميزانية الشهرية الإجمالية وحالة الصرف'}
+                  </h2>
+                  <span className={cn(
+                    "text-[10px] font-black px-2 py-0.5 rounded-full",
+                    isWeekly ? "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300" : "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300"
+                  )}>
+                    {isWeekly ? '⚡ أسبوعية' : '🗓️ شهرية'}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400 font-bold">
+                  {isWeekly 
+                    ? 'عيّن سقف مصروفاتك للأسبوع الحالي مع تتبع يومي دقيق'
+                    : 'عيّن سقف مصروفاتك للشهر الحالي لتنظيم الميزانية الذكية'
+                  }
+                </p>
               </div>
             </div>
 
-            {/* Quick Allocator and Information clicker */}
-            <BudgetAutoTune
-              showRuleInfo={showRuleInfo}
-              setShowRuleInfo={setShowRuleInfo}
-              suggestFromHistory={suggestFromHistory}
-              autoAllocate={autoAllocate}
-              isGenerating={isGenerating}
-              globalBudget={globalBudget}
-            />
+            {/* Right controls: Period switcher and Quick Allocator */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Period Switcher */}
+              <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticFeedback('medium');
+                    setOverallPeriod('weekly');
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer",
+                    isWeekly
+                      ? "bg-amber-500 text-white shadow-xs"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  <Zap size={12} />
+                  <span>ميزانية أسبوعية</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticFeedback('medium');
+                    setOverallPeriod('monthly');
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer",
+                    !isWeekly
+                      ? "bg-indigo-600 text-white shadow-xs"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  <Calendar size={12} />
+                  <span>ميزانية شهرية</span>
+                </button>
+              </div>
+
+              {/* Quick Allocator and Information clicker */}
+              <BudgetAutoTune
+                showRuleInfo={showRuleInfo}
+                setShowRuleInfo={setShowRuleInfo}
+                suggestFromHistory={suggestFromHistory}
+                autoAllocate={autoAllocate}
+                isGenerating={isGenerating}
+                globalBudget={globalBudget}
+              />
+            </div>
           </div>
 
           {/* Budget Input & Progress Gauge Block */}
@@ -98,7 +164,14 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             {/* Left Portion of Block: Raw Input and Balance Indicators */}
             <div className="lg:col-span-5 space-y-6">
               <div className="space-y-2">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">مبلغ الميزانية المستهدف</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">
+                    {isWeekly ? 'مبلغ الميزانية الأسبوعية المستهدف' : 'مبلغ الميزانية الشهرية المستهدف'}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-bold">
+                    {isWeekly ? 'يتجدد كل أسبوع' : 'لكامل دورة الشهر'}
+                  </span>
+                </div>
                 <div className="relative">
                   <input
                     type="number"
@@ -133,21 +206,32 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                         }, 50);
                       }
                     }}
-                    className="w-full bg-slate-50 dark:bg-slate-950/50 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-3xl font-black text-center font-mono text-slate-800 dark:text-white transition-all focus:border-emerald-500 outline-none"
+                    className={cn(
+                      "w-full bg-slate-50 dark:bg-slate-950/50 border-2 border-dashed rounded-2xl px-5 py-4 text-3xl font-black text-center font-mono text-slate-800 dark:text-white transition-all outline-none",
+                      isWeekly 
+                        ? "border-amber-300 dark:border-amber-800/60 focus:border-amber-500" 
+                        : "border-slate-200 dark:border-slate-800 focus:border-emerald-500"
+                    )}
                     placeholder="0.00"
                   />
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg font-black">{currency}</span>
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg font-black">
+                    {currency} {isWeekly ? '/ أس' : ''}
+                  </span>
                 </div>
               </div>
 
               {/* Dynamic summary counts */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-rose-50/20 dark:bg-rose-950/5 rounded-2xl p-4 border border-rose-100/30 dark:border-rose-900/20 transition-all hover:shadow-xs">
-                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-1">ما تم صرفه فعلياً</p>
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-1">
+                    {isWeekly ? 'صرف الأسبوع الحالي' : 'ما تم صرفه في الشهر'}
+                  </p>
                   <p className="text-sm font-black text-rose-500 dark:text-rose-400 font-mono">{formatCurrency(totalSpent, currency)}</p>
                 </div>
                 <div className="bg-emerald-50/20 dark:bg-emerald-950/5 rounded-2xl p-4 border border-emerald-100/30 dark:border-emerald-900/20 transition-all hover:shadow-xs">
-                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-1">المبلغ المتبقي</p>
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-1">
+                    {isWeekly ? 'المتبقي لهذا الأسبوع' : 'المبلغ المتبقي للشهر'}
+                  </p>
                   <p className={cn(
                     "text-sm font-black font-mono",
                     remainingBudget > 0 ? "text-emerald-500 dark:text-emerald-400" : "text-rose-500 dark:text-rose-400"
@@ -160,7 +244,9 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             <div className="lg:col-span-7 space-y-6 bg-slate-50/50 dark:bg-slate-950/20 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/40">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">نسبة استهلاك الميزانية الكلية</span>
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                    {isWeekly ? 'نسبة استهلاك ميزانية الأسبوع' : 'نسبة استهلاك الميزانية الكلية'}
+                  </span>
                   <span className={cn(
                     "text-xs font-black px-2.5 py-1 rounded-lg",
                     overallPercentage > 100 ? "bg-rose-50/50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400" :
@@ -179,7 +265,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                     transition={{ duration: 1.2, ease: "easeOut" }}
                     className={cn(
                       "h-full rounded-full transition-colors duration-500",
-                      overallPercentage > 100 ? "bg-rose-500" : overallPercentage > 85 ? "bg-amber-500" : "bg-gradient-to-r from-emerald-500 to-teal-400"
+                      overallPercentage > 100 ? "bg-rose-500" : overallPercentage > 85 ? "bg-amber-500" : isWeekly ? "bg-amber-500" : "bg-gradient-to-r from-emerald-500 to-teal-400"
                     )}
                   />
                 </div>
@@ -188,17 +274,27 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               {/* Auxiliary calculation summary */}
               <div className="grid grid-cols-2 gap-4 pt-1">
                 <div className="bg-white dark:bg-slate-900/60 rounded-2xl p-4 shadow-sm border border-slate-150 dark:border-slate-800/80 transition-all hover:-translate-y-0.5">
-                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-1">الميزانية اليومية المقترحة ⚡</p>
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-1">
+                    {isWeekly ? 'الميزانية اليومية للأسبوع ⚡' : 'الميزانية اليومية المقترحة ⚡'}
+                  </p>
                   <p className="text-sm md:text-base font-black text-slate-800 dark:text-white font-mono">{formatCurrency(dailyLimit, currency)}</p>
                   <p className="text-[8px] text-slate-400 font-medium mt-0.5">
-                    {rollingBudgetEnabled ? "تتكيف يومياً بناءً على ما أنفقته" : "موزعة بالتساوي على الأيام"}
+                    {rollingBudgetEnabled 
+                      ? (isWeekly ? `تتكيف مع الـ ${remainingDaysInWeek} أيام المتبقية في الأسبوع` : "تتكيف يومياً بناءً على ما أنفقته")
+                      : (isWeekly ? "موزعة بالتساوي على أيام الأسبوع" : "موزعة بالتساوي على الأيام")}
                   </p>
                 </div>
 
                 <div className="bg-white dark:bg-slate-900/60 rounded-2xl p-4 shadow-sm border border-slate-150 dark:border-slate-800/80 transition-all hover:-translate-y-0.5">
-                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-1">دورتك المالية المتبقية ⏳</p>
-                  <p className="text-sm md:text-base font-black text-slate-800 dark:text-white font-mono">{remainingDays} <span className="text-xs text-slate-400">أيّام</span></p>
-                  <p className="text-[8px] text-slate-400 font-medium mt-0.5 font-tajawal">من أصل {daysInMonth} يوم في دورتك</p>
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-1">
+                    {isWeekly ? 'أيام الأسبوع المتبقية ⏳' : 'دورتك المالية المتبقية ⏳'}
+                  </p>
+                  <p className="text-sm md:text-base font-black text-slate-800 dark:text-white font-mono">
+                    {isWeekly ? remainingDaysInWeek : remainingDays} <span className="text-xs text-slate-400">أيّام</span>
+                  </p>
+                  <p className="text-[8px] text-slate-400 font-medium mt-0.5 font-tajawal">
+                    {isWeekly ? `من أصل 7 أيام في الأسبوع الحالي` : `من أصل ${daysInMonth} يوم في دورتك`}
+                  </p>
                 </div>
               </div>
             </div>

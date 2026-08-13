@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import { useAppContext } from '../store/AppContext';
-import { formatCurrency, cn, getBudgetRange, getBudgetMonth, safeParseISO } from '../utils';
-import { TriangleAlert, CircleAlert, TrendingUp, X } from 'lucide-react';
+import { formatCurrency, cn, getBudgetRange, getBudgetMonth, getWeekRange, safeParseISO } from '../utils';
+import { TriangleAlert, CircleAlert, TrendingUp, X, Zap, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DynamicIcon } from './DynamicIcon';
+import { BudgetPeriod } from '../types';
 
 export const BudgetAlerts = () => {
   const { expenses, budgets, currency, removeNotification, notifications = [], firstDayOfMonth, categories = [] } = useAppContext();
@@ -12,6 +13,10 @@ export const BudgetAlerts = () => {
   const budget = useMemo(() => budgets?.find(b => b.month === currentMonth), [budgets, currentMonth]);
   
   const { start: rangeStart, end: rangeEnd } = useMemo(() => getBudgetRange(currentMonth, firstDayOfMonth), [currentMonth, firstDayOfMonth]);
+  const { start: weekStart, end: weekEnd } = useMemo(() => getWeekRange(new Date(), 1), []);
+
+  const overallPeriod: BudgetPeriod = budget?.period || 'monthly';
+  const categoryPeriods: Record<string, BudgetPeriod> = budget?.categoryPeriods || {};
 
   const totalMonthlyExpense = useMemo(() => 
     expenses
@@ -21,6 +26,17 @@ export const BudgetAlerts = () => {
       })
       .reduce((sum, e) => sum + e.amount, 0),
   [expenses, rangeStart, rangeEnd]);
+
+  const totalWeeklyExpense = useMemo(() => 
+    expenses
+      .filter(e => {
+        const d = safeParseISO(e.date);
+        return !e.isTransfer && d >= weekStart && d <= weekEnd;
+      })
+      .reduce((sum, e) => sum + e.amount, 0),
+  [expenses, weekStart, weekEnd]);
+
+  const activeTotalExpense = overallPeriod === 'weekly' ? totalWeeklyExpense : totalMonthlyExpense;
 
   const categoryBudgets = budget?.categoryBudgets || {};
 
@@ -32,8 +48,15 @@ export const BudgetAlerts = () => {
       const limit = Number(limitAmountStr) || 0;
       if (limit <= 0) return null;
 
+      const catPeriod: BudgetPeriod = categoryPeriods[catId] || 'monthly';
+      const isCatWeekly = catPeriod === 'weekly';
+
       const spent = expenses
-        .filter(e => !e.isTransfer && e.categoryId === catId && safeParseISO(e.date) >= rangeStart && safeParseISO(e.date) <= rangeEnd)
+        .filter(e => {
+          if (e.isTransfer || e.categoryId !== catId) return false;
+          const d = safeParseISO(e.date);
+          return isCatWeekly ? (d >= weekStart && d <= weekEnd) : (d >= rangeStart && d <= rangeEnd);
+        })
         .reduce((sum, e) => sum + e.amount, 0);
 
       const percentage = (spent / limit) * 100;
@@ -47,6 +70,7 @@ export const BudgetAlerts = () => {
           categoryId: catId,
           name,
           icon,
+          period: catPeriod,
           percentage,
           limit,
           spent,
@@ -59,6 +83,7 @@ export const BudgetAlerts = () => {
           categoryId: catId,
           name,
           icon,
+          period: catPeriod,
           percentage,
           limit,
           spent,
@@ -68,12 +93,12 @@ export const BudgetAlerts = () => {
       }
       return null;
     }).filter(Boolean);
-  }, [categoryBudgets, expenses, rangeStart, rangeEnd, categories]);
+  }, [categoryBudgets, categoryPeriods, expenses, rangeStart, rangeEnd, weekStart, weekEnd, categories]);
 
   if (!budget || budget.amount <= 0) return null;
 
-  const percentSpent = (totalMonthlyExpense / budget.amount) * 100;
-  const isExceeded = totalMonthlyExpense > budget.amount;
+  const percentSpent = (activeTotalExpense / budget.amount) * 100;
+  const isExceeded = activeTotalExpense > budget.amount;
   const isNearLimit = percentSpent >= 80 && !isExceeded;
 
   // Filter budget notifications from the state
@@ -99,9 +124,11 @@ export const BudgetAlerts = () => {
                 <CircleAlert size={24} className="text-white" />
               </div>
               <div className="flex-1 text-right" dir="rtl">
-                <h4 className="text-sm font-black uppercase tracking-widest mb-1">تجاوزت الميزانية الإجمالية! ⚠️</h4>
+                <h4 className="text-sm font-black uppercase tracking-widest mb-1">
+                  {overallPeriod === 'weekly' ? 'تجاوزت الميزانية الأسبوعية الإجمالية! ⚠️' : 'تجاوزت الميزانية الشهرية الإجمالية! ⚠️'}
+                </h4>
                 <p className="text-xs font-bold opacity-90">
-                  لقد تجاوزت ميزانيتك الشهرية بمقدار <span className="underline decoration-2 underline-offset-4">{formatCurrency(totalMonthlyExpense - budget.amount, currency)}</span>. يرجى مراجعة مصاريفك.
+                  لقد تجاوزت ميزانيتك {overallPeriod === 'weekly' ? 'لهذا الأسبوع' : 'لهذا الشهر'} بمقدار <span className="underline decoration-2 underline-offset-4">{formatCurrency(activeTotalExpense - budget.amount, currency)}</span>. يرجى ترشيد مصاريفك.
                 </p>
               </div>
             </div>
@@ -122,9 +149,11 @@ export const BudgetAlerts = () => {
                 <TriangleAlert size={24} className="text-white" />
               </div>
               <div className="flex-1 text-right" dir="rtl">
-                <h4 className="text-sm font-black uppercase tracking-widest mb-1">اقتربت من الحد الأقصى للميزانية!</h4>
+                <h4 className="text-sm font-black uppercase tracking-widest mb-1">
+                  {overallPeriod === 'weekly' ? 'اقتربت من الحد الأقصى للميزانية الأسبوعية!' : 'اقتربت من الحد الأقصى للميزانية الشهرية!'}
+                </h4>
                 <p className="text-xs font-bold opacity-90">
-                  لقد استهلكت <span className="text-lg font-black">{Math.round(percentSpent)}%</span> من ميزانيتك الشهرية. تبقى لك <span className="underline decoration-2 underline-offset-4">{formatCurrency(budget.amount - totalMonthlyExpense, currency)}</span> فقط.
+                  لقد استهلكت <span className="text-lg font-black">{Math.round(percentSpent)}%</span> من ميزانيتك {overallPeriod === 'weekly' ? 'لهذا الأسبوع' : 'لهذا الشهر'}. تبقى لك <span className="underline decoration-2 underline-offset-4">{formatCurrency(budget.amount - activeTotalExpense, currency)}</span> فقط.
                 </p>
               </div>
             </div>
@@ -135,6 +164,7 @@ export const BudgetAlerts = () => {
         {categoryAlerts.map((alert) => {
           if (!alert) return null;
           const isExceededType = alert.type === 'exceeded';
+          const isWeeklyCat = alert.period === 'weekly';
           return (
             <motion.div
               key={alert.id}
@@ -160,11 +190,22 @@ export const BudgetAlerts = () => {
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black tracking-tight block">
-                      {isExceededType ? "تجاوزت سقف الميزانية الفئوية! ⚠️" : "تنبيه ذكي: اقتربت من السقف! 🔔"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black tracking-tight block">
+                        {isExceededType 
+                          ? (isWeeklyCat ? "تجاوزت ميزانية الفئة لهذا الأسبوع! ⚡⚠️" : "تجاوزت سقف الميزانية الفئوية الشهرية! ⚠️")
+                          : (isWeeklyCat ? "تنبيه: اقتربت من ميزانية الفئة الأسبوعية! ⚡🔔" : "تنبيه ذكي: اقتربت من السقف الشهري! 🔔")
+                        }
+                      </span>
+                      <span className={cn(
+                        "text-[9px] font-bold px-1.5 py-0.5 rounded",
+                        isWeeklyCat ? "bg-amber-200/60 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200" : "bg-indigo-200/60 dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-200"
+                      )}>
+                        {isWeeklyCat ? 'أسبوعية' : 'شهرية'}
+                      </span>
+                    </div>
                     <span className={cn(
-                      "text-[10px] font-black px-2 py-0.5 rounded-full uppercase",
+                      "text-[10px] font-black px-2 py-0.5 rounded-full uppercase font-mono",
                       isExceededType
                         ? "bg-rose-200/50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300"
                         : "bg-amber-200/50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
@@ -173,7 +214,7 @@ export const BudgetAlerts = () => {
                     </span>
                   </div>
                   <p className="text-xs mt-1 font-semibold leading-relaxed">
-                    فئة <strong className="font-black text-black dark:text-white">"{alert.name}"</strong>: 
+                    فئة <strong className="font-black text-black dark:text-white">"{alert.name}"</strong> ({isWeeklyCat ? 'ميزانية أسبوعية' : 'ميزانية شهرية'}): 
                     {isExceededType ? (
                       <> لقد تجاوزت السقف المخصص ({formatCurrency(alert.limit, currency)}) بمقدار <span className="font-bold underline text-rose-600 dark:text-rose-400">{formatCurrency(Math.abs(alert.remaining), currency)}</span>!</>
                     ) : (
