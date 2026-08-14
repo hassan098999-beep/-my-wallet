@@ -1,10 +1,32 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useAppContext } from '../store/AppContext';
 import { cn, formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
-import { format, parseISO, eachDayOfInterval, startOfYear, endOfYear, eachMonthOfInterval, subDays } from 'date-fns';
+import { 
+  format, 
+  parseISO, 
+  eachDayOfInterval, 
+  startOfYear, 
+  endOfYear, 
+  eachMonthOfInterval, 
+  subDays,
+  subMonths,
+  startOfMonth,
+  endOfMonth
+} from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { motion, AnimatePresence } from 'motion/react';
-import { Calendar, Activity, Target, ChartPie as PieChartIcon, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence, Variants } from 'motion/react';
+import { 
+  Calendar, 
+  Activity, 
+  Target, 
+  ChartPie as PieChartIcon, 
+  Sparkles,
+  TrendingUp,
+  BarChart3,
+  Sliders,
+  Wallet,
+  Clock
+} from 'lucide-react';
 import { useWindowSize } from '../hooks/useWindowSize';
 import { useBehavioralEngine } from '../hooks/useBehavioralEngine';
 
@@ -14,29 +36,55 @@ import { BudgetSection } from '../components/analytics/BudgetSection';
 import { ChartsSection } from '../components/analytics/ChartsSection';
 import { WeeklySection } from '../components/analytics/WeeklySection';
 
+type PeriodPreset = 'this_month' | 'last_month' | 'last_3_months' | 'this_year' | 'custom';
+
 const Analytics = () => {
   const { expenses, income = [], categories, currency, budgets, dailyBudget, firstDayOfMonth, aiInsights } = useAppContext();
   const { width } = useWindowSize();
   const { insights } = useBehavioralEngine();
-  const [rangeType, setRangeType] = useState<'monthly' | 'custom'>('monthly');
+
+  // Period Preset State
+  const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('this_month');
   const [selectedMonth, setSelectedMonth] = useState(getBudgetMonth(new Date(), firstDayOfMonth)); // YYYY-MM
-  const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  
   const [isReady, setIsReady] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'budget' | 'charts' | 'weekly'>('overview');
-  const [chartSubTab, setChartSubTab] = useState<'daily' | 'monthly'>('daily');
+  const [activeTab, setActiveTab] = useState<'overview' | 'charts' | 'budget' | 'weekly'>('overview');
+  const [chartSubTab, setChartSubTab] = useState<'daily' | 'monthly' | 'cumulative'>('daily');
+
   const budget = useMemo(() => budgets?.find(b => b.month === selectedMonth), [budgets, selectedMonth]);
+
+  // Handle Preset Changes
+  const handlePresetSelect = (preset: PeriodPreset) => {
+    hapticFeedback('light');
+    setPeriodPreset(preset);
+    const now = new Date();
+
+    if (preset === 'this_month') {
+      setSelectedMonth(getBudgetMonth(now, firstDayOfMonth));
+    } else if (preset === 'last_month') {
+      const prev = subMonths(now, 1);
+      setSelectedMonth(getBudgetMonth(prev, firstDayOfMonth));
+    } else if (preset === 'last_3_months') {
+      setStartDate(format(subMonths(now, 3), 'yyyy-MM-dd'));
+      setEndDate(format(now, 'yyyy-MM-dd'));
+    } else if (preset === 'this_year') {
+      setStartDate(format(startOfYear(now), 'yyyy-MM-dd'));
+      setEndDate(format(endOfYear(now), 'yyyy-MM-dd'));
+    }
+  };
 
   useEffect(() => {
     setIsReady(false);
     const timer = setTimeout(() => {
       setIsReady(true);
-    }, 400); // Small delay to show smooth transitions
+    }, 250);
     return () => clearTimeout(timer);
-  }, [rangeType, selectedMonth, startDate, endDate, expenses.length, income.length]);
+  }, [periodPreset, selectedMonth, startDate, endDate, expenses.length, income.length]);
 
   const dateRange = useMemo(() => {
-    if (rangeType === 'monthly') {
+    if (periodPreset === 'this_month' || periodPreset === 'last_month') {
       return getBudgetRange(selectedMonth, firstDayOfMonth);
     } else {
       return {
@@ -44,7 +92,7 @@ const Analytics = () => {
         end: parseISO(endDate)
       };
     }
-  }, [rangeType, selectedMonth, startDate, endDate, firstDayOfMonth]);
+  }, [periodPreset, selectedMonth, startDate, endDate, firstDayOfMonth]);
 
   const filteredExpenses = useMemo(() => {
     const { start, end } = dateRange;
@@ -103,29 +151,33 @@ const Analytics = () => {
   }, [filteredIncome]);
 
   const dailyData = useMemo(() => {
-    const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
-    
-    const expenseMap = filteredExpenses.reduce((acc, e) => {
-      const dateStr = e.date.split('T')[0];
-      acc[dateStr] = (acc[dateStr] || 0) + e.amount;
-      return acc;
-    }, {} as Record<string, number>);
+    try {
+      const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
+      
+      const expenseMap = filteredExpenses.reduce((acc, e) => {
+        const dateStr = e.date.split('T')[0];
+        acc[dateStr] = (acc[dateStr] || 0) + e.amount;
+        return acc;
+      }, {} as Record<string, number>);
 
-    const incomeMap = filteredIncome.reduce((acc, i) => {
-      const dateStr = i.date.split('T')[0];
-      acc[dateStr] = (acc[dateStr] || 0) + i.amount;
-      return acc;
-    }, {} as Record<string, number>);
+      const incomeMap = filteredIncome.reduce((acc, i) => {
+        const dateStr = i.date.split('T')[0];
+        acc[dateStr] = (acc[dateStr] || 0) + i.amount;
+        return acc;
+      }, {} as Record<string, number>);
 
-    return days.map(day => {
-      const dateStr = format(day, 'yyyy-MM-dd');
-      return {
-        date: format(day, 'dd', { locale: ar }),
-        fullDate: format(day, 'dd MMMM', { locale: ar }),
-        expenseAmount: expenseMap[dateStr] || 0,
-        incomeAmount: incomeMap[dateStr] || 0
-      };
-    });
+      return days.map(day => {
+        const dateStr = format(day, 'yyyy-MM-dd');
+        return {
+          date: format(day, 'dd', { locale: ar }),
+          fullDate: format(day, 'dd MMMM', { locale: ar }),
+          expenseAmount: expenseMap[dateStr] || 0,
+          incomeAmount: incomeMap[dateStr] || 0
+        };
+      });
+    } catch {
+      return [];
+    }
   }, [filteredExpenses, filteredIncome, dateRange]);
 
   const highestExpenseDay = useMemo(() => {
@@ -169,8 +221,12 @@ const Analytics = () => {
     };
   }, [expenses, dailyBudget]);
 
+  const noSpendDaysCount = useMemo(() => {
+    return dailyData.filter(d => d.expenseAmount === 0).length;
+  }, [dailyData]);
+
   const prevMonthDateRange = useMemo(() => {
-    if (rangeType === 'monthly') {
+    if (periodPreset === 'this_month' || periodPreset === 'last_month') {
       const d = new Date(dateRange.start);
       d.setDate(d.getDate() - 15);
       return getBudgetRange(format(d, 'yyyy-MM'), firstDayOfMonth);
@@ -181,7 +237,7 @@ const Analytics = () => {
       start: new Date(dateRange.start.getTime() - duration),
       end: new Date(dateRange.end.getTime() - duration)
     };
-  }, [dateRange, rangeType, firstDayOfMonth]);
+  }, [dateRange, periodPreset, firstDayOfMonth]);
 
   const prevMonthExpenses = useMemo(() => {
     const { start, end } = prevMonthDateRange;
@@ -224,8 +280,8 @@ const Analytics = () => {
 
     const incomeMap = income.reduce((acc, i) => {
       if (i.isTransfer) return acc;
-      const d = i.parsedDate || parseISO(i.date);
-      const m = getBudgetMonth(d, firstDayOfMonth);
+      const d = e => (e.parsedDate || parseISO(e.date));
+      const m = getBudgetMonth(d(i), firstDayOfMonth);
       acc[m] = (acc[m] || 0) + i.amount;
       return acc;
     }, {} as Record<string, number>);
@@ -245,16 +301,13 @@ const Analytics = () => {
     });
   }, [expenses, income, firstDayOfMonth]);
 
-  const containerVariants: any = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { duration: 0.15 }
-    }
+    visible: { opacity: 1, transition: { duration: 0.15 } }
   };
 
-  const itemVariants: any = {
-    hidden: { opacity: 0, y: 8 },
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 6 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } }
   };
 
@@ -263,120 +316,114 @@ const Analytics = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6 p-4 pb-32 relative text-right"
+      className="space-y-5 p-4 pb-32 relative text-right max-w-7xl mx-auto"
       dir="rtl"
     >
+      {/* 1. Header & Period Filters */}
       <PageHeader
-        title="التحليل المالي"
-        subtitle="نظرة ممتدة وشاملة على تدفقاتك المالية والتزامات الميزانية بذكاء"
+        title="التحليل المالي والإحصائيات"
+        subtitle="لوحة مؤشرات تنفيذية ورسوم بيانية ذكية لتتبع صحتك المالية وتدفقاتك"
         action={
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-2xl border border-slate-200/40 dark:border-slate-700/40 select-none">
-              <button
-                onClick={() => { hapticFeedback('light'); setRangeType('monthly'); }}
-                className={cn(
-                  "flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
-                  rangeType === 'monthly' ? "bg-white dark:bg-slate-900 text-primary-600 dark:text-primary-400 shadow-xs" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                )}
-              >
-                شهري
-              </button>
-              <button
-                onClick={() => { hapticFeedback('light'); setRangeType('custom'); }}
-                className={cn(
-                  "flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
-                  rangeType === 'custom' ? "bg-white dark:bg-slate-900 text-primary-600 dark:text-primary-400 shadow-xs" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                )}
-              >
-                مخصص
-              </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+            {/* Quick Period Presets */}
+            <div className="flex flex-wrap bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 gap-1 select-none">
+              {[
+                { id: 'this_month', label: 'هذا الشهر' },
+                { id: 'last_month', label: 'الشهر الماضي' },
+                { id: 'last_3_months', label: '3 أشهر' },
+                { id: 'this_year', label: 'السنة' },
+                { id: 'custom', label: 'مخصص' }
+              ].map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => handlePresetSelect(p.id as PeriodPreset)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                    periodPreset === p.id 
+                      ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs" 
+                      : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
             
-            {rangeType === 'monthly' ? (
-              <div className="relative group flex-1 sm:flex-none">
-                <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-primary-500 pointer-events-none" size={14} />
+            {/* Date Picker Input (Only shown for month or custom) */}
+            {(periodPreset === 'this_month' || periodPreset === 'last_month') ? (
+              <div className="relative group">
+                <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 text-indigo-500 pointer-events-none" size={13} />
                 <input
                   type="month"
                   value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="w-full pr-10 pl-4 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-xs font-semibold shadow-xs font-mono cursor-pointer"
+                  onChange={(e) => {
+                    setSelectedMonth(e.target.value);
+                    setPeriodPreset('custom');
+                  }}
+                  className="pr-9 pl-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold shadow-xs font-mono cursor-pointer outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
-            ) : (
-              <div className="flex gap-1.5 flex-1 sm:flex-none">
+            ) : periodPreset === 'custom' ? (
+              <div className="flex gap-1.5">
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-xs font-semibold shadow-xs font-mono cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold shadow-xs font-mono cursor-pointer outline-none"
                 />
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all outline-none text-xs font-semibold shadow-xs font-mono cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold shadow-xs font-mono cursor-pointer outline-none"
                 />
               </div>
-            )}
+            ) : null}
           </div>
         }
       />
 
-      {/* Segmented Tab Switche Controls */}
+      {/* 2. Unified Refined 4-Tab Navigation Bar */}
       <motion.div 
         variants={itemVariants} 
-        className="flex p-1 bg-slate-100/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-200/40 dark:border-slate-800/40 max-w-lg mx-auto w-full transition-all"
+        className="flex p-1 bg-slate-100/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 max-w-2xl mx-auto w-full"
       >
-        <button
-          onClick={() => { hapticFeedback('light'); setActiveTab('overview'); }}
-          className={cn(
-            "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-black transition-all",
-            activeTab === 'overview' ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
-          )}
-        >
-          <Activity size={14} />
-          <span>نظرة عامة</span>
-        </button>
-        <button
-          onClick={() => { hapticFeedback('light'); setActiveTab('budget'); }}
-          className={cn(
-            "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-black transition-all",
-            activeTab === 'budget' ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
-          )}
-        >
-          <Target size={14} />
-          <span>الميزانية والنسب</span>
-        </button>
-        <button
-          onClick={() => { hapticFeedback('light'); setActiveTab('charts'); }}
-          className={cn(
-            "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-black transition-all",
-            activeTab === 'charts' ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
-          )}
-        >
-          <PieChartIcon size={14} />
-          <span>التحليل البياني</span>
-        </button>
-        <button
-          onClick={() => { hapticFeedback('light'); setActiveTab('weekly'); }}
-          className={cn(
-            "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[10px] font-black transition-all",
-            activeTab === 'weekly' ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
-          )}
-        >
-          <Sparkles size={14} />
-          <span>التحليل الأسبوعي</span>
-        </button>
+        {[
+          { id: 'overview', label: 'النظرة التنفيذية', icon: Activity },
+          { id: 'charts', label: 'الرسوم والتدفقات', icon: BarChart3 },
+          { id: 'budget', label: 'قاعدة 50/30/20', icon: Target },
+          { id: 'weekly', label: 'المقارنة الأسبوعية', icon: Sparkles }
+        ].map(tab => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => {
+                hapticFeedback('light');
+                setActiveTab(tab.id as any);
+              }}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                activeTab === tab.id 
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" 
+                  : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
+              )}
+            >
+              <Icon size={14} className={activeTab === tab.id ? "text-indigo-600 dark:text-indigo-400" : ""} />
+              <span className="truncate">{tab.label}</span>
+            </button>
+          );
+        })}
       </motion.div>
 
-      {/* Active Tab Panel with Transition */}
-      <div className="relative min-h-[400px]">
+      {/* 3. Active Tab Content Panel */}
+      <div className="relative min-h-[420px]">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15 }}
           >
             {activeTab === 'overview' && (
@@ -397,21 +444,9 @@ const Analytics = () => {
                 insights={insights}
                 aiInsights={aiInsights}
                 itemVariants={itemVariants}
-              />
-            )}
-
-            {activeTab === 'budget' && (
-              <BudgetSection
-                budget={budget}
-                rangeType={rangeType}
-                selectedMonth={selectedMonth}
-                totalMonthlyExpense={totalMonthlyExpense}
-                totalMonthlyIncome={totalMonthlyIncome}
-                currency={currency}
-                categories={categories}
-                categoryData={categoryData}
-                filteredExpenses={filteredExpenses}
-                itemVariants={itemVariants}
+                dailyBudget={dailyBudget}
+                overBudgetDaysCount={dailyPerformance.overBudgetDays}
+                noSpendDaysCount={noSpendDaysCount}
               />
             )}
 
@@ -430,6 +465,21 @@ const Analytics = () => {
                 dailyBudget={dailyBudget}
                 currency={currency}
                 width={width}
+                itemVariants={itemVariants}
+              />
+            )}
+
+            {activeTab === 'budget' && (
+              <BudgetSection
+                budget={budget}
+                rangeType={periodPreset === 'this_month' || periodPreset === 'last_month' ? 'monthly' : 'custom'}
+                selectedMonth={selectedMonth}
+                totalMonthlyExpense={totalMonthlyExpense}
+                totalMonthlyIncome={totalMonthlyIncome}
+                currency={currency}
+                categories={categories}
+                categoryData={categoryData}
+                filteredExpenses={filteredExpenses}
                 itemVariants={itemVariants}
               />
             )}
