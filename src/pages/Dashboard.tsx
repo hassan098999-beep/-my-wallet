@@ -16,11 +16,11 @@ import PageHeader from '../components/ui/PageHeader';
 // Refactored Dashboard Subcomponents
 import { TunisianFamilyBanner } from '../components/dashboard/TunisianFamilyBanner';
 import { SummaryKpiRow } from '../components/dashboard/SummaryKpiRow';
-import { DashboardTabSwitcher } from '../components/dashboard/DashboardTabSwitcher';
+import { MarketBasketCard } from '../components/dashboard/MarketBasketCard';
+import { DashboardTabSwitcher, DashboardTab } from '../components/dashboard/DashboardTabSwitcher';
 import { VaultsSection } from '../components/dashboard/VaultsSection';
 import { TodayOperationsPanel } from '../components/dashboard/TodayOperationsPanel';
 import { InsightsSection } from '../components/dashboard/InsightsSection';
-import { TransactionHistorySection } from '../components/dashboard/TransactionHistorySection';
 
 const Dashboard = () => {
   const { 
@@ -32,6 +32,7 @@ const Dashboard = () => {
     addExpense, 
     setIsAddModalOpen, 
     budgets, 
+    setBudget,
     income = [], 
     recurringExpenses = [], 
     userName, 
@@ -377,8 +378,12 @@ const Dashboard = () => {
   }, [expenses]);
 
   // Active Tab for refactored clutter-free dashboard
-  const [activeDashboardTab, setActiveDashboardTab] = useState<'daily' | 'vaults' | 'challenges' | 'insights' | 'history'>(() => {
-    return (safeStorage.getItem('dashboard_active_tab') as 'daily' | 'vaults' | 'insights' | 'history') || 'daily';
+  const [activeDashboardTab, setActiveDashboardTab] = useState<DashboardTab>(() => {
+    const saved = safeStorage.getItem('dashboard_active_tab') as DashboardTab;
+    if (saved && ['daily', 'vaults', 'insights', 'challenges'].includes(saved)) {
+      return saved;
+    }
+    return 'daily';
   });
 
   const handleQuickPresetClick = async (preset: { label: string; amount: string; desc: string; categoryName: string; }) => {
@@ -667,7 +672,17 @@ const Dashboard = () => {
         itemVariants={itemVariants}
       />
 
-      {/* 3. Intelligent Segmented Tab Switcher */}
+      {/* 3. Smart Market & Grocery Basket Widget (ميزانية قضية السوق والقفة - للقراءة فقط) */}
+      <MarketBasketCard
+        categories={categories}
+        expenses={expenses}
+        budgets={budgets}
+        currency={currency}
+        firstDayOfMonth={firstDayOfMonth}
+        itemVariants={itemVariants}
+      />
+
+      {/* 4. Intelligent Segmented Tab Switcher */}
       <DashboardTabSwitcher
         activeDashboardTab={activeDashboardTab}
         setActiveDashboardTab={setActiveDashboardTab}
@@ -721,10 +736,8 @@ const Dashboard = () => {
           budgetDaysInMonth={budgetDaysInMonth}
           rollingBudgetEnabled={rollingBudgetEnabled}
           totalSpent={totalSpent}
-          todayExpenses={todayExpenses}
           categories={categories}
           accounts={accounts}
-          expenses={expenses}
           goals={goals}
           remainingDailyBudget={remainingDailyBudget}
           todaySpending={todaySpending}
@@ -733,19 +746,7 @@ const Dashboard = () => {
           totalNetWorth={totalNetWorth}
           totalMonthlyExpense={totalMonthlyExpense}
           dailyAverage={dailyAverage}
-          recentTransactions={recentTransactions}
           budgetStatus={budgetStatus}
-          handleQuickPresetClick={handleQuickPresetClick}
-          handleQuickAddSubmit={handleQuickAddSubmit}
-          quickAmount={quickAmount}
-          setQuickAmount={setQuickAmount}
-          quickDescription={quickDescription}
-          setQuickDescription={setQuickDescription}
-          quickCategoryId={quickCategoryId}
-          setQuickCategoryId={setQuickCategoryId}
-          handleEdit={handleEdit}
-          deleteExpense={deleteExpense}
-          repeatExpense={repeatExpense}
           setIsAddModalOpen={setIsAddModalOpen}
           itemVariants={itemVariants}
         />
@@ -785,22 +786,6 @@ const Dashboard = () => {
           insights={insights}
           activeInsightIdx={activeInsightIdx}
           setActiveInsightIdx={setActiveInsightIdx}
-          itemVariants={itemVariants}
-        />
-      )}
-
-      {activeDashboardTab === 'history' && (
-        <TransactionHistorySection
-          recentTransactions={recentTransactions}
-          categories={categories}
-          accounts={accounts}
-          currency={currency}
-          txFilter={txFilter}
-          setTxFilter={setTxFilter}
-          deleteExpense={deleteExpense}
-          repeatExpense={repeatExpense}
-          handleEdit={handleEdit}
-          setIsAddModalOpen={setIsAddModalOpen}
           itemVariants={itemVariants}
         />
       )}
