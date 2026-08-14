@@ -12,7 +12,7 @@ const dropdownItems = [
   { path: '/family', name: 'تفريرة العيلة', icon: Baby },
   { path: '/recurring', name: 'المصاريف المتكررة', icon: RefreshCcw },
   { path: '/goals', name: 'الأهداف المالية', icon: Target },
-  { path: '/savings', name: 'تخصيص الادخار', icon: PiggyBank },
+  { path: '/savings', name: 'الادخار والأهداف', icon: PiggyBank },
   { path: '/settings', name: 'الإعدادات', icon: SlidersHorizontal },
 ];
 
@@ -30,7 +30,7 @@ const Header = () => {
       case '/budget': return 'الميزانيات';
       case '/recurring': return 'المصاريف المتكررة';
       case '/goals': return 'الأهداف المالية';
-      case '/savings': return 'تخصيص الادخار';
+      case '/savings': return 'الادخار والأهداف';
       case '/income': return 'الدخل';
       case '/family': return 'تفريرة العيلة';
       case '/settings': return 'الإعدادات';

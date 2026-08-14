@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion, Variants } from 'motion/react';
 import { 
   BarChart, 
   Bar, 
@@ -13,29 +12,21 @@ import {
   Cell, 
   AreaChart, 
   Area,
-  ReferenceLine,
-  Legend
+  ReferenceLine
 } from 'recharts';
 import { 
   ChartColumn as BarChart3, 
-  TrendingUp, 
-  ChartPie as PieChartIcon, 
-  Activity, 
-  Calendar,
-  Layers,
-  Sparkles,
-  Zap
+  ChartPie as PieChartIcon
 } from 'lucide-react';
 import { formatCurrency, cn, hapticFeedback } from '../../utils';
-import { DynamicIcon } from '../DynamicIcon';
 
 interface ChartsSectionProps {
   chartSubTab: 'daily' | 'monthly' | 'cumulative';
   setChartSubTab: (tab: 'daily' | 'monthly' | 'cumulative') => void;
-  isReady: boolean;
+  isReady?: boolean;
   dailyData: any[];
   monthlyData: any[];
-  dailyPerformance: { data: any[]; overBudgetDays: number; performanceScore: number; avgDailySpending: number };
+  dailyPerformance?: { data: any[]; overBudgetDays: number; performanceScore: number; avgDailySpending: number };
   categoryData: any[];
   incomeSourceData: any[];
   totalMonthlyExpense: number;
@@ -43,16 +34,15 @@ interface ChartsSectionProps {
   dailyBudget: number;
   currency: string;
   width: number;
-  itemVariants: Variants;
+  itemVariants?: any;
 }
 
 export const ChartsSection: React.FC<ChartsSectionProps> = ({
   chartSubTab,
   setChartSubTab,
-  isReady,
+  isReady = true,
   dailyData,
   monthlyData,
-  dailyPerformance,
   categoryData,
   incomeSourceData,
   totalMonthlyExpense,
@@ -60,12 +50,11 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
   dailyBudget,
   currency,
   width,
-  itemVariants,
 }) => {
   // Cumulative cash flow data (running net balance over days)
   const cumulativeData = React.useMemo(() => {
     let runningNet = 0;
-    return dailyData.map(d => {
+    return (dailyData || []).map(d => {
       const netForDay = (d.incomeAmount || 0) - (d.expenseAmount || 0);
       runningNet += netForDay;
       return {
@@ -76,14 +65,14 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
     });
   }, [dailyData]);
 
+  const hasDailyData = dailyData && dailyData.length > 0;
+  const hasMonthlyData = monthlyData && monthlyData.length > 0;
+
   return (
-    <div className="space-y-6 text-right" dir="rtl">
+    <div className="space-y-6 text-right w-full" dir="rtl">
       
       {/* 1. Main Interactive Flow & Trend Graph */}
-      <motion.div 
-        variants={itemVariants} 
-        className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs relative overflow-hidden"
-      >
+      <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs relative overflow-hidden w-full">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
@@ -128,99 +117,101 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
         </div>
 
         {/* Chart Canvas Area */}
-        <div className="h-64 md:h-72 w-full">
-          {isReady ? (
+        <div className="h-64 md:h-72 w-full min-h-[260px]">
+          {chartSubTab === 'daily' && hasDailyData ? (
             <ResponsiveContainer width="100%" height="100%">
-              {chartSubTab === 'daily' ? (
-                <BarChart data={dailyData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.35} />
-                  <XAxis 
-                    dataKey="date" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: width < 640 ? 8 : 10, fontWeight: 700, fill: '#94a3b8' }}
-                    interval={width < 640 ? 4 : 2}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: width < 640 ? 8 : 10, fontWeight: 700, fill: '#94a3b8' }}
-                    width={width < 640 ? 30 : 40}
-                  />
-                  <Tooltip 
-                    cursor={{ fill: '#f1f5f9', opacity: 0.2 }}
-                    contentStyle={{ borderRadius: '16px', background: '#0f172a', border: '1px solid #334155', color: '#fff', fontSize: '11px', direction: 'rtl', fontWeight: 'bold' }}
-                    formatter={(value: any, name: any) => [formatCurrency(value, currency), name === 'incomeAmount' ? 'المقبوضات (الدخل)' : 'المصروفات']}
-                  />
-                  {dailyBudget > 0 && (
-                    <ReferenceLine y={dailyBudget} stroke="#f59e0b" strokeDasharray="3 3" label={{ value: 'الحد اليومي', fill: '#f59e0b', fontSize: 9, position: 'insideTopRight' }} />
-                  )}
-                  <Bar dataKey="incomeAmount" name="الدخل" fill="#10b981" radius={[4, 4, 0, 0]} barSize={width < 640 ? 5 : 12} />
-                  <Bar dataKey="expenseAmount" name="المصاريف" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={width < 640 ? 5 : 12} />
-                </BarChart>
-              ) : chartSubTab === 'cumulative' ? (
-                <AreaChart data={cumulativeData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.35} />
-                  <XAxis 
-                    dataKey="date" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: width < 640 ? 8 : 10, fontWeight: 700, fill: '#94a3b8' }}
-                    interval={width < 640 ? 4 : 2}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: width < 640 ? 8 : 10, fontWeight: 700, fill: '#94a3b8' }}
-                    width={width < 640 ? 30 : 40}
-                  />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '16px', background: '#0f172a', border: '1px solid #334155', color: '#fff', fontSize: '11px', direction: 'rtl', fontWeight: 'bold' }}
-                    formatter={(value: any) => [formatCurrency(value, currency), 'الرصيد التراكمي المتبقي']}
-                  />
-                  <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="2 2" />
-                  <Area 
-                    type="monotone" 
-                    dataKey="cumulativeBalance" 
-                    stroke="#6366f1" 
-                    strokeWidth={2.5} 
-                    fillOpacity={1} 
-                    fill="url(#colorBalance)" 
-                  />
-                </AreaChart>
-              ) : (
-                <BarChart data={monthlyData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.35} />
-                  <XAxis 
-                    dataKey="month" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: width < 640 ? 8 : 10, fontWeight: 700, fill: '#94a3b8' }}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: width < 640 ? 8 : 10, fontWeight: 700, fill: '#94a3b8' }}
-                    width={width < 640 ? 30 : 40}
-                  />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '16px', background: '#0f172a', border: '1px solid #334155', color: '#fff', fontSize: '11px', direction: 'rtl', fontWeight: 'bold' }}
-                    formatter={(value: any, name: any) => [formatCurrency(value, currency), name === 'income' ? 'الدخل السنوي' : 'المصاريف السنوية']}
-                  />
-                  <Bar dataKey="income" name="الدخل" fill="#10b981" radius={[4, 4, 0, 0]} barSize={width < 640 ? 8 : 16} />
-                  <Bar dataKey="expense" name="المصاريف" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={width < 640 ? 8 : 16} />
-                </BarChart>
-              )}
+              <BarChart data={dailyData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.35} />
+                <XAxis 
+                  dataKey="date" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: width < 640 ? 8 : 10, fontWeight: 700, fill: '#94a3b8' }}
+                  interval={width < 640 ? 4 : 2}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: width < 640 ? 8 : 10, fontWeight: 700, fill: '#94a3b8' }}
+                  width={width < 640 ? 30 : 40}
+                />
+                <Tooltip 
+                  cursor={{ fill: '#f1f5f9', opacity: 0.2 }}
+                  contentStyle={{ borderRadius: '16px', background: '#0f172a', border: '1px solid #334155', color: '#fff', fontSize: '11px', direction: 'rtl', fontWeight: 'bold' }}
+                  formatter={(value: any, name: any) => [formatCurrency(value, currency), name === 'incomeAmount' ? 'المقبوضات (الدخل)' : 'المصروفات']}
+                />
+                {dailyBudget > 0 && (
+                  <ReferenceLine y={dailyBudget} stroke="#f59e0b" strokeDasharray="3 3" label={{ value: 'الحد اليومي', fill: '#f59e0b', fontSize: 9, position: 'insideTopRight' }} />
+                )}
+                <Bar dataKey="incomeAmount" name="الدخل" fill="#10b981" radius={[4, 4, 0, 0]} barSize={width < 640 ? 5 : 12} />
+                <Bar dataKey="expenseAmount" name="المصاريف" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={width < 640 ? 5 : 12} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : chartSubTab === 'cumulative' && hasDailyData ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={cumulativeData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.35} />
+                <XAxis 
+                  dataKey="date" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: width < 640 ? 8 : 10, fontWeight: 700, fill: '#94a3b8' }}
+                  interval={width < 640 ? 4 : 2}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: width < 640 ? 8 : 10, fontWeight: 700, fill: '#94a3b8' }}
+                  width={width < 640 ? 30 : 40}
+                />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '16px', background: '#0f172a', border: '1px solid #334155', color: '#fff', fontSize: '11px', direction: 'rtl', fontWeight: 'bold' }}
+                  formatter={(value: any) => [formatCurrency(value, currency), 'الرصيد التراكمي المتبقي']}
+                />
+                <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="2 2" />
+                <Area 
+                  type="monotone" 
+                  dataKey="cumulativeBalance" 
+                  stroke="#6366f1" 
+                  strokeWidth={2.5} 
+                  fillOpacity={1} 
+                  fill="url(#colorBalance)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : chartSubTab === 'monthly' && hasMonthlyData ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.35} />
+                <XAxis 
+                  dataKey="month" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: width < 640 ? 8 : 10, fontWeight: 700, fill: '#94a3b8' }}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: width < 640 ? 8 : 10, fontWeight: 700, fill: '#94a3b8' }}
+                  width={width < 640 ? 30 : 40}
+                />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '16px', background: '#0f172a', border: '1px solid #334155', color: '#fff', fontSize: '11px', direction: 'rtl', fontWeight: 'bold' }}
+                  formatter={(value: any, name: any) => [formatCurrency(value, currency), name === 'income' ? 'الدخل السنوي' : 'المصاريف السنوية']}
+                />
+                <Bar dataKey="income" name="الدخل" fill="#10b981" radius={[4, 4, 0, 0]} barSize={width < 640 ? 8 : 16} />
+                <Bar dataKey="expense" name="المصاريف" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={width < 640 ? 8 : 16} />
+              </BarChart>
             </ResponsiveContainer>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-800/20 rounded-2xl text-xs text-slate-400 font-bold">
-              تحديث البيانات البيانية...
+              لا توجد بيانات كافية لعرض الرسم البياني في هذه الفترة.
             </div>
           )}
         </div>
@@ -250,15 +241,12 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
             </strong>
           </span>
         </div>
-      </motion.div>
+      </div>
 
       {/* 2. Side-By-Side Distribution Circle Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Expenses Category Distribution Share */}
-        <motion.div 
-          variants={itemVariants} 
-          className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between"
-        >
+        <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-rose-50 dark:bg-rose-950/40 text-rose-500 rounded-xl">
@@ -326,13 +314,10 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
               لا توجد عمليات صرف مسجلة في هذه الفترة.
             </div>
           )}
-        </motion.div>
+        </div>
 
         {/* Income Source Distribution Share */}
-        <motion.div 
-          variants={itemVariants} 
-          className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between"
-        >
+        <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 rounded-xl">
@@ -400,7 +385,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
               لا توجد مصادر دخل مسجلة في هذه الفترة.
             </div>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   );
