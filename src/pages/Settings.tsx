@@ -4,7 +4,7 @@ import { cn, hapticFeedback, formatCurrency } from '../utils';
 import { 
   Layers, Wallet, Database, Sparkles, UserCircle, 
   ChevronLeft, Award, HelpCircle, CheckCircle, ShieldAlert,
-  Settings as SettingsIcon, Landmark, Info, Percent, Target, RefreshCw, PiggyBank, Loader2, HandCoins
+  Settings as SettingsIcon, Landmark, Info, Percent, Target, RefreshCw, PiggyBank, Loader2, HandCoins, BarChart3, History
 } from 'lucide-react';
 import { useAppContext } from '../store/AppContext';
 import CategoryManager from './settings/CategoryManager';
@@ -35,13 +35,14 @@ const itemVariants = {
 };
 
 const LAUNCHER_ITEMS = [
+  { path: '/analytics', name: 'التحليلات والإحصائيات البيانية', icon: BarChart3, desc: 'رسوم بيانية لتوزيع المصاريف ومقارنات وتيرة الإنفاق الأسبوعي 📊', bg: 'from-indigo-500/10 to-indigo-500/5 hover:border-indigo-500/30 border-indigo-500/15', iconColor: 'text-indigo-600' },
+  { path: '/transactions', name: 'سجل العمليات والمصروفات', icon: History, desc: 'استعراض وبحث في كامل الفواتير والمصروفات مع التصفية 📜', bg: 'from-slate-500/10 to-slate-500/5 hover:border-slate-500/30 border-slate-500/15', iconColor: 'text-slate-600' },
   { path: '/debts', name: 'الديون والقروض الشخصية', icon: HandCoins, desc: 'توثيق مستحقاتك لدى الآخرين والالتزامات وجدولة السداد 🤝', bg: 'from-amber-500/10 to-amber-500/5 hover:border-amber-500/30 border-amber-500/15', iconColor: 'text-amber-600' },
-  { path: '/budget', name: 'مخطط ومقارنة الميزانية الكلية', icon: Layers, desc: 'تحديد الميزانية الشهرية والتحليل الرسومي المباشر للفئات 📊', bg: 'from-rose-500/10 to-rose-500/5 hover:border-rose-500/30 border-rose-500/15', iconColor: 'text-rose-600' },
-  { path: '/savings-indicators', name: 'مؤشرات وفرص التوفير', icon: Percent, desc: 'حساب نسبة الادخار من الراتب ومحاكاة القفة 🇹🇳', bg: 'from-emerald-500/10 to-emerald-500/5 hover:border-emerald-500/30 border-emerald-500/15', iconColor: 'text-emerald-600' },
-  { path: '/savings', name: 'حصالة الادخار العائلية', icon: PiggyBank, desc: 'توفير مبالغ مخصصة للبيبي ومراجعة الأرصدة', bg: 'from-blue-500/10 to-blue-500/5 hover:border-blue-500/30 border-blue-500/15', iconColor: 'text-blue-600' },
-  { path: '/goals', name: 'الأهداف المالية الكبرى', icon: Target, desc: 'خطط ادخار مصروف الرعاية، الصحة، والتعليم الكلي', bg: 'from-indigo-500/10 to-indigo-500/5 hover:border-indigo-500/30 border-indigo-500/15', iconColor: 'text-indigo-600' },
-  { path: '/recurring', name: 'الفواتير والالتزامات المتكررة', icon: RefreshCw, desc: 'تنظيم مصاريف الكراء، فواتير STEG والصوناد شهرياً', bg: 'from-cyan-500/10 to-cyan-500/5 hover:border-cyan-500/30 border-cyan-500/15', iconColor: 'text-cyan-600' },
-  { path: '/assistant', name: 'مستشار مالي بالذكاء الاصطناعي', icon: Sparkles, desc: 'استشارة المساعد العائلي لترشيد ميزانيتكم اليومية', bg: 'from-purple-500/10 to-purple-500/5 hover:border-purple-500/30 border-purple-500/15', iconColor: 'text-purple-600' },
+  { path: '/income', name: 'إدارة الدخل والرواتب', icon: Wallet, desc: 'توثيق الراتب الشهري، المداخيل الإضافية ومصادر السيولة 💰', bg: 'from-emerald-500/10 to-emerald-500/5 hover:border-emerald-500/30 border-emerald-500/15', iconColor: 'text-emerald-600' },
+  { path: '/recurring', name: 'الفواتير والالتزامات المتكررة', icon: RefreshCw, desc: 'تنظيم مصاريف الكراء، فواتير STEG والصوناد شهرياً 🔄', bg: 'from-cyan-500/10 to-cyan-500/5 hover:border-cyan-500/30 border-cyan-500/15', iconColor: 'text-cyan-600' },
+  { path: '/goals', name: 'الأهداف المالية الكبرى', icon: Target, desc: 'خطط ادخار مصروف الرعاية، الصحة، والتعليم الكلي 🎯', bg: 'from-rose-500/10 to-rose-500/5 hover:border-rose-500/30 border-rose-500/15', iconColor: 'text-rose-600' },
+  { path: '/savings-indicators', name: 'مؤشرات وفرص التوفير', icon: Percent, desc: 'حساب نسبة الادخار من الراتب ومحاكاة القفة 🇹🇳', bg: 'from-teal-500/10 to-teal-500/5 hover:border-teal-500/30 border-teal-500/15', iconColor: 'text-teal-600' },
+  { path: '/assistant', name: 'مستشار مالي بالذكاء الاصطناعي', icon: Sparkles, desc: 'استشارة المساعد العائلي لترشيد ميزانيتكم اليومية 🤖', bg: 'from-purple-500/10 to-purple-500/5 hover:border-purple-500/30 border-purple-500/15', iconColor: 'text-purple-600' },
 ];
 
 const Settings = () => {

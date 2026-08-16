@@ -18,12 +18,11 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
-import Analytics from './Analytics';
 import BabyBudget from './BabyBudget';
 
 const FamilyReport: React.FC = () => {
   const { expenses, income, categories, budgets, firstDayOfMonth, currency = 'TND' } = useAppContext();
-  const [activeTab, setActiveTab] = React.useState<'report' | 'analytics' | 'baby'>('report');
+  const [activeTab, setActiveTab] = React.useState<'report' | 'baby'>('report');
   
   const currentMonth = getBudgetMonth(new Date(), firstDayOfMonth || 1);
   const budget = budgets?.find(b => b.month === currentMonth) || null;
@@ -255,30 +254,9 @@ const FamilyReport: React.FC = () => {
           <span className="text-sm">🍼</span>
           <span>ميزانية الرضيع يحيى</span>
         </button>
-        <button
-          onClick={() => { hapticFeedback('light'); setActiveTab('analytics'); }}
-          className={cn(
-            "flex-1 py-3 text-center rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer",
-            activeTab === 'analytics'
-              ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md font-bold scale-[1.02]"
-              : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-          )}
-        >
-          <Activity size={15} />
-          <span>التحليلات البيانية 📊</span>
-        </button>
       </div>
     </div>
   );
-
-  if (activeTab === 'analytics') {
-    return (
-      <div className="space-y-6">
-        {renderTabSwitcher()}
-        <Analytics />
-      </div>
-    );
-  }
 
   if (activeTab === 'baby') {
     return (

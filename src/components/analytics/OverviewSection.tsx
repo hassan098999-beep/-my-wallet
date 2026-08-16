@@ -104,73 +104,73 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
         {/* Financial Health Score Dial (5 cols on lg) */}
         <motion.div 
           variants={itemVariants} 
-          className="lg:col-span-5 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 rounded-3xl p-6 text-white border border-slate-800 shadow-md relative overflow-hidden flex flex-col justify-between"
+          className="lg:col-span-5 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 rounded-3xl p-4 sm:p-6 text-white border border-slate-800 shadow-md relative overflow-hidden flex flex-col justify-between"
         >
           <div className="absolute -top-12 -right-12 w-40 h-40 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
 
           <div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300 flex items-center gap-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300 flex items-center gap-1.5 shrink-0">
                 <Sparkles size={13} className="text-amber-400" />
                 <span>مؤشر العافية المالية الذكي</span>
               </span>
-              <span className={cn("text-[10px] font-black px-2.5 py-1 rounded-full border", scoreTier.bg, scoreTier.color, scoreTier.border)}>
+              <span className={cn("text-[10px] font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border text-center truncate", scoreTier.bg, scoreTier.color, scoreTier.border)}>
                 {scoreTier.label}
               </span>
             </div>
 
-            <div className="my-5 flex items-center justify-center gap-6">
+            <div className="my-4 sm:my-5 flex items-center justify-center gap-4 sm:gap-6">
               {/* Circular Gauge */}
-              <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+              <div className="relative w-24 h-24 sm:w-28 sm:h-28 shrink-0 flex items-center justify-center">
                 <svg className="w-full h-full -rotate-90">
                   <circle
-                    cx="56"
-                    cy="56"
-                    r="46"
+                    cx="48"
+                    cy="48"
+                    r="40"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="8"
+                    strokeWidth="7"
                     className="text-white/10"
                   />
                   <motion.circle
-                    cx="56"
-                    cy="56"
-                    r="46"
+                    cx="48"
+                    cy="48"
+                    r="40"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="8"
-                    strokeDasharray="289"
-                    initial={{ strokeDashoffset: 289 }}
-                    animate={{ strokeDashoffset: 289 - (289 * (healthScore / 100)) }}
+                    strokeWidth="7"
+                    strokeDasharray="251"
+                    initial={{ strokeDashoffset: 251 }}
+                    animate={{ strokeDashoffset: 251 - (251 * (healthScore / 100)) }}
                     transition={{ duration: 1.2, ease: "easeOut" }}
                     className={healthScore >= 70 ? "text-emerald-400" : healthScore >= 50 ? "text-indigo-400" : healthScore >= 35 ? "text-amber-400" : "text-rose-400"}
                     strokeLinecap="round"
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-black font-mono tracking-tighter">{healthScore}</span>
-                  <span className="text-[9px] text-slate-400 font-bold uppercase">من 100</span>
+                  <span className="text-2xl sm:text-3xl font-black font-mono tracking-tighter">{healthScore}</span>
+                  <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase">من 100</span>
                 </div>
               </div>
 
               {/* Quick Health Breakdown Factors */}
-              <div className="space-y-2 text-xs flex-1">
+              <div className="space-y-1.5 sm:space-y-2 text-xs flex-1 min-w-0">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-300 font-bold">نسبة الادخار:</span>
-                  <span className={cn("font-mono font-black", savingsRate >= 20 ? "text-emerald-400" : savingsRate > 0 ? "text-indigo-300" : "text-rose-400")}>
+                  <span className="text-slate-300 font-bold truncate">نسبة الادخار:</span>
+                  <span className={cn("font-mono font-black shrink-0", savingsRate >= 20 ? "text-emerald-400" : savingsRate > 0 ? "text-indigo-300" : "text-rose-400")}>
                     {savingsRate}%
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-300 font-bold">التحكم في النفقات:</span>
-                  <span className={cn("font-mono font-black", netBalance >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                  <span className="text-slate-300 font-bold truncate">التحكم في النفقات:</span>
+                  <span className={cn("font-mono font-black shrink-0", netBalance >= 0 ? "text-emerald-400" : "text-rose-400")}>
                     {netBalance >= 0 ? 'فائض مالي' : 'عجز مسجل'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-300 font-bold">أيام بلا صرف:</span>
-                  <span className="font-mono font-black text-amber-400">
+                  <span className="text-slate-300 font-bold truncate">أيام بلا صرف:</span>
+                  <span className="font-mono font-black text-amber-400 shrink-0">
                     {noSpendDaysCount} أيام
                   </span>
                 </div>
@@ -178,18 +178,18 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
             </div>
           </div>
 
-          <p className="text-[11px] text-slate-300 font-medium leading-relaxed bg-white/5 p-3 rounded-2xl border border-white/5">
+          <p className="text-[10px] sm:text-[11px] text-slate-300 font-medium leading-relaxed bg-white/5 p-2.5 sm:p-3 rounded-2xl border border-white/5 mt-1">
             {scoreTier.desc}
           </p>
         </motion.div>
 
         {/* 3 Core Inflow/Outflow/Net Cards (7 cols on lg) */}
-        <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5">
           {/* Net Surplus Card */}
           <motion.div 
             variants={itemVariants} 
             className={cn(
-              "rounded-3xl p-5 border flex flex-col justify-between transition-all",
+              "rounded-3xl p-4 sm:p-5 border flex flex-col justify-between transition-all",
               netBalance >= 0 
                 ? "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 shadow-xs" 
                 : "bg-rose-50/50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/50"
@@ -200,12 +200,12 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">الصافي المتبقي</span>
                 <Wallet size={16} className={netBalance >= 0 ? "text-emerald-500" : "text-rose-500"} />
               </div>
-              <div className={cn("text-xl md:text-2xl font-black font-mono", netBalance >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
+              <div className={cn("text-lg sm:text-xl md:text-2xl font-black font-mono truncate", netBalance >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
                 {formatCurrency(Math.abs(netBalance), currency)}
               </div>
             </div>
 
-            <div className="mt-4 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
+            <div className="mt-3 sm:mt-4 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
               <span className="text-slate-400">حالة الرصيد:</span>
               <span className={cn(netBalance >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
                 {netBalance >= 0 ? `توفير ${savingsRate}%` : 'عجز مطلوب تغطيته'}
@@ -216,19 +216,19 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
           {/* Income Card */}
           <motion.div 
             variants={itemVariants} 
-            className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between"
+            className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between text-slate-400 mb-2">
                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">إجمالي المقبوضات</span>
                 <ArrowDownRight size={16} className="text-emerald-500" />
               </div>
-              <div className="text-xl md:text-2xl font-black font-mono text-slate-900 dark:text-white">
+              <div className="text-lg sm:text-xl md:text-2xl font-black font-mono text-slate-900 dark:text-white truncate">
                 {formatCurrency(totalMonthlyIncome, currency)}
               </div>
             </div>
 
-            <div className="mt-4 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
+            <div className="mt-3 sm:mt-4 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
               <span className="text-slate-400">{filteredIncomeLength} مصادر دخل</span>
               {prevMonthIncome > 0 && (
                 <span className={cn("font-mono", incomeDiff >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500")}>
@@ -241,19 +241,19 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
           {/* Expenses Card */}
           <motion.div 
             variants={itemVariants} 
-            className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between"
+            className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between text-slate-400 mb-2">
                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">إجمالي المصروفات</span>
                 <ArrowUpRight size={16} className="text-rose-500" />
               </div>
-              <div className="text-xl md:text-2xl font-black font-mono text-slate-900 dark:text-white">
+              <div className="text-lg sm:text-xl md:text-2xl font-black font-mono text-slate-900 dark:text-white truncate">
                 {formatCurrency(totalMonthlyExpense, currency)}
               </div>
             </div>
 
-            <div className="mt-4 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
+            <div className="mt-3 sm:mt-4 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
               <span className="text-slate-400">{filteredExpensesLength} عملية صرف</span>
               {prevMonthExpenses > 0 && (
                 <span className={cn("font-mono", expenseDiff <= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500")}>

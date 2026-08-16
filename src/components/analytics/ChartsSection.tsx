@@ -72,8 +72,8 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
     <div className="space-y-6 text-right w-full" dir="rtl">
       
       {/* 1. Main Interactive Flow & Trend Graph */}
-      <div className="bg-white dark:bg-slate-900 p-5 md:p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs relative overflow-hidden w-full">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+      <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs relative overflow-hidden w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5 sm:mb-6">
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
               <BarChart3 size={18} />
@@ -84,14 +84,14 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
                  chartSubTab === 'cumulative' ? 'منحنى الرصيد التراكمي وتطور الفائض' :
                  'المقارنة السنوية عبر الأشهر'}
               </h3>
-              <p className="text-[11px] font-semibold text-slate-400">
+              <p className="text-[10px] sm:text-[11px] font-semibold text-slate-400">
                 متابعة بصرية دقيقة لوتيرة الصرف ومسار السيولة
               </p>
             </div>
           </div>
 
           {/* Sub-tab Pill Switcher */}
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 w-full sm:w-auto">
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 w-full sm:w-auto overflow-x-auto no-scrollbar">
             {[
               { id: 'daily', label: 'حركة يومية ⚡' },
               { id: 'cumulative', label: 'الرصيد التراكمي 📈' },
@@ -104,7 +104,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
                   setChartSubTab(tab.id as any);
                 }}
                 className={cn(
-                  "flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer",
+                  "flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap shrink-0",
                   chartSubTab === tab.id 
                     ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" 
                     : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
@@ -117,10 +117,10 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
         </div>
 
         {/* Chart Canvas Area */}
-        <div className="h-64 md:h-72 w-full min-h-[260px]">
+        <div className="h-60 sm:h-72 w-full min-h-[240px]">
           {chartSubTab === 'daily' && hasDailyData ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dailyData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+              <BarChart data={dailyData} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.35} />
                 <XAxis 
                   dataKey="date" 
@@ -149,7 +149,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
             </ResponsiveContainer>
           ) : chartSubTab === 'cumulative' && hasDailyData ? (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={cumulativeData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+              <AreaChart data={cumulativeData} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
@@ -187,7 +187,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
             </ResponsiveContainer>
           ) : chartSubTab === 'monthly' && hasMonthlyData ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+              <BarChart data={monthlyData} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.35} />
                 <XAxis 
                   dataKey="month" 
@@ -217,25 +217,25 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
         </div>
 
         {/* Legend indicator bar */}
-        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-4">
+        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-emerald-500" />
-              <span className="text-slate-600 dark:text-slate-400 font-bold text-[11px]">المقبوضات والدخل</span>
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <span className="text-slate-600 dark:text-slate-400 font-bold text-[10px] sm:text-[11px]">المقبوضات والدخل</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-rose-500" />
-              <span className="text-slate-600 dark:text-slate-400 font-bold text-[11px]">المصروفات اليومية</span>
+              <div className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+              <span className="text-slate-600 dark:text-slate-400 font-bold text-[10px] sm:text-[11px]">المصروفات اليومية</span>
             </div>
             {dailyBudget > 0 && chartSubTab === 'daily' && (
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-0.5 bg-amber-500" />
-                <span className="text-slate-600 dark:text-slate-400 font-bold text-[11px]">الحد اليومي المتاح ({formatCurrency(dailyBudget, currency)})</span>
+                <span className="text-slate-600 dark:text-slate-400 font-bold text-[10px] sm:text-[11px]">الحد اليومي المتاح ({formatCurrency(dailyBudget, currency)})</span>
               </div>
             )}
           </div>
 
-          <span className="text-[11px] text-slate-400 font-mono font-bold">
+          <span className="text-[10px] sm:text-[11px] text-slate-400 font-mono font-bold">
             صافي الفترة: <strong className={cn(totalMonthlyIncome >= totalMonthlyExpense ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
               {formatCurrency(totalMonthlyIncome - totalMonthlyExpense, currency)}
             </strong>

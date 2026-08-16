@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, ChartPie, History, Settings, Plus, Sparkles, Wallet, RefreshCcw, Target, PiggyBank, SlidersHorizontal, Percent, Baby, Zap, HandCoins } from 'lucide-react';
+import { Home, ChartPie, History, Plus, Sparkles, SlidersHorizontal, Baby, HandCoins, BarChart3, PiggyBank } from 'lucide-react';
 import { cn, hapticFeedback } from '../utils';
 import { motion } from 'motion/react';
 import { useAppContext } from '../store/AppContext';
@@ -9,12 +9,13 @@ const mainNavItems = [
   { path: '/', name: 'الرئيسية العائلية', icon: Home },
   { path: '/budget', name: 'الميزانية والالتزامات', icon: ChartPie },
   { path: '/savings', name: 'منصة الادخار الذكي', icon: PiggyBank },
-  { path: '/family', name: 'التقارير والتحليلات', icon: Baby },
+  { path: '/family', name: 'التقارير العائلية', icon: Baby },
 ];
 
 const subNavItems = [
-  { path: '/debts', name: 'الديون والقروض', icon: HandCoins },
+  { path: '/analytics', name: 'التحليلات والإحصائيات', icon: BarChart3 },
   { path: '/transactions', name: 'سجل العمليات الكامل', icon: History },
+  { path: '/debts', name: 'الديون والقروض', icon: HandCoins },
   { path: '/assistant', name: 'المساعد الذكي AI', icon: Sparkles },
   { path: '/settings', name: 'إعدادات النظام', icon: SlidersHorizontal },
 ];

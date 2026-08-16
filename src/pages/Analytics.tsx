@@ -20,13 +20,10 @@ import {
   Calendar, 
   Activity, 
   Target, 
-  ChartPie as PieChartIcon, 
   Sparkles,
-  TrendingUp,
   BarChart3,
-  Sliders,
-  Wallet,
-  Clock
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import { useWindowSize } from '../hooks/useWindowSize';
 import { useBehavioralEngine } from '../hooks/useBehavioralEngine';
@@ -68,12 +65,40 @@ const Analytics = () => {
     const tabParam = searchParams.get('tab') || (location.state as any)?.tab;
     if (tabParam && ['overview', 'charts', 'budget', 'weekly'].includes(tabParam)) {
       setActiveTab(tabParam as any);
-      // Auto-scroll to tab content smoothly if redirected
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [searchParams, location.state]);
 
   const budget = useMemo(() => budgets?.find(b => b.month === selectedMonth), [budgets, selectedMonth]);
+
+  const displayMonthName = useMemo(() => {
+    try {
+      const d = parseISO(`${selectedMonth}-01`);
+      return format(d, 'MMMM yyyy', { locale: ar });
+    } catch {
+      return selectedMonth;
+    }
+  }, [selectedMonth]);
+
+  const handlePrevMonth = () => {
+    try {
+      const d = parseISO(`${selectedMonth}-01`);
+      const prev = subMonths(d, 1);
+      setSelectedMonth(format(prev, 'yyyy-MM'));
+      setPeriodPreset('custom');
+      hapticFeedback('light');
+    } catch {}
+  };
+
+  const handleNextMonth = () => {
+    try {
+      const d = parseISO(`${selectedMonth}-01`);
+      const next = subMonths(d, -1);
+      setSelectedMonth(format(next, 'yyyy-MM'));
+      setPeriodPreset('custom');
+      hapticFeedback('light');
+    } catch {}
+  };
 
   // Handle Preset Changes
   const handlePresetSelect = (preset: PeriodPreset) => {
@@ -300,7 +325,7 @@ const Analytics = () => {
 
     const incomeMap = income.reduce((acc, i) => {
       if (i.isTransfer) return acc;
-      const d = e => (e.parsedDate || parseISO(e.date));
+      const d = (e: any) => (e.parsedDate || parseISO(e.date));
       const m = getBudgetMonth(d(i), firstDayOfMonth);
       acc[m] = (acc[m] || 0) + i.amount;
       return acc;
@@ -336,7 +361,7 @@ const Analytics = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-5 p-4 pb-32 relative text-right max-w-7xl mx-auto"
+      className="space-y-4 sm:space-y-6 px-3 sm:px-4 py-4 pb-32 relative text-right max-w-7xl mx-auto w-full"
       dir="rtl"
     >
       {/* 1. Header & Period Filters */}
@@ -344,9 +369,9 @@ const Analytics = () => {
         title="التحليل المالي والإحصائيات"
         subtitle="لوحة مؤشرات تنفيذية ورسوم بيانية ذكية لتتبع صحتك المالية وتدفقاتك"
         action={
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
             {/* Quick Period Presets */}
-            <div className="flex flex-wrap bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 gap-1 select-none">
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800/90 p-1 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 gap-1 overflow-x-auto no-scrollbar max-w-full">
               {[
                 { id: 'this_month', label: 'هذا الشهر' },
                 { id: 'last_month', label: 'الشهر الماضي' },
@@ -358,7 +383,7 @@ const Analytics = () => {
                   key={p.id}
                   onClick={() => handlePresetSelect(p.id as PeriodPreset)}
                   className={cn(
-                    "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                    "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0",
                     periodPreset === p.id 
                       ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs" 
                       : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
@@ -369,75 +394,87 @@ const Analytics = () => {
               ))}
             </div>
             
-            {/* Date Picker Input (Only shown for month or custom) */}
-            {(periodPreset === 'this_month' || periodPreset === 'last_month') ? (
-              <div className="relative group">
-                <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 text-indigo-500 pointer-events-none" size={13} />
-                <input
-                  type="month"
-                  value={selectedMonth}
-                  onChange={(e) => {
-                    setSelectedMonth(e.target.value);
-                    setPeriodPreset('custom');
-                  }}
-                  className="pr-9 pl-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold shadow-xs font-mono cursor-pointer outline-none focus:ring-2 focus:ring-indigo-500/20"
-                />
+            {/* Month Navigator with Next / Prev Controls */}
+            {(periodPreset === 'this_month' || periodPreset === 'last_month' || periodPreset === 'custom') && (
+              <div className="flex items-center justify-between sm:justify-start gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-2 py-1 shadow-xs">
+                <button
+                  onClick={handleNextMonth}
+                  aria-label="الشهر التالي"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <ChevronRight size={16} />
+                </button>
+
+                <div className="relative flex items-center justify-center gap-1.5 px-2">
+                  <Calendar size={13} className="text-indigo-500 shrink-0" />
+                  <span className="text-xs font-black text-slate-800 dark:text-slate-200 whitespace-nowrap select-none">
+                    {displayMonthName}
+                  </span>
+                  {/* Invisible native month picker overlay for quick jump */}
+                  <input
+                    type="month"
+                    value={selectedMonth}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setSelectedMonth(e.target.value);
+                        setPeriodPreset('custom');
+                      }
+                    }}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    title="اختر شهراً محدداً"
+                  />
+                </div>
+
+                <button
+                  onClick={handlePrevMonth}
+                  aria-label="الشهر السابق"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <ChevronLeft size={16} />
+                </button>
               </div>
-            ) : periodPreset === 'custom' ? (
-              <div className="flex gap-1.5">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold shadow-xs font-mono cursor-pointer outline-none"
-                />
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold shadow-xs font-mono cursor-pointer outline-none"
-                />
-              </div>
-            ) : null}
+            )}
           </div>
         }
       />
 
-      {/* 2. Unified Refined 4-Tab Navigation Bar */}
+      {/* 2. Unified Refined 4-Tab Navigation Bar with Full Mobile Horizontal Scroll Support */}
       <motion.div 
         variants={itemVariants} 
-        className="flex p-1 bg-slate-100/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 max-w-2xl mx-auto w-full"
+        className="w-full max-w-full overflow-x-auto no-scrollbar py-0.5"
       >
-        {[
-          { id: 'overview', label: 'النظرة التنفيذية', icon: Activity },
-          { id: 'charts', label: 'الرسوم والتدفقات', icon: BarChart3 },
-          { id: 'budget', label: 'قاعدة 50/30/20', icon: Target },
-          { id: 'weekly', label: 'المقارنة الأسبوعية', icon: Sparkles }
-        ].map(tab => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                hapticFeedback('light');
-                setActiveTab(tab.id as any);
-              }}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
-                activeTab === tab.id 
-                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs" 
-                  : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
-              )}
-            >
-              <Icon size={14} className={activeTab === tab.id ? "text-indigo-600 dark:text-indigo-400" : ""} />
-              <span className="truncate">{tab.label}</span>
-            </button>
-          );
-        })}
+        <div className="flex items-center gap-1.5 p-1.5 bg-slate-100/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 min-w-full sm:min-w-0 sm:max-w-2xl sm:mx-auto">
+          {[
+            { id: 'overview', label: 'النظرة التنفيذية', icon: Activity },
+            { id: 'charts', label: 'الرسوم والتدفقات', icon: BarChart3 },
+            { id: 'budget', label: 'قاعدة 50/30/20', icon: Target },
+            { id: 'weekly', label: 'المقارنة الأسبوعية', icon: Sparkles }
+          ].map(tab => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  hapticFeedback('light');
+                  setActiveTab(tab.id as any);
+                }}
+                className={cn(
+                  "flex-1 min-w-[125px] sm:min-w-0 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0",
+                  activeTab === tab.id 
+                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-black" 
+                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 font-semibold"
+                )}
+              >
+                <Icon size={14} className={cn("shrink-0", activeTab === tab.id ? "text-indigo-600 dark:text-indigo-400" : "")} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </motion.div>
 
       {/* 3. Active Tab Content Panel */}
-      <div className="relative min-h-[420px]">
+      <div className="relative min-h-[420px] w-full">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -445,6 +482,7 @@ const Analytics = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15 }}
+            className="w-full"
           >
             {activeTab === 'overview' && (
               <OverviewSection
