@@ -1,13 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Bell, X, Zap, AlertTriangle, Flame, ShieldAlert } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, X, Zap, AlertTriangle, Flame, ShieldAlert, BarChart3, Sparkles } from 'lucide-react';
 import { useAppContext } from '../store/AppContext';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn, formatCurrency } from '../utils';
+import { cn, formatCurrency, hapticFeedback } from '../utils';
 import { notifyPaceAlertIfAppropriate } from '../utils/paceAnalysis';
 import toast from 'react-hot-toast';
 
 const NotificationBell = () => {
+  const navigate = useNavigate();
   const { notifications, removeNotification, recurringExpenses, expenses, income, currency, categories } = useAppContext();
   const { overallPercentage, totalSpent, globalBudgetNum, categoryStatuses, categoryPaces, fastBurningPaces, remainingDays } = useBudgetStatus();
   const [isOpen, setIsOpen] = useState(false);
@@ -191,6 +193,48 @@ const NotificationBell = () => {
     return null;
   }, [expenses, income]);
 
+  // Interactive toast for weekly summary report
+  const showInteractiveWeeklyToast = (msg: string) => {
+    toast.custom((t) => (
+      <div
+        onClick={() => {
+          hapticFeedback('medium');
+          toast.dismiss(t.id);
+          navigate('/analytics?tab=weekly');
+        }}
+        className={cn(
+          "max-w-md w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xl rounded-2xl border-2 border-indigo-500/60 p-4 text-right cursor-pointer transition-all hover:scale-[1.02] hover:border-indigo-600 group pointer-events-auto",
+          t.visible ? 'animate-enter' : 'animate-leave'
+        )}
+        dir="rtl"
+      >
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/15 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5">
+            <BarChart3 size={20} />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">تذكير الميزانية الأسبوعية 🔔</span>
+              <span className="text-[10px] bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">
+                اضغط لعرض التقرير 👈
+              </span>
+            </div>
+            <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-1 leading-relaxed">
+              {msg}
+            </p>
+            <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-black text-indigo-600 dark:text-indigo-400 group-hover:underline">
+              <span>انقر للانتقال مباشرة لتقرير المقارنة الأسبوعي 📊</span>
+              <span>←</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    ), {
+      duration: 8000,
+      position: 'top-center'
+    });
+  };
+
   // Toast dynamic weekly report on load if Sunday
   useEffect(() => {
     const today = new Date();
@@ -199,11 +243,7 @@ const NotificationBell = () => {
       const todayStr = today.toISOString().split('T')[0];
       const hasToasted = sessionStorage.getItem(`masarifi_weekly_toast_${todayStr}`);
       if (!hasToasted) {
-        toast(weeklySummaryAlert.message, {
-          icon: '📊',
-          duration: 7000,
-          position: 'top-center'
-        });
+        showInteractiveWeeklyToast(weeklySummaryAlert.message);
         sessionStorage.setItem(`masarifi_weekly_toast_${todayStr}`, 'true');
       }
     }
@@ -274,6 +314,20 @@ const NotificationBell = () => {
     }
   };
 
+  const handleNotificationClick = (n: any) => {
+    hapticFeedback('light');
+    setIsOpen(false);
+    if (n.id === 'virtual-weekly-summary' || n.id.startsWith('virtual-pace-') || n.id === 'virtual-budget-alert' || n.id.startsWith('virtual-subbudget-')) {
+      navigate('/analytics?tab=weekly');
+    } else if (n.id.startsWith('virtual-recurring-')) {
+      navigate('/recurring');
+    } else if (n.id === 'virtual-daily-reminder-24h') {
+      navigate('/transactions');
+    } else {
+      navigate('/analytics?tab=weekly');
+    }
+  };
+
   return (
     <div className="relative">
       <button aria-label="الإشعارات" onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 relative cursor-pointer">
@@ -291,8 +345,8 @@ const NotificationBell = () => {
             exit={{ opacity: 0, y: 10 }}
             className="absolute left-0 mt-2 w-84 sm:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 p-4 text-right"
           >
-            <div className="flex justify-between items-center mb-4">
-              <button aria-label="إغلاق الإشعارات" onClick={() => setIsOpen(false)} className="hover:text-rose-500 transition-colors"><X size={16} /></button>
+            <div className="flex justify-between items-center mb-3">
+              <button aria-label="إغلاق الإشعارات" onClick={() => setIsOpen(false)} className="hover:text-rose-500 transition-colors cursor-pointer"><X size={16} /></button>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-800/40">
                   {visibleNotifications.length} تنبيه
@@ -300,6 +354,33 @@ const NotificationBell = () => {
                 <h3 className="font-bold text-slate-900 dark:text-white">نظام التنبيهات الذكي</h3>
               </div>
             </div>
+
+            {/* Quick action bar for weekly report / test trigger */}
+            <div className="mb-3 p-2 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-900/40 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate('/analytics?tab=weekly');
+                }}
+                className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <BarChart3 size={13} />
+                <span>فتح التقرير والمقارنة الأسبوعية 📊</span>
+              </button>
+              <button
+                onClick={() => {
+                  showInteractiveWeeklyToast(
+                    weeklySummaryAlert?.message || "تقرير الأحد الأسبوعي: مقارنة أداء ميزانيتك ومصاريفك جاهزة للتحليل!"
+                  );
+                }}
+                className="text-[10px] bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 px-2 py-1 rounded-lg border border-indigo-200/60 dark:border-indigo-800 font-bold text-indigo-700 dark:text-indigo-300 transition-colors cursor-pointer flex items-center gap-1"
+                title="معاينة إشعار التذكير التفاعلي"
+              >
+                <Sparkles size={11} className="text-amber-500" />
+                <span>تجربة التنبيه</span>
+              </button>
+            </div>
+
             <div className="space-y-2.5 max-h-72 overflow-y-auto custom-scrollbar">
               {visibleNotifications.length === 0 ? (
                 <div className="text-center py-6">
@@ -312,37 +393,68 @@ const NotificationBell = () => {
               ) : (
                 visibleNotifications.map(n => {
                   const isPace = n.id.startsWith('virtual-pace-') || n.type === 'pace_warning';
+                  const isWeekly = n.id === 'virtual-weekly-summary';
+                  const isRecurring = n.id.startsWith('virtual-recurring-');
+
                   return (
-                    <div key={n.id} className={cn(
-                      "p-3 rounded-xl text-xs font-medium leading-relaxed shadow-xs border text-right relative group/item transition-all",
-                      isPace ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 text-amber-950 dark:text-amber-200' :
-                      n.type === 'budget' ? 'bg-indigo-50/60 dark:bg-indigo-950/20 border-indigo-100 dark:border-indigo-900/30 text-indigo-950 dark:text-indigo-200' :
-                      n.type === 'achievement' ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-950 dark:text-emerald-200' :
-                      'bg-rose-50/60 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30 text-rose-950 dark:text-rose-200'
-                    )}>
+                    <div 
+                      key={n.id} 
+                      onClick={() => handleNotificationClick(n)}
+                      className={cn(
+                        "p-3 rounded-xl text-xs font-medium leading-relaxed shadow-xs border text-right relative group/item transition-all cursor-pointer hover:shadow-md",
+                        isWeekly ? 'bg-indigo-50/90 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200' :
+                        isPace ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 text-amber-950 dark:text-amber-200' :
+                        n.type === 'budget' ? 'bg-indigo-50/60 dark:bg-indigo-950/20 border-indigo-100 dark:border-indigo-900/30 text-indigo-950 dark:text-indigo-200' :
+                        n.type === 'achievement' ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-950 dark:text-emerald-200' :
+                        'bg-rose-50/60 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30 text-rose-950 dark:text-rose-200'
+                      )}
+                    >
                       {isPace && (
                         <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-black text-amber-700 dark:text-amber-400">
                           <Zap size={12} className="text-amber-500 fill-amber-500 animate-pulse" />
                           <span>تحليل سرعة الإنفاق اليومي</span>
                         </div>
                       )}
+                      {isWeekly && (
+                        <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-black text-indigo-700 dark:text-indigo-300">
+                          <BarChart3 size={12} className="text-indigo-600" />
+                          <span>تذكير الميزانية والمقارنة الأسبوعية</span>
+                        </div>
+                      )}
                       <div className="pl-6">
                         <p className="text-[11px] leading-relaxed font-semibold">{n.message}</p>
                       </div>
                       <button
-                        onClick={() => handleDismiss(n.id)}
-                        className="absolute left-2.5 top-2.5 p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDismiss(n.id);
+                        }}
+                        className="absolute left-2.5 top-2.5 p-1 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors cursor-pointer"
                         title="إغلاق"
                       >
                         <X size={12} />
                       </button>
+
                       <div className="flex justify-between items-center mt-2.5 pt-1.5 border-t border-black/5 dark:border-white/5">
-                        <span className="text-[9px] text-slate-400 font-mono">
-                          {new Date(n.createdAt).toLocaleTimeString('ar-TN', { hour: '2-digit', minute: '2-digit' })}
+                        <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 group-hover/item:underline">
+                          {isWeekly ? '📊 اضغط لفتح التقرير الأسبوعي ←' : 
+                           isRecurring ? '⏱️ عرض المصاريف المتكررة ←' : 
+                           '📊 عرض التقرير والتحليلات ←'}
                         </span>
-                        <button onClick={() => handleDismiss(n.id)} className="text-[10px] font-bold text-slate-500 hover:text-rose-500 cursor-pointer">
-                          تجاهل
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] text-slate-400 font-mono">
+                            {new Date(n.createdAt).toLocaleTimeString('ar-TN', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDismiss(n.id);
+                            }} 
+                            className="text-[10px] font-bold text-slate-500 hover:text-rose-500 cursor-pointer"
+                          >
+                            تجاهل
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );

@@ -1,13 +1,15 @@
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
-import { formatCurrency, cn, getBudgetRange, getBudgetMonth, getWeekRange, safeParseISO } from '../utils';
-import { TriangleAlert, CircleAlert, TrendingUp, X, Zap, Calendar, Flame, Gauge, ArrowDownRight, Clock } from 'lucide-react';
+import { formatCurrency, cn, getBudgetRange, getBudgetMonth, getWeekRange, safeParseISO, hapticFeedback } from '../utils';
+import { TriangleAlert, CircleAlert, TrendingUp, X, Zap, Calendar, Flame, Gauge, ArrowDownRight, Clock, ArrowLeft, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DynamicIcon } from './DynamicIcon';
 import { BudgetPeriod } from '../types';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
 
 export const BudgetAlerts = () => {
+  const navigate = useNavigate();
   const { expenses, budgets, currency, removeNotification, notifications = [], firstDayOfMonth, categories = [] } = useAppContext();
   const { categoryPaces = [], fastBurningPaces = [], remainingDays, remainingDaysInWeek } = useBudgetStatus();
 
@@ -60,20 +62,36 @@ export const BudgetAlerts = () => {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="relative overflow-hidden bg-rose-500 text-white p-4 md:p-6 rounded-2xl shadow-sm group text-right"
+            onClick={() => {
+              hapticFeedback('medium');
+              navigate('/analytics?tab=weekly');
+            }}
+            className="relative overflow-hidden bg-rose-500 hover:bg-rose-600 text-white p-4 md:p-6 rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition-all group text-right"
           >
             <div className="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
-            <div className="relative z-10 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-md">
-                <CircleAlert size={24} className="text-white" />
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-md">
+                  <CircleAlert size={24} className="text-white" />
+                </div>
+                <div className="flex-1 text-right">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-sm font-black uppercase tracking-widest mb-1">
+                      {overallPeriod === 'weekly' ? 'تجاوزت الميزانية الأسبوعية الإجمالية! ⚠️' : 'تجاوزت الميزانية الشهرية الإجمالية! ⚠️'}
+                    </h4>
+                    <span className="text-[10px] bg-white/25 px-2 py-0.5 rounded-full font-bold">
+                      اضغط لعرض التقرير 📊
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold opacity-90">
+                    لقد تجاوزت ميزانيتك {overallPeriod === 'weekly' ? 'لهذا الأسبوع' : 'لهذا الشهر'} بمقدار <span className="underline decoration-2 underline-offset-4">{formatCurrency(activeTotalExpense - budget.amount, currency)}</span>. يرجى ترشيد مصاريفك.
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 text-right">
-                <h4 className="text-sm font-black uppercase tracking-widest mb-1">
-                  {overallPeriod === 'weekly' ? 'تجاوزت الميزانية الأسبوعية الإجمالية! ⚠️' : 'تجاوزت الميزانية الشهرية الإجمالية! ⚠️'}
-                </h4>
-                <p className="text-xs font-bold opacity-90">
-                  لقد تجاوزت ميزانيتك {overallPeriod === 'weekly' ? 'لهذا الأسبوع' : 'لهذا الشهر'} بمقدار <span className="underline decoration-2 underline-offset-4">{formatCurrency(activeTotalExpense - budget.amount, currency)}</span>. يرجى ترشيد مصاريفك.
-                </p>
+
+              <div className="flex items-center gap-1.5 text-xs font-black bg-white/20 hover:bg-white/30 px-3 py-2 rounded-xl shrink-0 self-end sm:self-center transition-colors">
+                <BarChart3 size={15} />
+                <span>عرض التقرير والمقارنة الأسبوعية ←</span>
               </div>
             </div>
           </motion.div>
@@ -85,20 +103,36 @@ export const BudgetAlerts = () => {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="relative overflow-hidden bg-amber-500 text-white p-4 md:p-6 rounded-2xl shadow-sm group text-right"
+            onClick={() => {
+              hapticFeedback('medium');
+              navigate('/analytics?tab=weekly');
+            }}
+            className="relative overflow-hidden bg-amber-500 hover:bg-amber-600 text-white p-4 md:p-6 rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition-all group text-right"
           >
             <div className="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
-            <div className="relative z-10 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-md">
-                <TriangleAlert size={24} className="text-white" />
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-md">
+                  <TriangleAlert size={24} className="text-white" />
+                </div>
+                <div className="flex-1 text-right">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-sm font-black uppercase tracking-widest mb-1">
+                      {overallPeriod === 'weekly' ? 'اقتربت من الحد الأقصى للميزانية الأسبوعية!' : 'اقتربت من الحد الأقصى للميزانية الشهرية!'}
+                    </h4>
+                    <span className="text-[10px] bg-white/25 px-2 py-0.5 rounded-full font-bold">
+                      اضغط لعرض التقرير 📊
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold opacity-90">
+                    لقد استهلكت <span className="text-lg font-black">{Math.round(percentSpent)}%</span> من ميزانيتك {overallPeriod === 'weekly' ? 'لهذا الأسبوع' : 'لهذا الشهر'}. تبقى لك <span className="underline decoration-2 underline-offset-4">{formatCurrency(budget.amount - activeTotalExpense, currency)}</span> فقط.
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 text-right">
-                <h4 className="text-sm font-black uppercase tracking-widest mb-1">
-                  {overallPeriod === 'weekly' ? 'اقتربت من الحد الأقصى للميزانية الأسبوعية!' : 'اقتربت من الحد الأقصى للميزانية الشهرية!'}
-                </h4>
-                <p className="text-xs font-bold opacity-90">
-                  لقد استهلكت <span className="text-lg font-black">{Math.round(percentSpent)}%</span> من ميزانيتك {overallPeriod === 'weekly' ? 'لهذا الأسبوع' : 'لهذا الشهر'}. تبقى لك <span className="underline decoration-2 underline-offset-4">{formatCurrency(budget.amount - activeTotalExpense, currency)}</span> فقط.
-                </p>
+
+              <div className="flex items-center gap-1.5 text-xs font-black bg-white/20 hover:bg-white/30 px-3 py-2 rounded-xl shrink-0 self-end sm:self-center transition-colors">
+                <BarChart3 size={15} />
+                <span>عرض التقرير الأسبوعي المفصل ←</span>
               </div>
             </div>
           </motion.div>
@@ -116,13 +150,17 @@ export const BudgetAlerts = () => {
               initial={{ opacity: 0, y: 15, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
+              onClick={() => {
+                hapticFeedback('light');
+                navigate('/analytics?tab=weekly');
+              }}
               className={cn(
-                "relative overflow-hidden p-4 rounded-2xl shadow-xs border text-right transition-all",
+                "relative overflow-hidden p-4 rounded-2xl shadow-xs border text-right transition-all cursor-pointer hover:shadow-md group",
                 isExceededType
-                  ? "bg-rose-50/90 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/50 text-rose-950 dark:text-rose-200"
+                  ? "bg-rose-50/90 hover:bg-rose-100/90 dark:bg-rose-950/20 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900/50 text-rose-950 dark:text-rose-200"
                   : isCritical
-                  ? "bg-amber-50/90 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 text-amber-950 dark:text-amber-200"
-                  : "bg-indigo-50/80 dark:bg-indigo-950/20 border-indigo-200/80 dark:border-indigo-900/40 text-indigo-950 dark:text-indigo-200"
+                  ? "bg-amber-50/90 hover:bg-amber-100/90 dark:bg-amber-950/30 dark:hover:bg-amber-950/50 border-amber-200 dark:border-amber-900/50 text-amber-950 dark:text-amber-200"
+                  : "bg-indigo-50/80 hover:bg-indigo-100/80 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40 border-indigo-200/80 dark:border-indigo-900/40 text-indigo-950 dark:text-indigo-200"
               )}
             >
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
@@ -157,6 +195,9 @@ export const BudgetAlerts = () => {
                           ⚡ نفاد متوقع خلال {pace.daysUntilExhaustion} أيام
                         </span>
                       )}
+                      <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 mr-auto group-hover:underline flex items-center gap-0.5">
+                        عرض التقرير 📊 ←
+                      </span>
                     </div>
 
                     <p className="text-xs mt-1 font-medium leading-relaxed opacity-90">
@@ -193,16 +234,28 @@ export const BudgetAlerts = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xs flex items-center justify-between gap-4 group text-right"
+            onClick={() => {
+              hapticFeedback('light');
+              navigate('/analytics?tab=weekly');
+            }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xs hover:shadow-md cursor-pointer flex items-center justify-between gap-4 group text-right transition-all"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
                 <Zap size={20} />
               </div>
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{notification.message}</p>
+              <div>
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{notification.message}</p>
+                <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold group-hover:underline">
+                  اضغط لعرض التقرير 📊 ←
+                </span>
+              </div>
             </div>
             <button 
-              onClick={() => removeNotification(notification.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                removeNotification(notification.id);
+              }}
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 mr-auto cursor-pointer"
               title="إغلاق"
             >

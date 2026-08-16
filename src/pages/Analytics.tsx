@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import { cn, formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
 import { 
@@ -49,9 +50,28 @@ const Analytics = () => {
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [isReady, setIsReady] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'charts' | 'budget' | 'weekly'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'charts' | 'budget' | 'weekly'>(() => {
+    const tabParam = new URLSearchParams(window.location.search).get('tab') || 
+                     new URLSearchParams(window.location.hash.split('?')[1] || '').get('tab');
+    if (tabParam && ['overview', 'charts', 'budget', 'weekly'].includes(tabParam)) {
+      return tabParam as 'overview' | 'charts' | 'budget' | 'weekly';
+    }
+    return 'overview';
+  });
   const [chartSubTab, setChartSubTab] = useState<'daily' | 'monthly' | 'cumulative'>('daily');
+
+  // React to search params or location state changes
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') || (location.state as any)?.tab;
+    if (tabParam && ['overview', 'charts', 'budget', 'weekly'].includes(tabParam)) {
+      setActiveTab(tabParam as any);
+      // Auto-scroll to tab content smoothly if redirected
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [searchParams, location.state]);
 
   const budget = useMemo(() => budgets?.find(b => b.month === selectedMonth), [budgets, selectedMonth]);
 

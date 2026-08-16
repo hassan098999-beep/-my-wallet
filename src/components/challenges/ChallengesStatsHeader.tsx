@@ -1,153 +1,193 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Sparkles, Flame, Trophy, PiggyBank, Target, Calendar, Plus, RefreshCw } from 'lucide-react';
+import { 
+  Sparkles, 
+  Flame, 
+  TrendingUp, 
+  Award, 
+  Gift, 
+  Plus, 
+  Bot, 
+  CheckCircle,
+  Crown,
+  Zap,
+  Target
+} from 'lucide-react';
+import { ChallengeUserLevel } from '../../types';
 import { formatCurrency } from '../../utils';
 import { useAppContext } from '../../store/AppContext';
 
 interface ChallengesStatsHeaderProps {
   points: number;
-  maxStreak: number;
-  totalSaved: number;
-  completedCount: number;
-  activeCount: number;
-  weekRangeStr: string;
-  onOpenCustomModal: () => void;
-  onResetToDefault: () => void;
+  currentLevel: ChallengeUserLevel;
+  nextLevel: ChallengeUserLevel | null;
+  levelProgressPercentage: number;
+  maxStreakDays: number;
+  totalEstimatedSaved: number;
+  unlockedBadgesCount: number;
+  totalBadgesCount: number;
+  isDailyBoxAvailable: boolean;
+  onOpenDailyBox: () => void;
+  onOpenCreateCustom: () => void;
+  onOpenAISmartModal: () => void;
 }
 
 export const ChallengesStatsHeader: React.FC<ChallengesStatsHeaderProps> = ({
   points,
-  maxStreak,
-  totalSaved,
-  completedCount,
-  activeCount,
-  weekRangeStr,
-  onOpenCustomModal,
-  onResetToDefault
+  currentLevel,
+  nextLevel,
+  levelProgressPercentage,
+  maxStreakDays,
+  totalEstimatedSaved,
+  unlockedBadgesCount,
+  totalBadgesCount,
+  isDailyBoxAvailable,
+  onOpenDailyBox,
+  onOpenCreateCustom,
+  onOpenAISmartModal
 }) => {
   const { currency } = useAppContext();
 
   return (
-    <div className="space-y-4">
-      {/* Top Banner / Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-700 p-5 md:p-6 rounded-3xl text-white shadow-xl shadow-emerald-900/10 relative overflow-hidden">
-        {/* Ambient background decoration */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-2xl -mr-20 -mt-20 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-400/20 rounded-full blur-xl -ml-16 -mb-16 pointer-events-none" />
+    <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-emerald-500/20 relative overflow-hidden">
+      {/* Background ambient glow shapes */}
+      <div className="absolute -top-24 -left-24 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex items-center gap-3.5">
-          <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/30 shadow-inner">
-            <Target size={28} className="text-amber-300" />
+      {/* Top Bar: Level & Mystery Box */}
+      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-white/10">
+        {/* User Level Card */}
+        <div className="flex items-center gap-3.5">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-400 via-emerald-400 to-teal-400 p-0.5 shadow-lg shadow-emerald-500/20 shrink-0">
+            <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center text-2xl">
+              {currentLevel.title.split(' ').pop() || '🌱'}
+            </div>
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl md:text-2xl font-black tracking-tight">
-                التحديات المالية الأسبوعية
-              </h1>
-              <span className="bg-white/20 backdrop-blur-sm text-white text-[10px] font-black px-2.5 py-0.5 rounded-full border border-white/30 flex items-center gap-1">
-                <Calendar size={11} />
-                {weekRangeStr}
+              <span className="text-xs uppercase font-black tracking-wider text-emerald-400">
+                المستوى {currentLevel.level}
+              </span>
+              <span className="bg-white/10 px-2 py-0.5 rounded-full text-[11px] font-black text-amber-300 flex items-center gap-1">
+                <Crown size={12} className="text-amber-400" />
+                {currentLevel.title}
               </span>
             </div>
-            <p className="text-xs md:text-sm text-white/80 font-medium mt-1">
-              حوّل توفير المال إلى لعبة حماسية مع تتبع يومي بصري دقيق 🎯
+            <p className="text-xs text-slate-300 font-medium mt-0.5">
+              {currentLevel.perk}
             </p>
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="relative z-10 flex items-center gap-2.5 shrink-0 flex-wrap">
-          <button
-            onClick={onOpenCustomModal}
-            className="px-4 py-2.5 rounded-2xl bg-white text-emerald-800 hover:bg-emerald-50 font-black text-xs shadow-md transition-all active:scale-95 flex items-center gap-1.5"
+        {/* Action Buttons: Mystery Box & Custom & AI */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Daily Mystery Box */}
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={onOpenDailyBox}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-black flex items-center gap-2 shadow-md transition-all ${
+              isDailyBoxAvailable
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-500/25 animate-pulse'
+                : 'bg-white/10 text-slate-300 hover:bg-white/15'
+            }`}
           >
-            <Plus size={16} />
-            إنشاء تحدي مخصص
+            <Gift size={16} className={isDailyBoxAvailable ? 'text-yellow-200 animate-bounce' : 'text-slate-400'} />
+            <span>{isDailyBoxAvailable ? '🎁 صندوق الحظ اليومي (متاح!)' : '🎁 صندوق اليوم (تم الاستلام)'}</span>
+          </motion.button>
+
+          {/* AI Challenge Suggestion */}
+          <button
+            onClick={onOpenAISmartModal}
+            className="px-3.5 py-2 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-black flex items-center gap-1.5 transition-all active:scale-95"
+          >
+            <Bot size={15} />
+            تحدي ذكي بـ AI
           </button>
-          
+
+          {/* Create Custom */}
           <button
-            onClick={onResetToDefault}
-            className="p-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white transition-all backdrop-blur-sm border border-white/20"
-            title="إعادة ضبط التحديات الافتراضية"
+            onClick={onOpenCreateCustom}
+            className="px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-black flex items-center gap-1.5 transition-all active:scale-95 border border-white/10"
           >
-            <RefreshCw size={16} />
+            <Plus size={15} />
+            تحدي مخصص
           </button>
         </div>
       </div>
 
-      {/* Gamified 4-Metric Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        {/* Metric 1: Total Points */}
-        <motion.div
-          whileHover={{ y: -2 }}
-          className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-3.5"
-        >
-          <div className="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
-            <Sparkles size={22} />
-          </div>
-          <div>
-            <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 block">
-              رصيد النقاط 🌟
+      {/* Level XP Progress Bar */}
+      <div className="relative z-10 my-4 bg-white/5 p-3 rounded-2xl border border-white/10">
+        <div className="flex justify-between items-center text-xs mb-1.5 font-bold">
+          <span className="text-slate-300 flex items-center gap-1">
+            <Zap size={13} className="text-amber-400" />
+            نقاط الخبرة (XP): <strong className="text-white text-sm">{points}</strong> نقطة
+          </span>
+          {nextLevel ? (
+            <span className="text-slate-400 text-[11px]">
+              المستوى القادم ({nextLevel.title}): تبقى {Math.max(0, nextLevel.minPoints - points)} نقطة
             </span>
-            <span className="text-lg md:text-xl font-black text-slate-900 dark:text-white">
-              {points} <span className="text-xs font-bold text-amber-500">نقطة</span>
+          ) : (
+            <span className="text-amber-400 text-[11px] font-black">
+              أعلى رتبة مكتملة! 👑
             </span>
-          </div>
-        </motion.div>
+          )}
+        </div>
+        <div className="h-2 bg-slate-800 rounded-full overflow-hidden p-0.5">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${levelProgressPercentage}%` }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="h-full bg-gradient-to-r from-emerald-400 via-teal-400 to-amber-400 rounded-full"
+          />
+        </div>
+      </div>
 
-        {/* Metric 2: Active Streak */}
-        <motion.div
-          whileHover={{ y: -2 }}
-          className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-3.5"
-        >
-          <div className="w-11 h-11 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center shrink-0">
-            <Flame size={22} />
+      {/* 4 Gamified Stats Cards */}
+      <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        {/* Stat 1: Total Points */}
+        <div className="bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-2xl border border-white/10">
+          <div className="flex items-center gap-2 text-amber-400 mb-1">
+            <Sparkles size={16} />
+            <span className="text-[11px] font-black text-slate-300">نقاط المكافأة</span>
           </div>
-          <div>
-            <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 block">
-              أطول سلسلة التزام 🔥
-            </span>
-            <span className="text-lg md:text-xl font-black text-slate-900 dark:text-white">
-              {maxStreak} <span className="text-xs font-bold text-slate-400">أيام متتالية</span>
-            </span>
-          </div>
-        </motion.div>
+          <p className="text-xl font-black text-white">{points}</p>
+          <span className="text-[10px] text-slate-400 font-medium">قابلة للتجميع والترقية</span>
+        </div>
 
-        {/* Metric 3: Estimated Savings */}
-        <motion.div
-          whileHover={{ y: -2 }}
-          className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-3.5"
-        >
-          <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
-            <PiggyBank size={22} />
+        {/* Stat 2: Max Streak */}
+        <div className="bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-2xl border border-white/10">
+          <div className="flex items-center gap-2 text-orange-400 mb-1">
+            <Flame size={16} />
+            <span className="text-[11px] font-black text-slate-300">سلسلة الالتزام</span>
           </div>
-          <div>
-            <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 block">
-              وفر التحديات التقديري 💰
-            </span>
-            <span className="text-lg md:text-xl font-black text-emerald-600 dark:text-emerald-400">
-              {formatCurrency(totalSaved, currency)}
-            </span>
-          </div>
-        </motion.div>
+          <p className="text-xl font-black text-white">{maxStreakDays} <span className="text-xs font-normal text-slate-400">أيام</span></p>
+          <span className="text-[10px] text-slate-400 font-medium">أطول سلسلة هذا الأسبوع</span>
+        </div>
 
-        {/* Metric 4: Completed Challenges */}
-        <motion.div
-          whileHover={{ y: -2 }}
-          className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center gap-3.5"
-        >
-          <div className="w-11 h-11 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-500 flex items-center justify-center shrink-0">
-            <Trophy size={22} />
+        {/* Stat 3: Total Saved */}
+        <div className="bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-2xl border border-white/10">
+          <div className="flex items-center gap-2 text-emerald-400 mb-1">
+            <TrendingUp size={16} />
+            <span className="text-[11px] font-black text-slate-300">الوفر المحقق</span>
           </div>
-          <div>
-            <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 block">
-              التحديات المنجزة 🏆
-            </span>
-            <span className="text-lg md:text-xl font-black text-slate-900 dark:text-white">
-              {completedCount} <span className="text-xs font-bold text-slate-400">({activeCount} نشط)</span>
-            </span>
+          <p className="text-lg sm:text-xl font-black text-emerald-300 truncate">
+            {formatCurrency(totalEstimatedSaved, currency)}
+          </p>
+          <span className="text-[10px] text-slate-400 font-medium">وفر التحديات النشطة</span>
+        </div>
+
+        {/* Stat 4: Unlocked Badges */}
+        <div className="bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-2xl border border-white/10">
+          <div className="flex items-center gap-2 text-purple-400 mb-1">
+            <Award size={16} />
+            <span className="text-[11px] font-black text-slate-300">الأوسمة</span>
           </div>
-        </motion.div>
+          <p className="text-xl font-black text-white">
+            {unlockedBadgesCount} <span className="text-xs font-normal text-slate-400">/ {totalBadgesCount}</span>
+          </p>
+          <span className="text-[10px] text-slate-400 font-medium">أوسمة الإنجاز المفتوحة</span>
+        </div>
       </div>
     </div>
   );

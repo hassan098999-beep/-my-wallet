@@ -231,7 +231,16 @@ export type WeeklyChallengeType =
   | 'grocery_cap' 
   | 'freeze_wants' 
   | 'roundup_streak' 
+  | 'lunchbox_hero'
+  | 'walk_commute'
+  | 'energy_saver'
+  | 'ladder_saving'
+  | 'strict_list'
+  | 'cart_delay_24h'
+  | 'family_pot'
   | 'custom';
+
+export type ChallengeCategory = 'daily_habits' | 'shopping_saving' | 'lifestyle_fun' | 'family_home';
 
 export interface WeeklyChallengeDayStatus {
   date: string; // YYYY-MM-DD
@@ -249,9 +258,12 @@ export interface WeeklyChallengeDayStatus {
 export interface WeeklyChallenge {
   id: string;
   type: WeeklyChallengeType;
+  category?: ChallengeCategory;
   title: string;
+  subtitle?: string;
   description: string;
   icon: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
   badgeName: string;
   badgeIcon: string;
   rewardPoints: number;
@@ -285,6 +297,17 @@ export interface WeeklyChallengeBadge {
   unlocked: boolean;
   unlockedAt?: string;
   challengeType?: WeeklyChallengeType;
+  levelRequired?: number;
+}
+
+export interface ChallengeUserLevel {
+  level: number;
+  title: string;
+  icon: string;
+  minPoints: number;
+  maxPoints: number;
+  perk: string;
+  color: string;
 }
 
 export interface SmartSavingChallenge {
