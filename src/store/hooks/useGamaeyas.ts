@@ -6,7 +6,7 @@ import { safeParseISO } from '../../utils';
 import toast from 'react-hot-toast';
 
 export function useGamaeyas({ state, setState, user, evaluateAchievements, addNotification }: any) {
-const addGamaeya = async (gamaeya: Omit<import('../../types').Gamaeya, 'id' | 'createdAt' | 'status' | 'payments'>) => {
+  const addGamaeya = async (gamaeya: Omit<import('../../types').Gamaeya, 'id' | 'createdAt' | 'status' | 'payments'>) => {
     const payments: import('../../types').GamaeyaPayment[] = [];
     let baseDate: Date;
     try {
@@ -34,48 +34,54 @@ const addGamaeya = async (gamaeya: Omit<import('../../types').Gamaeya, 'id' | 'c
       payments
     };
 
+    // 1. Optimistic local update
+    setState((prev: any) => ({ ...prev, gamaeyas: [...(prev.gamaeyas || []), newGamaeya] }));
+
+    // 2. Cloud update
     if (user) {
       try {
         await setDoc(doc(db, 'users', user.uid, 'gamaeyas', newGamaeya.id), { ...newGamaeya, uid: user.uid });
       } catch (error) {
-        toast.error('فشل حفظ الجمعية في السحاب');
+        console.warn('Gamaeya saved locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev: any) => ({ ...prev, gamaeyas: [...(prev.gamaeyas || []), newGamaeya] }));
     }
   };
 
-const updateGamaeya = async (id: string, updates: Partial<import('../../types').Gamaeya>) => {
+  const updateGamaeya = async (id: string, updates: Partial<import('../../types').Gamaeya>) => {
+    // 1. Optimistic local update
+    setState((prev: any) => ({
+      ...prev,
+      gamaeyas: (prev.gamaeyas || []).map((g: any) => (g.id === id ? { ...g, ...updates } : g)),
+    }));
+
+    // 2. Cloud update
     if (user) {
       try {
         await updateDoc(doc(db, 'users', user.uid, 'gamaeyas', id), updates);
       } catch (error) {
-        toast.error('فشل تحديث الجمعية في السحاب');
+        console.warn('Gamaeya updated locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev: any) => ({
-        ...prev,
-        gamaeyas: (prev.gamaeyas || []).map((g) => (g.id === id ? { ...g, ...updates } : g)),
-      }));
     }
   };
 
-const deleteGamaeya = async (id: string) => {
+  const deleteGamaeya = async (id: string) => {
+    // 1. Optimistic local update
+    setState((prev: any) => ({
+      ...prev,
+      gamaeyas: (prev.gamaeyas || []).filter((g: any) => g.id !== id),
+    }));
+
+    // 2. Cloud update
     if (user) {
       try {
         await deleteDoc(doc(db, 'users', user.uid, 'gamaeyas', id));
       } catch (error) {
-        toast.error('فشل حذف الجمعية من السحاب');
+        console.warn('Gamaeya deleted locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev: any) => ({
-        ...prev,
-        gamaeyas: (prev.gamaeyas || []).filter((g) => g.id !== id),
-      }));
     }
   };
 
-const payGamaeyaMonth = async (gamaeyaId: string, monthIndex: number) => {
+  const payGamaeyaMonth = async (gamaeyaId: string, monthIndex: number) => {
     const list = state.gamaeyas || [];
     const gamaeya = list.find((g: any) => g.id === gamaeyaId);
     if (!gamaeya) return;
@@ -83,57 +89,58 @@ const payGamaeyaMonth = async (gamaeyaId: string, monthIndex: number) => {
     let createdExpenseId: string | undefined;
     const expenseAmount = gamaeya.monthlyAmount;
 
-    try {
-      const expenseId = crypto.randomUUID();
-      createdExpenseId = expenseId;
-      const paymentDate = new Date().toISOString().slice(0, 10);
-      
-      const newExpense: Expense = {
-        id: expenseId,
-        amount: expenseAmount,
-        categoryId: '6', // Other/Uncategorized or temporary
-        subcategoryId: 'أخرى وطارئة',
-        accountId: gamaeya.accountId || 'cash',
-        date: paymentDate,
-        note: `دفع الجمعية: ${gamaeya.name} (شهر ${monthIndex})`,
-        paymentMethod: 'cash',
-        createdAt: new Date().toISOString(),
-        parsedDate: safeParseISO(paymentDate)
-      };
+    const expenseId = crypto.randomUUID();
+    createdExpenseId = expenseId;
+    const paymentDate = new Date().toISOString().slice(0, 10);
+    
+    const newExpense: Expense = {
+      id: expenseId,
+      amount: expenseAmount,
+      categoryId: '6',
+      subcategoryId: 'أخرى وطارئة',
+      accountId: gamaeya.accountId || 'cash',
+      date: paymentDate,
+      note: `دفع الجمعية: ${gamaeya.name} (شهر ${monthIndex})`,
+      paymentMethod: 'cash',
+      createdAt: new Date().toISOString(),
+      parsedDate: safeParseISO(paymentDate)
+    };
 
-      if (user) {
+    // 1. Optimistic local update
+    setState((prev: any) => {
+      const updatedAccounts = (prev.accounts || []).map((acc: any) => {
+        if (acc.id === (gamaeya.accountId || 'cash')) {
+          return { ...acc, balance: acc.balance - expenseAmount };
+        }
+        return acc;
+      });
+      return {
+        ...prev,
+        expenses: [...(prev.expenses || []), newExpense],
+        accounts: updatedAccounts
+      };
+    });
+    toast.success('تم تسجيل دفعة الجمعية كمصروف بنجاح');
+
+    // 2. Cloud update
+    if (user) {
+      try {
         const batch = writeBatch(db);
         const expenseRef = doc(db, 'users', user.uid, 'expenses', newExpense.id);
         const { parsedDate: _pd, ...expenseToStore } = newExpense;
         batch.set(expenseRef, { ...expenseToStore, uid: user.uid });
 
-        // Update Account balance
         if (newExpense.accountId) {
           const accRef = doc(db, 'users', user.uid, 'accounts', newExpense.accountId);
-          const currentAcc = state.accounts.find((a: any) => a.id === newExpense.accountId);
+          const currentAcc = state.accounts?.find((a: any) => a.id === newExpense.accountId);
           if (currentAcc) {
             batch.update(accRef, { balance: currentAcc.balance - expenseAmount });
           }
         }
         await batch.commit();
-      } else {
-        setState((prev: any) => {
-          const updatedAccounts = (prev.accounts || []).map((acc: any) => {
-            if (acc.id === (gamaeya.accountId || 'cash')) {
-              return { ...acc, balance: acc.balance - expenseAmount };
-            }
-            return acc;
-          });
-          return {
-            ...prev,
-            expenses: [...(prev.expenses || []), newExpense],
-            accounts: updatedAccounts
-          };
-        });
+      } catch (err) {
+        console.warn('Gamaeya payment registered locally (buffered for sync):', err);
       }
-      toast.success('تم تسجيل دفعة الجمعية كمصروف بنجاح');
-    } catch (err) {
-      console.error('Failed to register Gamaeya expense', err);
     }
 
     const updatedPayments = (gamaeya.payments || []).map((p: any) => {
@@ -152,7 +159,7 @@ const payGamaeyaMonth = async (gamaeyaId: string, monthIndex: number) => {
     await updateGamaeya(gamaeyaId, updates);
   };
 
-const receiveGamaeyaPayout = async (gamaeyaId: string) => {
+  const receiveGamaeyaPayout = async (gamaeyaId: string) => {
     const list = state.gamaeyas || [];
     const gamaeya = list.find((g: any) => g.id === gamaeyaId);
     if (!gamaeya) return;
@@ -160,54 +167,55 @@ const receiveGamaeyaPayout = async (gamaeyaId: string) => {
     let createdIncomeId: string | undefined;
     const payoutAmount = gamaeya.monthlyAmount * gamaeya.memberCount;
 
-    try {
-      const incomeId = crypto.randomUUID();
-      createdIncomeId = incomeId;
-      const incomeDate = new Date().toISOString().slice(0, 10);
-      
-      const newIncome: Income = {
-        id: incomeId,
-        amount: payoutAmount,
-        accountId: gamaeya.accountId || 'cash',
-        date: incomeDate,
-        source: `قبض الجمعية: ${gamaeya.name}`,
-        createdAt: new Date().toISOString(),
-        parsedDate: safeParseISO(incomeDate)
-      };
+    const incomeId = crypto.randomUUID();
+    createdIncomeId = incomeId;
+    const incomeDate = new Date().toISOString().slice(0, 10);
+    
+    const newIncome: Income = {
+      id: incomeId,
+      amount: payoutAmount,
+      accountId: gamaeya.accountId || 'cash',
+      date: incomeDate,
+      source: `قبض الجمعية: ${gamaeya.name}`,
+      createdAt: new Date().toISOString(),
+      parsedDate: safeParseISO(incomeDate)
+    };
 
-      if (user) {
+    // 1. Optimistic local update
+    setState((prev: any) => {
+      const updatedAccounts = (prev.accounts || []).map((acc: any) => {
+        if (acc.id === (gamaeya.accountId || 'cash')) {
+          return { ...acc, balance: acc.balance + payoutAmount };
+        }
+        return acc;
+      });
+      return {
+        ...prev,
+        income: [...(prev.income || []), newIncome],
+        accounts: updatedAccounts
+      };
+    });
+    toast.success('تم تسجيل قبض الجمعية كدخل بنجاح');
+
+    // 2. Cloud update
+    if (user) {
+      try {
         const batch = writeBatch(db);
         const incomeRef = doc(db, 'users', user.uid, 'income', newIncome.id);
         const { parsedDate: _pd2, ...incomeToStore } = newIncome;
         batch.set(incomeRef, { ...incomeToStore, uid: user.uid });
 
-        // Update Account balance
         if (newIncome.accountId) {
           const accRef = doc(db, 'users', user.uid, 'accounts', newIncome.accountId);
-          const currentAcc = state.accounts.find((a: any) => a.id === newIncome.accountId);
+          const currentAcc = state.accounts?.find((a: any) => a.id === newIncome.accountId);
           if (currentAcc) {
             batch.update(accRef, { balance: currentAcc.balance + payoutAmount });
           }
         }
         await batch.commit();
-      } else {
-        setState((prev: any) => {
-          const updatedAccounts = (prev.accounts || []).map((acc: any) => {
-            if (acc.id === (gamaeya.accountId || 'cash')) {
-              return { ...acc, balance: acc.balance + payoutAmount };
-            }
-            return acc;
-          });
-          return {
-            ...prev,
-            income: [...(prev.income || []), newIncome],
-            accounts: updatedAccounts
-          };
-        });
+      } catch (err) {
+        console.warn('Gamaeya payout registered locally (buffered for sync):', err);
       }
-      toast.success('تم تسجيل قبض الجمعية كدخل بنجاح');
-    } catch (err) {
-      console.error('Failed to register Gamaeya payout', err);
     }
 
     const updatedPayments = (gamaeya.payments || []).map((p: any) => {

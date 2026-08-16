@@ -5,54 +5,60 @@ import { safeParseISO } from '../../utils';
 import toast from 'react-hot-toast';
 
 export function useAccounts({ state, setState, user, evaluateAchievements, addNotification }: any) {
-const addAccount = async (account: Omit<Account, 'id'>) => {
+  const addAccount = async (account: Omit<Account, 'id'>) => {
     const newAccount: Account = {
       ...account,
       id: crypto.randomUUID(),
     };
 
+    // 1. Optimistic local update
+    setState((prev: any) => ({ ...prev, accounts: [...(prev.accounts || []), newAccount] }));
+
+    // 2. Cloud update
     if (user) {
       try {
         await setDoc(doc(db, 'users', user.uid, 'accounts', newAccount.id), { ...newAccount, uid: user.uid });
       } catch (error) {
-        toast.error('فشل حفظ الحساب في السحاب');
+        console.warn('Account saved locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev: any) => ({ ...prev, accounts: [...(prev.accounts || []), newAccount] }));
     }
   };
 
-const updateAccount = async (id: string, updates: Partial<Account>) => {
+  const updateAccount = async (id: string, updates: Partial<Account>) => {
+    // 1. Optimistic local update
+    setState((prev: any) => ({
+      ...prev,
+      accounts: (prev.accounts || []).map((a: any) => (a.id === id ? { ...a, ...updates } : a)),
+    }));
+
+    // 2. Cloud update
     if (user) {
       try {
         await updateDoc(doc(db, 'users', user.uid, 'accounts', id), updates);
       } catch (error) {
-        toast.error('فشل تحديث الحساب في السحاب');
+        console.warn('Account updated locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev: any) => ({
-        ...prev,
-        accounts: (prev.accounts || []).map((a) => (a.id === id ? { ...a, ...updates } : a)),
-      }));
     }
   };
 
-const deleteAccount = async (id: string) => {
+  const deleteAccount = async (id: string) => {
+    // 1. Optimistic local update
+    setState((prev: any) => ({
+      ...prev,
+      accounts: (prev.accounts || []).filter((a: any) => a.id !== id),
+    }));
+
+    // 2. Cloud update
     if (user) {
       try {
         await deleteDoc(doc(db, 'users', user.uid, 'accounts', id));
       } catch (error) {
-        toast.error('فشل حذف الحساب من السحاب');
+        console.warn('Account deleted locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev: any) => ({
-        ...prev,
-        accounts: (prev.accounts || []).filter((a) => a.id !== id),
-      }));
     }
   };
 
-const transferAccount = async (fromAccountId: string, toAccountId: string, amount: number, transferDate?: string, transferNote?: string) => {
+  const transferAccount = async (fromAccountId: string, toAccountId: string, amount: number, transferDate?: string, transferNote?: string) => {
     const fromAcc = state.accounts.find((a: any) => a.id === fromAccountId);
     const toAcc = state.accounts.find((a: any) => a.id === toAccountId);
 
@@ -85,40 +91,43 @@ const transferAccount = async (fromAccountId: string, toAccountId: string, amoun
       transferId
     };
 
+    // 1. Optimistic local update
+    setState((prev: any) => {
+      const newAccounts = (prev.accounts || []).map((acc: any) => {
+        if (acc.id === fromAccountId) return { ...acc, balance: acc.balance - amount };
+        if (acc.id === toAccountId) return { ...acc, balance: acc.balance + amount };
+        return acc;
+      });
+      return {
+        ...prev,
+        accounts: newAccounts,
+        expenses: [{ ...expenseEntry, parsedDate: safeParseISO(expenseEntry.date) }, ...(prev.expenses || [])],
+        income: [{ ...incomeEntry, parsedDate: safeParseISO(incomeEntry.date) }, ...(prev.income || [])]
+      };
+    });
+
+    toast.success('تم التحويل بنجاح');
+
+    // 2. Cloud update
     if (user) {
       try {
         const batch = writeBatch(db);
-
         const fromAccRef = doc(db, 'users', user.uid, 'accounts', fromAccountId);
         const toAccRef = doc(db, 'users', user.uid, 'accounts', toAccountId);
-        const fromAccDoc = await getDoc(fromAccRef);
-        const toAccDoc = await getDoc(toAccRef);
 
-        if (fromAccDoc.exists()) batch.update(fromAccRef, { balance: fromAccDoc.data().balance - amount });
-        if (toAccDoc.exists()) batch.update(toAccRef, { balance: toAccDoc.data().balance + amount });
+        batch.update(fromAccRef, { balance: fromAcc.balance - amount });
+        batch.update(toAccRef, { balance: toAcc.balance + amount });
 
-        batch.set(doc(db, 'users', user.uid, 'expenses', expenseEntry.id), { ...expenseEntry, uid: user.uid });
-        batch.set(doc(db, 'users', user.uid, 'income', incomeEntry.id), { ...incomeEntry, uid: user.uid });
+        const { parsedDate: _pd1, ...expToStore } = expenseEntry;
+        const { parsedDate: _pd2, ...incToStore } = incomeEntry;
+
+        batch.set(doc(db, 'users', user.uid, 'expenses', expenseEntry.id), { ...expToStore, uid: user.uid });
+        batch.set(doc(db, 'users', user.uid, 'income', incomeEntry.id), { ...incToStore, uid: user.uid });
 
         await batch.commit();
-        toast.success('تم التحويل بنجاح');
       } catch (error) {
-        toast.error('فشل التحويل');
+        console.warn('Transfer saved locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev: any) => {
-        const newAccounts = prev.accounts.map((acc: any) => {
-          if (acc.id === fromAccountId) return { ...acc, balance: acc.balance - amount };
-          if (acc.id === toAccountId) return { ...acc, balance: acc.balance + amount };
-          return acc;
-        });
-        return {
-          ...prev,
-          accounts: newAccounts,
-          expenses: [{ ...expenseEntry, parsedDate: safeParseISO(expenseEntry.date) }, ...prev.expenses],
-          income: [{ ...incomeEntry, parsedDate: safeParseISO(incomeEntry.date) }, ...prev.income]
-        };
-      });
     }
   };
 

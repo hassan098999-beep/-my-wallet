@@ -10,7 +10,7 @@ import {
   setPersistence,
   browserLocalPersistence
 } from 'firebase/auth';
-import { initializeFirestore } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 // Initialize Firebase App
@@ -24,9 +24,12 @@ setPersistence(auth, browserLocalPersistence).catch((err) => {
   console.warn('Failed to set browserLocalPersistence:', err);
 });
 
-// Initialize Firestore DB
+// Initialize Firestore DB with persistent offline IndexedDB cache across multiple tabs
 export const db = initializeFirestore(app, {
-  ignoreUndefinedProperties: true
+  ignoreUndefinedProperties: true,
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
 }, (firebaseConfig as any).firestoreDatabaseId);
 
 // Google Auth Provider setup

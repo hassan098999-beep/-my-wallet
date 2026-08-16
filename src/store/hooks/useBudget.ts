@@ -5,8 +5,8 @@ import { safeParseISO } from '../../utils';
 import toast from 'react-hot-toast';
 
 export function useBudget({ state, setState, user, evaluateAchievements, addNotification }: any) {
-const setBudget = async (budget: Budget) => {
-    // Add or update the budget for the specific month
+  const setBudget = async (budget: Budget) => {
+    // 1. Add or update the budget in local state immediately
     setState((prev: any) => {
       const newBudgets = [...(prev.budgets || [])];
       const existingIndex = newBudgets.findIndex(b => b.month === budget.month);
@@ -18,39 +18,42 @@ const setBudget = async (budget: Budget) => {
       return { ...prev, budgets: newBudgets };
     });
 
+    // 2. Cloud update
     if (user) {
       try {
         const budgetRef = doc(collection(db, 'users', user.uid, 'budgets'), budget.month);
         await setDoc(budgetRef, { ...budget, uid: user.uid });
       } catch (error) {
-        toast.error('فشل حفظ الميزانية في السحاب');
+        console.warn('Budget saved locally (buffered for sync):', error);
       }
     }
   };
 
-const setDailyBudget = async (amount: number) => {
-    // Update local state immediately for responsiveness
+  const setDailyBudget = async (amount: number) => {
+    // 1. Update local state immediately
     setState((prev: any) => ({ ...prev, dailyBudget: amount }));
     
+    // 2. Cloud update
     if (user) {
       try {
         await updateDoc(doc(db, 'users', user.uid), { dailyBudget: amount });
       } catch (error) {
-        console.error('Failed to update dailyBudget in Firestore', error);
-        // Optionally revert local state if Firestore update fails
+        console.warn('Daily budget saved locally (buffered for sync):', error);
       }
     }
   };
 
-const setRollingBudgetEnabled = async (enabled: boolean) => {
+  const setRollingBudgetEnabled = async (enabled: boolean) => {
+    // 1. Update local state immediately
+    setState((prev: any) => ({ ...prev, rollingBudgetEnabled: enabled }));
+
+    // 2. Cloud update
     if (user) {
       try {
         await updateDoc(doc(db, 'users', user.uid), { rollingBudgetEnabled: enabled });
       } catch (error) {
-        console.error('Failed to update rollingBudgetEnabled in Firestore');
+        console.warn('Rolling budget setting saved locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev: any) => ({ ...prev, rollingBudgetEnabled: enabled }));
     }
   };
 

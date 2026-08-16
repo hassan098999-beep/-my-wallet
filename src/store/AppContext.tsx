@@ -656,44 +656,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     };
+    // 1. Optimistic local update
+    setState((prev) => ({ ...prev, recurringExpenses: [...(prev.recurringExpenses || []), newExpense] }));
+
+    // 2. Cloud update
     if (user) {
       try {
         await setDoc(doc(db, 'users', user.uid, 'recurringExpenses', newExpense.id), { ...newExpense, uid: user.uid });
       } catch (error) {
-        toast.error('فشل حفظ المصروف الدوري في السحاب');
+        console.warn('Recurring expense saved locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev) => ({ ...prev, recurringExpenses: [...(prev.recurringExpenses || []), newExpense] }));
     }
   };
 
   const updateRecurringExpense = async (id: string, updates: Partial<RecurringExpense>) => {
+    // 1. Optimistic local update
+    setState((prev) => ({
+      ...prev,
+      recurringExpenses: (prev.recurringExpenses || []).map((e) => (e.id === id ? { ...e, ...updates } : e)),
+    }));
+
+    // 2. Cloud update
     if (user) {
       try {
         await updateDoc(doc(db, 'users', user.uid, 'recurringExpenses', id), updates);
       } catch (error) {
-        toast.error('فشل تحديث المصروف الدوري في السحاب');
+        console.warn('Recurring expense updated locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev) => ({
-        ...prev,
-        recurringExpenses: (prev.recurringExpenses || []).map((e) => (e.id === id ? { ...e, ...updates } : e)),
-      }));
     }
   };
 
   const deleteRecurringExpense = async (id: string) => {
+    // 1. Optimistic local update
+    setState((prev) => ({
+      ...prev,
+      recurringExpenses: (prev.recurringExpenses || []).filter((e) => e.id !== id),
+    }));
+
+    // 2. Cloud update
     if (user) {
       try {
         await deleteDoc(doc(db, 'users', user.uid, 'recurringExpenses', id));
       } catch (error) {
-        toast.error('فشل حذف المصروف الدوري من السحاب');
+        console.warn('Recurring expense deleted locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev) => ({
-        ...prev,
-        recurringExpenses: (prev.recurringExpenses || []).filter((e) => e.id !== id),
-      }));
     }
   };
 

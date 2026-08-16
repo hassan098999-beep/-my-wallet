@@ -213,18 +213,56 @@ const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
   };
 
 const updateExpense = async (id: string, updates: Partial<Expense>) => {
+    const oldExpense = state.expenses?.find((e: any) => e.id === id);
+    if (!oldExpense) return;
+
+    const newExpense = { ...oldExpense, ...updates, parsedDate: updates.date ? safeParseISO(updates.date) : oldExpense.parsedDate };
+
+    // 1. Optimistic Local State Update
+    setState((prev: any) => {
+      let newAccounts = [...(prev.accounts || [])];
+      
+      if (oldExpense.accountId !== newExpense.accountId) {
+        if (oldExpense.accountId) {
+          newAccounts = newAccounts.map((acc: any) => acc.id === oldExpense.accountId ? { ...acc, balance: acc.balance + oldExpense.amount } : acc);
+        }
+        if (newExpense.accountId) {
+          newAccounts = newAccounts.map((acc: any) => acc.id === newExpense.accountId ? { ...acc, balance: acc.balance - newExpense.amount } : acc);
+        }
+      } else if (oldExpense.accountId && oldExpense.amount !== newExpense.amount) {
+        const diff = newExpense.amount - oldExpense.amount;
+        newAccounts = newAccounts.map((acc: any) => acc.id === oldExpense.accountId ? { ...acc, balance: acc.balance - diff } : acc);
+      }
+
+      let newGoals = [...(prev.goals || [])];
+      if (oldExpense.goalId !== newExpense.goalId) {
+        if (oldExpense.goalId) {
+          newGoals = newGoals.map((goal: any) => goal.id === oldExpense.goalId ? { ...goal, currentAmount: goal.currentAmount - oldExpense.amount } : goal);
+        }
+        if (newExpense.goalId) {
+          newGoals = newGoals.map((goal: any) => goal.id === newExpense.goalId ? { ...goal, currentAmount: goal.currentAmount + newExpense.amount } : goal);
+        }
+      } else if (oldExpense.goalId && oldExpense.amount !== newExpense.amount) {
+        const diff = newExpense.amount - oldExpense.amount;
+        newGoals = newGoals.map((goal: any) => goal.id === oldExpense.goalId ? { ...goal, currentAmount: goal.currentAmount + diff } : goal);
+      }
+
+      return {
+        ...prev,
+        expenses: (prev.expenses || []).map((e: any) => (e.id === id ? newExpense : e)),
+        accounts: newAccounts,
+        goals: newGoals
+      };
+    });
+
+    // 2. Cloud Write
     if (user) {
       try {
         const batch = writeBatch(db);
         const expenseRef = doc(db, 'users', user.uid, 'expenses', id);
-        const oldDoc = await getDoc(expenseRef);
-        if (!oldDoc.exists()) return;
-        const oldExpense = oldDoc.data() as Expense;
-        const newExpense = { ...oldExpense, ...updates };
+        const { parsedDate: _pd, ...cleanUpdates } = updates as any;
+        batch.update(expenseRef, cleanUpdates);
 
-        batch.update(expenseRef, updates);
-
-        // Update account balance
         if (oldExpense.accountId !== newExpense.accountId) {
           if (oldExpense.accountId) {
             await updateAccountBalanceInBatch(batch, user.uid, oldExpense.accountId, oldExpense.amount);
@@ -237,7 +275,6 @@ const updateExpense = async (id: string, updates: Partial<Expense>) => {
           await updateAccountBalanceInBatch(batch, user.uid, oldExpense.accountId, -diff);
         }
 
-        // Update linked goal progress
         if (oldExpense.goalId !== newExpense.goalId) {
           if (oldExpense.goalId) {
             await updateGoalAmountInBatch(batch, user.uid, oldExpense.goalId, -oldExpense.amount);
@@ -252,60 +289,54 @@ const updateExpense = async (id: string, updates: Partial<Expense>) => {
 
         await batch.commit();
       } catch (error) {
-        toast.error('فشل تحديث المصروف في السحاب');
+        console.warn('Expense updated locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev: any) => {
-        const oldExpense = prev.expenses.find((e: any) => e.id === id);
-        if (!oldExpense) return prev;
-        
-        const newExpense = { ...oldExpense, ...updates, parsedDate: updates.date ? safeParseISO(updates.date) : oldExpense.parsedDate };
-        let newAccounts = [...(prev.accounts || [])];
-        
-        if (oldExpense.accountId !== newExpense.accountId) {
-          if (oldExpense.accountId) {
-            newAccounts = newAccounts.map((acc: any) => acc.id === oldExpense.accountId ? { ...acc, balance: acc.balance + oldExpense.amount } : acc);
-          }
-          if (newExpense.accountId) {
-            newAccounts = newAccounts.map((acc: any) => acc.id === newExpense.accountId ? { ...acc, balance: acc.balance - newExpense.amount } : acc);
-          }
-        } else if (oldExpense.accountId && oldExpense.amount !== newExpense.amount) {
-          const diff = newExpense.amount - oldExpense.amount;
-          newAccounts = newAccounts.map((acc: any) => acc.id === oldExpense.accountId ? { ...acc, balance: acc.balance - diff } : acc);
-        }
-
-        let newGoals = [...(prev.goals || [])];
-        if (oldExpense.goalId !== newExpense.goalId) {
-          if (oldExpense.goalId) {
-            newGoals = newGoals.map((goal: any) => goal.id === oldExpense.goalId ? { ...goal, currentAmount: goal.currentAmount - oldExpense.amount } : goal);
-          }
-          if (newExpense.goalId) {
-            newGoals = newGoals.map((goal: any) => goal.id === newExpense.goalId ? { ...goal, currentAmount: goal.currentAmount + newExpense.amount } : goal);
-          }
-        } else if (oldExpense.goalId && oldExpense.amount !== newExpense.amount) {
-          const diff = newExpense.amount - oldExpense.amount;
-          newGoals = newGoals.map((goal: any) => goal.id === oldExpense.goalId ? { ...goal, currentAmount: goal.currentAmount + diff } : goal);
-        }
-
-        return {
-          ...prev,
-          expenses: prev.expenses.map((e) => (e.id === id ? newExpense : e)),
-          accounts: newAccounts,
-          goals: newGoals
-        };
-      });
     }
   };
 
 const deleteExpense = async (id: string) => {
+    const expense = state.expenses?.find((e: any) => e.id === id);
+    if (!expense) return;
+
+    // 1. Optimistic Local State Update
+    setState((prev: any) => {
+      let newAccounts = [...(prev.accounts || [])];
+      if (expense.accountId) {
+        newAccounts = newAccounts.map((acc: any) => acc.id === expense.accountId ? { ...acc, balance: acc.balance + expense.amount } : acc);
+      }
+
+      let newGoals = [...(prev.goals || [])];
+      if (expense.goalId) {
+        newGoals = newGoals.map((goal: any) => goal.id === expense.goalId ? { ...goal, currentAmount: goal.currentAmount - expense.amount } : goal);
+      }
+
+      let newIncome = [...(prev.income || [])];
+      if (expense.isTransfer && expense.transferId) {
+        const relatedIncome = newIncome.find((i: any) => i.transferId === expense.transferId);
+        if (relatedIncome) {
+          newIncome = newIncome.filter((i: any) => i.id !== relatedIncome.id);
+          if (relatedIncome.accountId) {
+            newAccounts = newAccounts.map((a: any) => 
+              a.id === relatedIncome.accountId ? { ...a, balance: a.balance - relatedIncome.amount } : a
+            );
+          }
+        }
+      }
+
+      return {
+        ...prev,
+        expenses: (prev.expenses || []).filter((e: any) => e.id !== id),
+        accounts: newAccounts,
+        goals: newGoals,
+        income: newIncome
+      };
+    });
+
+    // 2. Cloud Write
     if (user) {
       try {
         const batch = writeBatch(db);
         const expenseRef = doc(db, 'users', user.uid, 'expenses', id);
-        const docSnap = await getDoc(expenseRef);
-        if (!docSnap.exists()) return;
-        const expense = docSnap.data() as Expense;
-
         batch.delete(expenseRef);
 
         if (expense.accountId) {
@@ -331,44 +362,8 @@ const deleteExpense = async (id: string) => {
 
         await batch.commit();
       } catch (error) {
-        toast.error('فشل حذف المصروف من السحاب');
+        console.warn('Expense deleted locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev: any) => {
-        const expense = prev.expenses.find((e: any) => e.id === id);
-        if (!expense) return prev;
-        
-        let newAccounts = [...(prev.accounts || [])];
-        if (expense.accountId) {
-          newAccounts = newAccounts.map((acc: any) => acc.id === expense.accountId ? { ...acc, balance: acc.balance + expense.amount } : acc);
-        }
-
-        let newGoals = [...(prev.goals || [])];
-        if (expense.goalId) {
-          newGoals = newGoals.map((goal: any) => goal.id === expense.goalId ? { ...goal, currentAmount: goal.currentAmount - expense.amount } : goal);
-        }
-
-        let newIncome = [...(prev.income || [])];
-        if (expense.isTransfer && expense.transferId) {
-          const relatedIncome = newIncome.find((i: any) => i.transferId === expense.transferId);
-          if (relatedIncome) {
-            newIncome = newIncome.filter((i: any) => i.id !== relatedIncome.id);
-            if (relatedIncome.accountId) {
-              newAccounts = newAccounts.map((a: any) => 
-                a.id === relatedIncome.accountId ? { ...a, balance: a.balance - relatedIncome.amount } : a
-              );
-            }
-          }
-        }
-
-        return {
-          ...prev,
-          expenses: prev.expenses.filter((e) => e.id !== id),
-          accounts: newAccounts,
-          goals: newGoals,
-          income: newIncome
-        };
-      });
     }
   };
 
@@ -407,39 +402,77 @@ const addIncome = async (income: Omit<Income, 'id' | 'createdAt'>) => {
     });
 
     if (user) {
-      const batch = writeBatch(db);
-      const incomeRef = doc(db, 'users', user.uid, 'income', newIncome.id);
-      const { parsedDate: _pd2, ...incomeToStore } = newIncome;
-      batch.set(incomeRef, { ...incomeToStore, uid: user.uid });
-
-      if (newIncome.accountId) {
-        await updateAccountBalanceInBatch(batch, user.uid, newIncome.accountId, newIncome.amount);
-      }
-
-      if (newIncome.goalId) {
-        await updateGoalAmountInBatch(batch, user.uid, newIncome.goalId, newIncome.amount);
-      }
-
       try {
+        const batch = writeBatch(db);
+        const incomeRef = doc(db, 'users', user.uid, 'income', newIncome.id);
+        const { parsedDate: _pd2, ...incomeToStore } = newIncome;
+        batch.set(incomeRef, { ...incomeToStore, uid: user.uid });
+
+        if (newIncome.accountId) {
+          await updateAccountBalanceInBatch(batch, user.uid, newIncome.accountId, newIncome.amount);
+        }
+
+        if (newIncome.goalId) {
+          await updateGoalAmountInBatch(batch, user.uid, newIncome.goalId, newIncome.amount);
+        }
+
         await batch.commit();
       } catch (error) {
-        console.error('Failed to commit income:', error);
-        toast.error('فشل حفظ الدخل في السحاب');
+        console.warn('Income added locally (buffered for sync):', error);
       }
     }
   };
 
 const updateIncome = async (id: string, updates: Partial<Income>) => {
+    const oldIncome = state.income?.find((i: any) => i.id === id);
+    if (!oldIncome) return;
+
+    const newIncome = { ...oldIncome, ...updates, parsedDate: updates.date ? safeParseISO(updates.date) : oldIncome.parsedDate };
+
+    // 1. Optimistic local state update
+    setState((prev: any) => {
+      let newAccounts = [...(prev.accounts || [])];
+      
+      if (oldIncome.accountId !== newIncome.accountId) {
+        if (oldIncome.accountId) {
+          newAccounts = newAccounts.map((acc: any) => acc.id === oldIncome.accountId ? { ...acc, balance: acc.balance - oldIncome.amount } : acc);
+        }
+        if (newIncome.accountId) {
+          newAccounts = newAccounts.map((acc: any) => acc.id === newIncome.accountId ? { ...acc, balance: acc.balance + newIncome.amount } : acc);
+        }
+      } else if (oldIncome.accountId && oldIncome.amount !== newIncome.amount) {
+        const diff = newIncome.amount - oldIncome.amount;
+        newAccounts = newAccounts.map((acc: any) => acc.id === oldIncome.accountId ? { ...acc, balance: acc.balance + diff } : acc);
+      }
+
+      let newGoals = [...(prev.goals || [])];
+      if (oldIncome.goalId !== newIncome.goalId) {
+        if (oldIncome.goalId) {
+          newGoals = newGoals.map((goal: any) => goal.id === oldIncome.goalId ? { ...goal, currentAmount: goal.currentAmount - oldIncome.amount } : goal);
+        }
+        if (newIncome.goalId) {
+          newGoals = newGoals.map((goal: any) => goal.id === newIncome.goalId ? { ...goal, currentAmount: goal.currentAmount + newIncome.amount } : goal);
+        }
+      } else if (oldIncome.goalId && oldIncome.amount !== newIncome.amount) {
+        const diff = newIncome.amount - oldIncome.amount;
+        newGoals = newGoals.map((goal: any) => goal.id === oldIncome.goalId ? { ...goal, currentAmount: goal.currentAmount + diff } : goal);
+      }
+
+      return {
+        ...prev,
+        income: (prev.income || []).map((i: any) => (i.id === id ? newIncome : i)),
+        accounts: newAccounts,
+        goals: newGoals
+      };
+    });
+
+    // 2. Cloud Write
     if (user) {
       try {
         const batch = writeBatch(db);
         const incomeRef = doc(db, 'users', user.uid, 'income', id);
-        const oldDoc = await getDoc(incomeRef);
-        if (!oldDoc.exists()) return;
-        const oldIncome = oldDoc.data() as Income;
-        const newIncome = { ...oldIncome, ...updates };
-
-        batch.update(incomeRef, updates);
+        const { parsedDate: _pd, ...cleanUpdates } = updates as any;
+        batch.update(incomeRef, cleanUpdates);
 
         if (oldIncome.accountId !== newIncome.accountId) {
           if (oldIncome.accountId) {
@@ -453,7 +486,6 @@ const updateIncome = async (id: string, updates: Partial<Income>) => {
           await updateAccountBalanceInBatch(batch, user.uid, oldIncome.accountId, diff);
         }
 
-        // Update linked goal progress
         if (oldIncome.goalId !== newIncome.goalId) {
           if (oldIncome.goalId) {
             await updateGoalAmountInBatch(batch, user.uid, oldIncome.goalId, -oldIncome.amount);
@@ -468,60 +500,54 @@ const updateIncome = async (id: string, updates: Partial<Income>) => {
 
         await batch.commit();
       } catch (error) {
-        toast.error('فشل تحديث الدخل في السحاب');
+        console.warn('Income updated locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev: any) => {
-        const oldIncome = (prev.income || []).find((i: any) => i.id === id);
-        if (!oldIncome) return prev;
-        
-        const newIncome = { ...oldIncome, ...updates, parsedDate: updates.date ? safeParseISO(updates.date) : oldIncome.parsedDate };
-        let newAccounts = [...(prev.accounts || [])];
-        
-        if (oldIncome.accountId !== newIncome.accountId) {
-          if (oldIncome.accountId) {
-            newAccounts = newAccounts.map((acc: any) => acc.id === oldIncome.accountId ? { ...acc, balance: acc.balance - oldIncome.amount } : acc);
-          }
-          if (newIncome.accountId) {
-            newAccounts = newAccounts.map((acc: any) => acc.id === newIncome.accountId ? { ...acc, balance: acc.balance + newIncome.amount } : acc);
-          }
-        } else if (oldIncome.accountId && oldIncome.amount !== newIncome.amount) {
-          const diff = newIncome.amount - oldIncome.amount;
-          newAccounts = newAccounts.map((acc: any) => acc.id === oldIncome.accountId ? { ...acc, balance: acc.balance + diff } : acc);
-        }
-
-        let newGoals = [...(prev.goals || [])];
-        if (oldIncome.goalId !== newIncome.goalId) {
-          if (oldIncome.goalId) {
-            newGoals = newGoals.map((goal: any) => goal.id === oldIncome.goalId ? { ...goal, currentAmount: goal.currentAmount - oldIncome.amount } : goal);
-          }
-          if (newIncome.goalId) {
-            newGoals = newGoals.map((goal: any) => goal.id === newIncome.goalId ? { ...goal, currentAmount: goal.currentAmount + newIncome.amount } : goal);
-          }
-        } else if (oldIncome.goalId && oldIncome.amount !== newIncome.amount) {
-          const diff = newIncome.amount - oldIncome.amount;
-          newGoals = newGoals.map((goal: any) => goal.id === oldIncome.goalId ? { ...goal, currentAmount: goal.currentAmount + diff } : goal);
-        }
-
-        return {
-          ...prev,
-          income: (prev.income || []).map((i) => (i.id === id ? newIncome : i)),
-          accounts: newAccounts,
-          goals: newGoals
-        };
-      });
     }
   };
 
 const deleteIncome = async (id: string) => {
+    const income = (state.income || []).find((i: any) => i.id === id);
+    if (!income) return;
+
+    // 1. Optimistic local state update
+    setState((prev: any) => {
+      let newAccounts = [...(prev.accounts || [])];
+      if (income.accountId) {
+        newAccounts = newAccounts.map((acc: any) => acc.id === income.accountId ? { ...acc, balance: acc.balance - income.amount } : acc);
+      }
+
+      let newGoals = [...(prev.goals || [])];
+      if (income.goalId) {
+        newGoals = newGoals.map((goal: any) => goal.id === income.goalId ? { ...goal, currentAmount: goal.currentAmount - income.amount } : goal);
+      }
+
+      let newExpenses = [...(prev.expenses || [])];
+      if (income.isTransfer && income.transferId) {
+        const relatedExpense = newExpenses.find((e: any) => e.transferId === income.transferId);
+        if (relatedExpense) {
+          newExpenses = newExpenses.filter((e: any) => e.id !== relatedExpense.id);
+          if (relatedExpense.accountId) {
+            newAccounts = newAccounts.map((a: any) => 
+              a.id === relatedExpense.accountId ? { ...a, balance: a.balance + relatedExpense.amount } : a
+            );
+          }
+        }
+      }
+
+      return {
+        ...prev,
+        income: (prev.income || []).filter((i) => i.id !== id),
+        accounts: newAccounts,
+        goals: newGoals,
+        expenses: newExpenses
+      };
+    });
+
+    // 2. Cloud Write
     if (user) {
       try {
         const batch = writeBatch(db);
         const incomeRef = doc(db, 'users', user.uid, 'income', id);
-        const docSnap = await getDoc(incomeRef);
-        if (!docSnap.exists()) return;
-        const income = docSnap.data() as Income;
-
         batch.delete(incomeRef);
 
         if (income.accountId) {
@@ -547,44 +573,8 @@ const deleteIncome = async (id: string) => {
 
         await batch.commit();
       } catch (error) {
-        toast.error('فشل حذف الدخل من السحاب');
+        console.warn('Income deleted locally (buffered for sync):', error);
       }
-    } else {
-      setState((prev: any) => {
-        const income = (prev.income || []).find((i: any) => i.id === id);
-        if (!income) return prev;
-        
-        let newAccounts = [...(prev.accounts || [])];
-        if (income.accountId) {
-          newAccounts = newAccounts.map((acc: any) => acc.id === income.accountId ? { ...acc, balance: acc.balance - income.amount } : acc);
-        }
-
-        let newGoals = [...(prev.goals || [])];
-        if (income.goalId) {
-          newGoals = newGoals.map((goal: any) => goal.id === income.goalId ? { ...goal, currentAmount: goal.currentAmount - income.amount } : goal);
-        }
-
-        let newExpenses = [...(prev.expenses || [])];
-        if (income.isTransfer && income.transferId) {
-          const relatedExpense = newExpenses.find((e: any) => e.transferId === income.transferId);
-          if (relatedExpense) {
-            newExpenses = newExpenses.filter((e: any) => e.id !== relatedExpense.id);
-            if (relatedExpense.accountId) {
-              newAccounts = newAccounts.map((a: any) => 
-                a.id === relatedExpense.accountId ? { ...a, balance: a.balance + relatedExpense.amount } : a
-              );
-            }
-          }
-        }
-
-        return {
-          ...prev,
-          income: (prev.income || []).filter((i) => i.id !== id),
-          accounts: newAccounts,
-          goals: newGoals,
-          expenses: newExpenses
-        };
-      });
     }
   };
 
