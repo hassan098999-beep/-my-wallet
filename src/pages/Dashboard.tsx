@@ -8,7 +8,6 @@ import { Expense } from '../types';
 import { Variants } from 'motion/react';
 import { useBehavioralEngine } from '../hooks/useBehavioralEngine';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
-import Challenges from './Challenges';
 
 import { BudgetAlerts } from '../components/BudgetAlerts';
 import PageHeader from '../components/ui/PageHeader';
@@ -380,7 +379,7 @@ const Dashboard = () => {
   // Active Tab for refactored clutter-free dashboard
   const [activeDashboardTab, setActiveDashboardTab] = useState<DashboardTab>(() => {
     const saved = safeStorage.getItem('dashboard_active_tab') as DashboardTab;
-    if (saved && ['daily', 'vaults', 'insights', 'challenges'].includes(saved)) {
+    if (saved && ['daily', 'vaults', 'insights'].includes(saved)) {
       return saved;
     }
     return 'daily';
@@ -750,10 +749,6 @@ const Dashboard = () => {
           setIsAddModalOpen={setIsAddModalOpen}
           itemVariants={itemVariants}
         />
-      )}
-
-      {activeDashboardTab === 'challenges' && (
-        <Challenges />
       )}
 
       {activeDashboardTab === 'insights' && (

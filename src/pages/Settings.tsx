@@ -4,7 +4,7 @@ import { cn, hapticFeedback, formatCurrency } from '../utils';
 import { 
   Layers, Wallet, Database, Sparkles, UserCircle, 
   ChevronLeft, Award, HelpCircle, CheckCircle, ShieldAlert,
-  Settings as SettingsIcon, Landmark, Info, Percent, Target, RefreshCw, PiggyBank, Loader2
+  Settings as SettingsIcon, Landmark, Info, Percent, Target, RefreshCw, PiggyBank, Loader2, HandCoins
 } from 'lucide-react';
 import { useAppContext } from '../store/AppContext';
 import CategoryManager from './settings/CategoryManager';
@@ -35,6 +35,7 @@ const itemVariants = {
 };
 
 const LAUNCHER_ITEMS = [
+  { path: '/debts', name: 'الديون والقروض الشخصية', icon: HandCoins, desc: 'توثيق مستحقاتك لدى الآخرين والالتزامات وجدولة السداد 🤝', bg: 'from-amber-500/10 to-amber-500/5 hover:border-amber-500/30 border-amber-500/15', iconColor: 'text-amber-600' },
   { path: '/budget', name: 'مخطط ومقارنة الميزانية الكلية', icon: Layers, desc: 'تحديد الميزانية الشهرية والتحليل الرسومي المباشر للفئات 📊', bg: 'from-rose-500/10 to-rose-500/5 hover:border-rose-500/30 border-rose-500/15', iconColor: 'text-rose-600' },
   { path: '/savings-indicators', name: 'مؤشرات وفرص التوفير', icon: Percent, desc: 'حساب نسبة الادخار من الراتب ومحاكاة القفة 🇹🇳', bg: 'from-emerald-500/10 to-emerald-500/5 hover:border-emerald-500/30 border-emerald-500/15', iconColor: 'text-emerald-600' },
   { path: '/savings', name: 'حصالة الادخار العائلية', icon: PiggyBank, desc: 'توفير مبالغ مخصصة للبيبي ومراجعة الأرصدة', bg: 'from-blue-500/10 to-blue-500/5 hover:border-blue-500/30 border-blue-500/15', iconColor: 'text-blue-600' },

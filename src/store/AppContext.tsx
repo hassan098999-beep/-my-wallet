@@ -1,12 +1,13 @@
 import { useAccounts } from './hooks/useAccounts';
 import { useTransactions } from './hooks/useTransactions';
 import { useGoals } from './hooks/useGoals';
+import { useDebts } from './hooks/useDebts';
 import { useCategories } from './hooks/useCategories';
 import { useGamaeyas } from './hooks/useGamaeyas';
 import { useBudget } from './hooks/useBudget';
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { AppState, Category, Expense, Budget, RecurringExpense, Achievement, Goal, AppNotification, Income, Account, SmartSavingChallenge, AutoRoundUpSetting } from '../types';
+import { AppState, Category, Expense, Budget, RecurringExpense, Achievement, Goal, Debt, DebtPayment, AppNotification, Income, Account, SmartSavingChallenge, AutoRoundUpSetting } from '../types';
 import { evaluateAchievements } from '../utils/achievements';
 import { getBudgetMonth, safeStorage, safeParseISO, removeUndefinedFields, hashPin } from '../utils';
 import { addDays, addWeeks, addMonths, addYears, isBefore, isSameDay, subDays } from 'date-fns';
@@ -93,6 +94,7 @@ const INITIAL_STATE: AppState = {
   currency: 'TND',
   achievements: [],
   goals: [],
+  debts: [],
   income: [],
   notifications: [],
   hasCompletedOnboarding: false,
@@ -176,6 +178,10 @@ interface AppContextProps extends AppState {
   addGoal: (goal: Omit<Goal, 'id' | 'createdAt'>) => void;
   updateGoal: (id: string, goal: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
+  addDebt: (debt: Omit<Debt, 'id' | 'createdAt' | 'remainingAmount' | 'isSettled' | 'payments'> & Partial<Pick<Debt, 'remainingAmount' | 'isSettled' | 'payments'>>) => void;
+  updateDebt: (id: string, updates: Partial<Debt>) => void;
+  addDebtPayment: (debtId: string, payment: Omit<DebtPayment, 'id'>) => void;
+  deleteDebt: (id: string) => void;
   addIncome: (income: Omit<Income, 'id' | 'createdAt'>) => void;
   updateIncome: (id: string, income: Partial<Income>) => void;
   deleteIncome: (id: string) => void;
@@ -297,7 +303,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const parsed = JSON.parse(saved);
         const expenses = (parsed.expenses || []).map((e: any) => ({ ...e, parsedDate: safeParseISO(e.date) }));
         const income = (parsed.income || []).map((i: any) => ({ ...i, parsedDate: safeParseISO(i.date) }));
-        return { ...INITIAL_STATE, ...parsed, expenses, income, recurringExpenses: parsed.recurringExpenses || [], gamaeyas: parsed.gamaeyas || [] };
+        return { ...INITIAL_STATE, ...parsed, expenses, income, recurringExpenses: parsed.recurringExpenses || [], gamaeyas: parsed.gamaeyas || [], debts: parsed.debts || [] };
       } catch (e) {
         console.error('Failed to parse saved data', e);
       }
@@ -378,6 +384,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       { name: 'budgets', setter: (data: any[]) => setState(prev => ({ ...prev, budgets: data })) },
       { name: 'achievements', setter: (data: any[]) => setState(prev => ({ ...prev, achievements: data })) },
       { name: 'gamaeyas', setter: (data: any[]) => setState(prev => ({ ...prev, gamaeyas: data })) },
+      { name: 'debts', setter: (data: any[]) => setState(prev => ({ ...prev, debts: data })) },
     ];
 
     const unsubs = collections.map(col => {
@@ -611,6 +618,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToBatch('recurringExpenses', dataToSync.recurringExpenses);
     addToBatch('achievements', dataToSync.achievements);
     addToBatch('gamaeyas', dataToSync.gamaeyas || []);
+    addToBatch('debts', dataToSync.debts || []);
     if (dataToSync.budgets && dataToSync.budgets.length > 0) {
       dataToSync.budgets.forEach(budget => {
         const budgetRef = doc(collection(db, 'users', uid, 'budgets'), budget.month);
@@ -1389,9 +1397,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
 
+  // Check for upcoming debts due within 3 days
+  useEffect(() => {
+    if (!state.debts || state.debts.length === 0) return;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const upcomingDebts = state.debts.filter(debt => {
+      if (debt.isSettled || !debt.dueDate) return false;
+      try {
+        const due = new Date(debt.dueDate);
+        due.setHours(0, 0, 0, 0);
+        const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 3;
+      } catch (e) {
+        return false;
+      }
+    });
+
+    if (upcomingDebts.length > 0) {
+      setState(prev => {
+        const existingNotifications = prev.notifications || [];
+        let updatedNotifications = [...existingNotifications];
+        let hasNew = false;
+
+        upcomingDebts.forEach(debt => {
+          const alreadyNotified = existingNotifications.some(
+            n => n.debtId === debt.id && n.type === 'debt_due'
+          );
+          if (!alreadyNotified) {
+            hasNew = true;
+            const directionText = debt.direction === 'owed_to_me' ? `مستحق لك من ${debt.personName}` : `مطلوب منك لـ ${debt.personName}`;
+            const remainingFormatted = `${debt.remainingAmount} ${prev.currency || 'د.ت'}`;
+            const message = `تذكير استحقاق دين: موعد سداد دين (${directionText}) بمبلغ ${remainingFormatted} يحل قريباً (${debt.dueDate})`;
+            
+            updatedNotifications.unshift({
+              id: crypto.randomUUID(),
+              message,
+              type: 'debt_due',
+              debtId: debt.id,
+              createdAt: new Date().toISOString()
+            });
+
+            showNotification('تذكير استحقاق دين', {
+              body: message,
+              icon: '/icon-192.png'
+            });
+          }
+        });
+
+        return hasNew ? { ...prev, notifications: updatedNotifications } : prev;
+      });
+    }
+  }, [state.debts]);
+
   const { addAccount, updateAccount, deleteAccount, transferAccount } = useAccounts({ state, setState, user, evaluateAchievements: null, addNotification });
   const { addExpense, updateExpense, deleteExpense, addIncome, updateIncome, deleteIncome, repeatExpense } = useTransactions({ state, setState, user, evaluateAchievements: null, addNotification });
   const { addGoal, updateGoal, deleteGoal } = useGoals({ state, setState, user, evaluateAchievements: null, addNotification });
+  const { addDebt, updateDebt, addDebtPayment, deleteDebt } = useDebts({ state, setState, user, evaluateAchievements: null, addNotification });
   const { addCategory, updateCategory, deleteCategory, reorderCategories } = useCategories({ state, setState, user, evaluateAchievements: null, addNotification });
   const { addGamaeya, updateGamaeya, deleteGamaeya, payGamaeyaMonth, receiveGamaeyaPayout } = useGamaeyas({ state, setState, user, evaluateAchievements: null, addNotification });
   const { setBudget, setDailyBudget, setRollingBudgetEnabled } = useBudget({ state, setState, user, evaluateAchievements: null, addNotification });
@@ -1430,6 +1493,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addGoal,
     updateGoal,
     deleteGoal,
+    addDebt,
+    updateDebt,
+    addDebtPayment,
+    deleteDebt,
     addIncome,
     updateIncome,
     deleteIncome,

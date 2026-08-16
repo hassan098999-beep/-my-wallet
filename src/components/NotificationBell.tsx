@@ -8,12 +8,40 @@ import { cn, formatCurrency, hapticFeedback } from '../utils';
 import { notifyPaceAlertIfAppropriate } from '../utils/paceAnalysis';
 import toast from 'react-hot-toast';
 
+const DISMISSED_BELL_KEY = 'masarifi_dismissed_bell_alerts';
+
+const getDismissedBellToday = (): string[] => {
+  try {
+    const raw = localStorage.getItem(DISMISSED_BELL_KEY);
+    if (!raw) return [];
+    const parsed: Record<string, string> = JSON.parse(raw);
+    const todayStr = new Date().toISOString().split('T')[0];
+    return Object.entries(parsed)
+      .filter(([_, dateStr]) => dateStr === todayStr)
+      .map(([id]) => id);
+  } catch {
+    return [];
+  }
+};
+
+const saveDismissedBellToday = (id: string) => {
+  try {
+    const raw = localStorage.getItem(DISMISSED_BELL_KEY);
+    const parsed: Record<string, string> = raw ? JSON.parse(raw) : {};
+    const todayStr = new Date().toISOString().split('T')[0];
+    parsed[id] = todayStr;
+    localStorage.setItem(DISMISSED_BELL_KEY, JSON.stringify(parsed));
+  } catch (err) {
+    console.warn('Failed to save dismissed bell item:', err);
+  }
+};
+
 const NotificationBell = () => {
   const navigate = useNavigate();
   const { notifications, removeNotification, recurringExpenses, expenses, income, currency, categories } = useAppContext();
   const { overallPercentage, totalSpent, globalBudgetNum, categoryStatuses, categoryPaces, fastBurningPaces, remainingDays } = useBudgetStatus();
   const [isOpen, setIsOpen] = useState(false);
-  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+  const [dismissedIds, setDismissedIds] = useState<string[]>(() => getDismissedBellToday());
 
   // Smart Daily Spending Pace Alerts for Categories
   const paceAlerts = useMemo(() => {
@@ -307,9 +335,10 @@ const NotificationBell = () => {
   }, [notifications, paceAlerts, budgetAlert, recurringAlerts, subBudgetAlerts, weeklySummaryAlert, dailyReminderAlert, dismissedIds]);
 
   const handleDismiss = (id: string) => {
-    if (id.startsWith('virtual-')) {
-      setDismissedIds(prev => [...prev, id]);
-    } else {
+    hapticFeedback('light');
+    saveDismissedBellToday(id);
+    setDismissedIds(prev => [...prev, id]);
+    if (!id.startsWith('virtual-')) {
       removeNotification(id);
     }
   };
@@ -317,7 +346,9 @@ const NotificationBell = () => {
   const handleNotificationClick = (n: any) => {
     hapticFeedback('light');
     setIsOpen(false);
-    if (n.id === 'virtual-weekly-summary' || n.id.startsWith('virtual-pace-') || n.id === 'virtual-budget-alert' || n.id.startsWith('virtual-subbudget-')) {
+    if (n.type === 'debt_due' || n.debtId) {
+      navigate('/debts');
+    } else if (n.id === 'virtual-weekly-summary' || n.id.startsWith('virtual-pace-') || n.id === 'virtual-budget-alert' || n.id.startsWith('virtual-subbudget-')) {
       navigate('/analytics?tab=weekly');
     } else if (n.id.startsWith('virtual-recurring-')) {
       navigate('/recurring');

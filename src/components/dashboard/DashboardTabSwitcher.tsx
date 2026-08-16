@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion, Variants } from 'motion/react';
-import { Zap, PiggyBank, Target, Activity } from 'lucide-react';
+import { Zap, PiggyBank, Activity } from 'lucide-react';
 import { cn, hapticFeedback, safeStorage } from '../../utils';
 
-export type DashboardTab = 'daily' | 'vaults' | 'insights' | 'challenges';
+export type DashboardTab = 'daily' | 'vaults' | 'insights';
 
 interface DashboardTabSwitcherProps {
   activeDashboardTab: DashboardTab;
@@ -20,7 +20,6 @@ export const DashboardTabSwitcher: React.FC<DashboardTabSwitcherProps> = ({
     { id: 'daily' as const, label: 'ميزانية اليوم ⚡', shortLabel: 'اليوم', icon: <Zap size={14} className="text-amber-500" /> },
     { id: 'vaults' as const, label: 'الخزائن والحصالة 💳', shortLabel: 'الخزائن', icon: <PiggyBank size={14} className="text-emerald-500" /> },
     { id: 'insights' as const, label: 'الذكاء والتحليل 📊', shortLabel: 'التحليل', icon: <Activity size={14} className="text-indigo-500" /> },
-    { id: 'challenges' as const, label: 'تحديات التوفير 🏆', shortLabel: 'التحديات', icon: <Target size={14} className="text-rose-500" /> },
   ];
 
   return (

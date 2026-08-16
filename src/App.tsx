@@ -17,13 +17,12 @@ import ShareAdd from './pages/ShareAdd';
 
 import BudgetPage from './pages/Budget';
 import GoalsPage from './pages/Goals';
+import DebtsPage from './pages/Debts';
 import IncomePage from './pages/settings/Income';
 import RecurringExpenses from './pages/RecurringExpenses';
 import SavingsPage from './pages/Savings';
 import SavingsIndicatorsPage from './pages/SavingsIndicators';
 import FamilyReport from './pages/FamilyReport';
-
-import ChallengesPage from './pages/Challenges';
 
 function AppContent() {
   const { isLocked } = useAppContext();
@@ -46,9 +45,9 @@ function AppContent() {
               <Route path="budget" element={<BudgetPage />} />
               <Route path="recurring" element={<RecurringExpenses />} />
               <Route path="goals" element={<GoalsPage />} />
+              <Route path="debts" element={<DebtsPage />} />
               <Route path="income" element={<IncomePage />} />
               <Route path="savings" element={<SavingsPage />} />
-              <Route path="challenges" element={<ChallengesPage />} />
               <Route path="savings-indicators" element={<SavingsIndicatorsPage />} />
               <Route path="family" element={<FamilyReport />} />
               <Route path="settings" element={<Settings />} />

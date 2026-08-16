@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings2, Target, RefreshCcw, Trophy, Flag, LogOut, LogIn, UserCircle, PlusCircle, PiggyBank, Moon, Sun, Wallet, SlidersHorizontal, ChartPie, Baby, Loader2 } from 'lucide-react';
+import { Settings2, Target, RefreshCcw, Trophy, Flag, LogOut, LogIn, UserCircle, PlusCircle, PiggyBank, Moon, Sun, Wallet, SlidersHorizontal, ChartPie, Baby, Loader2, HandCoins } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { motion, AnimatePresence } from 'motion/react';
@@ -7,6 +7,7 @@ import { cn } from '../utils';
 import { useAppContext } from '../store/AppContext';
 
 const dropdownItems = [
+  { path: '/debts', name: 'الديون والقروض (لي / علي)', icon: HandCoins },
   { path: '/income', name: 'إدارة الدخل', icon: Wallet },
   { path: '/budget', name: 'الميزانيات', icon: ChartPie },
   { path: '/family', name: 'تفريرة العيلة', icon: Baby },
@@ -25,6 +26,7 @@ const Header = () => {
   const getPageName = () => {
     switch (location.pathname) {
       case '/': return 'الرئيسية';
+      case '/debts': return 'الديون والقروض الشخصية';
       case '/transactions': return 'العمليات';
       case '/analytics': return 'الإحصائيات';
       case '/budget': return 'الميزانيات';

@@ -124,9 +124,10 @@ export interface Income {
 export interface AppNotification {
   id: string;
   message: string;
-  type: 'budget' | 'unusual_expense' | 'achievement' | 'pace_warning';
+  type: 'budget' | 'unusual_expense' | 'achievement' | 'pace_warning' | 'debt_due';
   createdAt: string;
   categoryId?: string;
+  debtId?: string;
   meta?: {
     dailyRate?: number;
     safeRate?: number;
@@ -224,92 +225,6 @@ export interface AIInsights {
   lastUpdated: string; // ISO string
 }
 
-export type WeeklyChallengeType = 
-  | 'no_spend' 
-  | 'no_coffee' 
-  | 'home_cooking' 
-  | 'grocery_cap' 
-  | 'freeze_wants' 
-  | 'roundup_streak' 
-  | 'lunchbox_hero'
-  | 'walk_commute'
-  | 'energy_saver'
-  | 'ladder_saving'
-  | 'strict_list'
-  | 'cart_delay_24h'
-  | 'family_pot'
-  | 'custom';
-
-export type ChallengeCategory = 'daily_habits' | 'shopping_saving' | 'lifestyle_fun' | 'family_home';
-
-export interface WeeklyChallengeDayStatus {
-  date: string; // YYYY-MM-DD
-  dayLabel: string; // 'الإثنين', 'الثلاثاء', etc.
-  dayShort: string; // 'إثن', 'ثلا', etc.
-  spentAmount: number;
-  isSuccess: boolean;
-  manualChecked?: boolean;
-  isToday: boolean;
-  isPast: boolean;
-  isFuture: boolean;
-  note?: string;
-}
-
-export interface WeeklyChallenge {
-  id: string;
-  type: WeeklyChallengeType;
-  category?: ChallengeCategory;
-  title: string;
-  subtitle?: string;
-  description: string;
-  icon: string;
-  difficulty?: 'easy' | 'medium' | 'hard';
-  badgeName: string;
-  badgeIcon: string;
-  rewardPoints: number;
-  estimatedSavingTND: number;
-  startDate: string; // YYYY-MM-DD
-  endDate: string; // YYYY-MM-DD
-  targetDays: number; // e.g. 7 or 2
-  targetSpendCap?: number; // e.g. 50 TND
-  targetCategoryId?: string; // e.g. '6'
-  targetCategoryName?: string;
-  targetKeywords?: string[];
-  status: 'active' | 'completed' | 'abandoned' | 'available';
-  progressPercentage: number;
-  successfulDaysCount: number;
-  totalSavedSoFar: number;
-  days: WeeklyChallengeDayStatus[];
-  completedAt?: string;
-  isCustom?: boolean;
-  createdAt?: string;
-  tips?: string[];
-}
-
-export interface WeeklyChallengeBadge {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  unlocked: boolean;
-  unlockedAt?: string;
-  challengeType?: WeeklyChallengeType;
-  levelRequired?: number;
-}
-
-export interface ChallengeUserLevel {
-  level: number;
-  title: string;
-  icon: string;
-  minPoints: number;
-  maxPoints: number;
-  perk: string;
-  color: string;
-}
-
 export interface SmartSavingChallenge {
   title: string;
   description: string;
@@ -331,6 +246,29 @@ export interface BackupRecord {
   data: string;
 }
 
+export type DebtDirection = 'owed_to_me' | 'i_owe'; // لي عند فلان / علي لفلان
+
+export interface DebtPayment {
+  id: string;
+  amount: number;
+  date: string;
+  note?: string;
+}
+
+export interface Debt {
+  id: string;
+  personName: string;
+  direction: DebtDirection;
+  totalAmount: number;
+  remainingAmount: number;
+  dueDate?: string;
+  note?: string;
+  accountId?: string; // الحساب المرتبط عند التسديد
+  isSettled: boolean;
+  createdAt: string;
+  payments: DebtPayment[];
+}
+
 export interface AppState {
   expenses: Expense[];
   recurringExpenses: RecurringExpense[];
@@ -343,6 +281,7 @@ export interface AppState {
   currency: string;
   achievements: Achievement[];
   goals: Goal[];
+  debts?: Debt[];
   income: Income[];
   notifications: AppNotification[];
   hasCompletedOnboarding: boolean;
@@ -353,8 +292,6 @@ export interface AppState {
   offlineMode: boolean;
   gamaeyas?: Gamaeya[];
   activeChallenge?: SmartSavingChallenge;
-  weeklyChallenges?: WeeklyChallenge[];
-  challengePoints?: number;
   autoRoundUpSetting?: AutoRoundUpSetting;
 }
 
