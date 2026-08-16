@@ -1,36 +1,124 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'motion/react';
-import { Send, Bot, User, Sparkles, Loader2, Settings as SettingsIcon, Trash2, Lightbulb, ImagePlus, X, Eye, EyeOff, Key } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Send, 
+  Sparkles, 
+  Settings as SettingsIcon, 
+  Trash2, 
+  Lightbulb, 
+  ImagePlus, 
+  X, 
+  Eye, 
+  EyeOff, 
+  Key, 
+  Mic, 
+  MicOff, 
+  Volume2, 
+  VolumeX, 
+  TrendingUp, 
+  ShieldAlert, 
+  ShieldCheck, 
+  CheckCircle2, 
+  Target, 
+  PieChart as PieIcon, 
+  ArrowRightLeft, 
+  FileText, 
+  Download, 
+  Share2, 
+  ChevronRight,
+  HelpCircle,
+  Activity,
+  Plus
+} from 'lucide-react';
 import { GoogleGenAI, ThinkingLevel, Type, FunctionDeclaration } from '@google/genai';
 import { useAppContext } from '../store/AppContext';
 import { cn, hapticFeedback, getBudgetMonth, safeStorage, formatCurrency } from '../utils';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { FinancialHealthAssessment, AISavingPlan } from '../types';
+import { calculateFinancialHealth, generateSavingPlanAI } from '../services/geminiService';
 
 // Import unified components
 import PageHeader from '../components/ui/PageHeader';
 import Badge from '../components/ui/Badge';
 
-import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  BarChart, 
+  Bar, 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Legend 
+} from 'recharts';
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  image?: string;
+  isKeyError?: boolean;
+  chart?: { type: string; title: string; data: any[] };
+  healthAssessment?: FinancialHealthAssessment;
+  savingPlan?: AISavingPlan;
+  actionSummary?: string;
+}
+
+const MODEL_NAME = 'gemini-3.7-flash';
 
 export default function Assistant() {
-  const { accounts, expenses, budgets, currency, categories, addExpense, addIncome, deleteExpense, deleteIncome, setBudget, updateAccount, addGoal, goals, firstDayOfMonth, transferAccount, addCategory } = useAppContext();
+  const { 
+    accounts, 
+    expenses, 
+    income,
+    budgets, 
+    currency, 
+    categories, 
+    addExpense, 
+    addIncome, 
+    deleteExpense, 
+    setBudget, 
+    updateAccount, 
+    addGoal, 
+    goals, 
+    firstDayOfMonth, 
+    transferAccount, 
+    addCategory,
+    updateGoal
+  } = useAppContext();
+
   const currentMonth = getBudgetMonth(new Date(), firstDayOfMonth);
   const budget = budgets?.find(b => b.month === currentMonth);
+  const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
+  const currentMonthExpenses = expenses.filter(e => e.date.startsWith(currentMonth));
+  const currentMonthTotalSpend = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+
   const [query, setQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string, image?: string, isKeyError?: boolean, chart?: { type: string, title: string, data: any[] }}[]>([
-    { role: 'assistant', content: 'مرحباً! أنا مساعدك المالي الذكي. يمكنني تحليل مصاريفك، قراءة الفواتير، تقديم نصائح، إنشاء رسوم بيانية، أو حتى إضافة وحذف المصاريف والدخول وتعديل الميزانية نيابة عنك. كيف يمكنني مساعدتك اليوم؟' }
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { 
+      role: 'assistant', 
+      content: `مرحباً بك! أنا **مستشارك المالي الذكي الشخصي** 💼🇹🇳\n\nأنا هنا لمساعدتك على:\n- **تدقيق صحتك المالية** واكتشاف فرص التوفير الخفية.\n- **قراءة فواتير الستاغ والصوناد وإيصالات السوبرماركت** وتحويلها لمصاريف بنقرة واحدة.\n- **إدارة المعاملات والميزانيات والأهداف** عبر الأوامر الصوتية أو النصية.\n- **بناء خطط ادخار محكمة** لأهدافك العائلية.\n\nكيف يمكنني توجيهك اليوم؟` 
+    }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [customApiKey, setCustomApiKey] = useState(safeStorage.getItem('gemini_api_key') || '');
   const [showKeyText, setShowKeyText] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [speakingMessageIdx, setSpeakingMessageIdx] = useState<number | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatHistoryRef = useRef<any[]>([]);
+  const recognitionRef = useRef<any>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,6 +130,7 @@ export default function Assistant() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setSelectedImage(reader.result as string);
+        toast.success('تم إرفاق الصورة، اكتب سؤالك أو أرسل لقراءتها مباشرة!');
       };
       reader.readAsDataURL(file);
     }
@@ -64,6 +153,91 @@ export default function Assistant() {
     }
   }, []);
 
+  // Voice recording speech-to-text setup
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'ar-TN'; // Tunisian Arabic fallback to Arabic
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setQuery(prev => (prev ? `${prev} ${transcript}` : transcript));
+        setIsRecording(false);
+        hapticFeedback('success');
+        toast.success('تم التقاط الصوت بنجاح!');
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error', event);
+        setIsRecording(false);
+        toast.error('تعذر التعرف على الصوت. يمكنك المحاولة مجدداً أو الكتابة.');
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+  }, []);
+
+  const toggleVoiceRecording = () => {
+    if (!recognitionRef.current) {
+      toast.error('التعرف الصوتي غير مدعوم في هذا المتصفح.');
+      return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+      hapticFeedback('light');
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsRecording(true);
+        hapticFeedback('medium');
+        toast('تحدث الآن... استمع إليك 🎙️', { icon: '🎙️' });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  // Text-to-speech for reading advice
+  const toggleSpeak = (text: string, idx: number) => {
+    if (!('speechSynthesis' in window)) {
+      toast.error('خاصية القراءة الصوتية غير متوفرة في متصفحك.');
+      return;
+    }
+
+    if (speakingMessageIdx === idx) {
+      window.speechSynthesis.cancel();
+      setSpeakingMessageIdx(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    // Clean markdown symbols for cleaner speech
+    const cleanText = text.replace(/[*#_`~[\]]/g, '').replace(/\n+/g, '. ');
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'ar-SA';
+    utterance.rate = 1.0;
+
+    utterance.onend = () => {
+      setSpeakingMessageIdx(null);
+    };
+    utterance.onerror = () => {
+      setSpeakingMessageIdx(null);
+    };
+
+    setSpeakingMessageIdx(idx);
+    window.speechSynthesis.speak(utterance);
+    hapticFeedback('light');
+  };
+
   const saveApiKey = () => {
     if (customApiKey.trim()) {
       safeStorage.setItem('gemini_api_key', customApiKey.trim());
@@ -77,22 +251,19 @@ export default function Assistant() {
     }
   };
 
-  const handleAsk = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if ((!query.trim() && !selectedImage) || isLoading) return;
-
+  const executeAsk = async (textToSubmit: string, imageToSubmit: string | null) => {
     const apiKey = safeStorage.getItem('gemini_api_key') || process.env.GEMINI_API_KEY;
     if (!apiKey) {
       setApiKeyMissing(true);
       return;
     }
 
-    const userQuery = query.trim();
-    const userImage = selectedImage;
+    const userQuery = textToSubmit.trim();
+    const userImage = imageToSubmit;
     hapticFeedback('medium');
     setQuery('');
     setSelectedImage(null);
-    setMessages(prev => [...prev, { role: 'user', content: userQuery, image: userImage || undefined }]);
+    setMessages(prev => [...prev, { role: 'user', content: userQuery || (userImage ? 'قم بقراءة هذه الفاتورة/الإيصال واستخراج البيانات المالية بدقة.' : ''), image: userImage || undefined }]);
     setIsLoading(true);
 
     try {
@@ -104,7 +275,7 @@ export default function Assistant() {
         parameters: {
           type: Type.OBJECT,
           properties: {
-            amount: { type: Type.NUMBER, description: 'قيمة المصروف (رقم موجب)' },
+            amount: { type: Type.NUMBER, description: 'قيمة المصروف (رقم موجب بالدينار التونسي)' },
             categoryId: { type: Type.STRING, description: 'معرف الفئة (ID). يجب اختياره من قائمة الفئات المتاحة.' },
             note: { type: Type.STRING, description: 'ملاحظة أو وصف للمصروف' },
             accountId: { type: Type.STRING, description: 'معرف الحساب (ID). يجب اختياره من قائمة الحسابات المتاحة.' },
@@ -120,10 +291,10 @@ export default function Assistant() {
         parameters: {
           type: Type.OBJECT,
           properties: {
-            amount: { type: Type.NUMBER, description: 'قيمة الدخل (رقم موجب)' },
-            source: { type: Type.STRING, description: 'مصدر الدخل (مثال: راتب، مكافأة، إلخ)' },
+            amount: { type: Type.NUMBER, description: 'قيمة الدخل (رقم موجب بالدينار التونسي)' },
+            source: { type: Type.STRING, description: 'مصدر الدخل (مثال: راتب، مكافأة، منحة)' },
             accountId: { type: Type.STRING, description: 'معرف الحساب (ID). يجب اختياره من قائمة الحسابات المتاحة.' },
-            date: { type: Type.STRING, description: 'تاريخ الدخل بصيغة YYYY-MM-DD. استخدم تاريخ اليوم إذا لم يحدد المستخدم.' }
+            date: { type: Type.STRING, description: 'تاريخ الدخل بصيغة YYYY-MM-DD.' }
           },
           required: ['amount', 'source', 'accountId', 'date']
         }
@@ -147,7 +318,7 @@ export default function Assistant() {
         parameters: {
           type: Type.OBJECT,
           properties: {
-            amount: { type: Type.NUMBER, description: 'قيمة الميزانية الإجمالية' }
+            amount: { type: Type.NUMBER, description: 'قيمة الميزانية الإجمالية بالدينار' }
           },
           required: ['amount']
         }
@@ -207,8 +378,8 @@ export default function Assistant() {
           properties: {
             name: { type: Type.STRING, description: 'اسم الفئة' },
             type: { type: Type.STRING, enum: ['expense', 'income'], description: 'نوع الفئة: مصروف أو دخل' },
-            color: { type: Type.STRING, description: 'لون الفئة (مثال: #FF0000)' },
-            icon: { type: Type.STRING, description: 'اسم الأيقونة (مثال: ShoppingCart)' }
+            color: { type: Type.STRING, description: 'لون الفئة (مثال: #10B981)' },
+            icon: { type: Type.STRING, description: 'اسم الأيقونة' }
           },
           required: ['name', 'type', 'color', 'icon']
         }
@@ -216,7 +387,7 @@ export default function Assistant() {
 
       const generateChartDeclaration: FunctionDeclaration = {
         name: 'generateChart',
-        description: 'إنشاء رسم بياني لعرض البيانات المالية للمستخدم (مثل: المصاريف حسب الفئة، الدخل مقابل المنصرف، تطور الرصيد، إلخ)',
+        description: 'إنشاء رسم بياني تفاعلي لعرض البيانات المالية للمستخدم',
         parameters: {
           type: Type.OBJECT,
           properties: {
@@ -228,7 +399,7 @@ export default function Assistant() {
               items: {
                 type: Type.OBJECT,
                 properties: {
-                  name: { type: Type.STRING, description: 'الاسم أو التسمية (مثال: اسم الفئة، الشهر)' },
+                  name: { type: Type.STRING, description: 'الاسم أو الفئة' },
                   value: { type: Type.NUMBER, description: 'القيمة الرقمية' }
                 },
                 required: ['name', 'value']
@@ -239,30 +410,55 @@ export default function Assistant() {
         }
       };
 
+      const conductFinancialAuditDeclaration: FunctionDeclaration = {
+        name: 'conductFinancialAudit',
+        description: 'إجراء فحص شامل للصحة المالية واستخراج بطاقة التدقيق والدرجة من 100 مع خطة عمل',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            notes: { type: Type.STRING, description: 'ملاحظات إضافية للفحص' }
+          }
+        }
+      };
+
+      const createSavingPlanDeclaration: FunctionDeclaration = {
+        name: 'createSavingPlan',
+        description: 'إنشاء خطة ادخار ذكية ومفصلة لتحقيق هدف معين',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            goalName: { type: Type.STRING, description: 'اسم الهدف' },
+            targetAmount: { type: Type.NUMBER, description: 'المبلغ المطلوب توفيره' },
+            timeframeMonths: { type: Type.INTEGER, description: 'المدة بالأشهر' }
+          },
+          required: ['goalName', 'targetAmount', 'timeframeMonths']
+        }
+      };
+
       const context = `
-        أنت مساعد مالي ذكي وخبير في إدارة الميزانية الشخصية في تونس.
-        العملة: ${currency} (الدينار التونسي).
-        تذكر دائماً أن 1 دينار = 1000 مليم، لذا يجب عرض المبالغ بـ 3 أرقام بعد الفاصلة (مثلاً: 10.500 د.ت).
+        أنت مستشار مالي ذكي وخبير اقتصادي تونسي متخصص في التخطيط المالي والميزانيات العائلية.
+        العملة: ${currency} (الدينار التونسي - TND).
+        ملاحظة حاسمة: 1 دينار = 1000 مليم، لذا اعرض دائماً المبالغ بدقة المليمات بـ 3 أرقام بعد الفاصلة (مثال: 15.200 د.ت).
         تاريخ اليوم: ${new Date().toISOString().split('T')[0]}
         
-        بيانات المستخدم الحالية:
-        - إجمالي الرصيد: ${accounts.reduce((sum, acc) => sum + acc.balance, 0)}
-        - الحسابات المتاحة: ${JSON.stringify(accounts.map(a => ({ id: a.id, name: a.name, balance: a.balance })))}
-        - الفئات المتاحة: ${JSON.stringify(categories.map(c => ({ id: c.id, name: c.name, type: c.type })))}
-        - الميزانية الشهرية: ${budget?.amount || 'غير محددة'}
-        - الأهداف الحالية: ${JSON.stringify(goals.map(g => ({ id: g.id, name: g.name, target: g.targetAmount, current: g.currentAmount })))}
-        - ملخص مصاريف الشهر الحالي: ${JSON.stringify(
-          expenses
-            .filter(e => e.date.startsWith(new Date().toISOString().split('T')[0].substring(0, 7)))
-            .reduce((acc, e) => {
-              const cat = categories.find(c => c.id === e.categoryId)?.name || 'أخرى';
-              acc[cat] = (acc[cat] || 0) + e.amount;
-              return acc;
-            }, {} as Record<string, number>)
-        )}
+        بيانات المستخدم المالية:
+        - الرصيد الإجمالي: ${totalBalance.toFixed(3)} TND
+        - الحسابات: ${JSON.stringify(accounts.map(a => ({ id: a.id, name: a.name, balance: a.balance })))}
+        - الفئات: ${JSON.stringify(categories.map(c => ({ id: c.id, name: c.name, type: c.type })))}
+        - الميزانية المحددة للشهر: ${budget?.amount ? budget.amount.toFixed(3) : 'غير محددة'}
+        - إجمالي المصاريف هذا الشهر: ${currentMonthTotalSpend.toFixed(3)} TND
+        - الأهداف: ${JSON.stringify(goals.map(g => ({ id: g.id, name: g.name, target: g.targetAmount, current: g.currentAmount })))}
+        - آخر 25 عملية صرف: ${JSON.stringify(expenses.slice(0, 25).map(e => ({
+          amount: e.amount,
+          note: e.note,
+          category: categories.find(c => c.id === e.categoryId)?.name || 'أخرى',
+          date: e.date
+        })))}
         
-        لديك القدرة على استدعاء دوال (Tools) لإدارة البيانات نيابة عن المستخدم.
-        أجب باللغة العربية بأسلوب احترافي وودود.
+        تعليمات سلوك المستشار:
+        1. تحدث باللغة العربية الواضحة المشجعة، مع مراعاة الواقع المعيشي التونسي (قفة السوق، فواتير الستاغ والصوناد، مستلزمات وحليب الأطفال، أسعار المواد الاستهلاكية).
+        2. عند قراءة الفواتير أو الصور، استخرج المبالغ بدقة واعرضها واستدعِ دالة addExpense إذا كان واضحاً أن المستخدم يريد تسجيلها أو قدم له ملخصاً مع تأكيد.
+        3. استخدم أدوات Tools لإنشاء الرسوم البيانية وفحص الصحة المالية وخطط الادخار عندما يطلب المستخدم ذلك.
       `;
 
       // Append user message to history
@@ -280,86 +476,106 @@ export default function Assistant() {
       }
       chatHistoryRef.current.push({ role: 'user', parts: userParts });
 
-      let response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+      const response = await ai.models.generateContent({
+        model: MODEL_NAME,
         contents: [
           { role: 'user', parts: [{ text: context }] },
-          { role: 'model', parts: [{ text: 'فهمت السياق والتعليمات. أنا مستعد للمساعدة.' }] },
+          { role: 'model', parts: [{ text: 'أهلاً بك! أنا مستشارك المالي الذكي، جاهز لتحليل بياناتك وإدارتها بكفاءة عالية.' }] },
           ...chatHistoryRef.current
         ],
         config: {
-          tools: [{ functionDeclarations: [addExpenseDeclaration, addIncomeDeclaration, deleteExpenseDeclaration, setBudgetDeclaration, updateAccountDeclaration, addGoalDeclaration, transferAccountDeclaration, addCategoryDeclaration, generateChartDeclaration] }],
+          tools: [{ 
+            functionDeclarations: [
+              addExpenseDeclaration, 
+              addIncomeDeclaration, 
+              deleteExpenseDeclaration, 
+              setBudgetDeclaration, 
+              updateAccountDeclaration, 
+              addGoalDeclaration, 
+              transferAccountDeclaration, 
+              addCategoryDeclaration, 
+              generateChartDeclaration,
+              conductFinancialAuditDeclaration,
+              createSavingPlanDeclaration
+            ] 
+          }],
           thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
         }
       });
 
       let responseText = response.text || '';
+      let chartData: any = undefined;
+      let healthData: FinancialHealthAssessment | undefined = undefined;
+      let planData: AISavingPlan | undefined = undefined;
+      let actionExecutedText = '';
 
       // Handle function calls
       if (response.functionCalls && response.functionCalls.length > 0) {
         hapticFeedback('success');
-        let chartData: any = undefined;
         
         for (const call of response.functionCalls) {
           const args = call.args as any;
           if (call.name === 'addExpense') {
             addExpense({
               amount: Number(args.amount),
-              categoryId: args.categoryId,
-              note: args.note,
-              accountId: args.accountId,
-              date: args.date,
+              categoryId: args.categoryId || categories[0]?.id || '1',
+              note: args.note || 'مصروف ذكي',
+              accountId: args.accountId || accounts[0]?.id || '1',
+              date: args.date || new Date().toISOString().split('T')[0],
               paymentMethod: 'cash'
             });
-            responseText += '\n\n✅ تم إضافة المصروف بنجاح.';
+            actionExecutedText += `\n\n✅ **تم تسجيل المصروف بنجاح**: ${formatCurrency(args.amount, currency)} - ${args.note}`;
           } else if (call.name === 'addIncome') {
             addIncome({
               amount: Number(args.amount),
-              source: args.source,
-              accountId: args.accountId,
-              date: args.date
+              source: args.source || 'دخل إضافي',
+              accountId: args.accountId || accounts[0]?.id || '1',
+              date: args.date || new Date().toISOString().split('T')[0]
             });
-            responseText += '\n\n✅ تم إضافة الدخل بنجاح.';
+            actionExecutedText += `\n\n✅ **تم تسجيل الدخل بنجاح**: ${formatCurrency(args.amount, currency)} - ${args.source}`;
           } else if (call.name === 'deleteExpense') {
             deleteExpense(args.id);
-            responseText += '\n\n✅ تم حذف المصروف بنجاح.';
+            actionExecutedText += '\n\n🗑️ **تم حذف المصروف المحدد بنجاح.**';
           } else if (call.name === 'setBudget') {
             setBudget({ 
               amount: Number(args.amount), 
-              month: getBudgetMonth(new Date(), firstDayOfMonth),
+              month: currentMonth,
               categoryBudgets: budget?.categoryBudgets || {} 
             });
-            responseText += '\n\n✅ تم تحديث الميزانية بنجاح.';
+            actionExecutedText += `\n\n🎯 **تم تحديث الميزانية الشهرية إلى**: ${formatCurrency(args.amount, currency)}`;
           } else if (call.name === 'updateAccount') {
             updateAccount(args.id, { balance: args.balance, name: args.name });
-            responseText += '\n\n✅ تم تحديث بيانات الحساب بنجاح.';
+            actionExecutedText += '\n\n💳 **تم تحديث بيانات الحساب بنجاح.**';
           } else if (call.name === 'addGoal') {
             addGoal({
               name: args.name,
               targetAmount: Number(args.targetAmount),
-              currentAmount: Number(args.currentAmount),
-              deadline: args.deadline,
+              currentAmount: Number(args.currentAmount || 0),
+              deadline: args.deadline || new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0],
               linkedCategoryId: args.linkedCategoryId
             });
-            responseText += '\n\n✅ تم إضافة هدف الادخار بنجاح.';
+            actionExecutedText += `\n\n🚀 **تم إنشاء هدف الادخار**: "${args.name}" بمبلغ مستهدف ${formatCurrency(args.targetAmount, currency)}`;
           } else if (call.name === 'transferAccount') {
-            transferAccount(args.fromAccountId, args.toAccountId, Number(args.amount), args.date, args.note);
-            responseText += '\n\n✅ تم تحويل المبلغ بنجاح.';
+            transferAccount(args.fromAccountId, args.toAccountId, Number(args.amount), args.date || new Date().toISOString().split('T')[0], args.note || 'تحويل مالي');
+            actionExecutedText += `\n\n🔄 **تم تحويل المبلغ**: ${formatCurrency(args.amount, currency)} بنجاح.`;
           } else if (call.name === 'addCategory') {
             addCategory({
               name: args.name,
-              type: args.type,
-              color: args.color,
-              icon: args.icon
+              type: args.type || 'expense',
+              color: args.color || '#6366f1',
+              icon: args.icon || 'Tag'
             });
-            responseText += '\n\n✅ تم إضافة الفئة بنجاح.';
+            actionExecutedText += `\n\n🏷️ **تم إضافة الفئة الجديدة**: ${args.name}`;
           } else if (call.name === 'generateChart') {
             chartData = {
               type: args.type,
               title: args.title,
               data: args.data
             };
-            responseText += '\n\n✅ تم إنشاء الرسم البياني.';
+          } else if (call.name === 'conductFinancialAudit') {
+            healthData = await calculateFinancialHealth(expenses, income, budget || null, goals, accounts, categories, currency);
+          } else if (call.name === 'createSavingPlan') {
+            planData = await generateSavingPlanAI(args.goalName, Number(args.targetAmount), Number(args.timeframeMonths || 6), expenses, income, categories, currency);
           }
         }
         
@@ -368,15 +584,22 @@ export default function Assistant() {
         // Append function response to history
         chatHistoryRef.current.push({ role: 'user', parts: [{ functionResponse: { name: response.functionCalls[0].name, response: { success: true } } }] });
         
-        setMessages(prev => [...prev, { role: 'assistant', content: responseText || 'تم تنفيذ العملية.', chart: chartData }]);
+        const fullContent = (responseText ? `${responseText}\n` : '') + actionExecutedText;
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: fullContent || 'تم إتمام طلبك بنجاح.', 
+          chart: chartData,
+          healthAssessment: healthData,
+          savingPlan: planData
+        }]);
       } else {
         // Append normal text response to history
         chatHistoryRef.current.push({ role: 'model', parts: [{ text: responseText }] });
-        setMessages(prev => [...prev, { role: 'assistant', content: responseText || 'تم تنفيذ العملية.' }]);
+        setMessages(prev => [...prev, { role: 'assistant', content: responseText || 'تم معالجة طلبك.' }]);
       }
     } catch (error: any) {
       console.error('Error calling Gemini:', error);
-      let errorMessage = 'عذراً، حدث خطأ أثناء الاتصال بالمساعد الذكي. يرجى التأكد من صحة مفتاح API والمحاولة مرة أخرى.';
+      let errorMessage = 'عذراً، حدث خطأ أثناء الاتصال بالمساعد الذكي. يرجى التحقق من الاتصال بالإنترنت ومفتاح API.';
       let isKeyError = false;
       
       const errorStr = (error?.message || '').toUpperCase();
@@ -394,8 +617,8 @@ export default function Assistant() {
       }
       
       if (error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED')) {
-        errorMessage = 'لقد تجاوزت الحد المسموح به من الاستخدام المجاني للمساعد الذكي حالياً. يرجى المحاولة لاحقاً أو غداً.';
-        isKeyError = false;
+        errorMessage = 'لقد بلغت الحد المؤقت للاستخدام المجاني لـ Gemini API. يمكنك إضافة مفتاح API خاص بك من الإعدادات لمتابعة الخدمة بلا انقطاع.';
+        isKeyError = true;
       }
       
       setMessages(prev => [...prev, { role: 'assistant', content: errorMessage, isKeyError }]);
@@ -404,353 +627,503 @@ export default function Assistant() {
     }
   };
 
-  if (apiKeyMissing) {
-    return (
-      <div className="max-w-md mx-auto mt-20 p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md text-center">
-        <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
-          <SettingsIcon className="size-8" />
-        </div>
-        <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">مفتاح API مفقود</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-          لتشغيل المساعد الذكي خارج منصة التطوير، يرجى إضافة مفتاح Gemini API الخاص بك في صفحة الإعدادات.
-        </p>
-        <Link 
-          to="/settings" 
-          className="inline-flex items-center justify-center gap-2 bg-primary-500 text-white px-6 py-3 rounded-xl font-black hover:bg-primary-600 transition-colors w-full"
-        >
-          <SettingsIcon className="size-5" />
-          الذهاب إلى الإعدادات
-        </Link>
-      </div>
-    );
-  }
+  const handleAsk = (e: React.FormEvent) => {
+    e.preventDefault();
+    if ((!query.trim() && !selectedImage) || isLoading) return;
+    executeAsk(query, selectedImage);
+  };
+
+  const triggerPrompt = (promptText: string) => {
+    executeAsk(promptText, null);
+  };
+
+  const handleAuditDirect = async () => {
+    setIsLoading(true);
+    hapticFeedback('medium');
+    setMessages(prev => [...prev, { role: 'user', content: 'أريد إجراء فحص وتدقيق كامل لصحتي المالية الآن 🩺' }]);
+    try {
+      const assessment = await calculateFinancialHealth(expenses, income, budget || null, goals, accounts, categories, currency);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `### 🩺 تقرير التدقيق والعافية المالية الشامل\n\nبناءً على تحليلي لتدفقاتك النقدية ومصاريفك، إليك النتيجة التفصيلية وخريطة الطريق للتحسين:`,
+        healthAssessment: assessment
+      }]);
+    } catch (e) {
+      console.error(e);
+      toast.error('حدث خطأ أثناء إجراء الفحص المالي');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-full p-4 pb-32 flex flex-col"
+      className="w-full max-w-full p-4 md:p-6 pb-36 flex flex-col min-h-screen"
     >
       <PageHeader
-        title="المستشار الذكي"
-        subtitle="تحليل مالي متقدم وتكامل ذكي لقراءة الفواتير وتوجيه ميزانيتك بكفاءة"
+        title="المستشار المالي الذكي (AI Advisor)"
+        subtitle="شريكك الذكي لتحليل المصاريف، قراءة الفواتير، وتحقيق الأمان المالي لعائلتك"
         action={
           <div className="flex items-center gap-2">
-            <Badge variant="success">ذكاء اصطناعي آمن</Badge>
+            <span className="px-3 py-1 bg-violet-500/10 text-violet-600 dark:text-violet-400 text-xs font-black rounded-full border border-violet-500/20 flex items-center gap-1.5 shadow-xs">
+              <Sparkles size={13} className="text-violet-500 animate-pulse" />
+              <span>Gemini 3.7 Pro</span>
+            </span>
             <button 
               onClick={() => { hapticFeedback('light'); setShowSettings(!showSettings); }}
-              className="p-2 text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 transition-colors cursor-pointer"
+              className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all cursor-pointer shadow-xs"
+              title="إعدادات المفتاح"
             >
-              <SettingsIcon className="size-5" />
+              <SettingsIcon size={18} />
             </button>
           </div>
         }
       />
 
-      <div className="h-4" />
-
-      {showSettings && (
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm"
+      {/* Live Financial Context Bar */}
+      <div className="my-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-3.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs">
+          <span className="text-[10px] text-slate-400 font-bold block">إجمالي الرصيد</span>
+          <span className="text-sm font-black text-slate-900 dark:text-white font-sans">{formatCurrency(totalBalance, currency)}</span>
+        </div>
+        <div className="p-3.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs">
+          <span className="text-[10px] text-slate-400 font-bold block">مصاريف هذا الشهر</span>
+          <span className="text-sm font-black text-rose-600 dark:text-rose-400 font-sans">{formatCurrency(currentMonthTotalSpend, currency)}</span>
+        </div>
+        <div className="p-3.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs">
+          <span className="text-[10px] text-slate-400 font-bold block">الميزانية الشهرية</span>
+          <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 font-sans">
+            {budget?.amount ? formatCurrency(budget.amount, currency) : 'غير محددة'}
+          </span>
+        </div>
+        <button
+          onClick={handleAuditDirect}
+          disabled={isLoading}
+          className="p-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-2xl shadow-md shadow-indigo-500/15 flex items-center justify-between transition-all cursor-pointer active:scale-95 text-right disabled:opacity-50"
         >
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2">إعدادات API</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-            إذا واجهت مشاكل في "حد الاستخدام"، يمكنك إضافة مفتاح API الخاص بك من Google AI Studio.
-          </p>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <input
-                type={showKeyText ? "text" : "password"}
-                value={customApiKey}
-                onChange={(e) => setCustomApiKey(e.target.value)}
-                placeholder="أدخل مفتاح API الخاص بك..."
-                className="w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none font-sans"
-                dir="ltr"
-              />
-              <button
-                type="button"
-                onClick={() => setShowKeyText(!showKeyText)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          <div>
+            <span className="text-[10px] text-violet-200 font-bold block">فحص فوري</span>
+            <span className="text-xs font-black">العافية المالية 🩺</span>
+          </div>
+          <Activity size={18} className="animate-pulse" />
+        </button>
+      </div>
+
+      {/* Settings Modal Bar */}
+      <AnimatePresence>
+        {showSettings && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-4 p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <Key size={16} className="text-violet-500" />
+                إعدادات مفتاح Google Gemini API
+              </h3>
+              <button 
+                onClick={() => setShowSettings(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
-                {showKeyText ? <EyeOff size={16} /> : <Eye size={16} />}
+                <X size={16} />
               </button>
             </div>
-            <button
-              onClick={saveApiKey}
-              className="px-5 py-2 bg-primary-500 text-white rounded-xl text-sm font-black hover:bg-primary-600 transition-colors cursor-pointer shrink-0"
-            >
-              حفظ
-            </button>
-          </div>
-        </motion.div>
-      )}
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+              يستخدم التطبيق افتراضياً البيئة السحابية. إذا رغبت في رفع القيود أو استخدام مفتاحك الخاص من <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-violet-600 underline font-bold">Google AI Studio</a>، يمكنك إدخاله هنا بأمان:
+            </p>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type={showKeyText ? "text" : "password"}
+                  value={customApiKey}
+                  onChange={(e) => setCustomApiKey(e.target.value)}
+                  placeholder="AIzaSy..."
+                  className="w-full pl-10 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-violet-500 outline-none font-sans"
+                  dir="ltr"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowKeyText(!showKeyText)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  {showKeyText ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <button
+                onClick={saveApiKey}
+                className="px-6 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 shadow-md shadow-violet-500/20"
+              >
+                حفظ المفتاح
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className="flex-1 flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-180px)] bg-white/40 dark:bg-slate-900/40 backdrop-blur-3xl rounded-3xl border border-white/40 dark:border-slate-800/40 shadow-sm overflow-hidden relative">
-        {/* Chat Header */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50 flex items-center justify-between bg-white/50 dark:bg-slate-900/50 backdrop-blur-md z-10">
+      {/* Main Chat Container */}
+      <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200/80 dark:border-slate-800 shadow-lg overflow-hidden relative min-h-[560px]">
+        {/* Chat Top Bar */}
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-500 shadow-inner">
+            <div className="w-10 h-10 rounded-2xl bg-violet-600/10 flex items-center justify-center text-violet-600 shadow-inner">
               <Sparkles size={20} className="animate-pulse" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">المستشار الذكي</h2>
+              <h2 className="text-sm font-black text-slate-900 dark:text-white">المستشار المالي التونسي</h2>
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">متصل الآن</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-[10px] font-bold text-slate-400">جاهز للاستشارة والتحليل</span>
               </div>
             </div>
           </div>
-          <button 
-            onClick={() => {
-              setMessages([{ role: 'assistant', content: 'مرحباً! أنا مساعدك المالي الذكي. كيف يمكنني مساعدتك اليوم؟' }]);
-              chatHistoryRef.current = [];
-              hapticFeedback('warning');
-            }}
-            className="p-2.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all active:scale-90"
-            title="مسح المحادثة"
-          >
-            <Trash2 size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => {
+                setMessages([{ 
+                  role: 'assistant', 
+                  content: 'تم بدء محادثة جديدة! كيف يمكنني مساعدتك مالياً اليوم؟' 
+                }]);
+                chatHistoryRef.current = [];
+                hapticFeedback('warning');
+                toast.success('تم مسح سجل المحادثة.');
+              }}
+              className="p-2.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all cursor-pointer"
+              title="محادثة جديدة"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
         </div>
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scrollbar-hide">
-          {messages.length <= 1 && messages[0].role === 'assistant' && messages[0].content.includes('مرحباً') ? (
-            <div className="h-full flex flex-col items-center justify-center text-center space-y-8 py-12">
-              <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="relative"
-              >
-                <div className="w-32 h-32 md:w-48 md:h-48 bg-primary-500/5 dark:bg-primary-500/10 rounded-3xl flex items-center justify-center text-primary-500/20">
-                  <Sparkles size={64} className="md:size-96 absolute opacity-10" />
-                  <div className="w-20 h-20 md:w-28 md:h-28 bg-white dark:bg-slate-800 rounded-2xl shadow-md flex items-center justify-center text-primary-500">
-                    <Sparkles size={32} className="md:size-48" />
-                  </div>
-                </div>
-                <motion.div 
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute -top-4 -right-4 w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20"
-                >
-                  <Lightbulb size={24} />
-                </motion.div>
-              </motion.div>
-              
-              <div className="space-y-3 max-w-sm">
-                <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">كيف يمكنني مساعدتك؟</h3>
-                <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                  أنا مستشارك المالي الذكي. يمكنني تحليل مصاريفك، تقديم نصائح للادخار، أو الإجابة على أي استفسار مالي.
-                </p>
-              </div>
+        {/* Quick Topic Chips */}
+        <div className="px-6 py-2.5 bg-slate-50/70 dark:bg-slate-950/40 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2 overflow-x-auto scrollbar-hide text-xs">
+          <span className="text-[10px] font-black text-slate-400 shrink-0">مقترحات:</span>
+          {[
+            { label: '🩺 فحص الصحة المالية', prompt: 'قم بإجراء فحص شامل وتدقيق للصحة المالية الحالية مع تحديد الدرجة وخطة العمل' },
+            { label: '🛒 ترشيد قفة الأسبوع', prompt: 'كيف يمكنني تقليص نفقات قفة الأسبوع والمشتريات الاستهلاكية بنسبة 20%؟' },
+            { label: '👶 ميزانية البيبي', prompt: 'حلل نفقات ومستلزمات البيبي واقترح أفضل سبل التوفير وشراء الجملة في تونس' },
+            { label: '⚡ تخفيض فاتورة STEG', prompt: 'ما هي أهم النصائح العملية لتخفيض فاتورة الكهرباء والغاز (الستاغ) في المنزل؟' },
+            { label: '📊 تحليل مصاريف الشهر', prompt: 'اعرض رسماً بيانياً يوضح توزيع مصاريف هذا الشهر حسب الفئات مع نصائح للترشيد' },
+            { label: '🎯 خطة ادخار 300 د.ت', prompt: 'أريد خطة ادخار ذكية لتوفير 300 دينار خلال 3 أشهر. من أي فئات يمكنني الاقتطاع؟' }
+          ].map((chip, idx) => (
+            <button
+              key={idx}
+              onClick={() => triggerPrompt(chip.prompt)}
+              disabled={isLoading}
+              className="px-3 py-1 bg-white dark:bg-slate-800 hover:bg-violet-50 dark:hover:bg-violet-950/40 hover:text-violet-600 dark:hover:text-violet-400 text-slate-600 dark:text-slate-300 rounded-full border border-slate-200 dark:border-slate-700 whitespace-nowrap text-[11px] font-bold transition-all shrink-0 cursor-pointer shadow-xs disabled:opacity-50"
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl px-4">
-                {[
-                  "حلل قفة السوق والمصاريف الحالية للمنزل",
-                  "كيف يمكنني التوفير في لوازم وحفاظات البيبي؟",
-                  "هل نسبة الادخار وعيش عائلتي سليمة؟",
-                  "كيفية تقليص نفقات فواتير STEG والصوناد"
-                ].map((suggestion, idx) => (
-                  <motion.button
-                    key={idx}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      setQuery(suggestion);
-                      // Trigger handleAsk manually or via useEffect
-                    }}
-                    className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-right text-xs md:text-sm font-bold text-slate-600 dark:text-slate-300 hover:border-primary-500/50 hover:shadow-md transition-all shadow-sm"
-                  >
-                    {suggestion}
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <>
-              {messages.map((msg, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  className={cn(
-                    "flex w-full",
-                    msg.role === 'user' ? "justify-end" : "justify-start"
-                  )}
-                >
-                  <div className={cn(
-                    "max-w-[85%] md:max-w-[75%] p-4 md:p-6 rounded-2xl shadow-sm relative group",
-                    msg.role === 'user' 
-                      ? "bg-primary-600 text-white rounded-tr-none shadow-primary-500/20" 
-                      : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-100 dark:border-slate-700"
-                  )}>
-                    {msg.role === 'assistant' ? (
-                      <div className="prose prose-sm dark:prose-invert max-w-none font-medium leading-relaxed">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                        {msg.chart && (
-                          <div className="mt-6 w-full h-64 bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 shadow-inner border border-slate-200 dark:border-slate-700 overflow-hidden">
-                            <h4 className="text-sm font-bold text-center mb-4 text-slate-700 dark:text-slate-300">{msg.chart.title}</h4>
-                            <ResponsiveContainer width="100%" height="100%">
-                              {msg.chart.type === 'pie' ? (
-                                <PieChart>
-                                  <Pie data={msg.chart.data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} label>
-                                    {msg.chart.data.map((entry, index) => (
-                                      <Cell key={`cell-${index}`} fill={['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'][index % 5]} />
-                                    ))}
-                                  </Pie>
-                                  <Tooltip formatter={(value) => formatCurrency(value as number, currency)} />
-                                  <Legend />
-                                </PieChart>
-                              ) : msg.chart.type === 'bar' ? (
-                                <BarChart data={msg.chart.data}>
-                                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                                  <XAxis dataKey="name" tick={{fontSize: 12}} />
-                                  <YAxis tick={{fontSize: 12}} />
-                                  <Tooltip formatter={(value) => formatCurrency(value as number, currency)} />
-                                  <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                              ) : (
-                                <LineChart data={msg.chart.data}>
-                                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                                  <XAxis dataKey="name" tick={{fontSize: 12}} />
-                                  <YAxis tick={{fontSize: 12}} />
-                                  <Tooltip formatter={(value) => formatCurrency(value as number, currency)} />
-                                  <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={3} />
-                                </LineChart>
-                              )}
-                            </ResponsiveContainer>
-                          </div>
+        {/* Messages List Area */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+          {messages.map((msg, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={cn(
+                "flex w-full",
+                msg.role === 'user' ? "justify-end" : "justify-start"
+              )}
+            >
+              <div className={cn(
+                "max-w-[90%] md:max-w-[80%] p-4 md:p-6 rounded-3xl shadow-sm relative group",
+                msg.role === 'user' 
+                  ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-tr-none shadow-indigo-500/15" 
+                  : "bg-slate-50 dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 rounded-tl-none border border-slate-200/80 dark:border-slate-700"
+              )}>
+                {/* Assistant message content */}
+                {msg.role === 'assistant' ? (
+                  <div className="space-y-4">
+                    <div className="prose prose-sm dark:prose-invert max-w-none font-medium leading-relaxed">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+
+                    {/* Speech Playback Action */}
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                      <button
+                        onClick={() => toggleSpeak(msg.content, index)}
+                        className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-400 transition-colors cursor-pointer"
+                      >
+                        {speakingMessageIdx === index ? (
+                          <>
+                            <VolumeX size={14} className="text-rose-500" />
+                            <span className="text-rose-500">إيقاف القراءة</span>
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 size={14} />
+                            <span>استمع للنصيحة</span>
+                          </>
                         )}
-                        {msg.isKeyError && (
-                          <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-3" dir="rtl">
-                            <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400">
-                              <Key size={16} />
-                              <span className="text-xs font-bold">إدخال / تحديث مفتاح API الخاص بك:</span>
-                            </div>
-                            <div className="flex gap-2">
-                              <div className="relative flex-1">
-                                <input
-                                  type={showKeyText ? "text" : "password"}
-                                  value={customApiKey}
-                                  onChange={(e) => setCustomApiKey(e.target.value)}
-                                  placeholder="AIzaSy..."
-                                  className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-primary-500 outline-none font-sans"
-                                  dir="ltr"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setShowKeyText(!showKeyText)}
-                                  className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                                >
-                                  {showKeyText ? <EyeOff size={14} /> : <Eye size={14} />}
-                                </button>
+                      </button>
+
+                      <span className="text-[9px] font-black text-slate-400">المستشار المالي</span>
+                    </div>
+
+                    {/* Embedded Health Assessment Card */}
+                    {msg.healthAssessment && (
+                      <div className="mt-4 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-md space-y-4 text-right">
+                        <div className="flex items-center justify-between">
+                          <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                            درجة العافية: {msg.healthAssessment.grade}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-400">مؤشر الصحة:</span>
+                            <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 font-sans">
+                              {msg.healthAssessment.score}/100
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-semibold">
+                          {msg.healthAssessment.summary}
+                        </p>
+
+                        {/* Metric Grid */}
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <div className="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                            <span className="text-[9px] text-slate-400 font-bold block">معدل الادخار</span>
+                            <span className="text-xs font-black text-slate-800 dark:text-white font-sans">{msg.healthAssessment.metrics.savingsRatePercent}%</span>
+                          </div>
+                          <div className="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                            <span className="text-[9px] text-slate-400 font-bold block">صندوق الطوارئ</span>
+                            <span className="text-xs font-black text-slate-800 dark:text-white font-sans">{msg.healthAssessment.metrics.emergencyFundMonths} أشهر نفقات</span>
+                          </div>
+                        </div>
+
+                        {/* Strengths & Vulnerabilities */}
+                        <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                          <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 block flex items-center gap-1">
+                            <ShieldCheck size={13} /> نقاط القوة:
+                          </span>
+                          <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                            {msg.healthAssessment.strengths.map((s, i) => (
+                              <li key={i} className="flex items-center gap-1.5">
+                                <CheckCircle2 size={12} className="text-emerald-500 shrink-0" />
+                                <span>{s}</span>
+                              </li>
+                            ))}
+                          </ul>
+
+                          <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 block flex items-center gap-1 pt-1">
+                            <ShieldAlert size={13} /> فرص التحسين والتسرب:
+                          </span>
+                          <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                            {msg.healthAssessment.vulnerabilities.map((v, i) => (
+                              <li key={i} className="flex items-center gap-1.5">
+                                <ChevronRight size={12} className="text-amber-500 shrink-0" />
+                                <span>{v}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Action Plan */}
+                        {msg.healthAssessment.actionPlan && (
+                          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                            <span className="text-[10px] font-black text-violet-600 dark:text-violet-400 block">
+                              خطة العمل المقترحة:
+                            </span>
+                            {msg.healthAssessment.actionPlan.map((act, i) => (
+                              <div key={i} className="p-2.5 bg-violet-500/5 rounded-xl border border-violet-500/15 flex items-center justify-between gap-2">
+                                <div className="text-right">
+                                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{act.title}</p>
+                                  <p className="text-[10px] text-violet-600 dark:text-violet-400 font-semibold">{act.impact}</p>
+                                </div>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (customApiKey.trim()) {
-                                    safeStorage.setItem('gemini_api_key', customApiKey.trim());
-                                    setApiKeyMissing(false);
-                                    toast.success('تم حفظ مفتاح API بنجاح! يمكنك الآن إعادة المحاولة.');
-                                  } else {
-                                    safeStorage.removeItem('gemini_api_key');
-                                    toast.error('تم مسح مفتاح API');
-                                  }
-                                }}
-                                className="px-4 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-xs font-black transition-colors"
-                              >
-                                حفظ
-                              </button>
-                            </div>
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                              ملاحظة: يمكنك الحصول على مفتاح مجاني من <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline font-bold text-primary-500">Google AI Studio</a>. يُحفظ المفتاح محلياً في متصفحك فقط وهو آمن تماماً.
-                            </div>
+                            ))}
                           </div>
                         )}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-3">
-                        {msg.image && (
-                          <img 
-                            src={msg.image} 
-                            alt="Uploaded" 
-                            className="max-w-full h-auto max-h-48 rounded-xl object-contain bg-black/10"
-                            referrerPolicy="no-referrer"
-                          />
-                        )}
-                        {msg.content && <p className="text-sm font-medium leading-relaxed">{msg.content}</p>}
                       </div>
                     )}
-                    <div className={cn(
-                      "text-[8px] font-black uppercase tracking-widest mt-3 opacity-50",
-                      msg.role === 'user' ? "text-primary-100 text-left" : "text-slate-400 text-right"
-                    )}>
-                      {msg.role === 'user' ? 'أنت' : 'المستشار الذكي'}
-                    </div>
+
+                    {/* Embedded Saving Plan Card */}
+                    {msg.savingPlan && (
+                      <div className="mt-4 p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-md space-y-4 text-right">
+                        <div className="flex items-center justify-between">
+                          <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                            واقعية الخطة: {msg.savingPlan.feasibilityRating}
+                          </span>
+                          <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <Target size={16} className="text-emerald-500" />
+                            {msg.savingPlan.goalName}
+                          </h4>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                            <span className="text-[10px] text-slate-400 font-bold block">المبلغ المستهدف</span>
+                            <span className="text-xs font-black text-emerald-600 font-sans">{formatCurrency(msg.savingPlan.targetAmount, currency)}</span>
+                          </div>
+                          <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                            <span className="text-[10px] text-slate-400 font-bold block">الادخار الشهري</span>
+                            <span className="text-xs font-black text-indigo-600 font-sans">{formatCurrency(msg.savingPlan.monthlySavingsRequired, currency)} / شهر</span>
+                          </div>
+                        </div>
+
+                        {/* Category Reductions */}
+                        <div className="space-y-2">
+                          <span className="text-[10px] font-black text-slate-500 block">مقترحات تقليص المصاريف:</span>
+                          {msg.savingPlan.categoryReductions.map((red, i) => (
+                            <div key={i} className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/60 space-y-1.5">
+                              <div className="flex items-center justify-between text-xs font-bold">
+                                <span className="text-emerald-600 font-sans">توفير: {formatCurrency(red.suggestedReduction, currency)}</span>
+                                <span className="text-slate-800 dark:text-slate-200">{red.category}</span>
+                              </div>
+                              <ul className="text-[11px] text-slate-500 space-y-1">
+                                {red.tips.map((t, idx) => (
+                                  <li key={idx} className="flex items-center gap-1">
+                                    <ChevronRight size={11} className="text-slate-400" />
+                                    <span>{t}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Embedded Charts */}
+                    {msg.chart && (
+                      <div className="mt-4 w-full h-64 bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-inner border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <h4 className="text-xs font-bold text-center mb-3 text-slate-700 dark:text-slate-300">{msg.chart.title}</h4>
+                        <ResponsiveContainer width="100%" height="85%">
+                          {msg.chart.type === 'pie' ? (
+                            <PieChart>
+                              <Pie data={msg.chart.data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} label>
+                                {msg.chart.data.map((_, i) => (
+                                  <Cell key={`cell-${i}`} fill={['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'][i % 6]} />
+                                ))}
+                              </Pie>
+                              <Tooltip formatter={(val) => formatCurrency(val as number, currency)} />
+                              <Legend />
+                            </PieChart>
+                          ) : msg.chart.type === 'bar' ? (
+                            <BarChart data={msg.chart.data}>
+                              <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                              <YAxis tick={{ fontSize: 11 }} />
+                              <Tooltip formatter={(val) => formatCurrency(val as number, currency)} />
+                              <Bar dataKey="value" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                            </BarChart>
+                          ) : (
+                            <LineChart data={msg.chart.data}>
+                              <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                              <YAxis tick={{ fontSize: 11 }} />
+                              <Tooltip formatter={(val) => formatCurrency(val as number, currency)} />
+                              <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} />
+                            </LineChart>
+                          )}
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+
+                    {/* API Key prompt fallback */}
+                    {msg.isKeyError && (
+                      <div className="mt-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-2 text-right">
+                        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                          <Key size={16} />
+                          <span className="text-xs font-black">إضافة مفتاح API خاص بك:</span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                          يمكنك الحصول على مفتاح مجاني وسريع من Google AI Studio لإزالة أي حدود على الاستخدام.
+                        </p>
+                        <button
+                          onClick={() => setShowSettings(true)}
+                          className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-black transition-all cursor-pointer mt-1"
+                        >
+                          فتح إعدادات المفتاح
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </motion.div>
-              ))}
-              {isLoading && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex justify-start"
-                >
-                  <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl rounded-tl-none border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-3">
-                    <div className="flex gap-1.5">
-                      <motion.span 
-                        animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 1, repeat: Infinity }}
-                        className="w-2 h-2 rounded-full bg-primary-500"
+                ) : (
+                  /* User message content */
+                  <div className="space-y-3">
+                    {msg.image && (
+                      <img 
+                        src={msg.image} 
+                        alt="Uploaded invoice/receipt" 
+                        className="max-w-full h-auto max-h-56 rounded-2xl object-contain bg-black/20 shadow-sm"
+                        referrerPolicy="no-referrer"
                       />
-                      <motion.span 
-                        animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
-                        className="w-2 h-2 rounded-full bg-primary-500"
-                      />
-                      <motion.span 
-                        animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
-                        className="w-2 h-2 rounded-full bg-primary-500"
-                      />
-                    </div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">جاري التحليل...</span>
+                    )}
+                    {msg.content && <p className="text-sm font-bold leading-relaxed">{msg.content}</p>}
                   </div>
-                </motion.div>
-              )}
-              <div ref={messagesEndRef} />
-            </>
+                )}
+              </div>
+            </motion.div>
+          ))}
+
+          {/* Loading indicator */}
+          {isLoading && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-start"
+            >
+              <div className="bg-slate-50 dark:bg-slate-800 p-5 rounded-3xl rounded-tl-none border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <motion.span 
+                    animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                    className="w-2.5 h-2.5 rounded-full bg-violet-600"
+                  />
+                  <motion.span 
+                    animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
+                    className="w-2.5 h-2.5 rounded-full bg-violet-600"
+                  />
+                  <motion.span 
+                    animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
+                    className="w-2.5 h-2.5 rounded-full bg-violet-600"
+                  />
+                </div>
+                <span className="text-xs font-black text-slate-500 dark:text-slate-400">جاري التفكير والتحليل المالي...</span>
+              </div>
+            </motion.div>
           )}
+
+          <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
-        <div className="p-3 md:p-6 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border-t border-slate-100 dark:border-slate-800/50">
-          <form 
-            onSubmit={handleAsk}
-            className="relative max-w-4xl mx-auto group"
-          >
+        {/* Input Bar & Actions */}
+        <div className="p-3 md:p-5 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+          <form onSubmit={handleAsk} className="relative max-w-4xl mx-auto">
+            {/* Image Preview Floating Thumbnail */}
             {selectedImage && (
-              <div className="absolute bottom-full mb-4 right-0 p-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg">
-                <div className="relative">
-                  <img 
-                    src={selectedImage} 
-                    alt="Preview" 
-                    className="h-24 md:h-32 w-auto rounded-xl object-contain"
-                    referrerPolicy="no-referrer"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setSelectedImage(null)}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-rose-600 transition-colors"
-                  >
-                    <X size={14} />
-                  </button>
+              <div className="absolute bottom-full mb-3 right-0 p-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl flex items-center gap-3">
+                <img 
+                  src={selectedImage} 
+                  alt="Receipt Preview" 
+                  className="h-20 w-auto rounded-xl object-contain"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="text-right">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">فاتورة / إيصال جاهز</span>
+                  <span className="text-[10px] text-slate-400">اضغط إرسال للاستخراج الفوري</span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedImage(null)}
+                  className="w-7 h-7 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-rose-600 transition-colors cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
               </div>
             )}
+
             <input
               type="file"
               accept="image/*"
@@ -758,35 +1131,60 @@ export default function Assistant() {
               ref={fileInputRef}
               onChange={handleImageUpload}
             />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isLoading}
-              className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 w-9 h-9 md:w-11 md:h-11 rounded-xl text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 flex items-center justify-center transition-all disabled:opacity-50"
-              title="إرفاق صورة (فاتورة، إيصال...)"
-            >
-              <ImagePlus size={18} className="md:size-22" />
-            </button>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="اسأل عن أي شيء يخص ميزانيتك أو ارفع صورة فاتورة..."
-              className="w-full pl-14 pr-12 md:pl-16 md:pr-14 py-3 md:py-4 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-900 dark:text-white text-xs md:text-sm outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all shadow-sm font-bold"
-              disabled={isLoading}
-            />
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              type="submit"
-              disabled={(!query.trim() && !selectedImage) || isLoading}
-              className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 w-9 h-9 md:w-11 md:h-11 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-lg shadow-primary-500/30 disabled:opacity-50 disabled:shadow-none transition-all hover:bg-primary-700 active:scale-90"
-            >
-              <Send size={18} className="md:size-22 rotate-180" />
-            </motion.button>
+
+            <div className="flex items-center gap-2">
+              {/* Photo Upload Button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                className="w-12 h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-all disabled:opacity-50 shrink-0 cursor-pointer shadow-xs"
+                title="إرفاق صورة فاتورة أو إيصال"
+              >
+                <ImagePlus size={20} />
+              </button>
+
+              {/* Voice Speech Recognition Button */}
+              <button
+                type="button"
+                onClick={toggleVoiceRecording}
+                disabled={isLoading}
+                className={cn(
+                  "w-12 h-12 rounded-2xl flex items-center justify-center transition-all shrink-0 cursor-pointer shadow-xs",
+                  isRecording 
+                    ? "bg-rose-500 text-white animate-pulse" 
+                    : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
+                )}
+                title={isRecording ? "إيقاف التسجيل" : "تحدث بالصوت"}
+              >
+                {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+              </button>
+
+              {/* Text Input */}
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={isRecording ? "جاري الاستماع إليك..." : "اكتب سؤالك أو اطلب تسجيل عملية مالية..."}
+                className="flex-1 px-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs md:text-sm outline-none focus:ring-2 focus:ring-violet-500 font-bold transition-all shadow-inner"
+                disabled={isLoading}
+              />
+
+              {/* Submit Button */}
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                type="submit"
+                disabled={(!query.trim() && !selectedImage) || isLoading}
+                className="w-12 h-12 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white flex items-center justify-center shadow-md shadow-indigo-500/25 disabled:opacity-40 disabled:shadow-none transition-all shrink-0 cursor-pointer"
+              >
+                <Send size={18} className="rotate-180" />
+              </motion.button>
+            </div>
           </form>
-          <p className="text-center text-[10px] font-semibold text-slate-400 mt-3">
-            قد يخطئ الذكاء الاصطناعي أحياناً، يرجى مراجعة النصائح المالية الهامة.
+
+          <p className="text-center text-[10px] font-bold text-slate-400 mt-2.5">
+            المساعد مدعوم بـ Gemini 3.7 Pro مع تحليلات تراعي الاقتصاد التونسي والمصاريف العائلية.
           </p>
         </div>
       </div>

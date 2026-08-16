@@ -142,9 +142,51 @@ export interface FinancialForecast {
   reasoning: string;
 }
 
+export interface FinancialHealthAssessment {
+  score: number; // 0 - 100
+  grade: 'ممتاز' | 'جيد جداً' | 'متوسط' | 'يحتاج تحسين' | 'حرج';
+  summary: string;
+  metrics: {
+    savingsRatePercent: number;
+    budgetDisciplinePercent: number;
+    emergencyFundMonths: number;
+    needsVsWantsRatio: string;
+  };
+  strengths: string[];
+  vulnerabilities: string[];
+  actionPlan: {
+    title: string;
+    impact: string;
+    actionType: 'budget' | 'goal' | 'expense_cut' | 'general';
+    categoryTarget?: string;
+    amount?: number;
+  }[];
+}
+
+export interface AISavingPlan {
+  goalName: string;
+  targetAmount: number;
+  timeframeMonths: number;
+  monthlySavingsRequired: number;
+  categoryReductions: {
+    category: string;
+    currentSpend: number;
+    suggestedReduction: number;
+    newMonthlySpend: number;
+    tips: string[];
+  }[];
+  milestones: {
+    month: number;
+    projectedAccumulated: number;
+    encouragement: string;
+  }[];
+  feasibilityRating: 'عالية جداً' | 'ممكنة مع التزام' | 'صعبة تحتاج تعديل';
+}
+
 export interface AIInsights {
   advice: FinancialAdvice[];
   forecast: FinancialForecast[];
+  healthAssessment?: FinancialHealthAssessment;
   lastUpdated: string; // ISO string
 }
 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, TrendingUp, CircleAlert, CircleCheckBig, ChevronRight, Loader2, RefreshCcw, Lightbulb, MessageSquare } from 'lucide-react';
+import { Sparkles, TrendingUp, CircleAlert, CircleCheckBig, ChevronRight, Loader2, RefreshCcw, Lightbulb, MessageSquare, Activity, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { useAppContext } from '../store/AppContext';
-import { getFinancialAdvice, getFinancialForecast } from '../services/geminiService';
-import { FinancialAdvice, FinancialForecast } from '../types';
+import { getFinancialAdvice, getFinancialForecast, calculateFinancialHealth } from '../services/geminiService';
+import { FinancialAdvice, FinancialForecast, FinancialHealthAssessment } from '../types';
 import { formatCurrency, cn, getBudgetMonth } from '../utils';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Link } from 'react-router-dom';
@@ -11,9 +11,10 @@ import { Link } from 'react-router-dom';
 import { isSameDay } from 'date-fns';
 
 export const AIAdvisor: React.FC = () => {
-  const { expenses, income, budgets, firstDayOfMonth, goals, accounts, currency, dailyBudget, aiInsights, updateAIInsights } = useAppContext();
+  const { expenses, income, budgets, firstDayOfMonth, goals, accounts, categories, currency, dailyBudget, aiInsights, updateAIInsights } = useAppContext();
   const [advice, setAdvice] = useState<FinancialAdvice[]>([]);
   const [forecast, setForecast] = useState<FinancialForecast[]>([]);
+  const [healthScore, setHealthScore] = useState<FinancialHealthAssessment | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,13 +56,15 @@ export const AIAdvisor: React.FC = () => {
       .reduce((sum, e) => sum + e.amount, 0);
 
     try {
-      const [adviceData, forecastData] = await Promise.all([
+      const [adviceData, forecastData, healthData] = await Promise.all([
         getFinancialAdvice(expenses, income, budget, goals, accounts, currency, dailyBudget, todaySpending),
-        getFinancialForecast(expenses, income, accounts, currency)
+        getFinancialForecast(expenses, income, accounts, currency),
+        calculateFinancialHealth(expenses, income, budget, goals, accounts, categories, currency)
       ]);
       
       setAdvice(adviceData);
       setForecast(forecastData);
+      setHealthScore(healthData);
       setLastUpdated(new Date());
       
       // Update global cache
@@ -95,15 +98,6 @@ export const AIAdvisor: React.FC = () => {
     }
   }, [expenses.length]);
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'text-red-500 bg-red-50 dark:bg-red-900/20';
-      case 'medium': return 'text-amber-500 bg-amber-50 dark:bg-amber-900/20';
-      case 'low': return 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20';
-      default: return 'text-slate-500 bg-slate-50 dark:bg-slate-900/20';
-    }
-  };
-
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between px-2">
@@ -120,24 +114,25 @@ export const AIAdvisor: React.FC = () => {
           <div>
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">المستشار الذكي</h2>
-              <span className="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold rounded-full border border-emerald-500/20">AI Powered</span>
+              <span className="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold rounded-full border border-emerald-500/20">Gemini 3.7</span>
             </div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">تحليل مخصص لبياناتك المالية</p>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">تحليل وتوجيه مالي مخصص لعائلتك</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Link to="/assistant">
             <button
-              className="px-4 h-12 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl transition-all shadow-sm active:scale-95"
+              className="px-4 h-12 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl transition-all shadow-sm active:scale-95 cursor-pointer"
             >
               <MessageSquare size={18} />
-              <span className="hidden sm:inline">تحدث مع المستشار</span>
+              <span className="hidden sm:inline">محادثة المستشار</span>
             </button>
           </Link>
           <button
             onClick={() => fetchInsights(true)}
             disabled={isLoading}
-            className="w-12 h-12 flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 rounded-2xl transition-all disabled:opacity-50 shadow-sm active:scale-90"
+            className="w-12 h-12 flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 rounded-2xl transition-all disabled:opacity-50 shadow-sm active:scale-90 cursor-pointer"
+            title="تحديث التحليل"
           >
             <RefreshCcw className={cn("size-6", isLoading ? 'animate-spin' : '')} />
           </button>
@@ -152,6 +147,49 @@ export const AIAdvisor: React.FC = () => {
         >
           <CircleAlert className="w-5 h-5 shrink-0 mt-0.5" />
           <p className="font-medium leading-relaxed">{warning}</p>
+        </motion.div>
+      )}
+
+      {/* Financial Health Overview Card */}
+      {healthScore && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-6 bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-900 text-white rounded-3xl shadow-xl relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
+          
+          <div className="relative z-10 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Activity size={20} className="text-emerald-400 animate-pulse" />
+                <h3 className="text-base font-black">مؤشر الصحة المالية (Financial Health)</h3>
+              </div>
+              <span className="px-3 py-1 bg-white/10 rounded-full text-xs font-black text-emerald-300 border border-white/10">
+                الدرجة: {healthScore.grade}
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-6 pt-2">
+              <div className="flex items-center gap-3">
+                <div className="w-20 h-20 rounded-2xl bg-white/10 border border-white/15 flex flex-col items-center justify-center">
+                  <span className="text-3xl font-black text-emerald-400 font-sans">{healthScore.score}</span>
+                  <span className="text-[10px] text-slate-400 font-bold">من 100</span>
+                </div>
+              </div>
+
+              <div className="flex-1 text-right">
+                <p className="text-xs text-slate-300 font-medium leading-relaxed">
+                  {healthScore.summary}
+                </p>
+                <div className="flex flex-wrap gap-4 mt-3 text-[11px] font-bold text-slate-300">
+                  <span>معدل الادخار: <strong className="text-white font-sans">{healthScore.metrics.savingsRatePercent}%</strong></span>
+                  <span>صندوق الطوارئ: <strong className="text-white font-sans">{healthScore.metrics.emergencyFundMonths} أشهر</strong></span>
+                  <span>الالتزام بالميزانية: <strong className="text-white font-sans">{healthScore.metrics.budgetAdherencePercent}%</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
         </motion.div>
       )}
 
