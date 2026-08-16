@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'motion/react';
 import { format, parseISO } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Trash, Pencil, Copy, ArrowDown, ArrowRightLeft, ChevronRight, Check } from 'lucide-react';
+import { Trash, Pencil, Copy, ArrowDown, ArrowRightLeft, ChevronRight, Check, Coins } from 'lucide-react';
 import { DynamicIcon } from './DynamicIcon';
 import { formatCurrency, cn, hapticFeedback } from '../utils';
 import { PaymentMethod, Category, Account } from '../types';
@@ -14,6 +14,7 @@ interface TransactionItemProps {
   currency: string;
   index: number;
   onEdit: (t: any) => void;
+  onEditAmount?: (t: any) => void;
   onDelete: (id: string, type: 'expense' | 'income') => void;
   onDuplicate: (t: any) => void;
   getPaymentIcon: (method: PaymentMethod) => React.ReactNode;
@@ -30,6 +31,7 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
   currency,
   index,
   onEdit,
+  onEditAmount,
   onDelete,
   onDuplicate,
   getPaymentIcon,
@@ -49,11 +51,12 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
   const x = useMotionValue(0);
   
   // Dynamic values for buttons based on swipe (swiping right in RTL reveals left side)
-  const opacity = useTransform(x, [0, 100, 180], [0, 0.8, 1]);
-  const scale = useTransform(x, [0, 100, 180], [0.8, 0.9, 1]);
-  const repeatX = useTransform(x, [0, 180], [-60, 0]);
-  const editX = useTransform(x, [0, 180], [-40, 0]);
-  const deleteX = useTransform(x, [0, 180], [-20, 0]);
+  const opacity = useTransform(x, [0, 100, 200], [0, 0.8, 1]);
+  const scale = useTransform(x, [0, 100, 200], [0.8, 0.9, 1]);
+  const repeatX = useTransform(x, [0, 200], [-70, 0]);
+  const editAmountX = useTransform(x, [0, 200], [-50, 0]);
+  const editX = useTransform(x, [0, 200], [-30, 0]);
+  const deleteX = useTransform(x, [0, 200], [-10, 0]);
 
   const handleDuplicate = () => {
     hapticFeedback('medium');
@@ -64,6 +67,16 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
   const handleEdit = () => {
     hapticFeedback('medium');
     onEdit(transaction);
+    x.set(0);
+  };
+
+  const handleEditAmount = () => {
+    hapticFeedback('medium');
+    if (onEditAmount) {
+      onEditAmount(transaction);
+    } else {
+      onEdit(transaction);
+    }
     x.set(0);
   };
 
@@ -129,17 +142,25 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
             style={{ opacity, scale, x: repeatX }}
             onClick={handleDuplicate}
             className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform shrink-0"
-            title="تكرار"
+            title="تكرار العملية"
           >
             <Copy size={15} />
           </motion.button>
         )}
+        <motion.button
+          style={{ opacity, scale, x: editAmountX }}
+          onClick={handleEditAmount}
+          className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform shrink-0"
+          title="تعديل المبلغ"
+        >
+          <Coins size={15} />
+        </motion.button>
         {!isTransfer && (
           <motion.button
             style={{ opacity, scale, x: editX }}
             onClick={handleEdit}
             className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-blue-500 text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform shrink-0"
-            title="تعديل"
+            title="تعديل كافة التفاصيل"
           >
             <Pencil size={15} />
           </motion.button>
@@ -158,12 +179,12 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
         style={{ x }}
         drag={isSelectionMode ? false : "x"}
         dragDirectionLock
-        dragConstraints={{ left: 0, right: 140 }}
+        dragConstraints={{ left: 0, right: 180 }}
         dragElastic={0.1}
         onDragEnd={(e, info) => {
           if (!isSelectionMode && info.offset.x > 60) {
             hapticFeedback('medium');
-            x.set(140);
+            x.set(180);
           } else {
             x.set(0);
           }
@@ -268,17 +289,52 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
         </div>
         
         <div className="flex items-center gap-2 md:gap-4 shrink-0">
-          <div className={cn(
-            "text-sm md:text-base font-black tracking-tight leading-none font-mono dir-ltr", 
-            isTransfer ? "text-slate-900 dark:text-white" : (!isExpense ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")
-          )}>
-            {isTransfer ? '' : (!isExpense ? '+' : '-')} {formatCurrency(transaction.amount, currency)}
-          </div>
+          {/* Interactive Amount Badge with quick edit click */}
+          <button
+            type="button"
+            onClick={(e) => {
+              if (!isSelectionMode) {
+                e.stopPropagation();
+                handleEditAmount();
+              }
+            }}
+            title="انقر لتعديل مبلغ العملية مباشرة"
+            className={cn(
+              "group/amount flex items-center gap-1 px-2 py-1 rounded-xl transition-all",
+              !isSelectionMode && "hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer active:scale-95"
+            )}
+          >
+            <div className={cn(
+              "text-sm md:text-base font-black tracking-tight leading-none font-mono dir-ltr transition-colors", 
+              isTransfer ? "text-slate-900 dark:text-white" : (!isExpense ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")
+            )}>
+              {isTransfer ? '' : (!isExpense ? '+' : '-')} {formatCurrency(transaction.amount, currency)}
+            </div>
+            {!isSelectionMode && (
+              <Coins className="size-3 text-slate-400 opacity-0 group-hover/amount:opacity-100 transition-opacity hidden sm:block" />
+            )}
+          </button>
 
           <div className="hidden sm:flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Quick Amount Edit Button */}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditAmount();
+              }}
+              className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all"
+              title="تعديل المبلغ"
+            >
+              <Coins className="size-4" />
+            </button>
+
             {!isTransfer && isExpense && (
               <button 
-                onClick={() => { hapticFeedback('light'); onDuplicate(transaction); }}
+                onClick={(e) => { 
+                  e.stopPropagation();
+                  hapticFeedback('light'); 
+                  onDuplicate(transaction); 
+                }}
                 className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
                 title="تكرار"
               >
@@ -288,16 +344,23 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
 
             {!isTransfer && (
               <button 
-                onClick={() => { hapticFeedback('light'); onEdit(transaction); }}
+                onClick={(e) => { 
+                  e.stopPropagation();
+                  hapticFeedback('light'); 
+                  onEdit(transaction); 
+                }}
                 className="p-1.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                title="تعديل"
+                title="تعديل كافة التفاصيل"
               >
                 <Pencil className="size-4" />
               </button>
             )}
             
             <button 
-              onClick={handleDeleteClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteClick();
+              }}
               className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all"
               title="حذف"
             >
@@ -323,3 +386,4 @@ export const TransactionItem = React.memo(TransactionItemComponent, (prevProps, 
     prevProps.isSelected === nextProps.isSelected
   );
 });
+

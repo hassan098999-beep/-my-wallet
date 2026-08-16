@@ -16,6 +16,7 @@ import { TransactionsFilters } from "../components/transactions/TransactionsFilt
 import { TransactionsChart } from "../components/transactions/TransactionsChart";
 import { TransactionsList } from "../components/transactions/TransactionsList";
 import { EditTransactionModal } from "../components/transactions/EditTransactionModal";
+import { QuickEditAmountModal } from "../components/transactions/QuickEditAmountModal";
 import { DeleteConfirmModal } from "../components/transactions/DeleteConfirmModal";
 import { BackupModal } from "../components/transactions/BackupModal";
 
@@ -79,6 +80,7 @@ const Transactions = () => {
   const [editingTransaction, setEditingTransaction] = useState<any | null>(
     null,
   );
+  const [quickEditingTransaction, setQuickEditingTransaction] = useState<any | null>(null);
 
   const [editAmount, setEditAmount] = useState("");
   const [editCategoryId, setEditCategoryId] = useState("");
@@ -771,6 +773,25 @@ const Transactions = () => {
     }
   };
 
+  const handleEditAmountClick = (transaction: any) => {
+    setQuickEditingTransaction(transaction);
+  };
+
+  const handleQuickSaveAmount = async (transaction: any, newAmount: number) => {
+    try {
+      if (transaction.type === "expense") {
+        await updateExpense(transaction.id, { amount: newAmount });
+      } else {
+        await updateIncome(transaction.id, { amount: newAmount });
+      }
+      toast.success("تم تحديث مبلغ العملية بنجاح");
+      hapticFeedback("success");
+    } catch (error) {
+      toast.error("فشل تحديث مبلغ العملية");
+      throw error;
+    }
+  };
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTransaction) return;
@@ -947,6 +968,7 @@ const Transactions = () => {
           hasMore={hasMore}
           loadMore={loadMore}
           onEdit={handleEditClick}
+          onEditAmount={handleEditAmountClick}
           onDeleteConfirm={(id, type) => setShowDeleteConfirm({ id, type })}
           onDuplicate={handleDuplicate}
           getPaymentIcon={getPaymentIcon}
@@ -960,6 +982,21 @@ const Transactions = () => {
           selectedKeys={selectedKeys}
           onToggleSelectTransaction={handleToggleSelectTransaction}
           onSelectAllVisible={handleSelectAllVisible}
+        />
+
+        {/* Quick Edit Amount Modal */}
+        <QuickEditAmountModal
+          transaction={quickEditingTransaction}
+          isOpen={!!quickEditingTransaction}
+          onClose={() => setQuickEditingTransaction(null)}
+          onSaveAmount={handleQuickSaveAmount}
+          onOpenFullEdit={(t) => {
+            setQuickEditingTransaction(null);
+            handleEditClick(t);
+          }}
+          categories={categories}
+          accounts={accounts}
+          currency={currency}
         />
 
         {/* Edit Modal */}

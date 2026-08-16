@@ -17,6 +17,7 @@ interface TransactionsListProps {
   hasMore: boolean;
   loadMore: () => void;
   onEdit: (transaction: any) => void;
+  onEditAmount?: (transaction: any) => void;
   onDeleteConfirm: (id: string, type: "expense" | "income") => void;
   onDuplicate: (transaction: any) => void;
   getPaymentIcon: (method: PaymentMethod) => React.ReactNode;
@@ -45,6 +46,7 @@ export const TransactionsList: React.FC<TransactionsListProps> = ({
   hasMore,
   loadMore,
   onEdit,
+  onEditAmount,
   onDeleteConfirm,
   onDuplicate,
   getPaymentIcon,
@@ -232,6 +234,7 @@ export const TransactionsList: React.FC<TransactionsListProps> = ({
                         currency={currency}
                         index={currentIndex}
                         onEdit={onEdit}
+                        onEditAmount={onEditAmount}
                         onDelete={(id, type) => onDeleteConfirm(id, type)}
                         onDuplicate={onDuplicate}
                         getPaymentIcon={getPaymentIcon}

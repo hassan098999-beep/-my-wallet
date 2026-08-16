@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Pencil, X } from "lucide-react";
-import { cn, formatTunisianAmount } from "../../utils";
+import { Pencil, X, Plus, Minus, RotateCcw } from "lucide-react";
+import { cn, formatTunisianAmount, hapticFeedback } from "../../utils";
 import { CategorySelect } from "../CategorySelect";
 import { PaymentMethod } from "../../types";
 
@@ -96,9 +96,22 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
 
             <form onSubmit={handleUpdate} className="space-y-3 md:space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
-                  المبلغ ({currency})
-                </label>
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
+                  <span>المبلغ ({currency})</span>
+                  {editingTransaction?.amount && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        hapticFeedback("light");
+                        setEditAmount(editingTransaction.amount.toString());
+                      }}
+                      className="text-[10px] text-indigo-500 hover:text-indigo-600 font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <RotateCcw className="size-2.5" />
+                      <span>استعادة الأصلي ({editingTransaction.amount})</span>
+                    </button>
+                  )}
+                </div>
                 <input
                   type="text"
                   inputMode="decimal"
@@ -147,6 +160,40 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
                   className="w-full px-3 py-2 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 outline-none transition-all font-mono font-black text-sm md:text-base"
                   required
                 />
+                {/* Quick adjustment buttons */}
+                <div className="flex items-center gap-1.5 pt-0.5 overflow-x-auto no-scrollbar py-0.5">
+                  {[1, 5, 10, 50].map((val) => (
+                    <button
+                      key={`plus-${val}`}
+                      type="button"
+                      onClick={() => {
+                        hapticFeedback("light");
+                        const current = parseFloat(editAmount) || 0;
+                        setEditAmount(Math.max(0, Number((current + val).toFixed(3))).toString());
+                      }}
+                      className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-600 text-slate-600 dark:text-slate-300 font-mono text-[10px] md:text-xs font-bold border border-slate-200/60 dark:border-slate-700/60 transition-all shrink-0 active:scale-95 flex items-center gap-0.5"
+                    >
+                      <Plus className="size-2.5" />
+                      <span>{val}</span>
+                    </button>
+                  ))}
+                  {[1, 5, 10, 50].map((val) => (
+                    <button
+                      key={`minus-${val}`}
+                      type="button"
+                      onClick={() => {
+                        hapticFeedback("light");
+                        const current = parseFloat(editAmount) || 0;
+                        setEditAmount(Math.max(0, Number((current - val).toFixed(3))).toString());
+                      }}
+                      disabled={(parseFloat(editAmount) || 0) - val < 0}
+                      className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 text-slate-600 dark:text-slate-300 font-mono text-[10px] md:text-xs font-bold border border-slate-200/60 dark:border-slate-700/60 transition-all shrink-0 active:scale-95 disabled:opacity-40 flex items-center gap-0.5"
+                    >
+                      <Minus className="size-2.5" />
+                      <span>{val}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {editingTransaction.type === "expense" ? (
