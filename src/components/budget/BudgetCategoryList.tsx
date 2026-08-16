@@ -243,17 +243,49 @@ export const BudgetCategoryList: React.FC<BudgetCategoryListProps> = ({
                             )}
                           </div>
                           
-                          {/* Smart Daily Safe Spend Indicator */}
-                          {catBudgetNum > 0 && activeRemainingDays > 0 && !isOver && (
-                            <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-slate-800/50 flex justify-between items-center">
-                              <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">
-                                {isWeekly ? `مسموح الصرف اليومي (${activeRemainingDays} أيام متبقية):` : `مسموح الصرف اليومي (${activeRemainingDays} يوم متبقٍ):`}
-                              </span>
-                              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono">
-                                {formatCurrency(catSafeDailySpend, currency)} <span className="text-[8px] font-bold text-slate-400">/ يوم</span>
-                              </span>
-                            </div>
-                          )}
+                          {/* Smart Daily Safe Spend Indicator & Burn Rate Velocity */}
+                          {catBudgetNum > 0 && activeRemainingDays > 0 && !isOver && (() => {
+                            const totalDays = isWeekly ? 7 : 30;
+                            const daysElapsed = Math.max(1, totalDays - activeRemainingDays + 1);
+                            const currentDailyRate = spent > 0 ? spent / daysElapsed : 0;
+                            const daysUntilExhaustion = currentDailyRate > 0 ? Math.floor((catBudgetNum - spent) / currentDailyRate) : null;
+                            const isFastBurning = daysUntilExhaustion !== null && daysUntilExhaustion < activeRemainingDays;
+
+                            return (
+                              <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-slate-800/50 space-y-1.5">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">
+                                    {isWeekly ? `مسموح الصرف اليومي (${activeRemainingDays} أيام متبقية):` : `مسموح الصرف اليومي (${activeRemainingDays} يوم متبقٍ):`}
+                                  </span>
+                                  <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                                    {formatCurrency(catSafeDailySpend, currency)} <span className="text-[8px] font-bold text-slate-400">/ يوم</span>
+                                  </span>
+                                </div>
+
+                                {spent > 0 && (
+                                  <div className="flex justify-between items-center text-[9px]">
+                                    <span className="text-slate-400 font-bold flex items-center gap-1">
+                                      <span>معدل الصرف اليومي الفعلي:</span>
+                                      {isFastBurning && <span className="text-[8px] font-black text-amber-500 animate-pulse">⚠️ سريع</span>}
+                                    </span>
+                                    <span className={cn(
+                                      "font-black font-mono",
+                                      isFastBurning ? "text-amber-600 dark:text-amber-400" : "text-slate-600 dark:text-slate-300"
+                                    )}>
+                                      {formatCurrency(currentDailyRate, currency)} <span className="text-[8px] text-slate-400">/ يوم</span>
+                                    </span>
+                                  </div>
+                                )}
+
+                                {isFastBurning && daysUntilExhaustion !== null && (
+                                  <div className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-900/40 text-[9px] font-bold text-amber-800 dark:text-amber-300 flex justify-between items-center">
+                                    <span>نفاد الميزانية المتوقع:</span>
+                                    <span className="font-black text-rose-600 dark:text-rose-400">خلال {Math.max(1, daysUntilExhaustion)} أيام فقط ⚡</span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
 
                           {/* Equivalent period info for smart budgeting */}
                           {equivalentMonthly && (

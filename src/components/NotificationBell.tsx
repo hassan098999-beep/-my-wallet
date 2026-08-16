@@ -1,23 +1,51 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Bell, X } from 'lucide-react';
+import { Bell, X, Zap, AlertTriangle, Flame, ShieldAlert } from 'lucide-react';
 import { useAppContext } from '../store/AppContext';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '../utils';
+import { cn, formatCurrency } from '../utils';
+import { notifyPaceAlertIfAppropriate } from '../utils/paceAnalysis';
 import toast from 'react-hot-toast';
 
 const NotificationBell = () => {
   const { notifications, removeNotification, recurringExpenses, expenses, income, currency, categories } = useAppContext();
-  const { overallPercentage, totalSpent, globalBudgetNum, categoryStatuses, remainingDays } = useBudgetStatus();
+  const { overallPercentage, totalSpent, globalBudgetNum, categoryStatuses, categoryPaces, fastBurningPaces, remainingDays } = useBudgetStatus();
   const [isOpen, setIsOpen] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
 
-  // 4. Category-specific sub-budget limit alerts
+  // Smart Daily Spending Pace Alerts for Categories
+  const paceAlerts = useMemo(() => {
+    if (!categoryPaces || categoryPaces.length === 0) return [];
+
+    return categoryPaces
+      .filter(p => p.status === 'critical' || p.status === 'warning' || p.status === 'exceeded')
+      .map(p => {
+        return {
+          id: `virtual-pace-${p.categoryId}-${p.status}`,
+          message: `${p.alertTitle}: ${p.alertMessage} 💡 ${p.actionAdvice}`,
+          type: (p.status === 'critical' || p.status === 'exceeded' ? 'unusual_expense' : 'budget') as 'unusual_expense' | 'budget',
+          createdAt: new Date().toISOString(),
+          paceData: p
+        };
+      });
+  }, [categoryPaces]);
+
+  // Trigger push notifications for critical/warning pace items
+  useEffect(() => {
+    if (!categoryPaces || categoryPaces.length === 0) return;
+    categoryPaces.forEach(p => {
+      if (p.status === 'critical' || p.status === 'warning' || p.status === 'exceeded') {
+        notifyPaceAlertIfAppropriate(p, currency);
+      }
+    });
+  }, [categoryPaces, currency]);
+
+  // 4. Category-specific sub-budget limit alerts (fallback for general threshold)
   const subBudgetAlerts = useMemo(() => {
     if (!categoryStatuses || categoryStatuses.length === 0) return [];
 
     return categoryStatuses
-      .filter(cs => cs.percentage >= 85) // Warning at 85% or more
+      .filter(cs => cs.percentage >= 90 && !categoryPaces?.some(cp => cp.categoryId === cs.categoryId && (cp.status === 'critical' || cp.status === 'warning' || cp.status === 'exceeded')))
       .map(cs => {
         const cat = categories.find(c => c.id === cs.categoryId);
         const name = cat ? cat.name : 'الفئة';
@@ -27,19 +55,19 @@ const NotificationBell = () => {
 
         return {
           id: `virtual-subbudget-${cs.categoryId}`,
-          message: `تنبیه موازنة العائلة: اقتربت ميزانية الفئة "${name}" من النفاد (${cs.percentage.toFixed(0)}%). الحالة: ${formattedRemaining} ${currency}، الأيام المتبقية بالشهر لربط قشور الدفتر: ${remainingDays} أيام.`,
+          message: `تنبيه موازنة: اقتربت ميزانية الفئة "${name}" من السقف المخصص (%${cs.percentage.toFixed(0)}). الحالة: ${formattedRemaining} ${currency}.`,
           type: 'budget' as const,
           createdAt: new Date().toISOString()
         };
       });
-  }, [categoryStatuses, categories, currency, remainingDays]);
+  }, [categoryStatuses, categoryPaces, categories, currency]);
 
   // 1. Budget 80% limit warning
   const budgetAlert = useMemo(() => {
     if (globalBudgetNum > 0 && overallPercentage >= 80) {
       return {
         id: 'virtual-budget-alert',
-        message: `تنبيه ميزانية: لقد تجاوزت %${overallPercentage.toFixed(0)} من ميزانيتك الشهرية لهذا الشهر (${totalSpent} من أصل ${globalBudgetNum} ${currency})! ⚠️`,
+        message: `تنبيه ميزانية: لقد تجاوزت %${overallPercentage.toFixed(0)} من ميزانيتك الإجمالية (${formatCurrency(totalSpent, currency)} من أصل ${formatCurrency(globalBudgetNum, currency)})! ⚠️`,
         type: 'unusual_expense' as const,
         createdAt: new Date().toISOString()
       };
@@ -228,6 +256,7 @@ const NotificationBell = () => {
   // Combine real notifications with local virtual alerts
   const visibleNotifications = useMemo(() => {
     const list = [...notifications];
+    paceAlerts.forEach(pa => list.unshift(pa));
     if (budgetAlert) list.unshift(budgetAlert);
     recurringAlerts.forEach(re => list.unshift(re));
     subBudgetAlerts.forEach(sba => list.unshift(sba));
@@ -235,7 +264,7 @@ const NotificationBell = () => {
     if (dailyReminderAlert) list.unshift(dailyReminderAlert);
 
     return list.filter(n => !dismissedIds.includes(n.id));
-  }, [notifications, budgetAlert, recurringAlerts, subBudgetAlerts, weeklySummaryAlert, dailyReminderAlert, dismissedIds]);
+  }, [notifications, paceAlerts, budgetAlert, recurringAlerts, subBudgetAlerts, weeklySummaryAlert, dailyReminderAlert, dismissedIds]);
 
   const handleDismiss = (id: string) => {
     if (id.startsWith('virtual-')) {
@@ -250,7 +279,7 @@ const NotificationBell = () => {
       <button aria-label="الإشعارات" onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 relative cursor-pointer">
         <Bell size={20} className="text-slate-600 dark:text-slate-400" />
         {visibleNotifications.length > 0 && (
-          <span className="absolute top-1 right-1 size-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900" />
+          <span className="absolute top-1 right-1 size-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
         )}
       </button>
 
@@ -260,38 +289,64 @@ const NotificationBell = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="absolute left-0 mt-2 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-md z-50 p-4 text-right"
+            className="absolute left-0 mt-2 w-84 sm:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 p-4 text-right"
           >
             <div className="flex justify-between items-center mb-4">
               <button aria-label="إغلاق الإشعارات" onClick={() => setIsOpen(false)} className="hover:text-rose-500 transition-colors"><X size={16} /></button>
-              <h3 className="font-bold text-slate-900 dark:text-white">الإشعارات الذكية</h3>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-800/40">
+                  {visibleNotifications.length} تنبيه
+                </span>
+                <h3 className="font-bold text-slate-900 dark:text-white">نظام التنبيهات الذكي</h3>
+              </div>
             </div>
-            <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+            <div className="space-y-2.5 max-h-72 overflow-y-auto custom-scrollbar">
               {visibleNotifications.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-4">لا توجد تنبيهات حالياً</p>
-              ) : (
-                visibleNotifications.map(n => (
-                  <div key={n.id} className={cn(
-                    "p-3 rounded-xl text-xs font-medium leading-relaxed shadow-xs border text-right relative group/item",
-                    n.type === 'budget' ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30 text-amber-900 dark:text-amber-200' :
-                    n.type === 'achievement' ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-900 dark:text-emerald-200' :
-                    'bg-rose-50/50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30 text-rose-900 dark:text-rose-200'
-                  )}>
-                    <div className="pl-6">
-                      <p>{n.message}</p>
-                    </div>
-                    <button
-                      onClick={() => handleDismiss(n.id)}
-                      className="absolute left-2.5 top-2.5 p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                      title="إغلاق"
-                    >
-                      <X size={12} />
-                    </button>
-                    <div className="flex justify-start items-center mt-2.5">
-                      <button onClick={() => handleDismiss(n.id)} className="text-[10px] font-semibold underline cursor-pointer hover:no-underline opacity-80 hover:opacity-100">مسح التنبيه</button>
-                    </div>
+                <div className="text-center py-6">
+                  <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/50 dark:border-emerald-800/40 flex items-center justify-center mx-auto mb-2">
+                    <span className="text-base">✨</span>
                   </div>
-                ))
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">كل شيء تحت السيطرة!</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">معدل إنفاقك وميزانياتك ضمن الحدود الآمنة.</p>
+                </div>
+              ) : (
+                visibleNotifications.map(n => {
+                  const isPace = n.id.startsWith('virtual-pace-') || n.type === 'pace_warning';
+                  return (
+                    <div key={n.id} className={cn(
+                      "p-3 rounded-xl text-xs font-medium leading-relaxed shadow-xs border text-right relative group/item transition-all",
+                      isPace ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 text-amber-950 dark:text-amber-200' :
+                      n.type === 'budget' ? 'bg-indigo-50/60 dark:bg-indigo-950/20 border-indigo-100 dark:border-indigo-900/30 text-indigo-950 dark:text-indigo-200' :
+                      n.type === 'achievement' ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-950 dark:text-emerald-200' :
+                      'bg-rose-50/60 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30 text-rose-950 dark:text-rose-200'
+                    )}>
+                      {isPace && (
+                        <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-black text-amber-700 dark:text-amber-400">
+                          <Zap size={12} className="text-amber-500 fill-amber-500 animate-pulse" />
+                          <span>تحليل سرعة الإنفاق اليومي</span>
+                        </div>
+                      )}
+                      <div className="pl-6">
+                        <p className="text-[11px] leading-relaxed font-semibold">{n.message}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDismiss(n.id)}
+                        className="absolute left-2.5 top-2.5 p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                        title="إغلاق"
+                      >
+                        <X size={12} />
+                      </button>
+                      <div className="flex justify-between items-center mt-2.5 pt-1.5 border-t border-black/5 dark:border-white/5">
+                        <span className="text-[9px] text-slate-400 font-mono">
+                          {new Date(n.createdAt).toLocaleTimeString('ar-TN', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <button onClick={() => handleDismiss(n.id)} className="text-[10px] font-bold text-slate-500 hover:text-rose-500 cursor-pointer">
+                          تجاهل
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           </motion.div>

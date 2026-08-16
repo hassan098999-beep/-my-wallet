@@ -90,9 +90,11 @@ const IncomePage = () => {
     setAmount((current + val).toString());
   };
 
-  // Safe parse and sort logic
+  // Safe parse and sort logic (Excluding internal account transfers)
   const filteredIncome = useMemo(() => {
     return income.filter(item => {
+      // Internal account transfers (e.g., bank withdrawal to cash) are not revenue
+      if (item.isTransfer) return false;
       if (!item.date) return true;
       const itemMonth = item.date.slice(0, 7); // yyyy-MM
       
@@ -274,7 +276,7 @@ const IncomePage = () => {
         animate="visible"
         className="grid grid-cols-1 md:grid-cols-4 gap-5"
       >
-        {/* KPI: Total Liquidity */}
+        {/* KPI: Total Real Income */}
         <motion.div variants={itemVariants}>
           <div className="card border-emerald-500/10 bg-gradient-to-br from-emerald-500/5 to-transparent p-5 rounded-3xl relative overflow-hidden flex flex-col justify-between h-32 border">
             <div className="absolute right-0 top-0 -mr-10 -mt-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
@@ -282,13 +284,13 @@ const IncomePage = () => {
               <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0">
                 <ArrowDownCircle size={18} className="animate-pulse" />
               </span>
-              <p className="text-[10px] text-slate-400 font-extrabold tracking-widest uppercase">السيولة الإجمالية</p>
+              <p className="text-[10px] text-slate-400 font-extrabold tracking-widest uppercase">إجمالي الدخل الفعلي</p>
             </div>
             <div className="space-y-0.5">
               <h2 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight text-left">
                 {formatCurrency(stats.total, currency)}
               </h2>
-              <span className="text-[9px] font-bold text-slate-400">مجموع النفقات الواردة بالمدى المبحوث</span>
+              <span className="text-[9px] font-bold text-slate-400">مجموع الإيرادات والمداخيل في هذه الفترة</span>
             </div>
           </div>
         </motion.div>
@@ -300,13 +302,13 @@ const IncomePage = () => {
               <span className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-500 shrink-0 border border-slate-100 dark:border-slate-800">
                 <FileSpreadsheet size={18} />
               </span>
-              <p className="text-[10px] text-slate-400 font-extrabold tracking-widest uppercase">عدد العمليات والدفعات</p>
+              <p className="text-[10px] text-slate-400 font-extrabold tracking-widest uppercase">عدد مصادر الدخل</p>
             </div>
             <div className="space-y-0.5">
               <h2 className="text-2xl font-black text-slate-800 dark:text-white font-mono text-left">
-                {stats.count} <span className="text-[10px] font-black text-slate-400">حوالة</span>
+                {stats.count} <span className="text-[10px] font-black text-slate-400">مصدر</span>
               </h2>
-              <span className="text-[9px] font-bold text-slate-400">مصادر تم صرفها وتسجيلها بالدفتر</span>
+              <span className="text-[9px] font-bold text-slate-400">روافد مسجلة وموثقة في الدفتر</span>
             </div>
           </div>
         </motion.div>
@@ -832,9 +834,9 @@ const IncomePage = () => {
             </div>
 
             {/* Quick reminder help status */}
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800/60 text-right">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800/60 text-right space-y-1">
               <p className="text-[9px] text-slate-400 font-semibold leading-relaxed">
-                🚨 تنبيه: يرجى إبقاء كشف الدخل محدثاً لملاءمة التوقعات في <strong className="text-indigo-500">ميزانيات قفة الشهر الفرعية</strong> والحفاظ على نسب الادخار الآمنة.
+                💡 <strong className="text-emerald-600 dark:text-emerald-400">ملاحظة محاسبية:</strong> عمليات السحب والتحويل المالي بين حساباتك البنكية والنقدية لا تُحسب كدخل إضافي للحفاظ على دقة مؤشراتك ومعدلات الادخار الفعلية.
               </p>
             </div>
 

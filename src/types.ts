@@ -124,8 +124,42 @@ export interface Income {
 export interface AppNotification {
   id: string;
   message: string;
-  type: 'budget' | 'unusual_expense' | 'achievement';
+  type: 'budget' | 'unusual_expense' | 'achievement' | 'pace_warning';
   createdAt: string;
+  categoryId?: string;
+  meta?: {
+    dailyRate?: number;
+    safeRate?: number;
+    daysLeft?: number;
+    projectedSpend?: number;
+    limit?: number;
+  };
+}
+
+export interface CategoryPaceStatus {
+  categoryId: string;
+  categoryName: string;
+  categoryIcon: string;
+  categoryColor: string;
+  period: BudgetPeriod;
+  limit: number;
+  spent: number;
+  remaining: number;
+  daysInPeriod: number;
+  daysElapsed: number;
+  remainingDays: number;
+  currentDailyRate: number;
+  safeDailyRate: number;
+  adjustedDailyRate: number;
+  projectedSpend: number;
+  projectedOverrun: number;
+  projectedPercentage: number;
+  daysUntilExhaustion: number | null;
+  paceRatio: number;
+  status: 'safe' | 'moderate' | 'warning' | 'critical' | 'exceeded';
+  alertTitle: string;
+  alertMessage: string;
+  actionAdvice: string;
 }
 
 export interface FinancialAdvice {

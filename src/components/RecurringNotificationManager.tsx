@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Bell, BellOff, Volume2, CheckCircle2, AlertTriangle, Sparkles, Clock, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Bell, BellOff, Volume2, CheckCircle2, AlertTriangle, Sparkles, Clock, ShieldCheck, ArrowRight, Zap } from 'lucide-react';
 import { useAppContext } from '../store/AppContext';
 import { cn, formatCurrency, hapticFeedback } from '../utils';
 import toast from 'react-hot-toast';
@@ -10,9 +10,14 @@ import Badge from './ui/Badge';
 export const RecurringNotificationManager: React.FC = () => {
   const { recurringExpenses, currency, categories } = useAppContext();
 
-  // Local Storage state
+  // Local Storage state for recurring notifications
   const [isEnabled, setIsEnabled] = useState<boolean>(() => {
     return localStorage.getItem('masarifi_recurring_notifications_enabled') !== 'false';
+  });
+
+  // Local Storage state for daily pace notifications
+  const [isPaceEnabled, setIsPaceEnabled] = useState<boolean>(() => {
+    return localStorage.getItem('masarifi_pace_alerts_enabled') !== 'false';
   });
   
   const [noticeDays, setNoticeDays] = useState<number>(() => {
@@ -85,6 +90,13 @@ export const RecurringNotificationManager: React.FC = () => {
     toast.success(value ? 'تم تفعيل إشعارات التذكير للمصاريف المتكررة' : 'تم إيقاف إشعارات المصاريف المتكررة');
   };
 
+  const handleTogglePaceEnable = (value: boolean) => {
+    hapticFeedback('light');
+    setIsPaceEnabled(value);
+    localStorage.setItem('masarifi_pace_alerts_enabled', value ? 'true' : 'false');
+    toast.success(value ? 'تم تفعيل تنبيهات وتيرة وسرعة الإنفاق اليومي ⚡' : 'تم إيقاف تنبيهات وتيرة الإنفاق');
+  };
+
   const handleNoticeDaysChange = (days: number) => {
     hapticFeedback('light');
     setNoticeDays(days);
@@ -115,12 +127,12 @@ export const RecurringNotificationManager: React.FC = () => {
 
   const handleTestNotification = () => {
     hapticFeedback('heavy');
-    const sampleText = `إشعار تجريبي للمصاريف المتكررة 🇹🇳\nتذكير: فاتورة الكراء بقيمة 450 ${currency} تستحق غداً!`;
+    const sampleText = `⚡ تنبيه سرعة الإنفاق التجريبي:\nبمعدل صرفك الحالي في فئة 'قفة ومؤونة' (28.5 د.ت/يوم)، ستتجاوز الميزانية قبل نهاية الشهر بـ 8 أيام! الحد اليومي الموصى به: 12.0 د.ت/يوم.`;
 
     // In-app Toast
     toast(sampleText, {
-      icon: '🔔',
-      duration: 5000,
+      icon: '⚡',
+      duration: 6000,
       style: {
         borderRadius: '16px',
         background: '#0f172a',
@@ -133,8 +145,8 @@ export const RecurringNotificationManager: React.FC = () => {
     // Native browser notification
     if ('Notification' in window && Notification.permission === 'granted') {
       try {
-        new Notification("تطبيق مساريفي 🇹🇳", {
-          body: "هذا إشعار تجريبي لتأكيد عمل التنبيهات المحلية للمصاريف المتكررة بنجاح!",
+        new Notification("تطبيق مساريفي 🇹🇳 - تنبيه سرعة الإنفاق", {
+          body: "بمعدل صرفك اليومي الحالي، ستستنفد ميزانية الفئة بعد 4 أيام. اضغط لترشيد الإنفاق!",
           icon: '/icon-192.png'
         });
       } catch (err) {
@@ -193,15 +205,15 @@ export const RecurringNotificationManager: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-        {/* Toggle Switch */}
+        {/* Recurring Toggle Switch */}
         <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-850/70 border border-slate-200/50 dark:border-slate-800 flex items-center justify-between gap-3">
           <div className="space-y-0.5">
             <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
               {isEnabled ? <Bell size={14} className="text-emerald-500" /> : <BellOff size={14} className="text-slate-400" />}
-              تفعيل التذكيرات المحلية
+              تفعيل تذكيرات المصاريف المتكررة
             </span>
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              إرسال تنبيهات تلقائية في التطبيق والمتصفح
+              تنبيهات استحقاق الفواتير والاشتراكات
             </p>
           </div>
 
@@ -216,11 +228,34 @@ export const RecurringNotificationManager: React.FC = () => {
           </label>
         </div>
 
+        {/* Pace Alert Toggle Switch */}
+        <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-850/70 border border-slate-200/50 dark:border-slate-800 flex items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              {isPaceEnabled ? <Zap size={14} className="text-amber-500" /> : <BellOff size={14} className="text-slate-400" />}
+              تنبيهات وتيرة وسرعة الإنفاق اليومي
+            </span>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              تحليل تلقائي للمعدل والتنبيه قبل نفاد ميزانية أي فئة
+            </p>
+          </div>
+
+          <label className="relative inline-flex items-center cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={isPaceEnabled}
+              onChange={(e) => handleTogglePaceEnable(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+          </label>
+        </div>
+
         {/* Days notice selector */}
-        <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-850/70 border border-slate-200/50 dark:border-slate-800 space-y-2">
+        <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-850/70 border border-slate-200/50 dark:border-slate-800 space-y-2 md:col-span-2">
           <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
             <Clock size={14} className="text-emerald-500" />
-            وقت التذكير قبل الاستحقاق:
+            وقت التذكير قبل موعد استحقاق الفواتير:
           </span>
 
           <div className="grid grid-cols-4 gap-1.5">

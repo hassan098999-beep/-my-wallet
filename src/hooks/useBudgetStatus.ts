@@ -3,9 +3,10 @@ import { useAppContext } from '../store/AppContext';
 import { getBudgetRange, getBudgetMonth, getWeekRange } from '../utils';
 import { parseISO, differenceInDays, startOfDay, endOfDay, format } from 'date-fns';
 import { BudgetPeriod } from '../types';
+import { analyzeAllCategoryPaces, CategoryPaceStatus } from '../utils/paceAnalysis';
 
 export function useBudgetStatus(overrideMonth?: string) {
-  const { budgets, expenses, firstDayOfMonth, rollingBudgetEnabled } = useAppContext();
+  const { budgets, expenses, categories, currency, firstDayOfMonth, rollingBudgetEnabled } = useAppContext();
 
   return useMemo(() => {
     const today = new Date();
@@ -124,6 +125,18 @@ export function useBudgetStatus(overrideMonth?: string) {
       return acc;
     }, {} as Record<string, typeof categoryStatuses[number]>);
 
+    // Deep pace analysis for all categories with budget
+    const categoryPaces: CategoryPaceStatus[] = analyzeAllCategoryPaces({
+      categories,
+      budgets,
+      expenses,
+      firstDayOfMonth,
+      currency,
+      overrideMonth: activeMonth
+    });
+
+    const fastBurningPaces = categoryPaces.filter(p => p.status === 'critical' || p.status === 'warning' || p.status === 'exceeded');
+
     // Today's spending
     const todayStr = format(today, 'yyyy-MM-dd');
     const todaySpent = expenses
@@ -150,10 +163,12 @@ export function useBudgetStatus(overrideMonth?: string) {
       activeMonth,
       categoryStatuses,
       categoryStatusesLookup,
+      categoryPaces,
+      fastBurningPaces,
       weekStart,
       weekEnd,
       monthStart,
       monthEnd
     };
-  }, [budgets, expenses, firstDayOfMonth, rollingBudgetEnabled, overrideMonth]);
+  }, [budgets, expenses, categories, currency, firstDayOfMonth, rollingBudgetEnabled, overrideMonth]);
 }

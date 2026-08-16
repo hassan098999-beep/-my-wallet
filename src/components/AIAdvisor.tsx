@@ -185,7 +185,7 @@ export const AIAdvisor: React.FC = () => {
                 <div className="flex flex-wrap gap-4 mt-3 text-[11px] font-bold text-slate-300">
                   <span>معدل الادخار: <strong className="text-white font-sans">{healthScore.metrics.savingsRatePercent}%</strong></span>
                   <span>صندوق الطوارئ: <strong className="text-white font-sans">{healthScore.metrics.emergencyFundMonths} أشهر</strong></span>
-                  <span>الالتزام بالميزانية: <strong className="text-white font-sans">{healthScore.metrics.budgetAdherencePercent}%</strong></span>
+                  <span>الالتزام بالميزانية: <strong className="text-white font-sans">{healthScore.metrics.budgetDisciplinePercent}%</strong></span>
                 </div>
               </div>
             </div>

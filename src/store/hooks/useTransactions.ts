@@ -1,8 +1,9 @@
-import { getBudgetMonth } from "../../utils";
+import { getBudgetMonth, getBudgetRange, getWeekRange, formatCurrency } from "../../utils";
 import { Expense, Income, Goal, Account, Category, Gamaeya, Budget } from "../../types";
 import { updateDoc, arrayUnion, doc, collection, writeBatch, setDoc, deleteDoc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { safeParseISO } from '../../utils';
+import { calculateCategoryPace } from '../../utils/paceAnalysis';
 import toast from 'react-hot-toast';
 
 export function useTransactions({ state, setState, user, evaluateAchievements, addNotification }: any) {
@@ -95,11 +96,13 @@ const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
       
       // Logic for budget alerts
       if (!newExpense.isTransfer) {
-        const currentMonth = getBudgetMonth(new Date(), newState.firstDayOfMonth);
+        const now = new Date();
+        const currentMonth = getBudgetMonth(now, newState.firstDayOfMonth);
         const currentBudget = newState.budgets?.find((b: any) => b.month === currentMonth);
         const monthlyExpenses = newState.expenses.filter((e: any) => !e.isTransfer && e.date.startsWith(currentMonth));
         const totalSpent = monthlyExpenses.reduce((sum: any, e: any) => sum + e.amount, 0);
         const budgetAmount = currentBudget?.amount || 0;
+        const currency = newState.currency || 'د.ت';
         
         const sendPushNotification = (title: string, body: string) => {
           addNotification(title, { body, icon: '/icon-192.png' });
@@ -107,30 +110,70 @@ const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
 
         if (budgetAmount > 0) {
           if (totalSpent > budgetAmount && totalSpent - newExpense.amount <= budgetAmount) {
-            const msg = "تنبيه: لقد تجاوزت ميزانيتك الشهرية!";
+            const msg = `تنبيه: لقد تجاوزت ميزانيتك الشهرية الإجمالية (${formatCurrency(budgetAmount, currency)})!`;
             newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
-            sendPushNotification("تنبيه الميزانية", msg);
+            sendPushNotification("تنبيه الميزانية الإجمالية ⚠️", msg);
           } else if (totalSpent > budgetAmount * 0.8 && totalSpent - newExpense.amount <= budgetAmount * 0.8) {
-            const msg = "تنبيه: لقد قاربت على تجاوز ميزانيتك الشهرية!";
+            const msg = `تنبيه: لقد استهلكت أكثر من %80 من ميزانيتك الشهرية الإجمالية! المتبقي: ${formatCurrency(budgetAmount - totalSpent, currency)}.`;
             newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
-            sendPushNotification("تنبيه الميزانية", msg);
+            sendPushNotification("تنبيه اقتراب الميزانية 🔔", msg);
           }
         }
 
-        // Category budget alerts
+        // Smart Category Pace & Budget velocity alerts
         if (currentBudget?.categoryBudgets?.[newExpense.categoryId]) {
-          const catBudget = currentBudget.categoryBudgets[newExpense.categoryId];
-          const catSpent = monthlyExpenses.filter((e: any) => e.categoryId === newExpense.categoryId).reduce((sum: any, e: any) => sum + e.amount, 0);
-          const categoryName = newState.categories.find((c: any) => c.id === newExpense.categoryId)?.name || 'هذه الفئة';
+          const catLimit = currentBudget.categoryBudgets[newExpense.categoryId];
+          const targetCat = newState.categories.find((c: any) => c.id === newExpense.categoryId);
+          const categoryName = targetCat?.name || 'هذه الفئة';
+          const period = currentBudget.categoryPeriods?.[newExpense.categoryId] || 'monthly';
+          
+          const { start: monthStart, end: monthEnd } = getBudgetRange(currentMonth, newState.firstDayOfMonth);
+          const { start: weekStart, end: weekEnd } = getWeekRange(now, 1);
+          const rangeStart = period === 'weekly' ? weekStart : monthStart;
+          const rangeEnd = period === 'weekly' ? weekEnd : monthEnd;
 
-          if (catSpent > catBudget && catSpent - newExpense.amount <= catBudget) {
-            const msg = `تنبيه: لقد تجاوزت ميزانية فئة ${categoryName}!`;
-            newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
-            sendPushNotification("تنبيه الميزانية", msg);
-          } else if (catSpent > catBudget * 0.8 && catSpent - newExpense.amount <= catBudget * 0.8) {
-            const msg = `تنبيه: لقد قاربت على تجاوز ميزانية فئة ${categoryName}!`;
-            newNotifications.push({ id: crypto.randomUUID(), message: msg, type: 'budget', createdAt: new Date().toISOString() });
-            sendPushNotification("تنبيه الميزانية", msg);
+          if (targetCat && catLimit > 0) {
+            const pace = calculateCategoryPace({
+              category: targetCat,
+              limit: catLimit,
+              period,
+              expenses: newState.expenses,
+              rangeStart,
+              rangeEnd,
+              now,
+              currency
+            });
+
+            if (pace) {
+              if (pace.status === 'exceeded') {
+                const msg = `🛑 تجاوز ميزانية ${categoryName}: استنفدت كامل السقف المخصص (${formatCurrency(catLimit, currency)}). يرجى ترشيد الصرف.`;
+                newNotifications.push({ 
+                  id: crypto.randomUUID(), 
+                  message: msg, 
+                  type: 'budget', 
+                  createdAt: new Date().toISOString(),
+                  categoryId: newExpense.categoryId
+                });
+                sendPushNotification(`تجاوز ميزانية ${categoryName} 🛑`, msg);
+              } else if (pace.status === 'critical' || pace.status === 'warning') {
+                const msg = `⚡ تنبيه سرعة الإنفاق: بمعدلك اليومي (${formatCurrency(pace.currentDailyRate, currency)}/يوم)، ستتجاوز ميزانية "${categoryName}" ${pace.daysUntilExhaustion !== null ? `خلال ${pace.daysUntilExhaustion} أيام` : 'قبل نهاية الفترة'}! الموصى به: ${formatCurrency(pace.adjustedDailyRate, currency)}/يوم.`;
+                newNotifications.push({ 
+                  id: crypto.randomUUID(), 
+                  message: msg, 
+                  type: 'pace_warning', 
+                  createdAt: new Date().toISOString(),
+                  categoryId: newExpense.categoryId,
+                  meta: {
+                    dailyRate: pace.currentDailyRate,
+                    safeRate: pace.adjustedDailyRate,
+                    daysLeft: pace.daysUntilExhaustion || 0,
+                    projectedSpend: pace.projectedSpend,
+                    limit: pace.limit
+                  }
+                });
+                sendPushNotification(`تنبيه وتيرة إنفاق ${categoryName} ⚡`, msg);
+              }
+            }
           }
         }
       }

@@ -875,18 +875,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const headers = ['Type', 'Date', 'Amount', 'Category', 'Account', 'Description/Source'];
       const rows = [
         ...state.expenses.map(e => [
-          'Expense',
+          e.isTransfer ? 'Transfer (Out)' : 'Expense',
           e.date,
           e.amount,
-          state.categories.find(c => c.id === e.categoryId)?.name || e.categoryId,
+          e.isTransfer ? 'Transfer' : (state.categories.find(c => c.id === e.categoryId)?.name || e.categoryId),
           state.accounts.find(a => a.id === e.accountId)?.name || e.accountId,
           e.note
         ]),
         ...state.income.map(i => [
-          'Income',
+          i.isTransfer ? 'Transfer (In)' : 'Income',
           i.date,
           i.amount,
-          'Income',
+          i.isTransfer ? 'Transfer' : 'Income',
           state.accounts.find(a => a.id === i.accountId)?.name || i.accountId,
           i.source
         ])
@@ -945,7 +945,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       // Calculations
       const totalExpenses = state.expenses.filter(e => !e.isTransfer).reduce((sum, e) => sum + e.amount, 0);
-      const totalIncome = state.income.reduce((sum, i) => sum + i.amount, 0);
+      const totalIncome = state.income.filter(i => !i.isTransfer).reduce((sum, i) => sum + i.amount, 0);
       const balance = totalIncome - totalExpenses;
       const currency = state.currency || 'د.ت';
 

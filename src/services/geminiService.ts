@@ -151,8 +151,10 @@ export const getFinancialForecast = async (
   } catch (error: any) {
     console.warn("Gemini API Error or Quota Exceeded. Using smart algorithmic forecast.");
     const currentBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
-    const avgIncome = income.length > 0 ? income.reduce((sum, i) => sum + i.amount, 0) / Math.max(1, income.length) : 0;
-    const avgExpense = expenses.length > 0 ? expenses.reduce((sum, e) => sum + e.amount, 0) / Math.max(1, expenses.length) : 0;
+    const nonTransferIncome = income.filter(i => !i.isTransfer);
+    const nonTransferExpenses = expenses.filter(e => !e.isTransfer);
+    const avgIncome = nonTransferIncome.length > 0 ? nonTransferIncome.reduce((sum, i) => sum + i.amount, 0) / Math.max(1, nonTransferIncome.length) : 0;
+    const avgExpense = nonTransferExpenses.length > 0 ? nonTransferExpenses.reduce((sum, e) => sum + e.amount, 0) / Math.max(1, nonTransferExpenses.length) : 0;
     const monthlyNet = Math.max(-100, avgIncome - avgExpense);
     
     const fallbackForecast: FinancialForecast[] = [];
@@ -180,8 +182,10 @@ export const calculateFinancialHealth = async (
   currency: string
 ): Promise<FinancialHealthAssessment> => {
   const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
-  const totalIncome = income.reduce((sum, i) => sum + i.amount, 0);
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const nonTransferIncome = income.filter(i => !i.isTransfer);
+  const nonTransferExpenses = expenses.filter(e => !e.isTransfer);
+  const totalIncome = nonTransferIncome.reduce((sum, i) => sum + i.amount, 0);
+  const totalExpenses = nonTransferExpenses.reduce((sum, e) => sum + e.amount, 0);
   const budgetAmount = budget?.amount || (totalIncome > 0 ? totalIncome * 0.9 : 1000);
   
   // Calculate local empirical baseline
@@ -420,7 +424,7 @@ const buildFallbackSavingPlan = (
   timeframeMonths: number,
   monthlyReq: number
 ): AISavingPlan => {
-  const milestones = [];
+  const milestones: Array<{ month: number; projectedAccumulated: number; encouragement: string; }> = [];
   for (let m = 1; m <= timeframeMonths; m++) {
     milestones.push({
       month: m,
