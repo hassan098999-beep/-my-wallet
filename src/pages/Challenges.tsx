@@ -1,228 +1,372 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Award, Target, Zap, Medal, Star, CheckCircle, TrendingUp, Sparkles, Flame, Loader2, Bot } from 'lucide-react';
-import { cn, formatCurrency, hapticFeedback } from '../utils';
+import { 
+  Target, 
+  Sparkles, 
+  Flame, 
+  Bot, 
+  Loader2, 
+  Filter, 
+  CheckCircle2, 
+  Clock, 
+  Plus, 
+  Trophy,
+  Coffee,
+  ShieldCheck,
+  UtensilsCrossed,
+  ShoppingBag
+} from 'lucide-react';
+import { useWeeklyChallenges } from '../hooks/useWeeklyChallenges';
+import { ChallengesStatsHeader } from '../components/challenges/ChallengesStatsHeader';
+import { WeeklyChallengeCard } from '../components/challenges/WeeklyChallengeCard';
+import { ChallengeBadgesSection } from '../components/challenges/ChallengeBadgesSection';
+import { CreateCustomChallengeModal } from '../components/challenges/CreateCustomChallengeModal';
+import { CelebrationModal } from '../components/challenges/CelebrationModal';
 import { useAppContext } from '../store/AppContext';
+import { getSmartSavingChallenge } from '../services/geminiService';
+import { formatCurrency, hapticFeedback } from '../utils';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { ar } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 
 export default function Challenges() {
-  const { currency, expenses } = useAppContext();
-  
-  const [activeChallenges, setActiveChallenges] = useState<string[]>(['c1']);
+  const { expenses, categories, budgets, firstDayOfMonth, currency } = useAppContext();
+
+  const {
+    challenges,
+    activeChallenges,
+    availableChallenges,
+    completedChallenges,
+    points,
+    badges,
+    totalEstimatedSaved,
+    maxStreakDays,
+    celebrationChallenge,
+    setCelebrationChallenge,
+    startChallenge,
+    abandonChallenge,
+    toggleDayManualCheck,
+    claimReward,
+    createCustomChallenge,
+    deleteChallenge,
+    resetAllChallengesToDefault
+  } = useWeeklyChallenges();
+
+  // Local State
+  const [activeTab, setActiveTab] = useState<'active' | 'available' | 'completed'>('active');
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('all');
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
-  
-  const [challenges, setChallenges] = useState([
-    { id: 'c1', title: 'تحدي 30 يوم بدون مطاعم', desc: 'وفر مصاريف الأكل بالخارج واطبخ في المنزل', reward: '50 نقطة', progress: 40 },
-    { id: 'c2', title: 'توفير 10% من الراتب', desc: 'اقتطع 10% فور استلام الراتب هذا الشهر', reward: 'شارة المتسوق', progress: 0 },
-    { id: 'c3', title: 'أسبوع القهوة المنزلية', desc: 'استبدل قهوة الكافيه بقهوة من صنع يديك', reward: '20 نقطة', progress: 80 },
-  ]);
 
-  const toggleChallenge = (id: string) => {
-    hapticFeedback('light');
-    if (activeChallenges.includes(id)) {
-      setActiveChallenges(activeChallenges.filter(c => c !== id));
-    } else {
-      setActiveChallenges([...activeChallenges, id]);
-    }
-  };
+  // Week range string
+  const now = new Date();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+  const weekRangeStr = `${format(weekStart, 'd MMM', { locale: ar })} - ${format(weekEnd, 'd MMM yyyy', { locale: ar })}`;
 
-  const generateAIChallenges = async () => {
+  // AI Smart Weekly Challenge Generator
+  const handleGenerateAIChallenge = async () => {
     hapticFeedback('medium');
     setIsLoadingAI(true);
     try {
-      // Create a simplified expenses array to send
-      const recentExpenses = expenses.slice(0, 50).map(e => ({
-        amount: e.amount,
-        category: e.categoryId,
-        note: e.note,
-        date: e.date
-      }));
-
-      const res = await fetch('/api/suggest-challenges', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expenses: recentExpenses })
-      });
-
-      if (!res.ok) throw new Error('Failed to fetch AI challenges');
+      const budgetMonth = format(now, 'yyyy-MM');
+      const budget = budgets?.find(b => b.month === budgetMonth) || null;
       
-      const data = await res.json();
-      
-      if (data.challenges && Array.isArray(data.challenges)) {
-        setChallenges(prev => {
-          // Keep existing active challenges and add the new ones
-          const activeExisting = prev.filter(c => activeChallenges.includes(c.id));
-          return [...activeExisting, ...data.challenges];
+      const aiChallenge = await getSmartSavingChallenge(expenses, categories, budget, currency);
+
+      if (aiChallenge && aiChallenge.title) {
+        createCustomChallenge({
+          title: `تحدي الذكاء الاصطناعي: ${aiChallenge.title}`,
+          description: aiChallenge.description || aiChallenge.analysis || 'تحدي مقترح بذكاء بناءً على أنماط نفقاتك الأخيرة.',
+          type: 'custom',
+          icon: 'Sparkles',
+          rewardPoints: 50,
+          estimatedSavingTND: aiChallenge.targetAmount || 35,
+          targetDays: 7,
+          tips: aiChallenge.tips || [
+            'ركز على ترشيد هذه الفئة طوال أيام الأسبوع الحالي.',
+            'سجل كل مصروف فوراً لتفادي تجاوز السقف.'
+          ]
         });
-        toast.success('تم إنشاء تحديات ذكية بناءً على مصاريفك!');
+        setActiveTab('active');
+        toast.success('تم إنشاء التحدي الذكي المخصص وتفعيله للأسبوع بنجاح! ✨');
       }
     } catch (error) {
       console.error(error);
-      toast.error('لم نتمكن من توليد تحديات ذكية حالياً. جرب لاحقاً.');
+      toast.error('تعذر الاتصال بـ Gemini AI لتوليد التحدي. تم استخدام التحديات الذكية المتاحة.');
     } finally {
       setIsLoadingAI(false);
     }
   };
 
-  const badges = [
-    { id: 'b1', title: 'بطل التوفير', desc: 'وفرت 500 دينار', icon: Award, color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', unlocked: true },
-    { id: 'b2', title: 'نينجا الميزانية', desc: 'شهر بدون تجاوز الميزانية', icon: Medal, color: 'text-indigo-500', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20', unlocked: true },
-    { id: 'b3', title: 'نار الادخار', desc: 'سجل ادخار متتالي لـ 3 أشهر', icon: Flame, color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/20', unlocked: false },
-    { id: 'b4', title: 'المتسوق الذكي', desc: 'أقل صرف على الرفاهية', icon: Star, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', unlocked: false },
-  ];
+  // Filter challenges based on tab and type filter
+  const displayedChallenges = (
+    activeTab === 'active' 
+      ? activeChallenges 
+      : activeTab === 'available' 
+        ? availableChallenges 
+        : completedChallenges
+  ).filter(c => {
+    if (selectedTypeFilter === 'all') return true;
+    return c.type === selectedTypeFilter;
+  });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-20 md:pb-0" dir="rtl">
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <Target className="text-emerald-500" size={28} />
-            التحديات والمكافآت
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">حفز نفسك وحقق أهدافك بمتعة</p>
-        </div>
-      </header>
+    <div className="space-y-6 animate-in fade-in duration-300 pb-20 md:pb-8" dir="rtl">
+      {/* 1. Gamified Header & Summary Stats */}
+      <ChallengesStatsHeader
+        points={points}
+        maxStreak={maxStreakDays}
+        totalSaved={totalEstimatedSaved}
+        completedCount={completedChallenges.length}
+        activeCount={activeChallenges.length}
+        weekRangeStr={weekRangeStr}
+        onOpenCustomModal={() => {
+          hapticFeedback('light');
+          setIsCustomModalOpen(true);
+        }}
+        onResetToDefault={resetAllChallengesToDefault}
+      />
 
-      {/* Badges Section */}
-      <section>
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="text-indigo-500" size={20} />
-          <h2 className="text-lg font-black text-slate-800 dark:text-slate-100">أوسمة الإنجاز</h2>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {badges.map(badge => (
-            <motion.div 
-              key={badge.id}
-              whileHover={{ y: -4 }}
-              className={cn(
-                "p-4 rounded-2xl border-2 flex flex-col items-center text-center transition-all relative overflow-hidden",
-                badge.unlocked ? `${badge.bg} ${badge.border}` : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-60 grayscale hover:grayscale-0"
-              )}
-            >
-              {!badge.unlocked && (
-                <div className="absolute top-2 right-2">
-                  <span className="text-[10px] font-black bg-slate-200 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full">مغلق</span>
-                </div>
-              )}
-              <div className={cn("w-14 h-14 rounded-full flex items-center justify-center mb-3", badge.unlocked ? "bg-white dark:bg-slate-800 shadow-md" : "bg-slate-200 dark:bg-slate-800")}>
-                <badge.icon size={28} className={badge.unlocked ? badge.color : 'text-slate-400'} />
-              </div>
-              <h3 className={cn("font-black text-sm mb-1", badge.unlocked ? "text-slate-900 dark:text-white" : "text-slate-500")}>{badge.title}</h3>
-              <p className="text-[10px] font-bold text-slate-500 leading-tight">{badge.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Active Challenges Section */}
-      <section className="mt-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="text-emerald-500" size={20} />
-            <h2 className="text-lg font-black text-slate-800 dark:text-slate-100">تحديات الادخار المتاحة</h2>
-          </div>
+      {/* 2. AI Generator & Navigation Bar */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        {/* Tab Switcher */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl">
           <button
-            onClick={generateAIChallenges}
-            disabled={isLoadingAI}
-            className="bg-indigo-500/10 hover:bg-indigo-500 text-indigo-600 dark:text-indigo-400 hover:text-white transition-all px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed border border-indigo-500/20 active:scale-95"
+            onClick={() => {
+              hapticFeedback('light');
+              setActiveTab('active');
+            }}
+            className={`flex-1 md:flex-initial px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+              activeTab === 'active'
+                ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
           >
-            {isLoadingAI ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <Bot size={16} />
-            )}
-            تحديات مخصصة بالذكاء الاصطناعي
+            <Flame size={14} className={activeTab === 'active' ? 'text-emerald-500 animate-pulse' : ''} />
+            التحديات النشطة
+            <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.2 rounded-full text-[10px]">
+              {activeChallenges.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              hapticFeedback('light');
+              setActiveTab('available');
+            }}
+            className={`flex-1 md:flex-initial px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+              activeTab === 'available'
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <Target size={14} />
+            التحديات المتاحة
+            <span className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.2 rounded-full text-[10px]">
+              {availableChallenges.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              hapticFeedback('light');
+              setActiveTab('completed');
+            }}
+            className={`flex-1 md:flex-initial px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+              activeTab === 'completed'
+                ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-xs'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <Trophy size={14} className="text-amber-500" />
+            المكتملة
+            <span className="bg-purple-500/10 text-purple-600 dark:text-purple-400 px-1.5 py-0.2 rounded-full text-[10px]">
+              {completedChallenges.length}
+            </span>
           </button>
         </div>
-        <div className="space-y-4">
-          {challenges.map(challenge => {
-            const isActive = activeChallenges.includes(challenge.id);
-            return (
-              <div 
-                key={challenge.id} 
-                className={cn(
-                  "p-4 rounded-2xl border-2 transition-all relative overflow-hidden group",
-                  isActive ? "border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/20" : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
-                )}
-              >
-                {isActive && (
-                  <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 rounded-bl-full -z-10" />
-                )}
-                
-                <div className="flex flex-col sm:flex-row gap-4 justify-between sm:items-center">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-black text-slate-900 dark:text-white">{challenge.title}</h3>
-                      {isActive && <span className="bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full font-black animate-pulse-soft">نشط الآن</span>}
-                    </div>
-                    <p className="text-xs text-slate-500 font-medium mb-3">{challenge.desc}</p>
-                    
-                    {isActive ? (
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-[10px]">
-                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">التقدم: {challenge.progress}%</span>
-                          <span className="text-slate-400">المكافأة: {challenge.reward}</span>
-                        </div>
-                        <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                          <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: `${challenge.progress}%` }}
-                            className="h-full bg-emerald-500 rounded-full"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-[11px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 inline-block px-3 py-1 rounded-lg">
-                        المكافأة: {challenge.reward}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <button
-                    onClick={() => toggleChallenge(challenge.id)}
-                    className={cn(
-                      "shrink-0 py-2.5 px-6 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 active:scale-95",
-                      isActive 
-                        ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                        : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
-                    )}
-                  >
-                    {isActive ? (
-                      <>
-                        <CheckCircle size={16} />
-                        التخلي عن التحدي
-                      </>
-                    ) : (
-                      <>
-                        <Zap size={16} />
-                        ابدأ التحدي
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
 
-      {/* Motivation Banner */}
-      <div className="mt-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden shadow-lg shadow-indigo-500/20">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
-        <div className="relative z-10 flex items-center gap-4 text-right sm:text-right w-full sm:w-auto">
-          <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
-            <Target size={24} className="text-white" />
-          </div>
-          <div>
-            <h3 className="font-black text-lg">الاستمرارية هي سر النجاح!</h3>
-            <p className="text-white/80 text-xs font-medium mt-1">أكمل تحديين إضافيين هذا الأسبوع للحصول على شارة بطل الأسبوع.</p>
-          </div>
-        </div>
-        <button className="bg-white text-indigo-600 px-6 py-2.5 rounded-xl font-black text-sm hover:bg-indigo-50 transition-colors w-full sm:w-auto relative z-10 shadow-md">
-          عرض تفاصيل التقدم
+        {/* AI Action Button */}
+        <button
+          onClick={handleGenerateAIChallenge}
+          disabled={isLoadingAI}
+          className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 hover:from-indigo-500 hover:to-purple-600 text-indigo-600 dark:text-indigo-400 hover:text-white border border-indigo-500/20 font-black text-xs transition-all shadow-xs flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+        >
+          {isLoadingAI ? (
+            <Loader2 size={16} className="animate-spin text-indigo-500" />
+          ) : (
+            <Bot size={16} />
+          )}
+          <span>تحدي ذكي مخصص بالـ AI ✨</span>
         </button>
       </div>
 
+      {/* 3. Filter Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <button
+          onClick={() => {
+            hapticFeedback('light');
+            setSelectedTypeFilter('all');
+          }}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+            selectedTypeFilter === 'all'
+              ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-xs'
+              : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+          }`}
+        >
+          كافة التحديات
+        </button>
+
+        <button
+          onClick={() => {
+            hapticFeedback('light');
+            setSelectedTypeFilter('no_coffee');
+          }}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
+            selectedTypeFilter === 'no_coffee'
+              ? 'bg-amber-500 text-white border-transparent shadow-xs'
+              : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800'
+          }`}
+        >
+          <Coffee size={13} />
+          أسبوع بدون قهوة
+        </button>
+
+        <button
+          onClick={() => {
+            hapticFeedback('light');
+            setSelectedTypeFilter('no_spend');
+          }}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
+            selectedTypeFilter === 'no_spend'
+              ? 'bg-emerald-500 text-white border-transparent shadow-xs'
+              : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800'
+          }`}
+        >
+          <ShieldCheck size={13} />
+          لا شراء / صفر مصاريف
+        </button>
+
+        <button
+          onClick={() => {
+            hapticFeedback('light');
+            setSelectedTypeFilter('home_cooking');
+          }}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
+            selectedTypeFilter === 'home_cooking'
+              ? 'bg-rose-500 text-white border-transparent shadow-xs'
+              : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800'
+          }`}
+        >
+          <UtensilsCrossed size={13} />
+          طبخ منزلي ومقاطعة المطاعم
+        </button>
+
+        <button
+          onClick={() => {
+            hapticFeedback('light');
+            setSelectedTypeFilter('grocery_cap');
+          }}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
+            selectedTypeFilter === 'grocery_cap'
+              ? 'bg-orange-500 text-white border-transparent shadow-xs'
+              : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800'
+          }`}
+        >
+          <ShoppingBag size={13} />
+          سقف قفة الأسبوع
+        </button>
+      </div>
+
+      {/* 4. Challenges List */}
+      <div className="space-y-4">
+        {displayedChallenges.length === 0 ? (
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 text-center border border-slate-200 dark:border-slate-800 space-y-3">
+            <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+              <Target size={32} />
+            </div>
+            <h3 className="text-base font-black text-slate-800 dark:text-slate-100">
+              لا توجد تحديات في هذا القسم حالياً
+            </h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              {activeTab === 'active'
+                ? 'ليس لديك تحديات نشطة حالياً. اختر تحدياً من "التحديات المتاحة" أو أنشئ تحدياً مخصصاً!'
+                : activeTab === 'completed'
+                  ? 'لم تكمل أي تحدٍ بعد هذا الأسبوع. التزم بالتحديات النشطة واستلم مكافآتك!'
+                  : 'تم تفعيل جميع التحديات المتاحة لهذا الأسبوع!'}
+            </p>
+            {activeTab === 'active' && (
+              <button
+                onClick={() => setActiveTab('available')}
+                className="px-5 py-2.5 rounded-2xl bg-emerald-500 text-white font-black text-xs shadow-md shadow-emerald-500/20"
+              >
+                تصفح التحديات المتاحة
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            <AnimatePresence>
+              {displayedChallenges.map(challenge => (
+                <WeeklyChallengeCard
+                  key={challenge.id}
+                  challenge={challenge}
+                  onStart={startChallenge}
+                  onAbandon={abandonChallenge}
+                  onToggleCheck={toggleDayManualCheck}
+                  onClaim={claimReward}
+                  onDelete={deleteChallenge}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+
+      {/* 5. Badges & Medals Section */}
+      <ChallengeBadgesSection badges={badges} />
+
+      {/* 6. Motivation Card */}
+      <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-6 rounded-3xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
+        <div className="flex items-center gap-3.5 text-right">
+          <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+            <Sparkles size={24} className="text-amber-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black">
+              الانضباط الأسبوعي يصنع الثروة العائلية 📈
+            </h3>
+            <p className="text-xs text-slate-300 font-medium mt-0.5">
+              توفير 5 إلى 10 دنانير يومياً عبر التحديات يعني أكثر من 300 دينار مدخرات إضافية شهرياً لعائلتك.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            hapticFeedback('light');
+            setIsCustomModalOpen(true);
+          }}
+          className="px-5 py-2.5 rounded-2xl bg-white text-slate-900 hover:bg-slate-100 font-black text-xs shrink-0 shadow-md transition-all active:scale-95 flex items-center gap-1.5"
+        >
+          <Plus size={15} />
+          تحدي جديد
+        </button>
+      </div>
+
+      {/* Custom Challenge Modal */}
+      <CreateCustomChallengeModal
+        isOpen={isCustomModalOpen}
+        onClose={() => setIsCustomModalOpen(false)}
+        onCreate={createCustomChallenge}
+      />
+
+      {/* Celebratory Reward Modal */}
+      <CelebrationModal
+        challenge={celebrationChallenge}
+        onClose={() => setCelebrationChallenge(null)}
+      />
     </div>
   );
 }

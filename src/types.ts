@@ -224,6 +224,69 @@ export interface AIInsights {
   lastUpdated: string; // ISO string
 }
 
+export type WeeklyChallengeType = 
+  | 'no_spend' 
+  | 'no_coffee' 
+  | 'home_cooking' 
+  | 'grocery_cap' 
+  | 'freeze_wants' 
+  | 'roundup_streak' 
+  | 'custom';
+
+export interface WeeklyChallengeDayStatus {
+  date: string; // YYYY-MM-DD
+  dayLabel: string; // 'الإثنين', 'الثلاثاء', etc.
+  dayShort: string; // 'إثن', 'ثلا', etc.
+  spentAmount: number;
+  isSuccess: boolean;
+  manualChecked?: boolean;
+  isToday: boolean;
+  isPast: boolean;
+  isFuture: boolean;
+  note?: string;
+}
+
+export interface WeeklyChallenge {
+  id: string;
+  type: WeeklyChallengeType;
+  title: string;
+  description: string;
+  icon: string;
+  badgeName: string;
+  badgeIcon: string;
+  rewardPoints: number;
+  estimatedSavingTND: number;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  targetDays: number; // e.g. 7 or 2
+  targetSpendCap?: number; // e.g. 50 TND
+  targetCategoryId?: string; // e.g. '6'
+  targetCategoryName?: string;
+  targetKeywords?: string[];
+  status: 'active' | 'completed' | 'abandoned' | 'available';
+  progressPercentage: number;
+  successfulDaysCount: number;
+  totalSavedSoFar: number;
+  days: WeeklyChallengeDayStatus[];
+  completedAt?: string;
+  isCustom?: boolean;
+  createdAt?: string;
+  tips?: string[];
+}
+
+export interface WeeklyChallengeBadge {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  unlocked: boolean;
+  unlockedAt?: string;
+  challengeType?: WeeklyChallengeType;
+}
+
 export interface SmartSavingChallenge {
   title: string;
   description: string;
@@ -267,6 +330,8 @@ export interface AppState {
   offlineMode: boolean;
   gamaeyas?: Gamaeya[];
   activeChallenge?: SmartSavingChallenge;
+  weeklyChallenges?: WeeklyChallenge[];
+  challengePoints?: number;
   autoRoundUpSetting?: AutoRoundUpSetting;
 }
 
