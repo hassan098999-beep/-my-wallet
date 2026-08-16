@@ -179,8 +179,9 @@ const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
       }
 
       // Logic for unusual expense
-      const avg = prev.expenses.reduce((sum: any, e: any) => sum + e.amount, 0) / (prev.expenses.length || 1);
-      if (newExpense.amount > avg * 3) {
+      const nonTransferExpenses = prev.expenses.filter((e: any) => !e.isTransfer);
+      const avg = nonTransferExpenses.reduce((sum: any, e: any) => sum + e.amount, 0) / (nonTransferExpenses.length || 1);
+      if (!newExpense.isTransfer && newExpense.amount > avg * 3) {
         newNotifications.push({ id: crypto.randomUUID(), message: "تنبيه: مصروف غير معتاد!", type: 'unusual_expense', createdAt: new Date().toISOString() });
       }
 

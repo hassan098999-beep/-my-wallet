@@ -42,7 +42,8 @@ export const useBehavioralEngine = () => {
       }
     ];
 
-    if (expenses.length === 0) return defaultInsights;
+    const validExpenses = expenses.filter(e => !e.isTransfer);
+    if (validExpenses.length === 0) return defaultInsights;
 
     // 1. Time-based analysis
     const timeSlots = {
@@ -52,9 +53,9 @@ export const useBehavioralEngine = () => {
       night: 0      // 10pm - 5am
     };
 
-    expenses.forEach(e => {
+    validExpenses.forEach(e => {
       // استخدم createdAt للوقت الفعلي، وليس date الذي هو تاريخ فقط بدون ساعة
-      const hour = new Date(e.createdAt).getHours();
+      const hour = new Date(e.createdAt || e.date).getHours();
       if (hour >= 5 && hour < 12) timeSlots.morning += e.amount;
       else if (hour >= 12 && hour < 18) timeSlots.afternoon += e.amount;
       else if (hour >= 18 && hour < 22) timeSlots.evening += e.amount;
@@ -69,18 +70,21 @@ export const useBehavioralEngine = () => {
       night: 'الليل'
     };
 
-    list.push({
-      id: 'time-pattern',
-      title: `نمط الإنفاق الزمني`,
-      description: `أنت تنفق معظم أموالك في فترة ${timeLabels[maxTime[0]]}.`,
-      type: 'pattern'
-    });
+    if (maxTime[1] > 0) {
+      list.push({
+        id: 'time-pattern',
+        title: `نمط الإنفاق الزمني`,
+        description: `أنت تنفق معظم أموالك في فترة ${timeLabels[maxTime[0]]}.`,
+        type: 'pattern'
+      });
+    }
 
     // 2. Category Projections (Real Cost Awareness)
     const categoryTotals: Record<string, number> = {};
     const last30Days = subDays(new Date(), 30);
     
-    expenses.filter(e => isWithinInterval(parseISO(e.date), { start: last30Days, end: new Date() }))
+    validExpenses
+      .filter(e => e.categoryId && isWithinInterval(parseISO(e.date), { start: last30Days, end: new Date() }))
       .forEach(e => {
         categoryTotals[e.categoryId] = (categoryTotals[e.categoryId] || 0) + e.amount;
       });
@@ -101,9 +105,9 @@ export const useBehavioralEngine = () => {
     });
 
     // 3. Trend Prediction
-    const thisWeek = expenses.filter(e => !e.isTransfer && isWithinInterval(parseISO(e.date), { start: startOfWeek(new Date()), end: new Date() }))
+    const thisWeek = validExpenses.filter(e => isWithinInterval(parseISO(e.date), { start: startOfWeek(new Date()), end: new Date() }))
       .reduce((sum, e) => sum + e.amount, 0);
-    const lastWeek = expenses.filter(e => !e.isTransfer && isWithinInterval(parseISO(e.date), { start: startOfWeek(subWeeks(new Date(), 1)), end: endOfWeek(subWeeks(new Date(), 1)) }))
+    const lastWeek = validExpenses.filter(e => isWithinInterval(parseISO(e.date), { start: startOfWeek(subWeeks(new Date(), 1)), end: endOfWeek(subWeeks(new Date(), 1)) }))
       .reduce((sum, e) => sum + e.amount, 0);
 
     if (thisWeek > lastWeek && lastWeek > 0) {
@@ -119,8 +123,8 @@ export const useBehavioralEngine = () => {
     // 4. Uncategorized / 'Other' Category Alert
     const otherCategory = categories.find(c => c.name === 'أخرى' || c.name === 'اخرى' || c.name === 'Other');
     if (otherCategory) {
-      const otherTotal = expenses
-        .filter(e => !e.isTransfer && e.categoryId === otherCategory.id && isWithinInterval(parseISO(e.date), { start: last30Days, end: new Date() }))
+      const otherTotal = validExpenses
+        .filter(e => e.categoryId === otherCategory.id && isWithinInterval(parseISO(e.date), { start: last30Days, end: new Date() }))
         .reduce((sum, e) => sum + e.amount, 0);
       
       if (otherTotal > (dailyBudget * 30 * 0.1)) { // More than 10% of monthly budget
@@ -135,7 +139,7 @@ export const useBehavioralEngine = () => {
     }
 
     // 5. Large Single Expense Alert
-    const recentExpenses = expenses.filter(e => !e.isTransfer && isWithinInterval(parseISO(e.date), { start: subDays(new Date(), 7), end: new Date() }));
+    const recentExpenses = validExpenses.filter(e => isWithinInterval(parseISO(e.date), { start: subDays(new Date(), 7), end: new Date() }));
     if (recentExpenses.length > 0) {
       const largestExpense = recentExpenses.reduce((max, e) => e.amount > max.amount ? e : max, recentExpenses[0]);
       if (largestExpense.amount > (dailyBudget * 30 * 0.2)) { // More than 20% of monthly budget
@@ -161,8 +165,8 @@ export const useBehavioralEngine = () => {
     
     // Find the first activity date to avoid accumulating budget for days before the user started using the app
     const allDates = [
-      ...expenses.map(e => parseISO(e.date).getTime()),
-      ...(income || []).map(i => parseISO(i.date).getTime())
+      ...expenses.filter(e => !e.isTransfer).map(e => parseISO(e.date).getTime()),
+      ...(income || []).filter(i => !i.isTransfer).map(i => parseISO(i.date).getTime())
     ];
     const firstActivityDate = allDates.length > 0 ? startOfDay(new Date(Math.min(...allDates))) : today;
     

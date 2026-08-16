@@ -6,7 +6,7 @@ import { getBudgetMonth } from './index';
 export const evaluateAchievements = (state: AppState): Achievement[] => {
   const evaluated: Achievement[] = [];
   
-  const expenses = state.expenses || [];
+  const expenses = (state.expenses || []).filter(e => !e.isTransfer);
   const goals = state.goals || [];
   const dailyBudget = state.dailyBudget || 0;
   

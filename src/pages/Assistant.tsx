@@ -96,7 +96,7 @@ export default function Assistant() {
   const currentMonth = getBudgetMonth(new Date(), firstDayOfMonth);
   const budget = budgets?.find(b => b.month === currentMonth);
   const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
-  const currentMonthExpenses = expenses.filter(e => e.date.startsWith(currentMonth));
+  const currentMonthExpenses = expenses.filter(e => !e.isTransfer && e.date.startsWith(currentMonth));
   const currentMonthTotalSpend = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   const [query, setQuery] = useState('');
@@ -448,7 +448,7 @@ export default function Assistant() {
         - الميزانية المحددة للشهر: ${budget?.amount ? budget.amount.toFixed(3) : 'غير محددة'}
         - إجمالي المصاريف هذا الشهر: ${currentMonthTotalSpend.toFixed(3)} TND
         - الأهداف: ${JSON.stringify(goals.map(g => ({ id: g.id, name: g.name, target: g.targetAmount, current: g.currentAmount })))}
-        - آخر 25 عملية صرف: ${JSON.stringify(expenses.slice(0, 25).map(e => ({
+        - آخر 25 عملية صرف: ${JSON.stringify(expenses.filter(e => !e.isTransfer).slice(0, 25).map(e => ({
           amount: e.amount,
           note: e.note,
           category: categories.find(c => c.id === e.categoryId)?.name || 'أخرى',

@@ -43,7 +43,7 @@ const FamilyReport: React.FC = () => {
 
   // Determine if we have under 7 days of expenses
   const hasUnder7Days = useMemo(() => {
-    const uniqueDates = new Set(expenses.map(e => e.date));
+    const uniqueDates = new Set(expenses.filter(e => !e.isTransfer).map(e => e.date));
     return uniqueDates.size < 7;
   }, [expenses]);
 

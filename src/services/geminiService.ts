@@ -46,8 +46,8 @@ export const getFinancialAdvice = async (
         ركز على توازن ميزانية الرضيع (حفاظات، حليب، طبيب أطفال)، ترشيد قفة العائلة، فواتير الستاغ (STEG)، والصحة.
         
         البيانات:
-        - المصاريف الأخيرة: ${JSON.stringify(expenses.slice(0, 30))}
-        - الدخل الأخير: ${JSON.stringify(income.slice(0, 10))}
+        - المصاريف الأخيرة: ${JSON.stringify(expenses.filter(e => !e.isTransfer).slice(0, 30))}
+        - الدخل الأخير: ${JSON.stringify(income.filter(i => !i.isTransfer).slice(0, 10))}
         - الميزانية الشهرية: ${JSON.stringify(budget)}
         - الميزانية اليومية المحددة: ${dailyBudget} TND
         - صرف اليوم حتى الآن: ${todaySpending} TND
@@ -124,8 +124,8 @@ export const getFinancialForecast = async (
         الرصيد الحالي: ${accounts.reduce((sum, a) => sum + a.balance, 0)}
         
         البيانات التاريخية:
-        - المصاريف: ${JSON.stringify(expenses.slice(0, 50))}
-        - الدخل: ${JSON.stringify(income.slice(0, 20))}
+        - المصاريف: ${JSON.stringify(expenses.filter(e => !e.isTransfer).slice(0, 50))}
+        - الدخل: ${JSON.stringify(income.filter(i => !i.isTransfer).slice(0, 20))}
         
         يجب أن يكون التنبؤ واقعياً بناءً على أنماط الإنفاق والدخل، مع مراعاة دقة المليمات (3 أرقام بعد الفاصلة).
       `,
@@ -214,7 +214,7 @@ export const calculateFinancialHealth = async (
         - إجمالي المصاريف المسجلة: ${totalExpenses.toFixed(3)} TND
         - الميزانية المحددة: ${budgetAmount.toFixed(3)} TND
         - الأهداف والادخارات: ${JSON.stringify(goals)}
-        - تفاصيل المصاريف الأخيرة: ${JSON.stringify(expenses.slice(0, 40))}
+        - تفاصيل المصاريف الأخيرة: ${JSON.stringify(expenses.filter(e => !e.isTransfer).slice(0, 40))}
         
         احسب درجة العافية المالية من 0 إلى 100، وحدد نقاط القوة، المخاطر المحدقة، وخطة عمل عملية فورية للتنفيذ.
       `,
@@ -362,7 +362,7 @@ export const generateSavingPlanAI = async (
         - التوفير الشهري المطلوب: ${monthlyReq.toFixed(3)} TND
         
         بيانات المصاريف الحالية للمستخدم:
-        ${JSON.stringify(expenses.slice(0, 40))}
+        ${JSON.stringify(expenses.filter(e => !e.isTransfer).slice(0, 40))}
         
         المطلوب:
         1. حدد الفئات التي يمكن اقتطاع المبالغ منها بدون ألم كبير على العائلة.

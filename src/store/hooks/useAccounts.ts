@@ -64,7 +64,7 @@ const transferAccount = async (fromAccountId: string, toAccountId: string, amoun
     const expenseEntry: Expense = {
       id: crypto.randomUUID(),
       amount,
-      categoryId: '6',
+      categoryId: '',
       date,
       note: transferNote || `تحويل إلى ${toAcc.name}`,
       paymentMethod: 'cash',
