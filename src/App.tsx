@@ -74,11 +74,15 @@ export default function App() {
   return (
     <AppProvider>
       <Toaster position="top-center" toastOptions={{
+        duration: 3000,
+        success: { duration: 3000 },
+        error: { duration: 3000 },
         className: 'font-tajawal font-bold',
         style: {
           background: '#333',
           color: '#fff',
           borderRadius: '1rem',
+          pointerEvents: 'none',
         }
       }} />
       
