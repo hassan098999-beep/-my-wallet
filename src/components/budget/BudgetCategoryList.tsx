@@ -18,6 +18,8 @@ interface BudgetCategoryListProps {
   remainingDays: number;
   remainingDaysInWeek: number;
   currency: string;
+  categoryStatusesLookup?: Record<string, any>;
+  rollingBudgetEnabled?: boolean;
 }
 
 export const BudgetCategoryList: React.FC<BudgetCategoryListProps> = ({
@@ -31,6 +33,8 @@ export const BudgetCategoryList: React.FC<BudgetCategoryListProps> = ({
   remainingDays,
   remainingDaysInWeek,
   currency,
+  categoryStatusesLookup,
+  rollingBudgetEnabled = true,
 }) => {
   // Grouped Categories mapped to standard system categories
   const groupedCategories = [
@@ -115,15 +119,20 @@ export const BudgetCategoryList: React.FC<BudgetCategoryListProps> = ({
                 const spent = isWeekly ? weekSpent : monthSpent;
                 const catBudgetStr = categoryBudgets[cat.id] || '';
                 const catBudgetNum = Number(catBudgetStr) || 0;
-                const percentage = catBudgetNum > 0 ? (spent / catBudgetNum) * 100 : 0;
-                const isOver = catBudgetNum > 0 && spent > catBudgetNum;
+
+                const status = categoryStatusesLookup?.[cat.id];
+                const effectiveLimit = (rollingBudgetEnabled && isWeekly && status?.effectiveLimit !== undefined) ? status.effectiveLimit : catBudgetNum;
+                const pastSurplusDeficit = status?.pastSurplusDeficit || 0;
+
+                const percentage = effectiveLimit > 0 ? (spent / effectiveLimit) * 100 : (spent > 0 ? 100 : 0);
+                const isOver = effectiveLimit > 0 && spent > effectiveLimit;
                 
-                const catRemainingBudget = Math.max(0, catBudgetNum - spent);
+                const catRemainingBudget = Math.max(0, effectiveLimit - spent);
                 const activeRemainingDays = isWeekly ? remainingDaysInWeek : remainingDays;
                 const catSafeDailySpend = (activeRemainingDays > 0 && catRemainingBudget > 0) ? (catRemainingBudget / activeRemainingDays) : 0;
 
-                const equivalentMonthly = isWeekly && catBudgetNum > 0 ? Math.round(catBudgetNum * 4.333) : null;
-                const equivalentWeekly = !isWeekly && catBudgetNum > 0 ? Math.round(catBudgetNum / 4.333) : null;
+                const equivalentMonthly = isWeekly && effectiveLimit > 0 ? Math.round(effectiveLimit * 4.333) : null;
+                const equivalentWeekly = !isWeekly && effectiveLimit > 0 ? Math.round(effectiveLimit / 4.333) : null;
 
                 return (
                   <Card
@@ -242,6 +251,15 @@ export const BudgetCategoryList: React.FC<BudgetCategoryListProps> = ({
                               />
                             )}
                           </div>
+
+                          {rollingBudgetEnabled && isWeekly && catBudgetNum > 0 && pastSurplusDeficit !== 0 && (
+                            <div className="text-[9px] font-bold py-1 px-2 rounded bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 flex justify-between items-center border border-indigo-100 dark:border-indigo-900/40">
+                              <span>ميزانية متدحرجة 🔄:</span>
+                              <span className="font-black font-mono">
+                                {formatCurrency(effectiveLimit, currency)} ({pastSurplusDeficit > 0 ? `+${formatCurrency(pastSurplusDeficit, currency)} فائض` : `-${formatCurrency(Math.abs(pastSurplusDeficit), currency)} عجز`})
+                              </span>
+                            </div>
+                          )}
                           
                           {/* Smart Daily Safe Spend Indicator & Burn Rate Velocity */}
                           {catBudgetNum > 0 && activeRemainingDays > 0 && !isOver && (() => {

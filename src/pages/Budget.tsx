@@ -238,7 +238,8 @@ const BudgetPage = () => {
     remainingDaysInWeek,
     remainingBudget,
     dailyLimit,
-    daysInMonth
+    daysInMonth,
+    categoryStatusesLookup
   } = useBudgetStatus(selectedMonth);
 
   const chartData = useMemo(() => {
@@ -375,6 +376,8 @@ const BudgetPage = () => {
         remainingDays={remainingDays}
         remainingDaysInWeek={remainingDaysInWeek}
         currency={currency}
+        categoryStatusesLookup={categoryStatusesLookup}
+        rollingBudgetEnabled={rollingBudgetEnabled}
       />
     </motion.div>
   );

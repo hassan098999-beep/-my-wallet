@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useAppContext } from '../store/AppContext';
 import { getBudgetRange, getBudgetMonth, getWeekRange } from '../utils';
-import { parseISO, differenceInDays, startOfDay, endOfDay, format } from 'date-fns';
+import { parseISO, differenceInDays, startOfDay, endOfDay, format, addDays } from 'date-fns';
 import { BudgetPeriod } from '../types';
 import { analyzeAllCategoryPaces, CategoryPaceStatus } from '../utils/paceAnalysis';
 
@@ -92,21 +92,54 @@ export function useBudgetStatus(overrideMonth?: string) {
         .filter(e => e.categoryId === catId)
         .reduce((sum, e) => sum + e.amount, 0);
 
+      let effectiveLimit = limit;
+      let pastSurplusDeficit = 0;
+
+      if (period === 'weekly' && rollingBudgetEnabled && limit > 0) {
+        // Calculate rolling adjustment from past weeks in the active month
+        const weeks: { start: Date; end: Date }[] = [];
+        let curStart = new Date(monthStart);
+        while (curStart <= monthEnd) {
+          const curEnd = new Date(Math.min(monthEnd.getTime(), addDays(curStart, 6).getTime()));
+          weeks.push({ start: curStart, end: curEnd });
+          curStart = addDays(curEnd, 1);
+        }
+
+        const currentWeekIndex = weeks.findIndex(w => today >= startOfDay(w.start) && today <= endOfDay(w.end));
+        if (currentWeekIndex > 0) {
+          for (let k = 0; k < currentWeekIndex; k++) {
+            const w = weeks[k];
+            const wSpent = expenses
+              .filter(e => {
+                if (e.isTransfer || e.categoryId !== catId) return false;
+                const d = parseISO(e.date);
+                return d >= startOfDay(w.start) && d <= endOfDay(w.end);
+              })
+              .reduce((sum, e) => sum + e.amount, 0);
+            
+            pastSurplusDeficit += (limit - wSpent);
+          }
+          effectiveLimit = Math.max(0, limit + pastSurplusDeficit);
+        }
+      }
+
       const spent = period === 'weekly' ? catWeekSpent : catMonthSpent;
-      const percentage = limit > 0 ? (spent / limit) * 100 : 0;
-      const remaining = limit - spent; // Can be negative represents overspent
-      const isOver = limit > 0 && spent > limit;
+      const percentage = effectiveLimit > 0 ? (spent / effectiveLimit) * 100 : (spent > 0 ? 100 : 0);
+      const remaining = effectiveLimit - spent; // Can be negative represents overspent
+      const isOver = effectiveLimit > 0 && spent > effectiveLimit;
 
       const safeDailySpend = period === 'weekly'
         ? (remainingDaysInWeek > 0 && remaining > 0 ? remaining / remainingDaysInWeek : 0)
         : (remainingDays > 0 && remaining > 0 ? remaining / remainingDays : 0);
 
-      const monthlyEquivalent = period === 'weekly' ? Math.round(limit * (daysInMonth / 7)) : limit;
-      const weeklyEquivalent = period === 'monthly' ? Math.round(limit / (daysInMonth / 7)) : limit;
+      const monthlyEquivalent = period === 'weekly' ? Math.round(effectiveLimit * (daysInMonth / 7)) : effectiveLimit;
+      const weeklyEquivalent = period === 'monthly' ? Math.round(effectiveLimit / (daysInMonth / 7)) : effectiveLimit;
       
       return {
         categoryId: catId,
         limit,
+        effectiveLimit,
+        pastSurplusDeficit,
         spent,
         monthSpent: catMonthSpent,
         weekSpent: catWeekSpent,
