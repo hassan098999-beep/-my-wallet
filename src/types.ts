@@ -105,6 +105,7 @@ export interface Budget {
   month: string; // YYYY-MM
   period?: BudgetPeriod;
   categoryBudgets?: Record<string, number>;
+  categoryWeeklyBudgets?: Record<string, Record<number, number>>;
   categoryPeriods?: Record<string, BudgetPeriod>;
 }
 

@@ -117,9 +117,11 @@ export function useBudgetStatus(overrideMonth?: string) {
               })
               .reduce((sum, e) => sum + e.amount, 0);
             
-            pastSurplusDeficit += (limit - wSpent);
+            const weekLimit = budget?.categoryWeeklyBudgets?.[catId]?.[k] ?? limit;
+            pastSurplusDeficit += (weekLimit - wSpent);
           }
-          effectiveLimit = Math.max(0, limit + pastSurplusDeficit);
+          const currentWeekLimit = (currentWeekIndex >= 0 ? budget?.categoryWeeklyBudgets?.[catId]?.[currentWeekIndex] : null) ?? limit;
+          effectiveLimit = Math.max(0, currentWeekLimit + pastSurplusDeficit);
         }
       }
 

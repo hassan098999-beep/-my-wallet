@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../store/AppContext';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import { cn, hapticFeedback, getBudgetRange, getBudgetMonth, getWeekRange } from '../utils';
-import { parseISO } from 'date-fns';
+import { parseISO, addDays, startOfDay, endOfDay } from 'date-fns';
 import { Save, Wallet, Activity, CircleCheckBig, Calendar } from 'lucide-react';
 import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
@@ -45,9 +45,26 @@ const BudgetPage = () => {
       : {}
   );
 
+  const [categoryWeeklyBudgets, setCategoryWeeklyBudgets] = useState<Record<string, Record<number, number>>>(
+    currentBudget?.categoryWeeklyBudgets || {}
+  );
+
   const [categoryPeriods, setCategoryPeriods] = useState<Record<string, BudgetPeriod>>(
     currentBudget?.categoryPeriods || {}
   );
+
+  const currentWeekIndex = useMemo(() => {
+    const today = new Date();
+    const { start: monthStart, end: monthEnd } = getBudgetRange(selectedMonth, firstDayOfMonth);
+    const weeks: { start: Date; end: Date }[] = [];
+    let curStart = new Date(monthStart);
+    while (curStart <= monthEnd) {
+      const curEnd = new Date(Math.min(monthEnd.getTime(), addDays(curStart, 6).getTime()));
+      weeks.push({ start: curStart, end: curEnd });
+      curStart = addDays(curEnd, 1);
+    }
+    return weeks.findIndex(w => today >= startOfDay(w.start) && today <= endOfDay(w.end));
+  }, [selectedMonth, firstDayOfMonth]);
 
   // Sync state if budget changes externally or selected month changes
   useEffect(() => {
@@ -55,14 +72,30 @@ const BudgetPage = () => {
       setGlobalBudget(currentBudget.amount?.toString() || '');
       setOverallPeriod(currentBudget.period || 'monthly');
       setCategoryBudgets(Object.fromEntries(Object.entries(currentBudget.categoryBudgets || {}).map(([k, v]) => [k, v.toString()])));
+      setCategoryWeeklyBudgets(currentBudget.categoryWeeklyBudgets || {});
       setCategoryPeriods(currentBudget.categoryPeriods || {});
     } else {
       setGlobalBudget('');
       setOverallPeriod('monthly');
       setCategoryBudgets({});
+      setCategoryWeeklyBudgets({});
       setCategoryPeriods({});
     }
   }, [currentBudget]);
+
+  const handleCategoryBudgetChange = (id: string, val: string) => {
+    setCategoryBudgets(prev => ({ ...prev, [id]: val }));
+    const num = Number(val) || 0;
+    if (currentWeekIndex >= 0) {
+      setCategoryWeeklyBudgets(prev => ({
+        ...prev,
+        [id]: {
+          ...(prev[id] || {}),
+          [currentWeekIndex]: num
+        }
+      }));
+    }
+  };
 
   const handleSave = () => {
     hapticFeedback('success');
@@ -81,6 +114,7 @@ const BudgetPage = () => {
       month: selectedMonth,
       period: overallPeriod,
       categoryBudgets: parsedCategories,
+      categoryWeeklyBudgets,
       categoryPeriods: categoryPeriods
     });
     
@@ -95,9 +129,7 @@ const BudgetPage = () => {
     setTimeout(() => setIsSaved(false), 3000);
   };
 
-  const handleCategoryBudgetChange = (id: string, value: string) => {
-    setCategoryBudgets(prev => ({ ...prev, [id]: value }));
-  };
+
 
   const handleCategoryPeriodChange = (id: string, period: BudgetPeriod) => {
     setCategoryPeriods(prev => ({ ...prev, [id]: period }));
