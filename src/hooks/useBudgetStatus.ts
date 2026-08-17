@@ -132,7 +132,11 @@ export function useBudgetStatus(overrideMonth?: string) {
         ? (remainingDaysInWeek > 0 && remaining > 0 ? remaining / remainingDaysInWeek : 0)
         : (remainingDays > 0 && remaining > 0 ? remaining / remainingDays : 0);
 
-      const monthlyEquivalent = period === 'weekly' ? Math.round(effectiveLimit * (daysInMonth / 7)) : effectiveLimit;
+      const nominalMonthly = limit * (daysInMonth / 7);
+      const monthlyEffectiveLimit = period === 'weekly'
+        ? (rollingBudgetEnabled ? nominalMonthly + pastSurplusDeficit : nominalMonthly)
+        : effectiveLimit;
+      const monthlyEquivalent = Math.round(monthlyEffectiveLimit);
       const weeklyEquivalent = period === 'monthly' ? Math.round(effectiveLimit / (daysInMonth / 7)) : effectiveLimit;
       
       return {
@@ -149,6 +153,7 @@ export function useBudgetStatus(overrideMonth?: string) {
         period,
         safeDailySpend,
         monthlyEquivalent,
+        monthlyEffectiveLimit,
         weeklyEquivalent
       };
     });

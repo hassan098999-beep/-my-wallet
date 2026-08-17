@@ -307,8 +307,8 @@ export const BudgetCategoryList: React.FC<BudgetCategoryListProps> = ({
 
                           {/* Equivalent period info for smart budgeting */}
                           {equivalentMonthly && (
-                            <div className="text-[9px] font-bold text-slate-400 flex justify-between items-center pt-1 border-t border-dashed border-slate-200/40 dark:border-slate-800/40">
-                              <span>المعادل التقديري للشهر:</span>
+                            <div className="text-[9px] font-bold text-slate-400 flex justify-between items-center pt-1 border-t border-dashed border-slate-200/40 dark:border-slate-800/40" title="الميزانية الجملية المرصودة للفئة مطروحاً منها العجز أو مضافاً إليها الفائض التراكمي">
+                              <span>{rollingBudgetEnabled && isWeekly ? 'الميزانية الجملية للشهر (بعد التدحرج):' : 'المعادل التقديري للشهر:'}</span>
                               <span className="font-mono text-slate-600 dark:text-slate-300">~{formatCurrency(equivalentMonthly, currency)}</span>
                             </div>
                           )}
