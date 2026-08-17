@@ -385,9 +385,9 @@ export const BudgetCategoryList: React.FC<BudgetCategoryListProps> = ({
                         </p>
                         <p className={cn(
                           "text-xs font-black font-mono",
-                          (catBudgetNum - spent) >= 0 ? "text-emerald-500" : "text-rose-500"
+                          (effectiveLimit - spent) >= 0 ? "text-emerald-500" : "text-rose-500"
                         )}>
-                          {formatCurrency(catBudgetNum - spent, currency)}
+                          {formatCurrency(effectiveLimit - spent, currency)}
                         </p>
                       </div>
                     </div>

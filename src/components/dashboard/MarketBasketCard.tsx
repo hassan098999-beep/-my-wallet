@@ -17,6 +17,8 @@ import { Link } from 'react-router-dom';
 import { formatCurrency, cn, hapticFeedback, safeStorage, getBudgetRange, getBudgetMonth, getWeekRange, safeParseISO } from '../../utils';
 import { Category, Expense, Budget, BudgetPeriod } from '../../types';
 import { differenceInDays, startOfDay, format } from 'date-fns';
+import { useBudgetStatus } from '../../hooks/useBudgetStatus';
+import { useAppContext } from '../../store/AppContext';
 
 interface MarketBasketCardProps {
   categories: Category[];
@@ -76,6 +78,13 @@ export const MarketBasketCard: React.FC<MarketBasketCardProps> = ({
     return Number(currentBudget.categoryBudgets[basketCategory.id]) || 0;
   }, [currentBudget, basketCategory]);
 
+  const { categoryStatusesLookup } = useBudgetStatus();
+  const { rollingBudgetEnabled } = useAppContext();
+  const catStatus = basketCategory ? categoryStatusesLookup?.[basketCategory.id] : undefined;
+  const effectiveLimit = (rollingBudgetEnabled && categoryPeriod === 'weekly' && catStatus?.effectiveLimit !== undefined)
+    ? catStatus.effectiveLimit
+    : allocatedLimit;
+
   // Date range depending on weekly or monthly
   const { start: monthStart, end: monthEnd } = useMemo(() => getBudgetRange(activeMonth, firstDayOfMonth), [activeMonth, firstDayOfMonth]);
   const { start: weekStart, end: weekEnd } = useMemo(() => getWeekRange(today, 1), [today]);
@@ -122,11 +131,11 @@ export const MarketBasketCard: React.FC<MarketBasketCardProps> = ({
       .reduce((sum, e) => sum + e.amount, 0);
   }, [expenses, basketCategory, todayStr]);
 
-  const hasBudget = allocatedLimit > 0;
-  const remainingAmount = allocatedLimit - totalSpent;
-  const percentSpent = hasBudget ? Math.min(100, Math.round((totalSpent / allocatedLimit) * 100)) : 0;
-  const isOverBudget = hasBudget && totalSpent > allocatedLimit;
-  const isNearLimit = hasBudget && totalSpent >= allocatedLimit * 0.8 && !isOverBudget;
+  const hasBudget = effectiveLimit > 0;
+  const remainingAmount = effectiveLimit - totalSpent;
+  const percentSpent = hasBudget ? Math.min(100, Math.round((totalSpent / effectiveLimit) * 100)) : 0;
+  const isOverBudget = hasBudget && totalSpent > effectiveLimit;
+  const isNearLimit = hasBudget && totalSpent >= effectiveLimit * 0.8 && !isOverBudget;
   const safeDailyAllowance = hasBudget && remainingAmount > 0 && remainingDays > 0 
     ? remainingAmount / remainingDays 
     : 0;
