@@ -1,22 +1,21 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import { cn, hapticFeedback, getBudgetRange, getBudgetMonth, getWeekRange, safeStorage } from '../utils';
 import { parseISO, addDays, startOfDay, endOfDay } from 'date-fns';
-import { Save, Wallet, Activity, CircleCheckBig, Calendar } from 'lucide-react';
+import { Save, Wallet, CircleCheckBig, Calendar, ArrowLeftRight, RefreshCw, Layers } from 'lucide-react';
 import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 import { BudgetAlerts } from '../components/BudgetAlerts';
 import { BudgetPeriod } from '../types';
 
-// Import unified design system components
-import PageHeader from '../components/ui/PageHeader';
-
-// Import sub-components
+// Sub-components
 import BudgetOverview from '../components/budget/BudgetOverview';
 import BudgetCategoryList from '../components/budget/BudgetCategoryList';
 
 const BudgetPage = () => {
+  const location = useLocation();
   const { 
     budgets, 
     setBudget, 
@@ -35,7 +34,7 @@ const BudgetPage = () => {
   
   const currentBudget = useMemo(() => budgets.find(b => b.month === selectedMonth), [budgets, selectedMonth]);
 
-  const [globalBudget, setGlobalBudget] = useState(currentBudget?.amount.toString() || '');
+  const [globalBudget, setGlobalBudget] = useState(currentBudget?.amount?.toString() || '');
   const [overallPeriod, setOverallPeriod] = useState<BudgetPeriod>(currentBudget?.period || 'monthly');
   const [isSaved, setIsSaved] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -131,8 +130,6 @@ const BudgetPage = () => {
     setTimeout(() => setIsSaved(false), 3000);
   };
 
-
-
   const handleCategoryPeriodChange = (id: string, period: BudgetPeriod) => {
     setCategoryPeriods(prev => ({ ...prev, [id]: period }));
   };
@@ -156,7 +153,6 @@ const BudgetPage = () => {
       const savings = categories.filter(c => c.type === 'saving');
 
       // 50% for Needs, 30% for Wants, 20% for Savings
-      // If overall budget is weekly, convert pools accordingly
       const monthlyTotal = overallPeriod === 'weekly' ? totalBudget * 4.333 : totalBudget;
       const needsPool = monthlyTotal * 0.5;
       const wantsPool = monthlyTotal * 0.3;
@@ -212,7 +208,6 @@ const BudgetPage = () => {
       pastExpenses.forEach(e => {
         const monthKey = getBudgetMonth(parseISO(e.date), firstDayOfMonth);
         monthGroups[monthKey] = (monthGroups[monthKey] || 0) + e.amount;
-        
         categoryAverages[e.categoryId] = (categoryAverages[e.categoryId] || 0) + e.amount;
       });
 
@@ -296,12 +291,12 @@ const BudgetPage = () => {
   // Stagger Animations
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
+    visible: { opacity: 1, transition: { staggerChildren: 0.06 } }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 15 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35 } }
   };
 
   return (
@@ -309,23 +304,32 @@ const BudgetPage = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-8 p-4 pb-32 w-full max-w-full text-right font-tajawal rtl"
+      className="space-y-6 p-3 sm:p-4 md:p-6 pb-28 w-full max-w-7xl mx-auto text-right font-tajawal rtl"
     >
-      {/* Header Section */}
-      <PageHeader
-        title="مخطط الميزانية الذكي"
-        subtitle="وزّع ميزانيتك الشهرية أو الأسبوعية بذكاء، حدد فترات الفئات، فعّل الصرف المتدحرج، ورشّد نفقاتك"
-        action={
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
-            {/* Cycle day component */}
-            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 shadow-xs">
-              <span className="text-[10px] font-semibold text-slate-500">بداية الدورة:</span>
+      {/* Top Header & Navigation Tabs */}
+      <div className="space-y-4">
+        {/* Page Title Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              لوحة الميزانية الذكية
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+              تتبع السقف المالي، الميزانية المتدحرجة، ومخصصات الفئات اليومية والأسبوعية
+            </p>
+          </div>
+
+          {/* Action controls: Month picker, Start day & Save Button */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start sm:self-center">
+            {/* Cycle day */}
+            <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 shadow-2xs">
+              <span className="text-[10px] font-bold text-slate-400">الدورة:</span>
               <select
                 value={firstDayOfMonth}
                 onChange={(e) => {
                   hapticFeedback('light');
                   setFirstDayOfMonth(Number(e.target.value));
-                  toast.success(`دورتك المالية الجديدة ستبدأ يوم ${e.target.value} من كل شهر.`);
+                  toast.success(`دورتك المالية ستبدأ يوم ${e.target.value} من كل شهر.`);
                 }}
                 className="bg-transparent text-xs font-black text-slate-900 dark:text-white outline-none cursor-pointer"
               >
@@ -336,8 +340,8 @@ const BudgetPage = () => {
             </div>
 
             {/* Custom Month Selector */}
-            <div className="relative flex-1 sm:flex-none">
-              <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 size-3.5 pointer-events-none" />
+            <div className="relative">
+              <Calendar className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 size-3.5 pointer-events-none" />
               <input
                 type="month"
                 value={selectedMonth}
@@ -347,7 +351,7 @@ const BudgetPage = () => {
                   setSelectedMonth(val);
                   safeStorage.setItem('masarifi_budget_selected_month', val);
                 }}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-3 pr-8 py-2 text-xs font-black text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/20"
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-2.5 pr-8 py-1.5 text-xs font-black text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
@@ -357,16 +361,58 @@ const BudgetPage = () => {
               whileTap={{ scale: 0.98 }}
               onClick={handleSave}
               className={cn(
-                "flex items-center justify-center gap-2 px-5 py-2 rounded-xl font-black text-xs transition-all shadow-xs cursor-pointer active:scale-95",
-                isSaved ? "bg-emerald-500 text-white" : "bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
+                "flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl font-black text-xs transition-all shadow-2xs cursor-pointer active:scale-95",
+                isSaved ? "bg-emerald-500 text-white" : "bg-emerald-600 hover:bg-emerald-700 text-white"
               )}
             >
               {isSaved ? <CircleCheckBig size={14} className="animate-bounce" /> : <Save size={14} />}
-              <span>{isSaved ? 'تم الحفظ والمواءمة' : 'حفظ المخصّصات'}</span>
+              <span>{isSaved ? 'تم الحفظ' : 'حفظ الميزانية'}</span>
             </motion.button>
           </div>
-        }
-      />
+        </div>
+
+        {/* Navigation Tabs: (الميزانية / مصادر الدخل / المصاريف المتكررة) */}
+        <div className="flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto custom-scrollbar">
+          <Link
+            to="/budget"
+            className={cn(
+              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0",
+              location.pathname === '/budget'
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50"
+                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+            )}
+          >
+            <Layers size={13} />
+            <span>الميزانية الذكية</span>
+          </Link>
+
+          <Link
+            to="/income"
+            className={cn(
+              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0",
+              location.pathname === '/income'
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50"
+                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+            )}
+          >
+            <ArrowLeftRight size={13} />
+            <span>مصادر الدخل</span>
+          </Link>
+
+          <Link
+            to="/recurring"
+            className={cn(
+              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0",
+              location.pathname === '/recurring'
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50"
+                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+            )}
+          >
+            <RefreshCw size={13} />
+            <span>المصاريف المتكررة</span>
+          </Link>
+        </div>
+      </div>
 
       {/* Category smart budget warnings */}
       <BudgetAlerts />
@@ -398,6 +444,11 @@ const BudgetPage = () => {
         autoAllocate={autoAllocate}
         isGenerating={isGenerating}
         itemVariants={itemVariants}
+        selectedMonth={selectedMonth}
+        firstDayOfMonth={firstDayOfMonth}
+        setFirstDayOfMonth={setFirstDayOfMonth}
+        expenses={expenses}
+        budgets={budgets}
       />
 
       {/* Category List component */}
@@ -420,4 +471,3 @@ const BudgetPage = () => {
 };
 
 export default BudgetPage;
-
