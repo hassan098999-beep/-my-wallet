@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { motion } from 'motion/react';
-import { Hourglass, Coins, Trophy } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Hourglass, Coins, Trophy, ChevronDown, ChevronUp, Calculator } from 'lucide-react';
 
 import { Goal } from '../../types';
 import { formatCurrency, hapticFeedback, cn } from '../../utils';
@@ -19,6 +19,8 @@ const GoalSimulator: React.FC<GoalSimulatorProps> = ({
   currency,
   itemVariants
 }) => {
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+
   // Simulator State
   const [simGoalId, setSimGoalId] = useState<string>('custom');
   const [simGoalAmount, setSimGoalAmount] = useState<number>(3000);
@@ -82,47 +84,87 @@ const GoalSimulator: React.FC<GoalSimulatorProps> = ({
 
   return (
     <motion.div variants={itemVariants}>
-      <Card className="p-6 md:p-8 bg-gradient-to-br from-indigo-50/20 via-white to-white dark:from-slate-900/40 dark:via-slate-900 dark:to-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl relative overflow-hidden">
+      <Card className="p-5 md:p-6 bg-gradient-to-br from-indigo-50/20 via-white to-white dark:from-slate-900/40 dark:via-slate-900 dark:to-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl relative overflow-hidden">
         {/* Subtle design gradient lights */}
         <div className="absolute left-0 top-0 -ml-20 -mt-20 w-80 h-80 bg-primary-500/5 dark:bg-primary-400/5 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute right-0 bottom-0 -mr-20 -mb-20 w-80 h-80 bg-emerald-500/5 dark:bg-emerald-400/5 rounded-full blur-[100px] pointer-events-none" />
 
         {/* Widget Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-slate-100 dark:border-slate-800/60 relative z-10">
+        <div 
+          onClick={() => {
+            hapticFeedback('light');
+            setIsExpanded(!isExpanded);
+          }}
+          className={cn(
+            "flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10 cursor-pointer select-none transition-all",
+            isExpanded ? "pb-6 mb-6 border-b border-slate-100 dark:border-slate-800/60" : ""
+          )}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-500 shrink-0">
-              <Hourglass size={24} className="animate-spin-slow text-indigo-500" />
+            <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-500 shrink-0">
+              <Calculator size={22} className="text-indigo-500" />
             </div>
             <div>
-              <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                <span>مُحاكي الإدخار والوقت الذكي</span>
-                <Badge variant="success" className="text-[10px] py-0.5">جديد ⚡</Badge>
-              </h3>
-              <p className="text-[10px] text-slate-400 font-bold">احسب بدقة متناهية المدة اللازمة لتحقيق أهدافك المالية ومستويات تسريعها</p>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm md:text-base font-black text-slate-900 dark:text-white">
+                  مُحاكي الادخار والوقت الذكي
+                </h3>
+                <Badge variant="success" className="text-[10px] py-0.5">محاكي تفاعلي ⚡</Badge>
+              </div>
+              <p className="text-[11px] text-slate-400 font-bold">احسب المدة الدقيقة والوتيرة اللازمة لبلوغ هدفك المالي</p>
             </div>
           </div>
 
-          {/* Quick selector of active goal */}
-          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950/20 border border-slate-200/50 dark:border-slate-800 rounded-xl px-3 py-1.5 shadow-5xs">
-            <span className="text-[10px] font-black text-slate-400 shrink-0">ربط بهدف قائم:</span>
-            <select
-              value={simGoalId}
-              onChange={(e) => {
-                hapticFeedback('light');
-                handleSimGoalChange(e.target.value);
-              }}
-              className="bg-transparent text-xs font-black text-slate-800 dark:text-white outline-none cursor-pointer"
+          {/* Controls on header */}
+          <div className="flex items-center gap-3 self-end sm:self-auto">
+            {isExpanded && (
+              <div 
+                onClick={(e) => e.stopPropagation()} 
+                className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950/20 border border-slate-200/50 dark:border-slate-800 rounded-xl px-3 py-1.5 shadow-5xs"
+              >
+                <span className="text-[10px] font-black text-slate-400 shrink-0">ربط بهدف:</span>
+                <select
+                  value={simGoalId}
+                  onChange={(e) => {
+                    hapticFeedback('light');
+                    handleSimGoalChange(e.target.value);
+                  }}
+                  className="bg-transparent text-xs font-black text-slate-800 dark:text-white outline-none cursor-pointer"
+                >
+                  <option value="custom">✍️ هَدَف مخصص (حرّ)</option>
+                  {standardGoals.map(g => (
+                    <option key={g.id} value={g.id}>🎯 {g.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className={cn(
+                "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black transition-all",
+                isExpanded 
+                  ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                  : "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60"
+              )}
             >
-              <option value="custom">✍️ هَدَف مخصص (حرّ)</option>
-              {standardGoals.map(g => (
-                <option key={g.id} value={g.id}>🎯 {g.name}</option>
-              ))}
-            </select>
+              <span>{isExpanded ? 'إخفاء المحاكي' : 'فتح المحاكي'}</span>
+              {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+            </button>
           </div>
         </div>
 
         {/* Interactive Calculator Interface */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10 pt-2">
           
           {/* Left Portion: Controls (Sliders & Direct text entry) */}
           <div className="lg:col-span-6 space-y-6">
@@ -453,6 +495,9 @@ const GoalSimulator: React.FC<GoalSimulatorProps> = ({
           </div>
 
         </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </Card>
     </motion.div>

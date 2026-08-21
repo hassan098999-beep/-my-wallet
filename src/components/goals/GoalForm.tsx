@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Calendar, TrendingUp, Shield } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, Shield, Users, AlertCircle, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { Goal, Category } from '../../types';
@@ -26,6 +26,7 @@ const GoalForm: React.FC<GoalFormProps> = ({
   const [targetAmount, setTargetAmount] = useState('');
   const [currentAmount, setCurrentAmount] = useState('');
   const [deadline, setDeadline] = useState(new Date().toISOString().split('T')[0]);
+  const [goalPriority, setGoalPriority] = useState<'family' | 'essential' | 'personal'>('personal');
   const [linkedCategoryId, setLinkedCategoryId] = useState<string>('');
   const [isLinkedToOverallBudget, setIsLinkedToOverallBudget] = useState(false);
   const [isEmergencyFund, setIsEmergencyFund] = useState(false);
@@ -40,6 +41,7 @@ const GoalForm: React.FC<GoalFormProps> = ({
         targetAmount: Number(targetAmount),
         currentAmount: Number(currentAmount) || 0,
         deadline,
+        goalPriority,
         linkedCategoryId: linkedCategoryId || undefined,
         isLinkedToOverallBudget: isLinkedToOverallBudget,
         isEmergencyFund: isEmergencyFund,
@@ -56,6 +58,7 @@ const GoalForm: React.FC<GoalFormProps> = ({
       setName('');
       setTargetAmount('');
       setCurrentAmount('');
+      setGoalPriority('personal');
       setLinkedCategoryId('');
       setIsLinkedToOverallBudget(false);
       setIsEmergencyFund(false);
@@ -176,6 +179,59 @@ const GoalForm: React.FC<GoalFormProps> = ({
                   required
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Priority Selection */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-2 flex items-center justify-between">
+              <span>أولوية الهدف</span>
+              <span className="text-[10px] text-slate-400 font-normal">
+                {goalPriority === 'essential' ? '🚨 ضروري / طوارئ (الأولوية القصوى)' : goalPriority === 'family' ? '👨‍👩‍👧‍👦 هدف عائلي مشترك' : '👤 هدف شخصي'}
+              </span>
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => setGoalPriority('essential')}
+                className={cn(
+                  "flex items-center justify-center gap-2 py-3 px-4 rounded-2xl border-2 font-black text-xs transition-all cursor-pointer",
+                  goalPriority === 'essential'
+                    ? "bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-rose-600 dark:text-rose-400 shadow-sm"
+                    : "bg-white/50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 text-slate-500 hover:border-slate-300 dark:hover:border-slate-700"
+                )}
+              >
+                <AlertCircle size={15} className={goalPriority === 'essential' ? 'text-rose-500' : 'text-slate-400'} />
+                <span>ضروري / طارئ</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setGoalPriority('family')}
+                className={cn(
+                  "flex items-center justify-center gap-2 py-3 px-4 rounded-2xl border-2 font-black text-xs transition-all cursor-pointer",
+                  goalPriority === 'family'
+                    ? "bg-blue-50 dark:bg-blue-950/40 border-blue-500 text-blue-600 dark:text-blue-400 shadow-sm"
+                    : "bg-white/50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 text-slate-500 hover:border-slate-300 dark:hover:border-slate-700"
+                )}
+              >
+                <Users size={15} className={goalPriority === 'family' ? 'text-blue-500' : 'text-slate-400'} />
+                <span>عائلي مشترك</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setGoalPriority('personal')}
+                className={cn(
+                  "flex items-center justify-center gap-2 py-3 px-4 rounded-2xl border-2 font-black text-xs transition-all cursor-pointer",
+                  goalPriority === 'personal'
+                    ? "bg-slate-100 dark:bg-slate-800 border-primary-500 text-primary-600 dark:text-primary-400 shadow-sm"
+                    : "bg-white/50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 text-slate-500 hover:border-slate-300 dark:hover:border-slate-700"
+                )}
+              >
+                <User size={15} className={goalPriority === 'personal' ? 'text-primary-500' : 'text-slate-400'} />
+                <span>شخصي</span>
+              </button>
             </div>
           </div>
 

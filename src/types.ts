@@ -41,6 +41,7 @@ export interface Goal {
   monthlySavingsTarget?: number;
   isEmergencyFund?: boolean;
   isPhysicalPiggyBank?: boolean;
+  goalPriority?: 'family' | 'essential' | 'personal';
 }
 
 export type Mood = 'happy' | 'neutral' | 'sad' | 'stressed' | 'excited';

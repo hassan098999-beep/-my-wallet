@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Target, Trash, Calendar, Trophy, Shield, Sparkles, TrendingUp, 
-  History, ArrowUpRight, ArrowDownRight 
+  History, ArrowUpRight, ArrowDownRight, Users, AlertCircle, User
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -49,6 +49,27 @@ const GoalsList: React.FC<GoalsListProps> = ({
 }) => {
   const [showQuickAdd, setShowQuickAdd] = useState<string | null>(null);
   const [quickAddAmount, setQuickAddAmount] = useState('');
+
+  // Priority-based sorting (Essential -> Family -> Personal), sub-sorted by % progress
+  const sortedGoals = useMemo(() => {
+    const getPriorityWeight = (goal: Goal) => {
+      const priority = goal.goalPriority || (goal.isEmergencyFund ? 'essential' : 'personal');
+      if (priority === 'essential') return 1;
+      if (priority === 'family') return 2;
+      return 3;
+    };
+
+    return [...standardGoals].sort((a, b) => {
+      const weightA = getPriorityWeight(a);
+      const weightB = getPriorityWeight(b);
+      if (weightA !== weightB) {
+        return weightA - weightB;
+      }
+      const percentA = a.targetAmount > 0 ? (a.currentAmount / a.targetAmount) : 0;
+      const percentB = b.targetAmount > 0 ? (b.currentAmount / b.targetAmount) : 0;
+      return percentB - percentA;
+    });
+  }, [standardGoals]);
 
   const calculateSurplus = (goal: Goal) => {
     if (goal.isLinkedToOverallBudget) {
@@ -110,10 +131,11 @@ const GoalsList: React.FC<GoalsListProps> = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {standardGoals.length > 0 ? (
-        standardGoals.map(goal => {
+      {sortedGoals.length > 0 ? (
+        sortedGoals.map(goal => {
           const percentage = goal.targetAmount > 0 ? Math.min(100, (goal.currentAmount / goal.targetAmount) * 100) : 0;
           const isCompleted = percentage >= 100;
+          const priority = goal.goalPriority || (goal.isEmergencyFund ? 'essential' : 'personal');
           
           return (
             <motion.div 
@@ -134,15 +156,38 @@ const GoalsList: React.FC<GoalsListProps> = ({
                         )}>
                           {isCompleted ? <Trophy size={28} /> : <Target size={28} />}
                         </div>
-                        <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight flex items-center gap-2 flex-wrap">
-                          <span>{goal.name}</span>
-                          {goal.isEmergencyFund && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-wider bg-rose-500 text-white rounded-full transition-all shadow-xs shrink-0 select-none">
-                              <Shield size={12} className="shrink-0" />
-                              <span>صندوق طوارئ العائلة 🛡️</span>
-                            </span>
-                          )}
-                        </h3>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                              {goal.name}
+                            </h3>
+                            {/* Priority Badge */}
+                            {priority === 'essential' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-black bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 rounded-full select-none">
+                                <AlertCircle size={11} className="shrink-0 text-rose-500" />
+                                <span>ضروري 🚨</span>
+                              </span>
+                            )}
+                            {priority === 'family' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-black bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 rounded-full select-none">
+                                <Users size={11} className="shrink-0 text-blue-500" />
+                                <span>عائلي 👨‍👩‍👧‍👦</span>
+                              </span>
+                            )}
+                            {priority === 'personal' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-black bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-full select-none">
+                                <User size={11} className="shrink-0 text-slate-400" />
+                                <span>شخصي 👤</span>
+                              </span>
+                            )}
+                            {goal.isEmergencyFund && priority !== 'essential' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-black bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 rounded-full select-none">
+                                <Shield size={11} className="shrink-0 text-amber-500" />
+                                <span>صندوق طوارئ 🛡️</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                       <div className="flex items-center gap-3 text-slate-400">
                         <Calendar className="size-5" />
