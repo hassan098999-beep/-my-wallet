@@ -205,6 +205,7 @@ interface AppContextProps extends AppState {
   updateActiveChallenge: (challenge: SmartSavingChallenge | undefined) => Promise<void>;
   updateAutoRoundUpSetting: (setting: AutoRoundUpSetting | undefined) => Promise<void>;
   applyTunisianFamilyTemplate: () => Promise<void>;
+  migrateSeptemberDataToAugust: () => Promise<number>;
   isPinSet: boolean;
   isLocked: boolean;
   setIsLocked: (locked: boolean) => void;
@@ -1396,6 +1397,110 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const migrateSeptemberDataToAugust = async (): Promise<number> => {
+    let affectedExpenses = 0;
+    let affectedIncome = 0;
+
+    const newExpenses = (state.expenses || []).map(exp => {
+      if (exp.date && exp.date.includes('-09-')) {
+        affectedExpenses++;
+        const newDate = exp.date.replace('-09-', '-08-');
+        return {
+          ...exp,
+          date: newDate,
+          parsedDate: safeParseISO(newDate)
+        };
+      }
+      return exp;
+    });
+
+    const newIncome = (state.income || []).map(inc => {
+      if (inc.date && inc.date.includes('-09-')) {
+        affectedIncome++;
+        const newDate = inc.date.replace('-09-', '-08-');
+        return {
+          ...inc,
+          date: newDate,
+          parsedDate: safeParseISO(newDate)
+        };
+      }
+      return inc;
+    });
+
+    // Also migrate budgets if any exist for month -09 and not -08
+    let newBudgets = [...(state.budgets || [])];
+    const sepBudgets = newBudgets.filter(b => b.month && b.month.endsWith('-09'));
+    sepBudgets.forEach(sepB => {
+      const augMonth = sepB.month.replace('-09', '-08');
+      const existingAug = newBudgets.find(b => b.month === augMonth);
+      if (!existingAug) {
+        newBudgets.push({
+          ...sepB,
+          month: augMonth
+        });
+      }
+    });
+
+    const totalAffected = affectedExpenses + affectedIncome;
+
+    if (totalAffected === 0 && sepBudgets.length === 0) {
+      toast('لا توجد عمليات مسجلة بتاريخ شهر سبتمبر لتحويلها');
+      return 0;
+    }
+
+    const updatedState = {
+      ...state,
+      expenses: newExpenses,
+      income: newIncome,
+      budgets: newBudgets
+    };
+
+    setState(updatedState);
+    safeStorage.setItem('masarifi_data', JSON.stringify({
+      ...updatedState,
+      expenses: updatedState.expenses.map(({ parsedDate, ...rest }: any) => rest),
+      income: updatedState.income.map(({ parsedDate, ...rest }: any) => rest)
+    }));
+
+    // If user is authenticated with Firestore, write updates in batch
+    if (user) {
+      try {
+        const batch = writeBatch(db);
+
+        // Update affected expenses in Firestore
+        newExpenses.forEach(exp => {
+          if (exp.date && exp.date.includes('-08-')) {
+            const { parsedDate, ...expToStore } = exp;
+            const ref = doc(db, 'users', user.uid, 'expenses', exp.id);
+            batch.set(ref, { ...expToStore, uid: user.uid }, { merge: true });
+          }
+        });
+
+        // Update affected income in Firestore
+        newIncome.forEach(inc => {
+          if (inc.date && inc.date.includes('-08-')) {
+            const { parsedDate, ...incToStore } = inc;
+            const ref = doc(db, 'users', user.uid, 'income', inc.id);
+            batch.set(ref, { ...incToStore, uid: user.uid }, { merge: true });
+          }
+        });
+
+        // Update budgets in Firestore
+        newBudgets.forEach(b => {
+          const ref = doc(db, 'users', user.uid, 'budgets', b.month);
+          batch.set(ref, { ...b, uid: user.uid }, { merge: true });
+        });
+
+        await batch.commit();
+      } catch (cloudErr) {
+        console.error('Failed to sync migrated dates to Firestore:', cloudErr);
+      }
+    }
+
+    toast.success(`تم بنجاح نقل وتصحيح ${totalAffected} عملية إلى شهر أوت الحالي! ✨`);
+    return totalAffected;
+  };
+
 
   // Check for upcoming debts due within 3 days
   useEffect(() => {
@@ -1521,6 +1626,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     resetData,
     toggleOfflineMode,
     applyTunisianFamilyTemplate,
+    migrateSeptemberDataToAugust,
     isPinSet,
     isLocked,
     setIsLocked,

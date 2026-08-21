@@ -13,6 +13,7 @@ import { BudgetAlerts } from '../components/BudgetAlerts';
 import PageHeader from '../components/ui/PageHeader';
 
 // Refactored Dashboard Subcomponents
+import { SeptemberToAugustBanner } from '../components/SeptemberToAugustBanner';
 import { TunisianFamilyBanner } from '../components/dashboard/TunisianFamilyBanner';
 import { SummaryKpiRow } from '../components/dashboard/SummaryKpiRow';
 import { MarketBasketCard } from '../components/dashboard/MarketBasketCard';
@@ -646,6 +647,9 @@ const Dashboard = () => {
   return (
     <div className="space-y-6 p-4 pb-32 relative mt-2">
       
+      {/* September to August Date Correction Banner */}
+      <SeptemberToAugustBanner />
+
       {/* Tunisian Family Template Migration Banner */}
       <TunisianFamilyBanner
         hasTunisianFamilyCategories={hasTunisianFamilyCategories}

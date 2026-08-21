@@ -11,6 +11,7 @@ import { useWindowSize } from "../hooks/useWindowSize";
 import { useDebounce } from "../hooks/useDebounce";
 
 import PageHeader from "../components/ui/PageHeader";
+import { SeptemberToAugustBanner } from "../components/SeptemberToAugustBanner";
 import { TransactionsSummary } from "../components/transactions/TransactionsSummary";
 import { TransactionsFilters } from "../components/transactions/TransactionsFilters";
 import { TransactionsChart } from "../components/transactions/TransactionsChart";
@@ -899,6 +900,9 @@ const Transactions = () => {
             </motion.div>
           }
         />
+
+        {/* September to August Date Correction Banner */}
+        <SeptemberToAugustBanner />
 
         {/* Summary Stats & Filters */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">

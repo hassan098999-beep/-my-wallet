@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../../store/AppContext';
-import { DownloadCloud, UploadCloud, Smartphone, Trash, TriangleAlert, X, Save, Clock, Cloud, Database, WifiOff, FileText, Loader2 } from 'lucide-react';
+import { DownloadCloud, UploadCloud, Smartphone, Trash, TriangleAlert, X, Save, Clock, Cloud, Database, WifiOff, FileText, Loader2, CalendarSync, Sparkles } from 'lucide-react';
 import { cn, hapticFeedback, removeUndefinedFields } from '../../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { getBackupsFromDB, saveBackupToDB, deleteBackupFromDB } from '../../utils/indexedDB';
@@ -24,7 +24,7 @@ const DataManager = () => {
     dailyBudget, rollingBudgetEnabled, theme, currency, achievements,
     goals, income, notifications, hasCompletedOnboarding, userName,
     firstDayOfMonth, bestStreak, offlineMode, toggleOfflineMode,
-    isPinSet, setAppPin
+    isPinSet, setAppPin, migrateSeptemberDataToAugust
   } = useAppContext();
   
   const [deferredPrompt, setDeferredPrompt] = useState<any>(window.deferredPrompt || null);
@@ -375,6 +375,40 @@ const DataManager = () => {
             استيراد JSON
             <input type="file" accept=".json" onChange={handleImport} className="hidden" />
           </label>
+        </div>
+
+        {/* Date Repair & Migration Tool */}
+        <div className="mt-6 pt-6 md:mt-8 md:pt-8 border-t border-slate-100 dark:border-slate-800">
+          <div className="p-4 md:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                  <CalendarSync size={20} />
+                </div>
+                <div>
+                  <h4 className="text-xs md:text-sm font-black text-slate-900 dark:text-white">
+                    أداة تصحيح ومزامنة التواريخ (سبتمبر ⭢ أوت)
+                  </h4>
+                  <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-bold">
+                    نقل وتصحيح العمليات التي سُجلت سابقاً بتاريخ شهر سبتمبر وإعادتها لشهر أوت (أغسطس) الحالي.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  hapticFeedback('medium');
+                  if (migrateSeptemberDataToAugust) {
+                    await migrateSeptemberDataToAugust();
+                  }
+                }}
+                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-[11px] font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Sparkles size={14} />
+                <span>⚡ تصحيح ونقل العمليات الآن</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="mt-6 pt-6 md:mt-8 md:pt-8 border-t border-slate-100 dark:border-slate-800">
