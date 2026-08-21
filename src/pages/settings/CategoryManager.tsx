@@ -108,8 +108,8 @@ const CategoryManager = () => {
   const groups = [
     { 
       id: 'need', 
-      title: 'الاحتياجات الأساسية (50%)', 
-      description: 'المصاريف الضرورية للحياة مثل السكن، الطعام، الفواتير، والمواصلات.',
+      title: 'الاحتياجات والأساسيات', 
+      description: 'المصاريف الضرورية للحياة مثل السكن، الطعام، الفواتير، الصحة، والمواصلات.',
       color: 'bg-indigo-500', 
       lightColor: 'bg-indigo-50 dark:bg-indigo-900/20',
       textColor: 'text-indigo-600 dark:text-indigo-400',
@@ -117,8 +117,8 @@ const CategoryManager = () => {
     },
     { 
       id: 'want', 
-      title: 'الرغبات والكماليات (30%)', 
-      description: 'المصاريف غير الضرورية مثل الترفيه، الهدايا، والمطاعم.',
+      title: 'الرغبات ونمط الحياة', 
+      description: 'المصاريف الشخصية والترويحية مثل الترفيه، المطاعم، التسوق، والهدايا.',
       color: 'bg-amber-500', 
       lightColor: 'bg-amber-50 dark:bg-amber-900/20',
       textColor: 'text-amber-600 dark:text-amber-400',
@@ -126,8 +126,8 @@ const CategoryManager = () => {
     },
     { 
       id: 'saving', 
-      title: 'الادخار والاستثمار (20%)', 
-      description: 'المبالغ المخصصة للمستقبل مثل الادخار، الاستثمار، وسداد الديون.',
+      title: 'الادخار والاستثمار', 
+      description: 'المبالغ المخصصة للمستقبل مثل صناديق الطوارئ، الاستثمار، والأهداف المالية.',
       color: 'bg-emerald-500', 
       lightColor: 'bg-emerald-50 dark:bg-emerald-900/20',
       textColor: 'text-emerald-600 dark:text-emerald-400',
@@ -175,7 +175,7 @@ const CategoryManager = () => {
             </div>
             <div>
               <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">إدارة الفئات</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">نظم مصاريفك بذكاء وفق مبدأ 50/30/20</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">نظم مصاريفك بمرونة وسهولة حسب طبيعة الإنفاق</p>
             </div>
           </div>
           
@@ -297,31 +297,30 @@ const CategoryManager = () => {
         </div>
       </div>
 
-      {/* 50/30/20 Info Section */}
+      {/* Category Classification Info Section */}
       <motion.div variants={itemVariants} className="bg-slate-900 dark:bg-black rounded-3xl p-6 md:p-8 text-white relative overflow-hidden shadow-md mb-8">
         <div className="absolute -right-20 -top-20 w-80 h-80 bg-primary-500/20 rounded-full blur-[100px]" />
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/10 border border-white/10 text-[9px] font-black uppercase tracking-widest">
               <ShieldCheck size={10} className="text-primary-400" />
-              دليلك للتخطيط المالي
+              تصنيف المصاريف الذكي
             </div>
-            <h2 className="text-2xl md:text-4xl font-black tracking-tighter leading-none">قاعدة 50/30/20 الذكية</h2>
+            <h2 className="text-2xl md:text-4xl font-black tracking-tighter leading-none">تنظيم نفقاتك بمرونة تامة</h2>
             <p className="text-xs md:text-sm text-slate-400 leading-relaxed font-medium">
-              نظام بسيط وفعال لتنظيم دخلك الشهري يضمن لك تغطية احتياجاتك، الاستمتاع بحياتك، وتأمين مستقبلك المالي في آن واحد.
+              تصنيف فئاتك حسب طبيعة الإنفاق يساعدك على معرفة أين تذهب أموالك بدقة، وتحديد أولويات الصرف ومبالغ الادخار بحرية تناسب ظروفك.
             </p>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'احتياجات', percent: '50%', color: 'text-indigo-400', desc: 'أساسيات الحياة' },
-              { label: 'رغبات', percent: '30%', color: 'text-amber-400', desc: 'نمط الحياة' },
-              { label: 'ادخار', percent: '20%', color: 'text-emerald-400', desc: 'المستقبل' }
+              { label: 'الاحتياجات', color: 'text-indigo-400', desc: 'الأساسيات والمستلزمات' },
+              { label: 'الرغبات', color: 'text-amber-400', desc: 'نمط الحياة والترفيه' },
+              { label: 'الادخار', color: 'text-emerald-400', desc: 'الأهداف والطوارئ' }
             ].map((item, i) => (
               <div key={i} className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 md:p-4 flex flex-col items-center text-center space-y-1">
-                <span className={cn("text-xl md:text-3xl font-black tracking-tighter", item.color)}>{item.percent}</span>
+                <span className={cn("text-base md:text-xl font-black tracking-tight", item.color)}>{item.label}</span>
                 <div className="space-y-0.5">
-                  <p className="text-[9px] md:text-[10px] font-black uppercase tracking-tight">{item.label}</p>
-                  <p className="text-[7px] font-bold opacity-40 uppercase tracking-widest hidden md:block">{item.desc}</p>
+                  <p className="text-[8px] md:text-[9px] font-bold text-slate-400 leading-tight">{item.desc}</p>
                 </div>
               </div>
             ))}

@@ -243,22 +243,22 @@ export const SavingsSimulatorSection: React.FC<SavingsSimulatorSectionProps> = (
 
       {/* 2. Actionable Financial Health Insights */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Rule 50/30/20 */}
+        {/* Flexible Financial Discipline Principle */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-2.5">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
               <ShieldCheck size={18} />
             </div>
-            <h4 className="text-sm font-black text-slate-900 dark:text-white">قاعدة 50/30/20 للاتزان المالي</h4>
+            <h4 className="text-sm font-black text-slate-900 dark:text-white">مبدأ المرونة والتوازن المالي</h4>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-            توزيع الدخل المثالي المعتمد عالمياً:
+            ركائز التخطيط المالي المتزن لعائلتك:
             <br />
-            • <strong>50%</strong> للحاجات الأساسية (القفة، الفواتير، الإيجار، الرضيع).
+            • <strong>أولوية الأساسيات:</strong> تغطية قفة العائلة، الفواتير، ومصاريف الرضيع أولاً.
             <br />
-            • <strong>30%</strong> للرغبات والترفيه والكماليات.
+            • <strong>سقف مرن للرغبات:</strong> الاستمتاع بالحياة اليومية والترفيه دون الإخلال باستقرار الشهر.
             <br />
-            • <strong>20%</strong> للادخار المباشر، وصناديق الطوارئ والاستثمار.
+            • <strong>ادخار منتظم ومستدام:</strong> تخصيص مبلغ ثابت شهرياً لبناء وسادة طوارئ آمنة.
           </p>
         </div>
 

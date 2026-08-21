@@ -454,7 +454,7 @@ const Analytics = () => {
           {[
             { id: 'overview', label: 'النظرة التنفيذية', icon: Activity },
             { id: 'charts', label: 'الرسوم والتدفقات', icon: BarChart3 },
-            { id: 'budget', label: 'قاعدة 50/30/20', icon: Target },
+            { id: 'budget', label: 'هيكل الميزانية والنفقات', icon: Target },
             { id: 'weekly', label: 'المقارنة الأسبوعية', icon: Sparkles }
           ].map(tab => {
             const Icon = tab.icon;

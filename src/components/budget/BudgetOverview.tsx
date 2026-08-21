@@ -39,8 +39,8 @@ interface BudgetOverviewProps {
   globalBudgetNum: number;
   chartData: Array<{ name: string; spent: number; budgeted: number; color?: string }>;
   categories: Category[];
-  showRuleInfo: boolean;
-  setShowRuleInfo: React.Dispatch<React.SetStateAction<boolean>>;
+  showRuleInfo?: boolean;
+  setShowRuleInfo?: React.Dispatch<React.SetStateAction<boolean>>;
   suggestFromHistory: () => void;
   autoAllocate: () => void;
   isGenerating: boolean;
@@ -414,7 +414,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                     className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-2xs cursor-pointer disabled:opacity-50 transition-all"
                   >
                     <CheckCircle2 size={13} />
-                    <span>توزيع 50/30/20</span>
+                    <span>توزيع ذكي متوازن</span>
                   </button>
                   <button
                     type="button"
@@ -769,75 +769,32 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
 
               </div>
 
-              {/* Quick Smart Tools: 50/30/20 & History suggestions */}
+              {/* Quick Smart Tools: History suggestions & Proportional Allocation */}
               <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-xs font-bold text-slate-500">أدوات التوزيع الذكي:</span>
+                  <span className="text-xs font-bold text-slate-500">أدوات الضبط السريع:</span>
                   <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowRuleInfo(!showRuleInfo)}
-                      className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30 px-3 py-1.5 rounded-xl border border-indigo-200/50 dark:border-indigo-800/40 cursor-pointer"
-                    >
-                      <HelpCircle size={13} />
-                      <span>شرح قاعدة 50/30/20</span>
-                    </button>
-                    
                     <button 
                       type="button"
                       onClick={suggestFromHistory}
                       disabled={isGenerating}
-                      className="flex items-center gap-1 text-[11px] font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 px-3.5 py-1.5 rounded-xl border border-blue-500/15 disabled:opacity-50 active:scale-95 transition-all cursor-pointer"
+                      className="flex items-center gap-1.5 text-[11px] font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 px-3.5 py-1.5 rounded-xl border border-blue-500/15 disabled:opacity-50 active:scale-95 transition-all cursor-pointer"
                     >
                       {isGenerating ? <Loader2 size={13} className="animate-spin" /> : <Lightbulb size={13} />}
-                      <span>اقتراح من التاريخ</span>
+                      <span>اقتراح من تاريخ الإنفاق</span>
                     </button>
 
                     <button 
                       type="button"
                       onClick={autoAllocate}
                       disabled={isGenerating || !globalBudget}
-                      className="flex items-center gap-1 text-[11px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-3.5 py-1.5 rounded-xl border border-emerald-500/15 disabled:opacity-50 active:scale-95 transition-all cursor-pointer"
+                      className="flex items-center gap-1.5 text-[11px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-3.5 py-1.5 rounded-xl border border-emerald-500/15 disabled:opacity-50 active:scale-95 transition-all cursor-pointer"
                     >
                       {isGenerating ? <Loader2 size={13} className="animate-spin" /> : <Wand2 size={13} />}
-                      <span>توزيع 50/30/20 الذكي</span>
+                      <span>توزيع ذكي متوازن</span>
                     </button>
                   </div>
                 </div>
-
-                {/* 50/30/20 Rule Explanation Box */}
-                <AnimatePresence>
-                  {showRuleInfo && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="overflow-hidden mt-4 bg-white dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-4 space-y-2 text-xs leading-relaxed"
-                    >
-                      <p className="font-black text-slate-800 dark:text-white text-xs flex items-center gap-1.5">
-                        <Sparkles size={14} className="text-amber-500" />
-                        ما هي قاعدة الميزانية المثالية 50/30/20؟
-                      </p>
-                      <p className="text-slate-500 dark:text-slate-400 text-[11px]">
-                        قاعدة مالية عالمية تقسم ميزانيتك الكلية إلى ثلاثة روافد متوازنة:
-                      </p>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-                        <div className="p-3 bg-rose-50/60 dark:bg-rose-950/20 rounded-xl border border-rose-100 dark:border-rose-900/30">
-                          <p className="font-black text-rose-600 dark:text-rose-400">%50 للاحتياجات الأساسية</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-medium">الأكل، الشرب، الفواتير، الكراء ومصاريف التداوي الحتمية.</p>
-                        </div>
-                        <div className="p-3 bg-amber-50/60 dark:bg-amber-950/20 rounded-xl border border-amber-100 dark:border-amber-900/30">
-                          <p className="font-black text-amber-600 dark:text-amber-400">%30 للرغبات والكماليات</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-medium">المطاعم، القهوة، الترفيه، الشوبينغ والأنشطة الترويحية.</p>
-                        </div>
-                        <div className="p-3 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
-                          <p className="font-black text-emerald-600 dark:text-emerald-400">%20 للادخار والمستقبل</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-medium">بناء وسادة الطوارئ، تمويل الأهداف الادخارية والتحصين المالي.</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
 
             </Card>
@@ -845,7 +802,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Graphical Comparison & 50/30/20 Dashboard */}
+      {/* Graphical Comparison & Spending Structure */}
       <motion.div variants={itemVariants} className="space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
@@ -927,11 +884,11 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             )}
           </div>
 
-          {/* Allocation Gauge cards: 50/30/20 */}
+          {/* Allocation Structure cards */}
           <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
             <div>
-              <h4 className="text-xs font-black text-slate-900 dark:text-white">توزيع النفقات حسب قاعدة 50/30/20</h4>
-              <p className="text-[9px] text-slate-400 font-bold mt-0.5">حالة توازن النفقات الفعلية مع الميزانية</p>
+              <h4 className="text-xs font-black text-slate-900 dark:text-white">هيكل توزيع المصاريف حسب طبيعة الفئة</h4>
+              <p className="text-[9px] text-slate-400 font-bold mt-0.5">مقارنة النفقات الفعلية مع المخصصات المرصودة</p>
             </div>
 
             <div className="flex-1 flex flex-col justify-center space-y-4 py-1">
@@ -949,7 +906,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                       return found?.type === 'need' || !found?.type;
                     }).reduce((s, x) => s + x.budgeted, 0), currency)}
                   </span>
-                  <span className="text-slate-600 dark:text-slate-300">الاحتياجات (%50)</span>
+                  <span className="text-slate-600 dark:text-slate-300">الاحتياجات والأساسيات</span>
                 </div>
                 <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div 
@@ -964,7 +921,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                           const found = categories.find(c => c.name === i.name);
                           return found?.type === 'need' || !found?.type;
                         }).reduce((s, x) => s + x.spent, 0);
-                        return budgetsTotal > 0 ? (spentsTotal / budgetsTotal) * 100 : 0;
+                        return budgetsTotal > 0 ? (spentsTotal / budgetsTotal) * 100 : (spentsTotal > 0 ? 100 : 0);
                       })())}%` 
                     }} 
                   />
@@ -979,7 +936,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                     {' / '}
                     {formatCurrency(chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'want').reduce((s, x) => s + x.budgeted, 0), currency)}
                   </span>
-                  <span className="text-slate-600 dark:text-slate-300">الرغبات (%30)</span>
+                  <span className="text-slate-600 dark:text-slate-300">الرغبات ونمط الحياة</span>
                 </div>
                 <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div 
@@ -988,7 +945,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                       width: `${Math.min(100, (() => {
                         const budgetsTotal = chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'want').reduce((s, x) => s + x.budgeted, 0);
                         const spentsTotal = chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'want').reduce((s, x) => s + x.spent, 0);
-                        return budgetsTotal > 0 ? (spentsTotal / budgetsTotal) * 100 : 0;
+                        return budgetsTotal > 0 ? (spentsTotal / budgetsTotal) * 100 : (spentsTotal > 0 ? 100 : 0);
                       })())}%` 
                     }} 
                   />
@@ -1003,7 +960,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                     {' / '}
                     {formatCurrency(chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'saving').reduce((s, x) => s + x.budgeted, 0), currency)}
                   </span>
-                  <span className="text-slate-600 dark:text-slate-300">الادخار (%20)</span>
+                  <span className="text-slate-600 dark:text-slate-300">الادخار والتأمين</span>
                 </div>
                 <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div 
@@ -1012,7 +969,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                       width: `${Math.min(100, (() => {
                         const budgetsTotal = chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'saving').reduce((s, x) => s + x.budgeted, 0);
                         const spentsTotal = chartData.filter(i => categories.find(c => c.name === i.name)?.type === 'saving').reduce((s, x) => s + x.spent, 0);
-                        return budgetsTotal > 0 ? (spentsTotal / budgetsTotal) * 100 : 0;
+                        return budgetsTotal > 0 ? (spentsTotal / budgetsTotal) * 100 : (spentsTotal > 0 ? 100 : 0);
                       })())}%` 
                     }} 
                   />

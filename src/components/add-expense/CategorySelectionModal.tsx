@@ -203,9 +203,9 @@ export const CategorySelectionModal: React.FC<CategorySelectionModalProps> = ({
                         onChange={(e) => setNewCatType(e.target.value as any)}
                         className="w-full px-2 py-2 text-xs font-bold rounded-xl border-2 border-slate-150 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-white outline-none text-right"
                       >
-                        <option value="need">احتياجات (50%)</option>
-                        <option value="want">رغبات (30%)</option>
-                        <option value="saving">ادخار (20%)</option>
+                        <option value="need">احتياجات أساسية</option>
+                        <option value="want">رغبات ونمط حياة</option>
+                        <option value="saving">ادخار واستثمار</option>
                       </select>
                     </div>
 

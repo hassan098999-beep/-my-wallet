@@ -152,29 +152,26 @@ const FamilyReport: React.FC = () => {
     };
   }, [currentMonthExpenses, income, categories, currentMonthStr]);
 
-  // Chart data for 50/30/20 Comparison
+  // Chart data for spending nature breakdown
   const needWantChartData = useMemo(() => {
     return [
       {
-        name: 'الاحتياجات الضرورية (50%)',
-        'الفعلي': Math.round(budgetingStats.needsPct),
-        'الموصى به': 50,
+        name: 'الاحتياجات والأساسيات',
+        'النسبة الفعلية': Math.round(budgetingStats.needsPct),
         amount: budgetingStats.needs,
         color: '#f43f5e',
         bgColor: 'rgba(244, 63, 94, 0.1)'
       },
       {
-        name: 'الرغبات والكماليات (30%)',
-        'الفعلي': Math.round(budgetingStats.wantsPct),
-        'الموصى به': 30,
+        name: 'الرغبات ونمط الحياة',
+        'النسبة الفعلية': Math.round(budgetingStats.wantsPct),
         amount: budgetingStats.wants,
         color: '#f59e0b',
         bgColor: 'rgba(245, 158, 11, 0.1)'
       },
       {
-        name: 'الادخار والتأمين (20%)',
-        'الفعلي': Math.round(budgetingStats.savingsPct),
-        'الموصى به': 20,
+        name: 'الادخار والتأمين',
+        'النسبة الفعلية': Math.round(budgetingStats.savingsPct),
         amount: budgetingStats.savings,
         color: '#10b981',
         bgColor: 'rgba(16, 185, 129, 0.1)'
@@ -406,9 +403,9 @@ const FamilyReport: React.FC = () => {
               <div className="space-y-1">
                 <h3 className="text-base font-black text-slate-800 dark:text-white flex items-center gap-2">
                   <Activity size={18} className="text-rose-500" />
-                  <span>الأساسيات والاحتياجات مقابل الكماليات (قاعدة 50/30/20)</span>
+                  <span>توزيع المصاريف الأسرية حسب طبيعة الإنفاق</span>
                 </h3>
-                <p className="text-[10px] text-slate-400 font-bold">يقارن هذا التحليل نفقاتك الكلية موزعة حسب طبيعة كل فئة بالتواؤم مع السقف المثالي لعائلتك</p>
+                <p className="text-[10px] text-slate-400 font-bold">يقارن هذا التحليل نفقاتك الكلية موزعة حسب طبيعة كل فئة لضمان التوازن المالي للأسرة</p>
               </div>
               <span className="p-2 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-150 text-[10px] text-slate-400 font-black">
                 دورة {format(new Date(), 'MMMM yyyy', { locale: ar })}
@@ -444,9 +441,7 @@ const FamilyReport: React.FC = () => {
                       labelStyle={{ color: '#94a3b8', fontSize: '9px', fontWeight: 'bold', textAlign: 'right' }}
                       formatter={(value: any, name: any) => [`${value}%`, name]}
                     />
-                    <RechartsLegend verticalAlign="top" height={36} iconType="circle" iconSize={6} wrapperStyle={{ fontSize: '9px', fontWeight: 'bold' }} />
-                    <Bar dataKey="الفعلي" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={10} />
-                    <Bar dataKey="الموصى به" fill="#e2e8f0" radius={[0, 4, 4, 0]} barSize={10} />
+                    <Bar dataKey="النسبة الفعلية" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={14} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -457,14 +452,13 @@ const FamilyReport: React.FC = () => {
                   <div key={index} className="p-3 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-slate-800/80 space-y-1.5 flex items-center justify-between">
                     <div className="space-y-0.5 text-right">
                       <span className="flex items-center gap-1.5 justify-end">
-                        <span className="text-xs font-black text-slate-800 dark:text-white">{item.name.split(' ')[0]}</span>
+                        <span className="text-xs font-black text-slate-800 dark:text-white">{item.name}</span>
                         <span className="size-2 rounded-full" style={{ backgroundColor: item.color }} />
                       </span>
-                      <p className="text-[10px] text-slate-400 font-bold">الحصة الفعلية: <span className="font-mono text-slate-700 dark:text-slate-300 font-extrabold">{item.الفعلي}%</span></p>
+                      <p className="text-[10px] text-slate-400 font-bold">الحصة من الإجمالي: <span className="font-mono text-slate-700 dark:text-slate-300 font-extrabold">{item['النسبة الفعلية']}%</span></p>
                     </div>
                     <div className="text-left font-mono">
                       <p className="text-xs font-black text-slate-700 dark:text-slate-200">{formatCurrency(item.amount, currency)}</p>
-                      <span className="text-[8px] font-bold text-slate-400">توصية: {item['الموصى به']}%</span>
                     </div>
                   </div>
                 ))}

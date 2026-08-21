@@ -226,10 +226,10 @@ const HeroSlidingDeck: React.FC<HeroSlidingDeckProps> = ({
               <div>
                 <h4 className="text-lg font-black text-white tracking-tight flex items-center gap-2 justify-end">
                   <Gem className="size-4.5 text-indigo-400 animate-pulse" />
-                  الهيكل التوزيعي المتزن (50/30/20)
+                  الهيكل التوزيعي المرن للمصاريف
                 </h4>
                 <p className="text-[11px] text-slate-400 font-medium leading-relaxed mt-1">
-                  تنظيم توزيع نفقاتك لضمان تحقيق كلي للتوافق التمويلي ورفع الادخار التراكمي.
+                  تنظيم توزيع نفقاتك لضمان تغطية الضروريات مع إتاحة سقف مرن للرغبات والادخار.
                 </p>
               </div>
 
@@ -238,7 +238,7 @@ const HeroSlidingDeck: React.FC<HeroSlidingDeckProps> = ({
                 <div className="space-y-1 bg-slate-950/25 p-3 rounded-xl border border-white/5">
                   <div className="flex justify-between items-center text-[11px]">
                     <span className="font-bold text-indigo-300 flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-indigo-500" /> الاحتياجات الضرورية (50%)
+                      <span className="w-2 h-2 rounded-full bg-indigo-500" /> الاحتياجات والأساسيات
                     </span>
                     <span className="font-black text-white font-mono">{formatCurrency(typeSpent.need, currency)}</span>
                   </div>
@@ -255,7 +255,7 @@ const HeroSlidingDeck: React.FC<HeroSlidingDeckProps> = ({
                 <div className="space-y-1 bg-slate-950/25 p-3 rounded-xl border border-white/5">
                   <div className="flex justify-between items-center text-[11px]">
                     <span className="font-bold text-amber-300 flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-amber-500" /> الرغبات والكماليات (30%)
+                      <span className="w-2 h-2 rounded-full bg-amber-500" /> الرغبات ونمط الحياة
                     </span>
                     <span className="font-black text-white font-mono">{formatCurrency(typeSpent.want, currency)}</span>
                   </div>
@@ -272,7 +272,7 @@ const HeroSlidingDeck: React.FC<HeroSlidingDeckProps> = ({
                 <div className="space-y-1 bg-slate-950/25 p-3 rounded-xl border border-white/5">
                   <div className="flex justify-between items-center text-[11px]">
                     <span className="font-bold text-emerald-300 flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" /> الادخار والاستثمار الذكي (20%)
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" /> الادخار والتأمين المالي
                     </span>
                     <span className="font-black text-white font-mono">{formatCurrency(typeSpent.saving, currency)}</span>
                   </div>
@@ -289,7 +289,7 @@ const HeroSlidingDeck: React.FC<HeroSlidingDeckProps> = ({
               <div className="p-3 bg-slate-950/30 rounded-2xl border border-white/5 flex items-start gap-2 text-[10px] text-slate-300 leading-normal justify-end">
                 <HelpCircle size={13} className="shrink-0 text-amber-400 mt-0.5" />
                 <span>
-                  المقاييس تُبني على صافي الدخل. ننصح بعدم زيادة الرغبات عن 30% لدعم عجلة الادخار والاستثمار الفردي.
+                  التوازن المالي ينبع من المرونة؛ اضبط مخصصات الفئات بحرية بما يلائم دخل عائلتك الفعلي.
                 </span>
               </div>
             </motion.div>

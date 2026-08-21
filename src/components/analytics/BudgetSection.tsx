@@ -42,10 +42,13 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
   filteredExpenses,
   itemVariants,
 }) => {
-  // Computations for 50/30/20 rule
+  // Computations for spending structure by category nature
   const budgetRuleStats = React.useMemo(() => {
     const needAmt = filteredExpenses
-      .filter(e => categories.find(c => c.id === e.categoryId)?.type === 'need')
+      .filter(e => {
+        const cat = categories.find(c => c.id === e.categoryId);
+        return cat?.type === 'need' || !cat?.type;
+      })
       .reduce((sum, e) => sum + e.amount, 0);
       
     const wantAmt = filteredExpenses
@@ -56,27 +59,32 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
       .filter(e => categories.find(c => c.id === e.categoryId)?.type === 'saving')
       .reduce((sum, e) => sum + e.amount, 0);
 
-    const targetIncome = totalMonthlyIncome > 0 ? totalMonthlyIncome : totalMonthlyExpense || 1;
-    const needPercent = (needAmt / targetIncome) * 100;
-    const wantPercent = (wantAmt / targetIncome) * 100;
-    const savingPercent = (savingAmt / targetIncome) * 100;
+    const totalCalculated = totalMonthlyExpense > 0 ? totalMonthlyExpense : 1;
+    const needPercent = (needAmt / totalCalculated) * 100;
+    const wantPercent = (wantAmt / totalCalculated) * 100;
+    const savingPercent = (savingAmt / totalCalculated) * 100;
 
-    // Scores (closer to target gives higher score)
-    const needScore = Math.max(0, 100 - Math.max(0, (needAmt / (targetIncome * 0.5) - 1) * 100));
-    const wantScore = Math.max(0, 100 - Math.max(0, (wantAmt / (targetIncome * 0.3) - 1) * 100));
-    const savingScore = Math.min(100, (savingAmt / (targetIncome * 0.2)) * 100);
+    // Allocated budgets for each bucket
+    const needBudget = categories
+      .filter(c => c.type === 'need' || !c.type)
+      .reduce((sum, c) => sum + (budget?.categoryBudgets?.[c.id] || 0), 0);
 
-    const performanceScore = Math.round((needScore + wantScore + savingScore) / 3);
+    const wantBudget = categories
+      .filter(c => c.type === 'want')
+      .reduce((sum, c) => sum + (budget?.categoryBudgets?.[c.id] || 0), 0);
+
+    const savingBudget = categories
+      .filter(c => c.type === 'saving')
+      .reduce((sum, c) => sum + (budget?.categoryBudgets?.[c.id] || 0), 0);
 
     return {
-      performanceScore,
       buckets: [
         { 
           type: 'need', 
           label: 'الاحتياجات الضرورية', 
-          target: 50, 
           amount: needAmt,
           percent: needPercent,
+          allocatedBudget: needBudget,
           color: 'bg-indigo-500', 
           textColor: 'text-indigo-600 dark:text-indigo-400',
           bgLight: 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/50',
@@ -85,10 +93,10 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
         },
         { 
           type: 'want', 
-          label: 'الرغبات والكماليات', 
-          target: 30, 
+          label: 'الرغبات ونمط الحياة', 
           amount: wantAmt,
           percent: wantPercent,
+          allocatedBudget: wantBudget,
           color: 'bg-amber-500', 
           textColor: 'text-amber-600 dark:text-amber-400',
           bgLight: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50',
@@ -98,9 +106,9 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
         { 
           type: 'saving', 
           label: 'الادخار والاستثمار', 
-          target: 20, 
           amount: savingAmt,
           percent: savingPercent,
+          allocatedBudget: savingBudget,
           color: 'bg-emerald-500', 
           textColor: 'text-emerald-600 dark:text-emerald-400',
           bgLight: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50',
@@ -109,7 +117,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
         }
       ]
     };
-  }, [filteredExpenses, categories, totalMonthlyIncome, totalMonthlyExpense]);
+  }, [filteredExpenses, categories, totalMonthlyExpense, budget]);
 
   const hasMasterBudget = Boolean(budget && budget.amount > 0);
   const budgetAmount = budget?.amount || 0;
@@ -261,24 +269,24 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
         </div>
       )}
 
-      {/* 2. Modern 50/30/20 Smart Allocation Board */}
+      {/* 2. Modern Spending Structure Board */}
       <div className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <div>
             <h3 className="text-sm md:text-base font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-              <span>قاعدة التوزيع المالي الذكي (50 / 30 / 20)</span>
+              <span>هيكل توزيع المصاريف حسب طبيعة الإنفاق</span>
               <span className="text-xs">⚖️</span>
             </h3>
             <p className="text-[11px] font-semibold text-slate-400">
-              توزيع الدخل المثالي: 50% للضروريات، 30% للرغبات، و 20% للادخار والاستثمار
+              توزيع المصاريف الفعلية والميزانيات المرصودة بين الضروريات، نمط الحياة، والمدخرات
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {budgetRuleStats.buckets.map((bucket) => {
-            const targetAmount = totalMonthlyIncome > 0 ? totalMonthlyIncome * (bucket.target / 100) : 0;
-            const isOverTarget = bucket.type !== 'saving' ? bucket.percent > bucket.target : bucket.percent < bucket.target;
+            const hasAllocated = bucket.allocatedBudget > 0;
+            const isOverAllocated = hasAllocated && bucket.amount > bucket.allocatedBudget;
             
             return (
               <motion.div 
@@ -295,10 +303,10 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                       <bucket.icon size={18} />
                     </div>
                     <div className="text-left font-mono">
-                      <span className={cn("text-lg font-black", (bucket.type !== 'saving' && bucket.percent > bucket.target) ? "text-rose-500" : bucket.textColor)}>
+                      <span className={cn("text-lg font-black", isOverAllocated ? "text-rose-500" : bucket.textColor)}>
                         {Math.round(bucket.percent)}%
                       </span>
-                      <p className="text-[9px] font-black text-slate-400 uppercase">الهدف: {bucket.target}%</p>
+                      <p className="text-[9px] font-black text-slate-400">من إجمالي المصاريف</p>
                     </div>
                   </div>
 
@@ -311,9 +319,9 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                 <div className="space-y-2 mt-auto pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
                   <div className="flex justify-between items-center text-xs font-mono font-bold">
                     <span className="text-slate-900 dark:text-white">{formatCurrency(bucket.amount, currency)}</span>
-                    {targetAmount > 0 && (
+                    {hasAllocated && (
                       <span className="text-[10px] text-slate-400 font-medium">
-                        المخصص: {formatCurrency(targetAmount, currency)}
+                        الميزانية: {formatCurrency(bucket.allocatedBudget, currency)}
                       </span>
                     )}
                   </div>
@@ -321,19 +329,21 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                   <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(100, bucket.percent)}%` }}
+                      animate={{ 
+                        width: `${Math.min(100, hasAllocated ? (bucket.amount / bucket.allocatedBudget) * 100 : bucket.percent)}%` 
+                      }}
                       transition={{ duration: 1 }}
                       className={cn(
                         "h-full rounded-full",
-                        (bucket.type !== 'saving' && bucket.percent > bucket.target) ? "bg-rose-500" : bucket.color
+                        isOverAllocated ? "bg-rose-500" : bucket.color
                       )}
                     />
                   </div>
 
-                  {bucket.type !== 'saving' && bucket.percent > bucket.target && (
+                  {isOverAllocated && (
                     <div className="flex items-center gap-1 text-rose-600 dark:text-rose-400 text-[10px] font-black">
                       <TriangleAlert size={11} />
-                      <span>تجاوز النسبة المستهدفة</span>
+                      <span>تجاوز الميزانية المرصودة</span>
                     </div>
                   )}
                 </div>

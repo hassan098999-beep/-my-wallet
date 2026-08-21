@@ -113,10 +113,10 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
                 />
               </div>
 
-              {/* Category Type (Allocation 50/30/20 Cards) */}
+              {/* Category Type (Allocation Nature Cards) */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
-                  النوع وتصنيف الميزانية (حسب قاعدة 50/30/20)
+                  طبيعة وتصنيف الإنفاق
                 </label>
                 <div className="grid grid-cols-3 gap-2.5">
                   {/* Need */}
@@ -124,17 +124,17 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
                     type="button"
                     onClick={() => setType('need')}
                     className={cn(
-                      "flex flex-col items-center p-3 rounded-xl border-2 transition-all text-center space-y-1 group relative",
+                      "flex flex-col items-center p-3 rounded-xl border-2 transition-all text-center space-y-1 group relative cursor-pointer",
                       type === 'need'
                         ? 'border-indigo-500 bg-indigo-500/[0.04] dark:bg-indigo-500/[0.02]'
                         : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
                     )}
                   >
                     <span className={cn(
-                      "text-sm font-bold",
+                      "text-xs md:text-sm font-bold",
                       type === 'need' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-300'
                     )}>
-                      احتياجات (50%)
+                      احتياجات أساسية
                     </span>
                     <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 leading-tight">
                       أساسيات البيت والمعيشة
@@ -146,20 +146,20 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
                     type="button"
                     onClick={() => setType('want')}
                     className={cn(
-                      "flex flex-col items-center p-3 rounded-xl border-2 transition-all text-center space-y-1 group relative",
+                      "flex flex-col items-center p-3 rounded-xl border-2 transition-all text-center space-y-1 group relative cursor-pointer",
                       type === 'want'
                         ? 'border-amber-500 bg-amber-500/[0.04] dark:bg-amber-500/[0.02]'
                         : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
                     )}
                   >
                     <span className={cn(
-                      "text-sm font-bold",
+                      "text-xs md:text-sm font-bold",
                       type === 'want' ? 'text-amber-500 dark:text-amber-400' : 'text-slate-700 dark:text-slate-300'
                     )}>
-                      رغبات (30%)
+                      رغبات ونمط حياة
                     </span>
                     <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 leading-tight">
-                      كماليات ونمط الحياة
+                      ترفيه وتسوق شخصي
                     </span>
                   </button>
 
@@ -168,20 +168,20 @@ export const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
                     type="button"
                     onClick={() => setType('saving')}
                     className={cn(
-                      "flex flex-col items-center p-3 rounded-xl border-2 transition-all text-center space-y-1 group relative",
+                      "flex flex-col items-center p-3 rounded-xl border-2 transition-all text-center space-y-1 group relative cursor-pointer",
                       type === 'saving'
                         ? 'border-emerald-500 bg-emerald-500/[0.04] dark:bg-emerald-500/[0.02]'
                         : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50'
                     )}
                   >
                     <span className={cn(
-                      "text-sm font-bold",
+                      "text-xs md:text-sm font-bold",
                       type === 'saving' ? 'text-emerald-500 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'
                     )}>
-                      الادخار (20%)
+                      ادخار واستثمار
                     </span>
                     <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 leading-tight">
-                      الاستثمار وحصالة الطفل
+                      أهداف وطوارئ ومستقبل
                     </span>
                   </button>
                 </div>

@@ -399,17 +399,17 @@ export const TransactionsFilters: React.FC<TransactionsFiltersProps> = ({
 
                       <div className="space-y-1">
                         <label className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 pl-1">
-                          التقسيم المالي (50/30/20)
+                          طبيعة الإنفاق
                         </label>
                         <select
                           value={typeFilter}
                           onChange={(e) => setTypeFilter(e.target.value)}
                           className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-150 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-white appearance-none"
                         >
-                          <option value="">كل الأنواع</option>
-                          <option value="need">احتياجات (50%)</option>
-                          <option value="want">رغبات (30%)</option>
-                          <option value="saving">ادخار (20%)</option>
+                          <option value="">كل التصنيفات</option>
+                          <option value="need">احتياجات أساسية</option>
+                          <option value="want">رغبات ونمط حياة</option>
+                          <option value="saving">ادخار واستثمار</option>
                         </select>
                       </div>
                     </div>

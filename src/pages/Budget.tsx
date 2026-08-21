@@ -38,7 +38,6 @@ const BudgetPage = () => {
   const [overallPeriod, setOverallPeriod] = useState<BudgetPeriod>(currentBudget?.period || 'monthly');
   const [isSaved, setIsSaved] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showRuleInfo, setShowRuleInfo] = useState(false);
   const [showSettings, setShowSettings] = useState(() => !currentBudget?.amount || currentBudget.amount === 0);
   
   const [categoryBudgets, setCategoryBudgets] = useState<Record<string, string>>(
@@ -135,7 +134,7 @@ const BudgetPage = () => {
     setCategoryPeriods(prev => ({ ...prev, [id]: period }));
   };
 
-  // One-click 50/30/20 Tuning
+  // One-click Smart Fluid Allocation (Proportional to habits and categories)
   const autoAllocate = () => {
     const totalBudget = Number(globalBudget) || 0;
     if (totalBudget <= 0) {
@@ -148,42 +147,56 @@ const BudgetPage = () => {
     
     setTimeout(() => {
       const newBudgets: Record<string, string> = {};
-      
-      const needs = categories.filter(c => c.type === 'need' || !c.type);
-      const wants = categories.filter(c => c.type === 'want');
-      const savings = categories.filter(c => c.type === 'saving');
-
-      // 50% for Needs, 30% for Wants, 20% for Savings
       const monthlyTotal = overallPeriod === 'weekly' ? totalBudget * 4.333 : totalBudget;
-      const needsPool = monthlyTotal * 0.5;
-      const wantsPool = monthlyTotal * 0.3;
-      const savingsPool = monthlyTotal * 0.2;
+      
+      const activeCats = categories.filter(c => !c.id.startsWith('archived_'));
+      if (activeCats.length === 0) {
+        setIsGenerating(false);
+        return;
+      }
 
-      const allocateGroup = (groupItems: typeof categories, groupPool: number) => {
-        if (groupItems.length === 0) return;
-        const perItemMonthly = groupPool / groupItems.length;
-        groupItems.forEach(c => {
+      // Check if we have past expenses to allocate by actual spending proportions
+      const pastExpenses = expenses.filter(e => !e.isTransfer);
+      const catSpentMap: Record<string, number> = {};
+      pastExpenses.forEach(e => {
+        catSpentMap[e.categoryId] = (catSpentMap[e.categoryId] || 0) + e.amount;
+      });
+      const totalPastSpent = Object.values(catSpentMap).reduce((a, b) => a + b, 0);
+
+      if (totalPastSpent > 0 && activeCats.some(c => (catSpentMap[c.id] || 0) > 0)) {
+        activeCats.forEach(c => {
+          const spent = catSpentMap[c.id] || 0;
+          const weight = spent > 0 ? (spent / totalPastSpent) : (1 / (activeCats.length * 4));
+          const catMonthly = monthlyTotal * weight;
+          const isWeeklyCat = categoryPeriods[c.id] === 'weekly';
+          const finalVal = isWeeklyCat ? Math.round(catMonthly / 4.333) : Math.round(catMonthly);
+          if (finalVal > 0) {
+            newBudgets[c.id] = finalVal.toString();
+          }
+        });
+      } else {
+        // Equal balanced distribution
+        const perItemMonthly = monthlyTotal / activeCats.length;
+        activeCats.forEach(c => {
           const isWeeklyCat = categoryPeriods[c.id] === 'weekly';
           const finalVal = isWeeklyCat ? Math.round(perItemMonthly / 4.333) : Math.round(perItemMonthly);
-          newBudgets[c.id] = finalVal > 0 ? finalVal.toString() : '';
+          if (finalVal > 0) {
+            newBudgets[c.id] = finalVal.toString();
+          }
         });
-      };
-
-      allocateGroup(needs, needsPool);
-      allocateGroup(wants, wantsPool);
-      allocateGroup(savings, savingsPool);
+      }
 
       setCategoryBudgets(newBudgets);
       setIsGenerating(false);
       
       toast.success(
         <div className="flex flex-col gap-1 text-right font-tajawal">
-          <span className="font-black text-sm">تم مواءمة الميزانية حسب قاعدة 50/30/20 ✨</span>
-          <span className="text-xs opacity-90">قمنا بتقسيم المجموع ومراعاة الفئات الأسبوعية والشهرية تلقائياً.</span>
+          <span className="font-black text-sm">تم التوزيع التناسبي المرن للميزانية ✨</span>
+          <span className="text-xs opacity-90">تم تقسيم السقف المالي بمرونة كاملة تتناسب مع احتياجاتك وفئاتك.</span>
         </div>,
-        { duration: 4000 }
+        { duration: 3500 }
       );
-    }, 700);
+    }, 500);
   };
 
   const suggestFromHistory = () => {
@@ -467,8 +480,6 @@ const BudgetPage = () => {
         globalBudgetNum={globalBudgetNum}
         chartData={chartData}
         categories={categories}
-        showRuleInfo={showRuleInfo}
-        setShowRuleInfo={setShowRuleInfo}
         suggestFromHistory={suggestFromHistory}
         autoAllocate={autoAllocate}
         isGenerating={isGenerating}

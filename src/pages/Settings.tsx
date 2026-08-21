@@ -91,7 +91,7 @@ const Settings = () => {
 
   const TABS = [
     { id: 'profile', name: 'الملف الشخصي والجوائز', icon: UserCircle, description: 'الاسم والميزانية اليومية والجوائز العائلية', badgeColor: 'bg-indigo-50 text-indigo-650 dark:bg-indigo-950/40 dark:text-indigo-400' },
-    { id: 'categories', name: 'إدارة فئات المصروف', icon: Layers, description: 'تنظيم قفة السوق والصحة وقاعدة 50/30/20', badgeColor: 'bg-emerald-50 text-emerald-650 dark:bg-emerald-950/40 dark:text-emerald-400' },
+    { id: 'categories', name: 'إدارة فئات المصروف', icon: Layers, description: 'تنظيم قفة السوق والصحة وتصنيف طبيعة الإنفاق', badgeColor: 'bg-emerald-50 text-emerald-650 dark:bg-emerald-950/40 dark:text-emerald-400' },
     { id: 'accounts', name: 'الحسابات البنكية والمالية', icon: Wallet, description: 'تحديث أرصدة الحسابات وطرق الدفع الكاش', badgeColor: 'bg-blue-50 text-blue-650 dark:bg-blue-950/40 dark:text-blue-400' },
     { id: 'roundup', name: 'حصالة التوفير التلقائي والفكة', icon: PiggyBank, description: 'التقريب التلقائي للمصاريف وتحويل الفكة إلى حصالة الادخار', badgeColor: 'bg-teal-50 text-teal-650 dark:bg-teal-950/40 dark:text-teal-400' },
     { id: 'data', name: 'البيانات والأمان المالي', icon: Database, description: 'النسخ الاحتياطي التلقائي والصناعي والتحكم', badgeColor: 'bg-amber-50 text-amber-650 dark:bg-amber-950/40 dark:text-amber-400' },
