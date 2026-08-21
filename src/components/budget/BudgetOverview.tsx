@@ -50,6 +50,8 @@ interface BudgetOverviewProps {
   setFirstDayOfMonth?: (day: number) => void;
   expenses?: Expense[];
   budgets?: Budget[];
+  showSettings?: boolean;
+  setShowSettings?: (show: boolean | ((prev: boolean) => boolean)) => void;
 }
 
 export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
@@ -81,12 +83,30 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   setFirstDayOfMonth,
   expenses = [],
   budgets = [],
+  showSettings: propShowSettings,
+  setShowSettings: propSetShowSettings,
 }) => {
   const isWeekly = overallPeriod === 'weekly';
   const activeRemainingDays = isWeekly ? remainingDaysInWeek : remainingDays;
   const totalPeriodDays = isWeekly ? 7 : daysInMonth;
-  const [showSettings, setShowSettings] = useState(false);
+  const [internalShowSettings, setInternalShowSettings] = useState(() => !globalBudgetNum || globalBudgetNum === 0);
+  const showSettings = propShowSettings !== undefined ? propShowSettings : internalShowSettings;
+  const setShowSettings = propSetShowSettings || setInternalShowSettings;
   const [showTrendChart, setShowTrendChart] = useState(false);
+
+  const handleToggleSettings = () => {
+    hapticFeedback('light');
+    const nextVal = !showSettings;
+    setShowSettings(nextVal);
+    if (nextVal) {
+      setTimeout(() => {
+        const el = document.getElementById('global-budget-input');
+        el?.focus();
+        const panel = document.getElementById('budget-settings-panel');
+        panel?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+  };
 
   // Status Evaluation
   const isOver = globalBudgetNum > 0 && totalSpent > globalBudgetNum;
@@ -305,24 +325,109 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               {/* Foldable Settings Gear Button */}
               <button
                 type="button"
-                onClick={() => {
-                  hapticFeedback('light');
-                  setShowSettings(!showSettings);
-                }}
+                id="budget-settings-toggle-btn"
+                onClick={handleToggleSettings}
                 className={cn(
-                  "p-1.5 px-2.5 rounded-xl border text-xs font-black transition-all cursor-pointer flex items-center gap-1.5",
+                  "p-1.5 px-2.5 rounded-xl border text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs",
                   showSettings 
-                    ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900" 
-                    : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                    ? "bg-indigo-600 text-white border-indigo-600 dark:bg-indigo-500 dark:border-indigo-500" 
+                    : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
                 )}
                 title="إعدادات وأدوات الميزانية المتقدمة"
               >
-                <Settings size={15} className={cn("transition-transform duration-300", showSettings && "rotate-90")} />
+                <Settings size={15} className={cn("transition-transform duration-300", showSettings && "rotate-90 text-white")} />
                 <span className="text-[10px]">الإعدادات</span>
                 {showSettings ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
               </button>
             </div>
           </div>
+
+          {/* Quick Budget Setup on Card if Unset */}
+          {isUnset && (
+            <div className="my-4 p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/60 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+                    <Zap size={14} />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900 dark:text-white">
+                      عيّن ميزانيتك المرصودة للبدء
+                    </h3>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                      أدخل سقف الصرف لتفعيل التتبع الذكي والنصائح التفاعلية
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Quick Period Selector */}
+                <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-0.5 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      hapticFeedback('light');
+                      setOverallPeriod('monthly');
+                    }}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg font-black transition-all cursor-pointer",
+                      !isWeekly ? "bg-indigo-600 text-white shadow-2xs" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    )}
+                  >
+                    شهرية 🗓️
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      hapticFeedback('light');
+                      setOverallPeriod('weekly');
+                    }}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg font-black transition-all cursor-pointer",
+                      isWeekly ? "bg-amber-500 text-white shadow-2xs" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    )}
+                  >
+                    أسبوعية ⚡
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={globalBudget}
+                    onChange={(e) => setGlobalBudget(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-xl px-3 py-2 text-sm font-black font-mono text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 text-center"
+                    placeholder="اكتب المبلغ هنا (مثلاً: 1500)"
+                  />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                    {currency}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={autoAllocate}
+                    disabled={isGenerating || !globalBudget || parseFloat(globalBudget) <= 0}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-2xs cursor-pointer disabled:opacity-50 transition-all"
+                  >
+                    <CheckCircle2 size={13} />
+                    <span>توزيع 50/30/20</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleToggleSettings}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 rounded-xl text-xs font-black border border-slate-200 dark:border-slate-700 cursor-pointer shadow-2xs"
+                  >
+                    <Sliders size={13} />
+                    <span>خيارات متقدمة</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Card Middle: One Prominent Number & Spending Stats */}
           <div className="my-5 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -346,14 +451,24 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-4 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-850 px-3 py-1.5 rounded-xl border border-slate-150 dark:border-slate-800">
-                <span className="text-[10px] text-slate-400 block font-bold">الميزانية المرصودة</span>
-                <span className="font-black text-slate-800 dark:text-slate-200 font-mono">
+            <div className="flex items-center gap-3 text-xs">
+              {/* Clickable Budget Stat to quickly open settings */}
+              <button
+                type="button"
+                onClick={handleToggleSettings}
+                className="bg-slate-50 hover:bg-indigo-50/50 dark:bg-slate-850 dark:hover:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-150 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer text-right group"
+                title="انقر لضبط مبلغ الميزانية والإعدادات"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] text-slate-400 block font-bold">الميزانية المرصودة</span>
+                  <Sliders size={10} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                </div>
+                <span className="font-black text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 font-mono transition-colors">
                   {formatCurrency(globalBudgetNum, currency)}
                 </span>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-850 px-3 py-1.5 rounded-xl border border-slate-150 dark:border-slate-800">
+              </button>
+
+              <div className="bg-slate-50 dark:bg-slate-850 px-3 py-1.5 rounded-xl border border-slate-150 dark:border-slate-800 text-right">
                 <span className="text-[10px] text-slate-400 block font-bold">المصروف الفعلي</span>
                 <span className={cn("font-black font-mono", isOver ? "text-rose-500" : "text-slate-800 dark:text-slate-200")}>
                   {formatCurrency(totalSpent, currency)}
@@ -522,12 +637,14 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
       <AnimatePresence>
         {showSettings && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
+            id="budget-settings-panel"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-6 scroll-mt-20"
           >
-            <Card className="p-5 md:p-6 border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 space-y-6">
+            <Card className="p-5 md:p-6 border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 space-y-6 shadow-sm">
               
               <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2">
@@ -537,7 +654,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                 <button 
                   type="button"
                   onClick={() => setShowSettings(false)}
-                  className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer font-bold"
+                  className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer font-bold px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   إغلاق ✕
                 </button>
@@ -546,12 +663,13 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 
                 {/* Setting 1: Total Budget Amount */}
-                <div className="space-y-1.5 bg-white dark:bg-slate-950/40 p-4 rounded-2xl border border-slate-150 dark:border-slate-800">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300 block">
+                <div className="space-y-1.5 bg-white dark:bg-slate-950/60 p-4 rounded-2xl border border-slate-150 dark:border-slate-800 shadow-2xs">
+                  <label htmlFor="global-budget-input" className="text-xs font-bold text-slate-600 dark:text-slate-300 block">
                     مبلغ الميزانية الإجمالية:
                   </label>
                   <div className="relative">
                     <input
+                      id="global-budget-input"
                       type="number"
                       inputMode="decimal"
                       value={globalBudget}
@@ -566,7 +684,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                           }, 50);
                         }
                       }}
-                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-base font-black font-mono text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-all text-center"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-base font-black font-mono text-slate-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-center"
                       placeholder="0.00"
                     />
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">

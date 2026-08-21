@@ -4,7 +4,7 @@ import { useAppContext } from '../store/AppContext';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import { cn, hapticFeedback, getBudgetRange, getBudgetMonth, getWeekRange, safeStorage } from '../utils';
 import { parseISO, addDays, startOfDay, endOfDay } from 'date-fns';
-import { Save, Wallet, CircleCheckBig, Calendar, ArrowLeftRight, RefreshCw, Layers } from 'lucide-react';
+import { Save, Wallet, CircleCheckBig, Calendar, ArrowLeftRight, RefreshCw, Layers, Sliders } from 'lucide-react';
 import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 import { BudgetAlerts } from '../components/BudgetAlerts';
@@ -39,6 +39,7 @@ const BudgetPage = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showRuleInfo, setShowRuleInfo] = useState(false);
+  const [showSettings, setShowSettings] = useState(() => !currentBudget?.amount || currentBudget.amount === 0);
   
   const [categoryBudgets, setCategoryBudgets] = useState<Record<string, string>>(
     currentBudget?.categoryBudgets 
@@ -355,6 +356,34 @@ const BudgetPage = () => {
               />
             </div>
 
+            {/* Settings Quick Toggle Button */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={() => {
+                hapticFeedback('light');
+                const next = !showSettings;
+                setShowSettings(next);
+                if (next) {
+                  setTimeout(() => {
+                    document.getElementById('global-budget-input')?.focus();
+                    document.getElementById('budget-settings-panel')?.scrollIntoView({ behavior: 'smooth' });
+                  }, 80);
+                }
+              }}
+              className={cn(
+                "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all border cursor-pointer active:scale-95 shadow-2xs",
+                showSettings 
+                  ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900" 
+                  : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+              )}
+              title="إعدادات وتعديل الميزانية"
+            >
+              <Sliders size={13} />
+              <span>{showSettings ? 'إخفاء الإعدادات' : 'الإعدادات'}</span>
+            </motion.button>
+
             {/* Save Button */}
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -449,6 +478,8 @@ const BudgetPage = () => {
         setFirstDayOfMonth={setFirstDayOfMonth}
         expenses={expenses}
         budgets={budgets}
+        showSettings={showSettings}
+        setShowSettings={setShowSettings}
       />
 
       {/* Category List component */}
