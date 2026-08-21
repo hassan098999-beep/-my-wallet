@@ -9,9 +9,9 @@ export const SeptemberToAugustBanner: React.FC = () => {
   const [isMigrating, setIsMigrating] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  // Count operations with date in September (-09-)
-  const sepExpensesCount = (expenses || []).filter(e => e.date && e.date.includes('-09-')).length;
-  const sepIncomeCount = (income || []).filter(i => i.date && i.date.includes('-09-')).length;
+  // Count operations with date in September (-09- or /09/)
+  const sepExpensesCount = (expenses || []).filter(e => e.date && (e.date.includes('-09-') || e.date.includes('/09/'))).length;
+  const sepIncomeCount = (income || []).filter(i => i.date && (i.date.includes('-09-') || i.date.includes('/09/'))).length;
   const totalSepCount = sepExpensesCount + sepIncomeCount;
 
   // If no operations in September or dismissed, don't show

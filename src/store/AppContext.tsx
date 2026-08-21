@@ -5,7 +5,7 @@ import { useDebts } from './hooks/useDebts';
 import { useCategories } from './hooks/useCategories';
 import { useGamaeyas } from './hooks/useGamaeyas';
 import { useBudget } from './hooks/useBudget';
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { AppState, Category, Expense, Budget, RecurringExpense, Achievement, Goal, Debt, DebtPayment, AppNotification, Income, Account, SmartSavingChallenge, AutoRoundUpSetting } from '../types';
 import { evaluateAchievements } from '../utils/achievements';
@@ -1397,32 +1397,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const isAutoMigratingRef = useRef(false);
+
   const migrateSeptemberDataToAugust = async (): Promise<number> => {
     let affectedExpenses = 0;
     let affectedIncome = 0;
+    const migratedExpenseDocs: any[] = [];
+    const migratedIncomeDocs: any[] = [];
 
     const newExpenses = (state.expenses || []).map(exp => {
-      if (exp.date && exp.date.includes('-09-')) {
+      if (exp.date && (exp.date.includes('-09-') || exp.date.includes('/09/'))) {
         affectedExpenses++;
-        const newDate = exp.date.replace('-09-', '-08-');
-        return {
+        const newDate = exp.date.replace(/[-/]09[-/]/g, (match: string) => match.replace('09', '08'));
+        const updated = {
           ...exp,
           date: newDate,
           parsedDate: safeParseISO(newDate)
         };
+        migratedExpenseDocs.push(updated);
+        return updated;
       }
       return exp;
     });
 
     const newIncome = (state.income || []).map(inc => {
-      if (inc.date && inc.date.includes('-09-')) {
+      if (inc.date && (inc.date.includes('-09-') || inc.date.includes('/09/'))) {
         affectedIncome++;
-        const newDate = inc.date.replace('-09-', '-08-');
-        return {
+        const newDate = inc.date.replace(/[-/]09[-/]/g, (match: string) => match.replace('09', '08'));
+        const updated = {
           ...inc,
           date: newDate,
           parsedDate: safeParseISO(newDate)
         };
+        migratedIncomeDocs.push(updated);
+        return updated;
       }
       return inc;
     });
@@ -1430,21 +1438,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Also migrate budgets if any exist for month -09 and not -08
     let newBudgets = [...(state.budgets || [])];
     const sepBudgets = newBudgets.filter(b => b.month && b.month.endsWith('-09'));
+    const migratedBudgets: any[] = [];
     sepBudgets.forEach(sepB => {
       const augMonth = sepB.month.replace('-09', '-08');
       const existingAug = newBudgets.find(b => b.month === augMonth);
       if (!existingAug) {
-        newBudgets.push({
+        const newB = {
           ...sepB,
           month: augMonth
-        });
+        };
+        newBudgets.push(newB);
+        migratedBudgets.push(newB);
       }
     });
 
     const totalAffected = affectedExpenses + affectedIncome;
 
     if (totalAffected === 0 && sepBudgets.length === 0) {
-      toast('لا توجد عمليات مسجلة بتاريخ شهر سبتمبر لتحويلها');
       return 0;
     }
 
@@ -1462,36 +1472,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       income: updatedState.income.map(({ parsedDate, ...rest }: any) => rest)
     }));
 
-    // If user is authenticated with Firestore, write updates in batch
+    // If user is authenticated with Firestore, write updates in chunks to prevent 500 limit
     if (user) {
       try {
-        const batch = writeBatch(db);
+        const allOperations: { ref: any; data: any }[] = [];
 
-        // Update affected expenses in Firestore
-        newExpenses.forEach(exp => {
-          if (exp.date && exp.date.includes('-08-')) {
-            const { parsedDate, ...expToStore } = exp;
-            const ref = doc(db, 'users', user.uid, 'expenses', exp.id);
-            batch.set(ref, { ...expToStore, uid: user.uid }, { merge: true });
-          }
+        migratedExpenseDocs.forEach(exp => {
+          const { parsedDate, ...expToStore } = exp;
+          allOperations.push({
+            ref: doc(db, 'users', user.uid, 'expenses', exp.id),
+            data: { ...expToStore, uid: user.uid }
+          });
         });
 
-        // Update affected income in Firestore
-        newIncome.forEach(inc => {
-          if (inc.date && inc.date.includes('-08-')) {
-            const { parsedDate, ...incToStore } = inc;
-            const ref = doc(db, 'users', user.uid, 'income', inc.id);
-            batch.set(ref, { ...incToStore, uid: user.uid }, { merge: true });
-          }
+        migratedIncomeDocs.forEach(inc => {
+          const { parsedDate, ...incToStore } = inc;
+          allOperations.push({
+            ref: doc(db, 'users', user.uid, 'income', inc.id),
+            data: { ...incToStore, uid: user.uid }
+          });
         });
 
-        // Update budgets in Firestore
-        newBudgets.forEach(b => {
-          const ref = doc(db, 'users', user.uid, 'budgets', b.month);
-          batch.set(ref, { ...b, uid: user.uid }, { merge: true });
+        migratedBudgets.forEach(b => {
+          allOperations.push({
+            ref: doc(db, 'users', user.uid, 'budgets', b.month),
+            data: { ...b, uid: user.uid }
+          });
         });
 
-        await batch.commit();
+        // Commit in chunks of 400
+        const CHUNK_SIZE = 400;
+        for (let i = 0; i < allOperations.length; i += CHUNK_SIZE) {
+          const chunk = allOperations.slice(i, i + CHUNK_SIZE);
+          const batch = writeBatch(db);
+          chunk.forEach(op => {
+            batch.set(op.ref, op.data, { merge: true });
+          });
+          await batch.commit();
+        }
       } catch (cloudErr) {
         console.error('Failed to sync migrated dates to Firestore:', cloudErr);
       }
@@ -1500,6 +1518,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     toast.success(`تم بنجاح نقل وتصحيح ${totalAffected} عملية إلى شهر أوت الحالي! ✨`);
     return totalAffected;
   };
+
+  // Auto-migrate September transactions to August if detected on load or sync
+  useEffect(() => {
+    if (isAutoMigratingRef.current) return;
+    const hasSepExpenses = (state.expenses || []).some(e => e.date && (e.date.includes('-09-') || e.date.includes('/09/')));
+    const hasSepIncome = (state.income || []).some(i => i.date && (i.date.includes('-09-') || i.date.includes('/09/')));
+    const hasSepBudgets = (state.budgets || []).some(b => b.month && b.month.endsWith('-09'));
+
+    if (hasSepExpenses || hasSepIncome || hasSepBudgets) {
+      isAutoMigratingRef.current = true;
+      migrateSeptemberDataToAugust().finally(() => {
+        isAutoMigratingRef.current = false;
+      });
+    }
+  }, [state.expenses, state.income, state.budgets, user]);
 
 
   // Check for upcoming debts due within 3 days

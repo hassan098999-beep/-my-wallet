@@ -29,6 +29,7 @@ import { useWindowSize } from '../hooks/useWindowSize';
 import { useBehavioralEngine } from '../hooks/useBehavioralEngine';
 
 import PageHeader from '../components/ui/PageHeader';
+import { SeptemberToAugustBanner } from '../components/SeptemberToAugustBanner';
 import { OverviewSection } from '../components/analytics/OverviewSection';
 import { BudgetSection } from '../components/analytics/BudgetSection';
 import { ChartsSection } from '../components/analytics/ChartsSection';
@@ -444,6 +445,9 @@ const Analytics = () => {
           </div>
         }
       />
+
+      {/* September to August Date Correction Banner */}
+      <SeptemberToAugustBanner />
 
       {/* 2. Unified Refined 4-Tab Navigation Bar with Full Mobile Horizontal Scroll Support */}
       <motion.div 
