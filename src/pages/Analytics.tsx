@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
-import { cn, formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
+import { cn, formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth, safeStorage } from '../utils';
 import { 
   format, 
   parseISO, 
@@ -43,7 +43,14 @@ const Analytics = () => {
 
   // Period Preset State
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('this_month');
-  const [selectedMonth, setSelectedMonth] = useState(getBudgetMonth(new Date(), firstDayOfMonth)); // YYYY-MM
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    return safeStorage.getItem('masarifi_analytics_selected_month') || getBudgetMonth(new Date(), firstDayOfMonth);
+  }); // YYYY-MM
+
+  const updateSelectedMonth = (val: string) => {
+    setSelectedMonth(val);
+    safeStorage.setItem('masarifi_analytics_selected_month', val);
+  };
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   
@@ -84,7 +91,7 @@ const Analytics = () => {
     try {
       const d = parseISO(`${selectedMonth}-01`);
       const prev = subMonths(d, 1);
-      setSelectedMonth(format(prev, 'yyyy-MM'));
+      updateSelectedMonth(format(prev, 'yyyy-MM'));
       setPeriodPreset('custom');
       hapticFeedback('light');
     } catch {}
@@ -94,7 +101,7 @@ const Analytics = () => {
     try {
       const d = parseISO(`${selectedMonth}-01`);
       const next = subMonths(d, -1);
-      setSelectedMonth(format(next, 'yyyy-MM'));
+      updateSelectedMonth(format(next, 'yyyy-MM'));
       setPeriodPreset('custom');
       hapticFeedback('light');
     } catch {}
@@ -107,10 +114,10 @@ const Analytics = () => {
     const now = new Date();
 
     if (preset === 'this_month') {
-      setSelectedMonth(getBudgetMonth(now, firstDayOfMonth));
+      updateSelectedMonth(getBudgetMonth(now, firstDayOfMonth));
     } else if (preset === 'last_month') {
       const prev = subMonths(now, 1);
-      setSelectedMonth(getBudgetMonth(prev, firstDayOfMonth));
+      updateSelectedMonth(getBudgetMonth(prev, firstDayOfMonth));
     } else if (preset === 'last_3_months') {
       setStartDate(format(subMonths(now, 3), 'yyyy-MM-dd'));
       setEndDate(format(now, 'yyyy-MM-dd'));
@@ -416,7 +423,7 @@ const Analytics = () => {
                     value={selectedMonth}
                     onChange={(e) => {
                       if (e.target.value) {
-                        setSelectedMonth(e.target.value);
+                        updateSelectedMonth(e.target.value);
                         setPeriodPreset('custom');
                       }
                     }}

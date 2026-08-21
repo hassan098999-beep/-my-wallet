@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../store/AppContext';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
-import { cn, hapticFeedback, getBudgetRange, getBudgetMonth, getWeekRange } from '../utils';
+import { cn, hapticFeedback, getBudgetRange, getBudgetMonth, getWeekRange, safeStorage } from '../utils';
 import { parseISO, addDays, startOfDay, endOfDay } from 'date-fns';
 import { Save, Wallet, Activity, CircleCheckBig, Calendar } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -29,7 +29,9 @@ const BudgetPage = () => {
     setRollingBudgetEnabled 
   } = useAppContext();
 
-  const [selectedMonth, setSelectedMonth] = useState(getBudgetMonth(new Date(), firstDayOfMonth));
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    return safeStorage.getItem('masarifi_budget_selected_month') || getBudgetMonth(new Date(), firstDayOfMonth);
+  });
   
   const currentBudget = useMemo(() => budgets.find(b => b.month === selectedMonth), [budgets, selectedMonth]);
 
@@ -341,7 +343,9 @@ const BudgetPage = () => {
                 value={selectedMonth}
                 onChange={(e) => {
                   hapticFeedback('light');
-                  setSelectedMonth(e.target.value);
+                  const val = e.target.value;
+                  setSelectedMonth(val);
+                  safeStorage.setItem('masarifi_budget_selected_month', val);
                 }}
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-3 pr-8 py-2 text-xs font-black text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/20"
               />

@@ -57,22 +57,7 @@ export function getBudgetRange(monthStr: string, firstDay: number = 1) {
 }
 
 export function getBudgetMonth(date: Date, firstDay: number = 1): string {
-  if (firstDay === 1) return format(date, 'yyyy-MM');
-  
-  const day = date.getDate();
-  let month = date.getMonth();
-  let year = date.getFullYear();
-  
-  if (day >= firstDay) {
-    // We are in the next budget month
-    month += 1;
-    if (month > 11) {
-      month = 0;
-      year += 1;
-    }
-  }
-  
-  return `${year}-${String(month + 1).padStart(2, '0')}`;
+  return format(date, 'yyyy-MM');
 }
 
 export function formatCurrency(amount: number, currencyCode: string = 'TND', customPrecision?: number) {
