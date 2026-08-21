@@ -115,37 +115,50 @@ const RecurringExpenses = () => {
   ];
 
   const calculateNextOccurrence = (type: RecurringInterval, baseDate: Date): string => {
-    let next = new Date(baseDate);
-
     if (type === 'daily') {
-      return next.toISOString().split('T')[0];
+      return format(baseDate, 'yyyy-MM-dd');
     }
 
     if (type === 'weekly') {
-      const currentDay = next.getDay();
+      const currentDay = baseDate.getDay();
       const diff = (selectedDayOfWeek + 7 - currentDay) % 7;
+      const next = new Date(baseDate);
       next.setDate(next.getDate() + diff);
-      return next.toISOString().split('T')[0];
+      return format(next, 'yyyy-MM-dd');
     }
 
     if (type === 'monthly') {
-      next.setDate(selectedDayOfMonth);
-      if (next < baseDate) {
-        next.setMonth(next.getMonth() + 1);
+      const year = baseDate.getFullYear();
+      let month = baseDate.getMonth();
+      const lastDayOfThisMonth = new Date(year, month + 1, 0).getDate();
+      let targetDay = Math.min(selectedDayOfMonth, lastDayOfThisMonth);
+      let candidate = new Date(year, month, targetDay);
+
+      if (candidate < baseDate) {
+        month += 1;
+        const lastDayOfNextMonth = new Date(year, month + 1, 0).getDate();
+        targetDay = Math.min(selectedDayOfMonth, lastDayOfNextMonth);
+        candidate = new Date(year, month, targetDay);
       }
-      return next.toISOString().split('T')[0];
+      return format(candidate, 'yyyy-MM-dd');
     }
 
     if (type === 'yearly') {
-      next.setMonth(selectedMonthOfYear);
-      next.setDate(selectedDayOfYear);
-      if (next < baseDate) {
-        next.setFullYear(next.getFullYear() + 1);
+      let year = baseDate.getFullYear();
+      const month = selectedMonthOfYear;
+      const maxDay = new Date(year, month + 1, 0).getDate();
+      const targetDay = Math.min(selectedDayOfYear, maxDay);
+      let candidate = new Date(year, month, targetDay);
+
+      if (candidate < baseDate) {
+        year += 1;
+        const maxDayNext = new Date(year, month + 1, 0).getDate();
+        candidate = new Date(year, month, Math.min(selectedDayOfYear, maxDayNext));
       }
-      return next.toISOString().split('T')[0];
+      return format(candidate, 'yyyy-MM-dd');
     }
 
-    return next.toISOString().split('T')[0];
+    return format(baseDate, 'yyyy-MM-dd');
   };
 
   const handleEdit = (expense: RecurringExpense) => {

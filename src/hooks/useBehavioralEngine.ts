@@ -98,7 +98,7 @@ export const useBehavioralEngine = () => {
             title: `تكلفة حقيقية: ${category.name}`,
             description: `أنت تنفق حوالي ${total.toFixed(1)} TND شهرياً على ${category.name}.`,
             type: 'warning',
-            impact: `هذا يمثل ${( (total / (dailyBudget * 30)) * 100 ).toFixed(1)}% من ميزانيتك الشهرية.`
+            impact: (dailyBudget * 30) > 0 ? `هذا يمثل ${( (total / (dailyBudget * 30)) * 100 ).toFixed(1)}% من ميزانيتك الشهرية.` : `هذا يمثل ${total.toFixed(1)} TND من نفقاتك الشهرية.`
           });
         }
       }

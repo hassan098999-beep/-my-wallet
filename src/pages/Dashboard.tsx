@@ -358,6 +358,7 @@ const Dashboard = () => {
   [rollingBudget, todaySpending]);
 
   const budgetStatus = useMemo(() => {
+    if (rollingBudget <= 0) return todaySpending > 0 ? 'red' : 'green';
     const ratio = todaySpending / rollingBudget;
     if (ratio > 1) return 'red';
     if (ratio > 0.8) return 'orange';

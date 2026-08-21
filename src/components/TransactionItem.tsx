@@ -253,10 +253,10 @@ const TransactionItemComponent: React.FC<TransactionItemProps> = ({
               <h4 className="font-bold text-slate-900 dark:text-white text-xs md:text-sm leading-tight truncate">
                 {isTransfer 
                   ? (isExpense ? (transaction as any).note : (transaction as any).source) 
-                  : (!isExpense 
+                  : !isExpense 
                       ? (transaction as any).source 
-                      : ((transaction as any).note || ((transaction as any).subcategoryId ? `${category?.name} - ${(transaction as any).subcategoryId}` : category?.name))
-                    )}
+                      : (transaction as any).note || ((transaction as any).subcategoryId ? `${category?.name || 'مصروف'} - ${(transaction as any).subcategoryId}` : (category?.name || 'مصروف عام'))
+                }
               </h4>
             </div>
 

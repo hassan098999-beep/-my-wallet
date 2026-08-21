@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import { AppState, Category, Expense, Budget, RecurringExpense, Achievement, Goal, Debt, DebtPayment, AppNotification, Income, Account, SmartSavingChallenge, AutoRoundUpSetting } from '../types';
 import { evaluateAchievements } from '../utils/achievements';
 import { getBudgetMonth, safeStorage, safeParseISO, removeUndefinedFields, hashPin } from '../utils';
-import { addDays, addWeeks, addMonths, addYears, isBefore, isSameDay, subDays } from 'date-fns';
+import { addDays, addWeeks, addMonths, addYears, isBefore, isSameDay, subDays, format, parseISO } from 'date-fns';
 import { ACHIEVEMENTS } from '../constants/achievements';
 import { auth, db, signInWithGoogle, logout as firebaseLogout, onAuthStateChanged, getRedirectResult } from '../lib/firebase';
 import { 
@@ -748,7 +748,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       newExpensesToCreate.push(newExpense);
 
-      const currentNextDate = new Date(re.nextDate);
+      const currentNextDate = parseISO(re.nextDate);
       let updatedNextDate: Date;
       switch (re.interval) {
         case 'daily':
@@ -766,7 +766,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         default:
           updatedNextDate = addMonths(currentNextDate, 1);
       }
-      const updatedNextDateStr = updatedNextDate.toISOString().split('T')[0];
+      const updatedNextDateStr = format(updatedNextDate, 'yyyy-MM-dd');
 
       const idx = updatedRecurring.findIndex(item => item.id === re.id);
       if (idx !== -1) {

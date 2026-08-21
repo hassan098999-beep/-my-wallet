@@ -75,8 +75,8 @@ export const AddGoalModal: React.FC<AddGoalModalProps> = ({
       toast.error('يرجى إدخال مبلغ هدف صحيح');
       return;
     }
-    const current = parseFloat(currentAmount) || 0;
-    const monthlyTarget = monthlySavingsTarget ? parseFloat(monthlySavingsTarget) : undefined;
+    const current = Math.max(0, parseFloat(currentAmount) || 0);
+    const monthlyTarget = monthlySavingsTarget ? Math.max(0, parseFloat(monthlySavingsTarget) || 0) : undefined;
     const finalIsEmergency = isEmergencyFund || goalPriority === 'essential';
 
     hapticFeedback('success');
