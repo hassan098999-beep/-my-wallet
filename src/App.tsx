@@ -16,7 +16,6 @@ import Assistant from './pages/Assistant';
 import ShareAdd from './pages/ShareAdd';
 
 import BudgetPage from './pages/Budget';
-import GoalsPage from './pages/Goals';
 import DebtsPage from './pages/Debts';
 import IncomePage from './pages/settings/Income';
 import RecurringExpenses from './pages/RecurringExpenses';
@@ -44,7 +43,6 @@ function AppContent() {
               <Route path="analytics" element={<Analytics />} />
               <Route path="budget" element={<BudgetPage />} />
               <Route path="recurring" element={<RecurringExpenses />} />
-              <Route path="goals" element={<GoalsPage />} />
               <Route path="debts" element={<DebtsPage />} />
               <Route path="income" element={<IncomePage />} />
               <Route path="savings" element={<SavingsPage />} />

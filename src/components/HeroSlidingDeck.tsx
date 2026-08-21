@@ -309,7 +309,7 @@ const HeroSlidingDeck: React.FC<HeroSlidingDeckProps> = ({
                   <Target className="size-4.5 text-emerald-450" />
                   مستهدفات الادخار النشطة
                 </h4>
-                <Link to="/goals" className="text-[9px] font-black text-emerald-400 underline uppercase tracking-widest">لوحة الأهداف</Link>
+                <Link to="/savings" className="text-[9px] font-black text-emerald-400 underline uppercase tracking-widest">منصة الادخار</Link>
               </div>
 
               {goals.length > 0 ? (
@@ -349,7 +349,7 @@ const HeroSlidingDeck: React.FC<HeroSlidingDeckProps> = ({
               ) : (
                 <div className="py-8 text-center bg-slate-950/20 rounded-3xl border border-white/5">
                   <p className="text-xs font-bold text-slate-400 max-w-xs mx-auto mb-4">ليس لديك أهداف ادخار مسجلة حالياً. ابدأ بالتخطيط لمشاريعك المستقبلية!</p>
-                  <Link to="/goals" className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-black rounded-xl transition-all inline-block shadow-md">إنشاء هدف ادخار</Link>
+                  <Link to="/savings" className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-black rounded-xl transition-all inline-block shadow-md">إنشاء هدف ادخار</Link>
                 </div>
               )}
             </motion.div>
@@ -362,7 +362,7 @@ const HeroSlidingDeck: React.FC<HeroSlidingDeckProps> = ({
         {[
           { icon: Plus, label: 'إضافة عملية', color: 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 border border-emerald-500/10', action: () => setIsAddModalOpen(true) },
           { icon: ArrowRightLeft, label: 'تحويل سريع', color: 'bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white border border-indigo-500/10', action: () => { setEditingExpense({ isTransfer: true } as any); setIsAddModalOpen(true); } },
-          { icon: Target, label: 'الأهداف', color: 'bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white border border-amber-500/10', link: '/goals' },
+          { icon: Target, label: 'الادخار', color: 'bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white border border-amber-500/10', link: '/savings' },
           { icon: Sparkles, label: 'المساعد', color: 'bg-violet-500/10 text-violet-400 hover:bg-violet-500 hover:text-white border border-violet-500/10', link: '/assistant' },
         ].map((item, idx) => (
           <motion.div key={idx} whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }}>

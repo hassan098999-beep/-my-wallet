@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings2, Target, RefreshCcw, LogOut, LogIn, UserCircle, Moon, Sun, Wallet, SlidersHorizontal, Loader2, HandCoins, BarChart3, History } from 'lucide-react';
+import { Settings2, PiggyBank, RefreshCcw, LogOut, LogIn, UserCircle, Moon, Sun, Wallet, SlidersHorizontal, Loader2, HandCoins, BarChart3, History } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { motion, AnimatePresence } from 'motion/react';
@@ -12,7 +12,7 @@ const dropdownItems = [
   { path: '/debts', name: 'الديون والقروض (لي / علي) 🤝', icon: HandCoins },
   { path: '/income', name: 'إدارة الدخل 💰', icon: Wallet },
   { path: '/recurring', name: 'المصاريف المتكررة 🔄', icon: RefreshCcw },
-  { path: '/goals', name: 'الأهداف المالية 🎯', icon: Target },
+  { path: '/savings', name: 'الادخار والأهداف 🎯', icon: PiggyBank },
   { path: '/settings', name: 'الإعدادات والتحكم ⚙️', icon: SlidersHorizontal },
 ];
 
@@ -30,7 +30,6 @@ const Header = () => {
       case '/analytics': return 'الإحصائيات';
       case '/budget': return 'الميزانيات';
       case '/recurring': return 'المصاريف المتكررة';
-      case '/goals': return 'الأهداف المالية';
       case '/savings': return 'الادخار والأهداف';
       case '/income': return 'الدخل';
       case '/family': return 'تفريرة العيلة';

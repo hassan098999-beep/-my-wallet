@@ -1,6 +1,6 @@
 import React from 'react';
-import { motion, Variants } from 'motion/react';
-import { PiggyBank, TrendingUp, Target, Plus, Zap, ArrowUpRight, Sparkles, ShieldCheck } from 'lucide-react';
+import { motion } from 'motion/react';
+import { PiggyBank, TrendingUp, Target, Plus, Zap, ArrowUpRight, Sparkles, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { formatCurrency, cn, hapticFeedback } from '../../utils';
 
 interface SavingsHeaderProps {
@@ -58,104 +58,101 @@ export const SavingsHeader: React.FC<SavingsHeaderProps> = ({
   const badge = getHealthBadge();
 
   return (
-    <div className="space-y-4" dir="rtl">
-      {/* 3 Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        
-        {/* 1. Total Saved Balance */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-black text-slate-400">إجمالي المدخرات المحققة</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <PiggyBank size={18} />
-            </div>
-          </div>
-          <div>
-            <span className="text-2xl md:text-3xl font-black font-mono text-slate-900 dark:text-white">
-              {formatCurrency(totalSaved, currency)}
-            </span>
-            <p className="text-[11px] font-bold text-slate-400 mt-1">
-              موزعة عبر {totalGoalsCount} أهداف وحصالات نشطة
-            </p>
-          </div>
-        </div>
+    <div className="space-y-3.5" dir="rtl">
+      {/* Primary Hero Master Card - Highlighting the Most Motivating Metric */}
+      <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 text-white p-5 md:p-6 rounded-3xl border border-slate-800 shadow-xl relative overflow-hidden">
+        {/* Subtle decorative glow */}
+        <div className="absolute -left-12 -top-12 w-48 h-48 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* 2. Monthly Free Cashflow / Surplus */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-black text-slate-400">الفائض الشهري المتاح</span>
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-              <TrendingUp size={18} />
-            </div>
-          </div>
-          <div>
-            <span className={cn(
-              "text-2xl md:text-3xl font-black font-mono",
-              monthlySurplus > 0 ? "text-indigo-600 dark:text-indigo-400" : "text-slate-700 dark:text-slate-300"
-            )}>
-              {formatCurrency(monthlySurplus, currency)}
-            </span>
-            <p className="text-[11px] font-bold text-slate-400 mt-1">
-              الفرق المباشر بين الدخل والمصروفات
-            </p>
-          </div>
-        </div>
-
-        {/* 3. Savings Rate & Health Badge */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-black text-slate-400">معدل الادخار الفعلي</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <Target size={18} />
-            </div>
-          </div>
-          <div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl md:text-3xl font-black font-mono text-slate-900 dark:text-white">
-                {Math.round(savingRate)}%
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          {/* Main Focal Metric */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <PiggyBank size={18} />
+              </span>
+              <span className="text-xs font-bold text-slate-300">
+                إجمالي رصيد المدخرات المحققة
               </span>
               <span className={cn("text-[10px] font-black px-2 py-0.5 rounded-lg border", badge.bgColor, badge.textColor)}>
                 {badge.label}
               </span>
             </div>
-            <p className="text-[11px] font-bold text-slate-400 mt-1">
-              {completedGoalsCount > 0 ? `تم إنجاز ${completedGoalsCount} أهداف بالكامل 🏆` : 'قيد التقدم نحو تحقيق الأهداف'}
+
+            <div className="flex items-baseline gap-3 pt-1">
+              <span className="text-3xl sm:text-4xl md:text-5xl font-black font-mono tracking-tight text-white">
+                {formatCurrency(totalSaved, currency)}
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-400 font-medium pt-0.5">
+              مجمّعة عبر <strong className="text-slate-200">{totalGoalsCount}</strong> مستهدفات وحصالات نشطة
+              {completedGoalsCount > 0 && ` · تم إنجاز ${completedGoalsCount} أهداف 🏆`}
             </p>
           </div>
-        </div>
-      </div>
 
-      {/* Quick Action Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 bg-slate-100 dark:bg-slate-800/60 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
-          <Sparkles size={16} className="text-amber-500 shrink-0" />
-          <span>لديك فائض شهري؟ يمكنك توزيعه مباشرة أو إنشاء أهداف مالية جديدة</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {monthlySurplus > 0 && (
+          {/* Integrated Action Buttons */}
+          <div className="flex flex-row md:flex-col gap-2 shrink-0">
             <button
               onClick={() => {
                 hapticFeedback('medium');
-                onOpenQuickAllocate();
+                onOpenAddGoal();
               }}
-              className="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              className="flex-1 md:flex-initial px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-98 text-slate-950 rounded-2xl font-black text-xs transition-all shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <Zap size={14} />
-              <span>توزيع الفائض الذكي ({formatCurrency(monthlySurplus, currency)})</span>
+              <Plus size={15} />
+              <span>هدف ادخار جديد</span>
             </button>
-          )}
 
-          <button
-            onClick={() => {
-              hapticFeedback('light');
-              onOpenAddGoal();
-            }}
-            className="flex-1 sm:flex-none px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
-          >
-            <Plus size={15} />
-            <span>إضافة هدف ادخاري</span>
-          </button>
+            {monthlySurplus > 0 && (
+              <button
+                onClick={() => {
+                  hapticFeedback('medium');
+                  onOpenQuickAllocate();
+                }}
+                className="flex-1 md:flex-initial px-4 py-2.5 bg-indigo-600/80 hover:bg-indigo-600 active:scale-98 text-white rounded-2xl font-black text-xs transition-all border border-indigo-400/30 flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Zap size={14} className="text-amber-300" />
+                <span>توزيع الفائض ({formatCurrency(monthlySurplus, currency)})</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Secondary KPIs Row within Master Container */}
+        <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-4 mt-4 border-t border-slate-800/80">
+          <div className="p-3 bg-slate-950/40 rounded-2xl border border-white/5">
+            <span className="text-[10px] font-bold text-slate-400 block mb-0.5">الفائض الشهري المتاح</span>
+            <div className="flex items-baseline gap-1">
+              <span className={cn(
+                "text-base md:text-lg font-black font-mono",
+                monthlySurplus > 0 ? "text-emerald-400" : "text-slate-300"
+              )}>
+                {formatCurrency(monthlySurplus, currency)}
+              </span>
+            </div>
+          </div>
+
+          <div className="p-3 bg-slate-950/40 rounded-2xl border border-white/5">
+            <span className="text-[10px] font-bold text-slate-400 block mb-0.5">معدل الادخار من الدخل</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-base md:text-lg font-black font-mono text-indigo-300">
+                {Math.round(savingRate)}%
+              </span>
+              <span className="text-[10px] text-slate-400">شهرياً</span>
+            </div>
+          </div>
+
+          <div className="col-span-2 sm:col-span-1 p-3 bg-slate-950/40 rounded-2xl border border-white/5">
+            <span className="text-[10px] font-bold text-slate-400 block mb-0.5">معدل الإنجاز الكلي</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-base md:text-lg font-black font-mono text-amber-300">
+                {completedGoalsCount}/{totalGoalsCount}
+              </span>
+              <span className="text-[10px] text-slate-400">أهداف مكتملة</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

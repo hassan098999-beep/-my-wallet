@@ -33,6 +33,7 @@ export const AddGoalModal: React.FC<AddGoalModalProps> = ({
   const [deadline, setDeadline] = useState('');
   const [linkedCategoryId, setLinkedCategoryId] = useState<string>('');
   const [isEmergencyFund, setIsEmergencyFund] = useState(false);
+  const [goalPriority, setGoalPriority] = useState<'essential' | 'family' | 'personal'>('personal');
   const [monthlySavingsTarget, setMonthlySavingsTarget] = useState('');
 
   useEffect(() => {
@@ -43,7 +44,9 @@ export const AddGoalModal: React.FC<AddGoalModalProps> = ({
         setCurrentAmount(goalToEdit.currentAmount.toString());
         setDeadline(goalToEdit.deadline ? goalToEdit.deadline.split('T')[0] : '');
         setLinkedCategoryId(goalToEdit.linkedCategoryId || '');
-        setIsEmergencyFund(Boolean(goalToEdit.isEmergencyFund));
+        const isEmerg = Boolean(goalToEdit.isEmergencyFund);
+        setIsEmergencyFund(isEmerg);
+        setGoalPriority(goalToEdit.goalPriority || (isEmerg ? 'essential' : 'personal'));
         setMonthlySavingsTarget(goalToEdit.monthlySavingsTarget ? goalToEdit.monthlySavingsTarget.toString() : '');
       } else {
         // Default new goal: 6 months ahead
@@ -55,6 +58,7 @@ export const AddGoalModal: React.FC<AddGoalModalProps> = ({
         setDeadline(defaultDate.toISOString().split('T')[0]);
         setLinkedCategoryId('');
         setIsEmergencyFund(false);
+        setGoalPriority('personal');
         setMonthlySavingsTarget('');
       }
     }
@@ -73,6 +77,7 @@ export const AddGoalModal: React.FC<AddGoalModalProps> = ({
     }
     const current = parseFloat(currentAmount) || 0;
     const monthlyTarget = monthlySavingsTarget ? parseFloat(monthlySavingsTarget) : undefined;
+    const finalIsEmergency = isEmergencyFund || goalPriority === 'essential';
 
     hapticFeedback('success');
 
@@ -83,7 +88,8 @@ export const AddGoalModal: React.FC<AddGoalModalProps> = ({
         currentAmount: current,
         deadline: deadline || new Date().toISOString().split('T')[0],
         linkedCategoryId: linkedCategoryId || undefined,
-        isEmergencyFund,
+        isEmergencyFund: finalIsEmergency,
+        goalPriority,
         monthlySavingsTarget: monthlyTarget,
       });
       toast.success('تم تحديث الهدف الادخاري بنجاح 🎯');
@@ -94,7 +100,8 @@ export const AddGoalModal: React.FC<AddGoalModalProps> = ({
         currentAmount: current,
         deadline: deadline || new Date().toISOString().split('T')[0],
         linkedCategoryId: linkedCategoryId || undefined,
-        isEmergencyFund,
+        isEmergencyFund: finalIsEmergency,
+        goalPriority,
         monthlySavingsTarget: monthlyTarget,
       });
       toast.success('تم إنشاء الهدف الادخاري بنجاح! 🚀');
@@ -107,7 +114,12 @@ export const AddGoalModal: React.FC<AddGoalModalProps> = ({
     hapticFeedback('light');
     setName(preset.name);
     setTargetAmount(preset.defaultTarget.toString());
-    if (preset.isEmergency) setIsEmergencyFund(true);
+    if (preset.isEmergency) {
+      setIsEmergencyFund(true);
+      setGoalPriority('essential');
+    } else if (preset.isBaby) {
+      setGoalPriority('family');
+    }
   };
 
   if (!isOpen) return null;
@@ -254,6 +266,45 @@ export const AddGoalModal: React.FC<AddGoalModalProps> = ({
               </div>
             </div>
 
+            {/* Goal Priority Selector */}
+            <div>
+              <label className="text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5 block">
+                أولوية الهدف المالي
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'essential', label: 'ضروري / طارئ', icon: '🚨', desc: 'أولوية قصوى' },
+                  { id: 'family', label: 'عائلي مشترك', icon: '👨‍👩‍👧', desc: 'للأسرة' },
+                  { id: 'personal', label: 'شخصي / تطويري', icon: '🎯', desc: 'مرن' },
+                ].map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => {
+                      hapticFeedback('light');
+                      setGoalPriority(p.id as any);
+                      if (p.id === 'essential') setIsEmergencyFund(true);
+                      else if (isEmergencyFund && p.id !== 'essential') setIsEmergencyFund(false);
+                    }}
+                    className={cn(
+                      "p-2.5 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer",
+                      goalPriority === p.id
+                        ? p.id === 'essential'
+                          ? "bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 font-black shadow-2xs"
+                          : p.id === 'family'
+                            ? "bg-indigo-50 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 font-black shadow-2xs"
+                            : "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-black shadow-2xs"
+                        : "bg-slate-50 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-700/60 text-slate-500 hover:text-slate-800"
+                    )}
+                  >
+                    <span className="text-base leading-none">{p.icon}</span>
+                    <span className="text-[11px] font-bold mt-1">{p.label}</span>
+                    <span className="text-[9px] opacity-70">{p.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Optional Category Link */}
             <div>
               <label className="text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
@@ -276,7 +327,11 @@ export const AddGoalModal: React.FC<AddGoalModalProps> = ({
 
             {/* Emergency Checkbox */}
             <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between cursor-pointer"
-              onClick={() => setIsEmergencyFund(!isEmergencyFund)}
+              onClick={() => {
+                const next = !isEmergencyFund;
+                setIsEmergencyFund(next);
+                if (next) setGoalPriority('essential');
+              }}
             >
               <div className="flex items-center gap-2">
                 <ShieldCheck size={16} className="text-emerald-500 shrink-0" />
@@ -288,7 +343,10 @@ export const AddGoalModal: React.FC<AddGoalModalProps> = ({
               <input
                 type="checkbox"
                 checked={isEmergencyFund}
-                onChange={(e) => setIsEmergencyFund(e.target.checked)}
+                onChange={(e) => {
+                  setIsEmergencyFund(e.target.checked);
+                  if (e.target.checked) setGoalPriority('essential');
+                }}
                 className="w-4 h-4 text-emerald-600 rounded-md accent-emerald-500"
               />
             </div>

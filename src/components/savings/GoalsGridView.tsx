@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence, Variants } from 'motion/react';
+import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Target, 
   Calendar, 
@@ -10,11 +10,11 @@ import {
   ShieldCheck, 
   Baby, 
   Link2, 
-  Sparkles,
-  ArrowUpRight,
-  TrendingUp,
-  Coins,
-  DollarSign
+  Sparkles, 
+  Coins, 
+  Users, 
+  User, 
+  AlertCircle
 } from 'lucide-react';
 import { Goal, Category } from '../../types';
 import { formatCurrency, hapticFeedback, cn } from '../../utils';
@@ -44,6 +44,100 @@ export const GoalsGridView: React.FC<GoalsGridViewProps> = ({
 }) => {
   const [activeDepositGoalId, setActiveDepositGoalId] = useState<string | null>(null);
   const [customDepositAmount, setCustomDepositAmount] = useState<string>('');
+
+  // 1. Automatically sort goals by priority:
+  // Emergency/Essential first, then closest to completion (% descending), then completed last.
+  const sortedGoals = useMemo(() => {
+    return [...goals].sort((a, b) => {
+      const aTarget = a.targetAmount || 1;
+      const bTarget = b.targetAmount || 1;
+      const aPercent = (a.currentAmount || 0) / aTarget;
+      const bPercent = (b.currentAmount || 0) / bTarget;
+      const aDone = aPercent >= 1;
+      const bDone = bPercent >= 1;
+
+      // Completed goals go to the end
+      if (aDone !== bDone) return aDone ? 1 : -1;
+
+      // Emergency fund / Essential priority comes first
+      const aIsEssential = a.isEmergencyFund || a.goalPriority === 'essential';
+      const bIsEssential = b.isEmergencyFund || b.goalPriority === 'essential';
+      if (aIsEssential !== bIsEssential) return aIsEssential ? -1 : 1;
+
+      // Family priority next
+      const aIsFamily = a.goalPriority === 'family';
+      const bIsFamily = b.goalPriority === 'family';
+      if (aIsFamily !== bIsFamily) return aIsFamily ? -1 : 1;
+
+      // Closest to completion (% descending)
+      return bPercent - aPercent;
+    });
+  }, [goals]);
+
+  // 2. Smart Insight Line calculated dynamically
+  const smartInsight = useMemo(() => {
+    if (goals.length === 0) return null;
+
+    const incompleteGoals = goals.filter(g => (g.currentAmount || 0) < (g.targetAmount || 1));
+    if (incompleteGoals.length === 0) {
+      return {
+        type: 'success',
+        icon: '🏆',
+        text: 'تهانينا! لقد حققت جميع أهدافك الادخارية الحالية بنجاح 100%. يمكنك إنشاء أهداف جديدة الآن!'
+      };
+    }
+
+    // A. Check if emergency fund is incomplete
+    const emergencyGoal = incompleteGoals.find(g => g.isEmergencyFund || g.goalPriority === 'essential');
+    if (emergencyGoal) {
+      const emergencyPct = Math.round(((emergencyGoal.currentAmount || 0) / (emergencyGoal.targetAmount || 1)) * 100);
+      if (emergencyPct < 60) {
+        return {
+          type: 'warning',
+          icon: '🛡️',
+          text: `صندوق الأمان المالي "${emergencyGoal.name}" عند نسبة ${emergencyPct}% — يُستحسن توجيه الفائض إليه أولاً لبناء شبكة طوارئ قوية.`
+        };
+      }
+    }
+
+    // B. Check for goal closest to completion (>= 65% or remaining <= 150)
+    const closestGoal = [...incompleteGoals].sort((a, b) => {
+      const aPct = (a.currentAmount || 0) / (a.targetAmount || 1);
+      const bPct = (b.currentAmount || 0) / (b.targetAmount || 1);
+      return bPct - aPct;
+    })[0];
+
+    if (closestGoal) {
+      const target = closestGoal.targetAmount || 1;
+      const current = closestGoal.currentAmount || 0;
+      const remaining = Math.max(0, target - current);
+      const pct = Math.round((current / target) * 100);
+
+      if (pct >= 65 || remaining <= 150) {
+        return {
+          type: 'highlight',
+          icon: '🎯',
+          text: `أنت على بُعد ${formatCurrency(remaining, currency)} فقط (${pct}%) من تحقيق هدفك "${closestGoal.name}" بالكامل!`
+        };
+      }
+    }
+
+    // C. Check for goal with monthly savings target
+    const goalWithMonthly = incompleteGoals.find(g => g.monthlySavingsTarget && g.monthlySavingsTarget > 0);
+    if (goalWithMonthly) {
+      return {
+        type: 'info',
+        icon: '💡',
+        text: `الالتزام بقسط ${formatCurrency(goalWithMonthly.monthlySavingsTarget!, currency)}/شهر لهدف "${goalWithMonthly.name}" يضمن تحقيقه في الموعد المحدد.`
+      };
+    }
+
+    return {
+      type: 'info',
+      icon: '✨',
+      text: 'الادخار التراكمي المنتظم عبر تخصيص جزء من كل دخل يحقق أهدافك بأسرع مما تتوقع.'
+    };
+  }, [goals, currency]);
 
   const handleFastDeposit = (goal: Goal, amount: number) => {
     hapticFeedback('success');
@@ -88,8 +182,26 @@ export const GoalsGridView: React.FC<GoalsGridViewProps> = ({
   return (
     <div className="space-y-4 text-right" dir="rtl">
       
+      {/* Smart Insight Line */}
+      {smartInsight && (
+        <div className={cn(
+          "px-4 py-3 rounded-2xl border flex items-center gap-2.5 text-xs font-bold transition-all",
+          smartInsight.type === 'highlight'
+            ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200"
+            : smartInsight.type === 'warning'
+              ? "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200"
+              : smartInsight.type === 'success'
+                ? "bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800 text-indigo-900 dark:text-indigo-200"
+                : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
+        )}>
+          <span className="text-base shrink-0 leading-none">{smartInsight.icon}</span>
+          <span className="leading-relaxed flex-1">{smartInsight.text}</span>
+        </div>
+      )}
+
+      {/* Grid of Goals (Sorted by priority) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {goals.map((goal) => {
+        {sortedGoals.map((goal) => {
           const target = goal.targetAmount || 1;
           const current = goal.currentAmount || 0;
           const percent = Math.min(100, Math.round((current / target) * 100));
@@ -123,6 +235,8 @@ export const GoalsGridView: React.FC<GoalsGridViewProps> = ({
 
           const linkedCategory = goal.linkedCategoryId ? categories.find(c => c.id === goal.linkedCategoryId) : null;
           const isBaby = goal.name.includes('Baby') || goal.name.includes('الرضيع');
+          const isEssential = goal.isEmergencyFund || goal.goalPriority === 'essential';
+          const isFamily = goal.goalPriority === 'family' || isBaby;
 
           return (
             <div
@@ -131,36 +245,46 @@ export const GoalsGridView: React.FC<GoalsGridViewProps> = ({
                 "bg-white dark:bg-slate-900 rounded-3xl p-5 border shadow-xs flex flex-col justify-between transition-all relative overflow-hidden",
                 isCompleted 
                   ? "border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/10 dark:bg-emerald-950/10" 
-                  : goal.isEmergencyFund
-                    ? "border-amber-200/80 dark:border-amber-900/40"
-                    : isBaby
-                      ? "border-cyan-200/80 dark:border-cyan-900/40"
+                  : isEssential
+                    ? "border-rose-200/90 dark:border-rose-900/40 bg-rose-50/5"
+                    : isFamily
+                      ? "border-indigo-200/80 dark:border-indigo-900/40"
                       : "border-slate-200/80 dark:border-slate-800"
               )}
             >
               <div>
-                {/* Card Top: Icon, Tags, and Action Menu */}
+                {/* Card Top: Icon, Priority Tag, and Action Menu */}
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2.5">
                     <div className={cn(
                       "w-10 h-10 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-xs",
                       isCompleted ? "bg-emerald-500" :
-                      goal.isEmergencyFund ? "bg-amber-500" :
-                      isBaby ? "bg-cyan-500" : "bg-indigo-600"
+                      isEssential ? "bg-rose-500" :
+                      isFamily ? "bg-indigo-600" : "bg-slate-700 dark:bg-slate-800 text-slate-200"
                     )}>
                       {isCompleted ? <CheckCircle2 size={20} /> :
-                       goal.isEmergencyFund ? <ShieldCheck size={20} /> :
-                       isBaby ? <Baby size={20} /> : <Target size={20} />}
+                       isEssential ? <ShieldCheck size={20} /> :
+                       isFamily ? <Users size={20} /> : <Target size={20} />}
                     </div>
 
                     <div>
                       <h4 className="text-sm font-black text-slate-900 dark:text-white leading-tight line-clamp-1">
                         {goal.name}
                       </h4>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        {goal.isEmergencyFund && (
-                          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/40">
-                            صندوق طوارئ
+                      <div className="flex flex-wrap items-center gap-1 mt-1">
+                        {isEssential && (
+                          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/40">
+                            🚨 ضروري / طارئ
+                          </span>
+                        )}
+                        {!isEssential && isFamily && (
+                          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-900/40">
+                            👨‍👩‍👧 عائلي
+                          </span>
+                        )}
+                        {!isEssential && !isFamily && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500">
+                            🎯 شخصي
                           </span>
                         )}
                         {linkedCategory && (
@@ -227,14 +351,14 @@ export const GoalsGridView: React.FC<GoalsGridViewProps> = ({
                       className={cn(
                         "h-full rounded-full transition-all",
                         isCompleted ? "bg-emerald-500" :
-                        goal.isEmergencyFund ? "bg-amber-500" :
-                        isBaby ? "bg-cyan-500" : "bg-indigo-600"
+                        isEssential ? "bg-rose-500" :
+                        isFamily ? "bg-indigo-600" : "bg-teal-500"
                       )}
                     />
                   </div>
 
                   <div className="flex justify-between items-center text-[10px] font-bold text-slate-400">
-                    <span>نسبة الإنجاز: <strong className={isCompleted ? "text-emerald-500" : "text-slate-700 dark:text-slate-200"}>{percent}%</strong></span>
+                    <span>نسبة الإنجاز: <strong className={isCompleted ? "text-emerald-500 font-black" : "text-slate-700 dark:text-slate-200"}>{percent}%</strong></span>
                     <span>المتبقي: {formatCurrency(remaining, currency)}</span>
                   </div>
                 </div>
@@ -284,7 +408,7 @@ export const GoalsGridView: React.FC<GoalsGridViewProps> = ({
                       </button>
                     </div>
 
-                    {/* Quick Quick Amount buttons */}
+                    {/* Fast Quick Amount buttons */}
                     <div className="flex gap-1">
                       {[10, 20, 50, 100].map(amt => (
                         <button

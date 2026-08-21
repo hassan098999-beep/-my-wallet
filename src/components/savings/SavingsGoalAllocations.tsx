@@ -63,7 +63,7 @@ export const SavingsGoalAllocations: React.FC<SavingsGoalAllocationsProps> = ({
             title="لا توجد أهداف ادخارية مسجلة حالياً"
             description="أضف أهدافك الادخارية المحددة لتقوم بربط حركة ميزانيتك المباشرة واستخراج الفائض المالي!"
             actionLabel="إنشاء وتحديد هدف ادخاري الآن"
-            onAction={() => window.location.hash = '#/goals'}
+            onAction={() => window.location.hash = '#/savings'}
           />
         </div>
       )}
