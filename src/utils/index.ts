@@ -35,7 +35,7 @@ export function getBudgetRange(monthStr: string, firstDay: number = 1) {
   const [year, month] = monthStr.split('-').map(Number);
   const budgetMonthDate = new Date(year, month - 1, 1);
   
-  if (firstDay === 1) {
+  if (!firstDay || firstDay === 1) {
     const start = startOfMonth(budgetMonthDate);
     const end = endOfMonth(budgetMonthDate);
     start.setHours(0, 0, 0, 0);
@@ -43,11 +43,12 @@ export function getBudgetRange(monthStr: string, firstDay: number = 1) {
     return { start, end };
   }
 
-  // If firstDay = 25, and monthStr = 2026-03
-  // Start is 2026-02-25
-  // End is 2026-03-24
-  const start = setDate(subMonths(budgetMonthDate, 1), firstDay);
-  const end = subDays(setDate(budgetMonthDate, firstDay), 1);
+  // If firstDay = 10, and monthStr = 2026-08
+  // Start is 2026-08-10
+  // End is 2026-09-09
+  const start = setDate(budgetMonthDate, firstDay);
+  const nextMonthDate = addMonths(budgetMonthDate, 1);
+  const end = subDays(setDate(nextMonthDate, firstDay), 1);
   
   // Set times to cover full days
   start.setHours(0, 0, 0, 0);
@@ -57,6 +58,13 @@ export function getBudgetRange(monthStr: string, firstDay: number = 1) {
 }
 
 export function getBudgetMonth(date: Date, firstDay: number = 1): string {
+  if (!firstDay || firstDay === 1) {
+    return format(date, 'yyyy-MM');
+  }
+  // If firstDay = 10, then dates 1-9 belong to previous month's budget cycle
+  if (date.getDate() < firstDay) {
+    return format(subMonths(date, 1), 'yyyy-MM');
+  }
   return format(date, 'yyyy-MM');
 }
 

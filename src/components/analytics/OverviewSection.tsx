@@ -276,7 +276,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
           },
           { 
             label: 'أعلى يوم صرفاً', 
-            value: highestExpenseDay.date !== '-' ? `${highestExpenseDay.fullDate}` : '-', 
+            value: highestExpenseDay.date !== '-' && highestExpenseDay.expenseAmount > 0 ? `${highestExpenseDay.fullDate}` : '-', 
             icon: <Flame size={14} className="text-rose-500" />,
             sub: highestExpenseDay.expenseAmount > 0 ? formatCurrency(highestExpenseDay.expenseAmount, currency) : 'لا يوجد'
           },

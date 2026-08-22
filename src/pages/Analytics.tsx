@@ -115,10 +115,10 @@ const Analytics = () => {
     const now = new Date();
 
     if (preset === 'this_month') {
-      updateSelectedMonth(getBudgetMonth(now, firstDayOfMonth));
+      updateSelectedMonth(format(now, 'yyyy-MM'));
     } else if (preset === 'last_month') {
       const prev = subMonths(now, 1);
-      updateSelectedMonth(getBudgetMonth(prev, firstDayOfMonth));
+      updateSelectedMonth(format(prev, 'yyyy-MM'));
     } else if (preset === 'last_3_months') {
       setStartDate(format(subMonths(now, 3), 'yyyy-MM-dd'));
       setEndDate(format(now, 'yyyy-MM-dd'));
@@ -137,15 +137,30 @@ const Analytics = () => {
   }, [periodPreset, selectedMonth, startDate, endDate, expenses.length, income.length]);
 
   const dateRange = useMemo(() => {
-    if (periodPreset === 'this_month' || periodPreset === 'last_month') {
-      return getBudgetRange(selectedMonth, firstDayOfMonth);
+    if (periodPreset === 'this_month' || periodPreset === 'last_month' || periodPreset === 'custom') {
+      try {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const budgetMonthDate = new Date(year, month - 1, 1);
+        const start = startOfMonth(budgetMonthDate);
+        const end = endOfMonth(budgetMonthDate);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        return { start, end };
+      } catch {
+        const now = new Date();
+        const start = startOfMonth(now);
+        const end = endOfMonth(now);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        return { start, end };
+      }
     } else {
       return {
         start: parseISO(startDate),
         end: parseISO(endDate)
       };
     }
-  }, [periodPreset, selectedMonth, startDate, endDate, firstDayOfMonth]);
+  }, [periodPreset, selectedMonth, startDate, endDate]);
 
   const filteredExpenses = useMemo(() => {
     const { start, end } = dateRange;
@@ -235,7 +250,11 @@ const Analytics = () => {
 
   const highestExpenseDay = useMemo(() => {
     if (dailyData.length === 0) return { date: '-', expenseAmount: 0, fullDate: '-' };
-    return dailyData.reduce((max, day) => day.expenseAmount > max.expenseAmount ? day : max, dailyData[0]);
+    const max = dailyData.reduce((max, day) => day.expenseAmount > max.expenseAmount ? day : max, dailyData[0]);
+    if (!max || max.expenseAmount <= 0) {
+      return { date: '-', expenseAmount: 0, fullDate: '-' };
+    }
+    return max;
   }, [dailyData]);
 
   const averageDailyExpense = useMemo(() => 
@@ -279,10 +298,23 @@ const Analytics = () => {
   }, [dailyData]);
 
   const prevMonthDateRange = useMemo(() => {
-    if (periodPreset === 'this_month' || periodPreset === 'last_month') {
-      const d = new Date(dateRange.start);
-      d.setDate(d.getDate() - 15);
-      return getBudgetRange(format(d, 'yyyy-MM'), firstDayOfMonth);
+    if (periodPreset === 'this_month' || periodPreset === 'last_month' || periodPreset === 'custom') {
+      try {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const prevMonthDate = subMonths(new Date(year, month - 1, 1), 1);
+        const start = startOfMonth(prevMonthDate);
+        const end = endOfMonth(prevMonthDate);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        return { start, end };
+      } catch {
+        const prev = subMonths(new Date(), 1);
+        const start = startOfMonth(prev);
+        const end = endOfMonth(prev);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        return { start, end };
+      }
     }
     
     const duration = dateRange.end.getTime() - dateRange.start.getTime();
@@ -290,7 +322,7 @@ const Analytics = () => {
       start: new Date(dateRange.start.getTime() - duration),
       end: new Date(dateRange.end.getTime() - duration)
     };
-  }, [dateRange, periodPreset, firstDayOfMonth]);
+  }, [dateRange, periodPreset, selectedMonth]);
 
   const prevMonthExpenses = useMemo(() => {
     const { start, end } = prevMonthDateRange;
@@ -326,15 +358,15 @@ const Analytics = () => {
     const expenseMap = expenses.reduce((acc, e) => {
       if (e.isTransfer) return acc;
       const d = e.parsedDate || parseISO(e.date);
-      const m = getBudgetMonth(d, firstDayOfMonth);
+      const m = format(d, 'yyyy-MM');
       acc[m] = (acc[m] || 0) + e.amount;
       return acc;
     }, {} as Record<string, number>);
 
     const incomeMap = income.reduce((acc, i) => {
       if (i.isTransfer) return acc;
-      const d = (e: any) => (e.parsedDate || parseISO(e.date));
-      const m = getBudgetMonth(d(i), firstDayOfMonth);
+      const d = i.parsedDate || parseISO(i.date);
+      const m = format(d, 'yyyy-MM');
       acc[m] = (acc[m] || 0) + i.amount;
       return acc;
     }, {} as Record<string, number>);
@@ -352,7 +384,7 @@ const Analytics = () => {
         net: incomeAmount - expenseAmount
       };
     });
-  }, [expenses, income, firstDayOfMonth]);
+  }, [expenses, income]);
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
