@@ -42,7 +42,7 @@ interface OverviewSectionProps {
   noSpendDaysCount?: number;
 }
 
-export const OverviewSection: React.FC<OverviewSectionProps> = ({
+export const OverviewSection: React.FC<OverviewSectionProps> = React.memo(({
   netBalance,
   totalMonthlyIncome,
   totalMonthlyExpense,
@@ -63,7 +63,9 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
   overBudgetDaysCount = 0,
   noSpendDaysCount = 0,
 }) => {
-  const savingsRate = totalMonthlyIncome > 0 ? Math.max(0, Math.round((netBalance / totalMonthlyIncome) * 100)) : 0;
+  const savingsRate = React.useMemo(() => {
+    return totalMonthlyIncome > 0 ? Math.max(0, Math.round((netBalance / totalMonthlyIncome) * 100)) : 0;
+  }, [totalMonthlyIncome, netBalance]);
 
   // Calculate comprehensive Financial Health Score (0 - 100)
   const healthScore = React.useMemo(() => {
@@ -95,6 +97,10 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
     if (healthScore >= 40) return { label: 'يحتاج إلى ترشيد ⚠️', color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20', desc: 'الإنفاق متقارب مع الدخل، ينصح بمراجعة الرغبات والكماليات.' };
     return { label: 'في دائرة الخطر 🚨', color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/20', desc: 'المصاريف تفوق الدخل أو تقترب من استنزافه بالكامل، يتطلب تدخلاً سريعاً.' };
   }, [healthScore]);
+
+  const topAdvices = React.useMemo(() => {
+    return aiInsights?.advice ? aiInsights.advice.slice(0, 2) : [];
+  }, [aiInsights?.advice]);
 
   return (
     <div className="space-y-6 text-right" dir="rtl">
@@ -382,9 +388,9 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
             </Link>
           </div>
 
-          {aiInsights?.advice && aiInsights.advice.length > 0 ? (
+          {topAdvices.length > 0 ? (
             <div className="space-y-2.5">
-              {aiInsights.advice.slice(0, 2).map((item: any, idx: number) => (
+              {topAdvices.map((item: any, idx: number) => (
                 <motion.div
                   key={idx}
                   variants={itemVariants}
@@ -438,4 +444,6 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
       </div>
     </div>
   );
-};
+});
+
+OverviewSection.displayName = 'OverviewSection';

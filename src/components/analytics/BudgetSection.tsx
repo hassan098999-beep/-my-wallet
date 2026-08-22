@@ -30,7 +30,7 @@ interface BudgetSectionProps {
   itemVariants: Variants;
 }
 
-export const BudgetSection: React.FC<BudgetSectionProps> = ({
+export const BudgetSection: React.FC<BudgetSectionProps> = React.memo(({
   budget,
   rangeType,
   selectedMonth,
@@ -42,22 +42,23 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
   filteredExpenses,
   itemVariants,
 }) => {
-  // Computations for spending structure by category nature
+  // Computations for spending structure by category nature (50/30/20 framework)
   const budgetRuleStats = React.useMemo(() => {
-    const needAmt = filteredExpenses
-      .filter(e => {
-        const cat = categories.find(c => c.id === e.categoryId);
-        return cat?.type === 'need' || !cat?.type;
-      })
-      .reduce((sum, e) => sum + e.amount, 0);
-      
-    const wantAmt = filteredExpenses
-      .filter(e => categories.find(c => c.id === e.categoryId)?.type === 'want')
-      .reduce((sum, e) => sum + e.amount, 0);
-      
-    const savingAmt = filteredExpenses
-      .filter(e => categories.find(c => c.id === e.categoryId)?.type === 'saving')
-      .reduce((sum, e) => sum + e.amount, 0);
+    // Build category type lookup map for O(1) checks
+    const catTypeMap = new Map<string, string>();
+    categories.forEach(c => catTypeMap.set(c.id, c.type || 'need'));
+
+    let needAmt = 0;
+    let wantAmt = 0;
+    let savingAmt = 0;
+
+    for (let i = 0; i < filteredExpenses.length; i++) {
+      const e = filteredExpenses[i];
+      const type = catTypeMap.get(e.categoryId) || 'need';
+      if (type === 'want') wantAmt += e.amount;
+      else if (type === 'saving') savingAmt += e.amount;
+      else needAmt += e.amount;
+    }
 
     const totalCalculated = totalMonthlyExpense > 0 ? totalMonthlyExpense : 1;
     const needPercent = (needAmt / totalCalculated) * 100;
@@ -121,8 +122,45 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
 
   const hasMasterBudget = Boolean(budget && budget.amount > 0);
   const budgetAmount = budget?.amount || 0;
-  const budgetSpentPercent = hasMasterBudget ? Math.min(100, Math.round((totalMonthlyExpense / budgetAmount) * 100)) : 0;
+  const budgetSpentPercent = React.useMemo(() => {
+    return hasMasterBudget ? Math.min(100, Math.round((totalMonthlyExpense / budgetAmount) * 100)) : 0;
+  }, [hasMasterBudget, totalMonthlyExpense, budgetAmount]);
   const isOverBudget = hasMasterBudget && totalMonthlyExpense > budgetAmount;
+
+  // Memoized processed category budget progress items
+  const categoryBudgetItems = React.useMemo(() => {
+    if (!budget?.categoryBudgets) return [];
+    
+    const catMap = new Map(categories.map(c => [c.id, c]));
+    const spentMap = new Map(categoryData.map(d => [d.id, d.value]));
+
+    return Object.entries(budget.categoryBudgets)
+      .map(([categoryId, amount]) => {
+        const category = catMap.get(categoryId);
+        if (!category) return null;
+        const spent = spentMap.get(categoryId) || 0;
+        const numericAmount = Number(amount) || 0;
+        const percentage = numericAmount > 0 ? (spent / numericAmount) * 100 : 0;
+        const isCatOver = spent > numericAmount;
+
+        return {
+          categoryId,
+          category,
+          spent,
+          numericAmount,
+          percentage,
+          isCatOver
+        };
+      })
+      .filter(Boolean) as {
+        categoryId: string;
+        category: Category;
+        spent: number;
+        numericAmount: number;
+        percentage: number;
+        isCatOver: boolean;
+      }[];
+  }, [budget?.categoryBudgets, categories, categoryData]);
 
   return (
     <div className="space-y-6 text-right" dir="rtl">
@@ -195,7 +233,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
           </div>
 
           {/* Individual Category Caps */}
-          {budget?.categoryBudgets && Object.keys(budget.categoryBudgets).length > 0 && (
+          {categoryBudgetItems.length > 0 && (
             <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
               <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-1.5">
                 <Sliders size={13} className="text-indigo-500" />
@@ -203,50 +241,41 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
               </h4>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {Object.entries(budget.categoryBudgets).map(([categoryId, amount]) => {
-                  const category = categories.find(c => c.id === categoryId);
-                  if (!category) return null;
-                  const spent = categoryData.find(d => d.id === categoryId)?.value || 0;
-                  const numericAmount = Number(amount) || 0;
-                  const percentage = numericAmount > 0 ? (spent / numericAmount) * 100 : 0;
-                  const isCatOver = spent > numericAmount;
-
-                  return (
-                    <div 
-                      key={categoryId} 
-                      className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 flex flex-col justify-between"
-                    >
-                      <div className="flex justify-between items-center mb-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0" style={{ backgroundColor: category.color }}>
-                            <DynamicIcon name={category.icon || 'Circle'} size={12} />
-                          </div>
-                          <span className="text-xs font-black text-slate-800 dark:text-slate-200 truncate">{category.name}</span>
+                {categoryBudgetItems.map(({ categoryId, category, spent, numericAmount, percentage, isCatOver }) => (
+                  <div 
+                    key={categoryId} 
+                    className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 flex flex-col justify-between"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0" style={{ backgroundColor: category.color }}>
+                          <DynamicIcon name={category.icon || 'Circle'} size={12} />
                         </div>
-                        <div className="text-left font-mono shrink-0 text-xs">
-                          <span className={cn("font-black", isCatOver ? "text-rose-500" : "text-slate-900 dark:text-white")}>
-                            {formatCurrency(spent, currency)}
-                          </span>
-                          <span className="text-[10px] text-slate-400 mx-1">/</span>
-                          <span className="text-[10px] text-slate-400">{formatCurrency(numericAmount, currency)}</span>
-                        </div>
+                        <span className="text-xs font-black text-slate-800 dark:text-slate-200 truncate">{category.name}</span>
                       </div>
-
-                      <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.min(100, percentage)}%` }}
-                          transition={{ duration: 0.8 }}
-                          className={cn(
-                            "h-full rounded-full",
-                            isCatOver ? "bg-rose-500" : 
-                            percentage > 85 ? "bg-amber-500" : "bg-emerald-500"
-                          )}
-                        />
+                      <div className="text-left font-mono shrink-0 text-xs">
+                        <span className={cn("font-black", isCatOver ? "text-rose-500" : "text-slate-900 dark:text-white")}>
+                          {formatCurrency(spent, currency)}
+                        </span>
+                        <span className="text-[10px] text-slate-400 mx-1">/</span>
+                        <span className="text-[10px] text-slate-400">{formatCurrency(numericAmount, currency)}</span>
                       </div>
                     </div>
-                  );
-                })}
+
+                    <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(100, percentage)}%` }}
+                        transition={{ duration: 0.8 }}
+                        className={cn(
+                          "h-full rounded-full",
+                          isCatOver ? "bg-rose-500" : 
+                          percentage > 85 ? "bg-amber-500" : "bg-emerald-500"
+                        )}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -354,4 +383,6 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
       </div>
     </div>
   );
-};
+});
+
+BudgetSection.displayName = 'BudgetSection';

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import { cn, formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth, safeStorage } from '../utils';
@@ -30,12 +30,32 @@ import { useBehavioralEngine } from '../hooks/useBehavioralEngine';
 
 import PageHeader from '../components/ui/PageHeader';
 import { SeptemberToAugustBanner } from '../components/SeptemberToAugustBanner';
+import { SmartMonthAdviceBanner } from '../components/analytics/SmartMonthAdviceBanner';
 import { OverviewSection } from '../components/analytics/OverviewSection';
 import { BudgetSection } from '../components/analytics/BudgetSection';
 import { ChartsSection } from '../components/analytics/ChartsSection';
 import { WeeklySection } from '../components/analytics/WeeklySection';
 
 type PeriodPreset = 'this_month' | 'last_month' | 'last_3_months' | 'this_year' | 'custom';
+
+// Static animation variants defined outside component to preserve stable object references for memoized children
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.15 } }
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 6 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } }
+};
+
+const PERIOD_PRESETS: { id: PeriodPreset; label: string }[] = [
+  { id: 'this_month', label: 'هذا الشهر' },
+  { id: 'last_month', label: 'الشهر الماضي' },
+  { id: 'last_3_months', label: '3 أشهر' },
+  { id: 'this_year', label: 'السنة' },
+  { id: 'custom', label: 'مخصص' }
+];
 
 const Analytics = () => {
   const { expenses, income = [], categories, currency, budgets, dailyBudget, firstDayOfMonth, aiInsights } = useAppContext();
@@ -48,12 +68,13 @@ const Analytics = () => {
     return safeStorage.getItem('masarifi_analytics_selected_month') || getBudgetMonth(new Date(), firstDayOfMonth);
   }); // YYYY-MM
 
-  const updateSelectedMonth = (val: string) => {
+  const updateSelectedMonth = useCallback((val: string) => {
     setSelectedMonth(val);
     safeStorage.setItem('masarifi_analytics_selected_month', val);
-  };
-  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  }, []);
+
+  const [startDate, setStartDate] = useState(() => format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(() => format(new Date(), 'yyyy-MM-dd'));
   
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -67,6 +88,10 @@ const Analytics = () => {
     return 'overview';
   });
   const [chartSubTab, setChartSubTab] = useState<'daily' | 'monthly' | 'cumulative'>('daily');
+
+  const handleSetChartSubTab = useCallback((tab: 'daily' | 'monthly' | 'cumulative') => {
+    setChartSubTab(tab);
+  }, []);
 
   // React to search params or location state changes
   useEffect(() => {
@@ -88,7 +113,7 @@ const Analytics = () => {
     }
   }, [selectedMonth]);
 
-  const handlePrevMonth = () => {
+  const handlePrevMonth = useCallback(() => {
     try {
       const d = parseISO(`${selectedMonth}-01`);
       const prev = subMonths(d, 1);
@@ -96,9 +121,9 @@ const Analytics = () => {
       setPeriodPreset('custom');
       hapticFeedback('light');
     } catch {}
-  };
+  }, [selectedMonth, updateSelectedMonth]);
 
-  const handleNextMonth = () => {
+  const handleNextMonth = useCallback(() => {
     try {
       const d = parseISO(`${selectedMonth}-01`);
       const next = subMonths(d, -1);
@@ -106,10 +131,10 @@ const Analytics = () => {
       setPeriodPreset('custom');
       hapticFeedback('light');
     } catch {}
-  };
+  }, [selectedMonth, updateSelectedMonth]);
 
   // Handle Preset Changes
-  const handlePresetSelect = (preset: PeriodPreset) => {
+  const handlePresetSelect = useCallback((preset: PeriodPreset) => {
     hapticFeedback('light');
     setPeriodPreset(preset);
     const now = new Date();
@@ -126,7 +151,7 @@ const Analytics = () => {
       setStartDate(format(startOfYear(now), 'yyyy-MM-dd'));
       setEndDate(format(endOfYear(now), 'yyyy-MM-dd'));
     }
-  };
+  }, [updateSelectedMonth]);
 
   useEffect(() => {
     setIsReady(false);
@@ -386,16 +411,6 @@ const Analytics = () => {
     });
   }, [expenses, income]);
 
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.15 } }
-  };
-
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 6 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } }
-  };
-
   return (
     <motion.div 
       variants={containerVariants}
@@ -412,16 +427,10 @@ const Analytics = () => {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
             {/* Quick Period Presets */}
             <div className="flex items-center bg-slate-100 dark:bg-slate-800/90 p-1 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 gap-1 overflow-x-auto no-scrollbar max-w-full">
-              {[
-                { id: 'this_month', label: 'هذا الشهر' },
-                { id: 'last_month', label: 'الشهر الماضي' },
-                { id: 'last_3_months', label: '3 أشهر' },
-                { id: 'this_year', label: 'السنة' },
-                { id: 'custom', label: 'مخصص' }
-              ].map(p => (
+              {PERIOD_PRESETS.map(p => (
                 <button
                   key={p.id}
-                  onClick={() => handlePresetSelect(p.id as PeriodPreset)}
+                  onClick={() => handlePresetSelect(p.id)}
                   className={cn(
                     "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0",
                     periodPreset === p.id 
@@ -480,6 +489,22 @@ const Analytics = () => {
 
       {/* September to August Date Correction Banner */}
       <SeptemberToAugustBanner />
+
+      {/* Smart Month Advice Banner for Empty / Incomplete Data */}
+      <SmartMonthAdviceBanner
+        selectedMonth={selectedMonth}
+        periodPreset={periodPreset}
+        filteredExpensesCount={filteredExpenses.length}
+        filteredIncomeCount={filteredIncome.length}
+        allExpenses={expenses}
+        allIncome={income}
+        currency={currency}
+        onSelectMonth={(m) => {
+          updateSelectedMonth(m);
+          setPeriodPreset('custom');
+        }}
+        onSelectPreset={(preset) => handlePresetSelect(preset)}
+      />
 
       {/* 2. Unified Refined 4-Tab Navigation Bar with Full Mobile Horizontal Scroll Support */}
       <motion.div 

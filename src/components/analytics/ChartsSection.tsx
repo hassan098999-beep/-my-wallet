@@ -37,7 +37,7 @@ interface ChartsSectionProps {
   itemVariants?: any;
 }
 
-export const ChartsSection: React.FC<ChartsSectionProps> = ({
+export const ChartsSection: React.FC<ChartsSectionProps> = React.memo(({
   chartSubTab,
   setChartSubTab,
   isReady = true,
@@ -64,6 +64,24 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
       };
     });
   }, [dailyData]);
+
+  // Memoize top categories with percentages precomputed
+  const topCategoriesWithPercent = React.useMemo(() => {
+    const total = totalMonthlyExpense > 0 ? totalMonthlyExpense : 1;
+    return (categoryData || []).slice(0, 5).map(cat => ({
+      ...cat,
+      percent: ((cat.value / total) * 100).toFixed(0)
+    }));
+  }, [categoryData, totalMonthlyExpense]);
+
+  // Memoize top income sources with percentages precomputed
+  const topIncomeSourcesWithPercent = React.useMemo(() => {
+    const total = totalMonthlyIncome > 0 ? totalMonthlyIncome : 1;
+    return (incomeSourceData || []).slice(0, 5).map(source => ({
+      ...source,
+      percent: ((source.value / total) * 100).toFixed(0)
+    }));
+  }, [incomeSourceData, totalMonthlyIncome]);
 
   const hasDailyData = dailyData && dailyData.length > 0;
   const hasMonthlyData = monthlyData && monthlyData.length > 0;
@@ -293,7 +311,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
               </div>
 
               <div className="space-y-1.5 sm:col-span-6 max-h-44 overflow-y-auto pr-1">
-                {categoryData.slice(0, 5).map((cat, i) => (
+                {topCategoriesWithPercent.map((cat, i) => (
                   <div key={i} className="flex items-center justify-between text-xs p-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
@@ -302,7 +320,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
                     <div className="text-left font-mono font-bold shrink-0">
                       <span className="text-slate-900 dark:text-white">{formatCurrency(cat.value, currency)}</span>
                       <span className="text-[10px] text-slate-400 mr-1.5">
-                        ({((cat.value / (totalMonthlyExpense || 1)) * 100).toFixed(0)}%)
+                        ({cat.percent}%)
                       </span>
                     </div>
                   </div>
@@ -364,7 +382,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
               </div>
 
               <div className="space-y-1.5 sm:col-span-6 max-h-44 overflow-y-auto pr-1">
-                {incomeSourceData.slice(0, 5).map((source, i) => (
+                {topIncomeSourcesWithPercent.map((source, i) => (
                   <div key={i} className="flex items-center justify-between text-xs p-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: source.color }} />
@@ -373,7 +391,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
                     <div className="text-left font-mono font-bold shrink-0">
                       <span className="text-slate-900 dark:text-white">{formatCurrency(source.value, currency)}</span>
                       <span className="text-[10px] text-slate-400 mr-1.5">
-                        ({((source.value / (totalMonthlyIncome || 1)) * 100).toFixed(0)}%)
+                        ({source.percent}%)
                       </span>
                     </div>
                   </div>
@@ -389,4 +407,6 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({
       </div>
     </div>
   );
-};
+});
+
+ChartsSection.displayName = 'ChartsSection';

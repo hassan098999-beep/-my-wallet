@@ -30,7 +30,7 @@ interface WeeklySectionProps {
   itemVariants: Variants;
 }
 
-export const WeeklySection: React.FC<WeeklySectionProps> = ({
+export const WeeklySection: React.FC<WeeklySectionProps> = React.memo(({
   expenses,
   categories,
   currency,
@@ -38,13 +38,23 @@ export const WeeklySection: React.FC<WeeklySectionProps> = ({
 }) => {
   // 1. Generate the last 7 days (including today)
   const currentWeekDays = useMemo(() => {
-    return Array.from({ length: 7 }, (_, i) => subDays(new Date(), 6 - i));
+    const today = new Date();
+    return Array.from({ length: 7 }, (_, i) => subDays(today, 6 - i));
   }, []);
 
   // 2. Map day name and calculate spending for each day
   const weeklyData = useMemo(() => {
     const ARABIC_DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
     
+    // Pre-aggregate expenses by yyyy-MM-dd date key for fast O(1) lookups
+    const expenseByDate: Record<string, number> = {};
+    for (let i = 0; i < expenses.length; i++) {
+      const e = expenses[i];
+      if (e.isTransfer) continue;
+      const key = e.date.split('T')[0];
+      expenseByDate[key] = (expenseByDate[key] || 0) + e.amount;
+    }
+
     return currentWeekDays.map((day, index) => {
       const dayOfWeekIndex = day.getDay();
       let dayLabel = ARABIC_DAYS[dayOfWeekIndex];
@@ -59,23 +69,8 @@ export const WeeklySection: React.FC<WeeklySectionProps> = ({
       const prevWeekDay = subDays(day, 7);
       const prevDateStr = format(prevWeekDay, 'yyyy-MM-dd');
 
-      // Calculate spent this week
-      const thisWeekSpent = expenses
-        .filter(e => {
-          if (e.isTransfer) return false;
-          const eDate = e.date.split('T')[0];
-          return eDate === dateStr;
-        })
-        .reduce((sum, e) => sum + e.amount, 0);
-
-      // Calculate spent same day last week
-      const lastWeekSpent = expenses
-        .filter(e => {
-          if (e.isTransfer) return false;
-          const eDate = e.date.split('T')[0];
-          return eDate === prevDateStr;
-        })
-        .reduce((sum, e) => sum + e.amount, 0);
+      const thisWeekSpent = expenseByDate[dateStr] || 0;
+      const lastWeekSpent = expenseByDate[prevDateStr] || 0;
 
       return {
         dayLabel,
@@ -102,32 +97,39 @@ export const WeeklySection: React.FC<WeeklySectionProps> = ({
 
   // Category and Spike analysis
   const categoryAnalysis = useMemo(() => {
-    const thisWeekStartStr = format(subDays(new Date(), 6), 'yyyy-MM-dd');
-    const todayStr = format(new Date(), 'yyyy-MM-dd');
-    const prevWeekStartStr = format(subDays(new Date(), 13), 'yyyy-MM-dd');
-    const prevWeekEndStr = format(subDays(new Date(), 7), 'yyyy-MM-dd');
+    const today = new Date();
+    const thisWeekStartStr = format(subDays(today, 6), 'yyyy-MM-dd');
+    const todayStr = format(today, 'yyyy-MM-dd');
+    const prevWeekStartStr = format(subDays(today, 13), 'yyyy-MM-dd');
+    const prevWeekEndStr = format(subDays(today, 7), 'yyyy-MM-dd');
 
-    const thisWeekExpenses = expenses.filter(e => !e.isTransfer && e.date.split('T')[0] >= thisWeekStartStr && e.date.split('T')[0] <= todayStr);
-    const lastWeekExpenses = expenses.filter(e => !e.isTransfer && e.date.split('T')[0] >= prevWeekStartStr && e.date.split('T')[0] <= prevWeekEndStr);
-
+    let thisWeekCount = 0;
+    let lastWeekCount = 0;
     const catThisSums: Record<string, number> = {};
-    thisWeekExpenses.forEach(e => {
-      catThisSums[e.categoryId] = (catThisSums[e.categoryId] || 0) + e.amount;
-    });
-
     const catLastSums: Record<string, number> = {};
-    lastWeekExpenses.forEach(e => {
-      catLastSums[e.categoryId] = (catLastSums[e.categoryId] || 0) + e.amount;
-    });
+
+    for (let i = 0; i < expenses.length; i++) {
+      const e = expenses[i];
+      if (e.isTransfer) continue;
+      const dStr = e.date.split('T')[0];
+      if (dStr >= thisWeekStartStr && dStr <= todayStr) {
+        thisWeekCount++;
+        catThisSums[e.categoryId] = (catThisSums[e.categoryId] || 0) + e.amount;
+      } else if (dStr >= prevWeekStartStr && dStr <= prevWeekEndStr) {
+        lastWeekCount++;
+        catLastSums[e.categoryId] = (catLastSums[e.categoryId] || 0) + e.amount;
+      }
+    }
 
     let highestCatId = '';
     let highestCatAmount = 0;
-    Object.entries(catThisSums).forEach(([catId, amount]) => {
+    for (const catId in catThisSums) {
+      const amount = catThisSums[catId];
       if (amount > highestCatAmount) {
-         highestCatAmount = amount;
-         highestCatId = catId;
+        highestCatAmount = amount;
+        highestCatId = catId;
       }
-    });
+    }
 
     const highestCategory = categories.find(c => c.id === highestCatId);
     const highestCatLastAmount = catLastSums[highestCatId] || 0;
@@ -136,8 +138,8 @@ export const WeeklySection: React.FC<WeeklySectionProps> = ({
       highestCategory,
       highestCatAmount,
       highestCatLastAmount,
-      thisWeekExpensesCount: thisWeekExpenses.length,
-      lastWeekExpensesCount: lastWeekExpenses.length
+      thisWeekExpensesCount: thisWeekCount,
+      lastWeekExpensesCount: lastWeekCount
     };
   }, [expenses, categories]);
 
@@ -365,4 +367,6 @@ export const WeeklySection: React.FC<WeeklySectionProps> = ({
       </div>
     </div>
   );
-};
+});
+
+WeeklySection.displayName = 'WeeklySection';
