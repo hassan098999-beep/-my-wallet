@@ -15,7 +15,9 @@ import {
   Wallet,
   Zap,
   CheckCircle2,
-  Calendar
+  Calendar,
+  Layers,
+  Percent
 } from 'lucide-react';
 import { formatCurrency, cn, hapticFeedback } from '../../utils';
 import { Link } from 'react-router-dom';
@@ -102,10 +104,174 @@ export const OverviewSection: React.FC<OverviewSectionProps> = React.memo(({
     return aiInsights?.advice ? aiInsights.advice.slice(0, 2) : [];
   }, [aiInsights?.advice]);
 
+  const hasHighestExpense = highestExpenseDay.date !== '-' && highestExpenseDay.expenseAmount > 0;
+
   return (
     <div className="space-y-6 text-right" dir="rtl">
       
-      {/* 1. Primary Financial Health & Net Liquidity Hero Bento */}
+      {/* 1. Primary Daily Tracking Metrics (High Priority - Large Visual Cards) */}
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-1.5 text-xs font-black text-slate-800 dark:text-slate-200">
+            <Activity size={15} className="text-indigo-600 dark:text-indigo-400" />
+            <span>مؤشرات التتبع اليومي ذات الأولوية</span>
+          </div>
+          <span className="text-[10px] text-slate-400 font-semibold">معدلات الاستهلاك والانضباط الفعلي</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
+          
+          {/* Card 1: Highest Spending Day (أعلى يوم صرف) */}
+          <motion.div 
+            variants={itemVariants}
+            className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <span className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-0.5">
+                  أعلى يوم صرفاً
+                </span>
+                <span className="text-xs text-slate-400 font-medium">ذروة النفقات في الفترة</span>
+              </div>
+              <div className="p-2.5 bg-rose-500/10 text-rose-500 rounded-2xl border border-rose-500/20 shrink-0">
+                <Flame size={20} />
+              </div>
+            </div>
+
+            <div className="my-2">
+              <div className="text-2xl sm:text-3xl font-black font-mono text-rose-600 dark:text-rose-400 truncate">
+                {hasHighestExpense ? formatCurrency(highestExpenseDay.expenseAmount, currency) : '0 ' + currency}
+              </div>
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-300 mt-1 flex items-center gap-1.5">
+                <Calendar size={13} className="text-slate-400" />
+                <span>{hasHighestExpense ? highestExpenseDay.fullDate : 'لا توجد مصاريف بعد'}</span>
+              </div>
+            </div>
+
+            <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
+              <span className="text-slate-400 font-medium">مستوى التأثير:</span>
+              <span className={cn("font-bold font-mono", hasHighestExpense ? "text-rose-500" : "text-slate-400")}>
+                {hasHighestExpense && totalMonthlyExpense > 0 
+                  ? `${Math.round((highestExpenseDay.expenseAmount / totalMonthlyExpense) * 100)}% من المصاريف`
+                  : 'عادي'}
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Card 2: Daily Average Spending (متوسط الصرف اليومي) */}
+          <motion.div 
+            variants={itemVariants}
+            className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <span className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-0.5">
+                  متوسط الصرف اليومي
+                </span>
+                <span className="text-xs text-slate-400 font-medium">معدل الحرق والاستنزاف</span>
+              </div>
+              <div className="p-2.5 bg-indigo-500/10 text-indigo-500 rounded-2xl border border-indigo-500/20 shrink-0">
+                <Activity size={20} />
+              </div>
+            </div>
+
+            <div className="my-2">
+              <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 dark:text-white truncate">
+                {formatCurrency(averageDailyExpense, currency)}
+              </div>
+              <div className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+                <Zap size={13} className="text-amber-500" />
+                <span>المعدل اليومي المستهدف: {formatCurrency(dailyBudget, currency)}</span>
+              </div>
+            </div>
+
+            <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
+              <span className="text-slate-400 font-medium">حالة المعدل:</span>
+              <span className={cn(
+                "font-bold font-mono",
+                averageDailyExpense <= dailyBudget ? "text-emerald-500" : "text-amber-500"
+              )}>
+                {averageDailyExpense <= dailyBudget ? 'ضمن السقف الآمن' : 'أعلى من المعدل'}
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Card 3: Zero-Spend Days Count (أيام بدون صرف) */}
+          <motion.div 
+            variants={itemVariants}
+            className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <span className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-0.5">
+                  عدد الأيام بدون صرف
+                </span>
+                <span className="text-xs text-slate-400 font-medium">مؤشر الانضباط والتوفير</span>
+              </div>
+              <div className="p-2.5 bg-emerald-500/10 text-emerald-500 rounded-2xl border border-emerald-500/20 shrink-0">
+                <Award size={20} />
+              </div>
+            </div>
+
+            <div className="my-2">
+              <div className="text-2xl sm:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400 truncate">
+                {noSpendDaysCount} <span className="text-base font-bold text-slate-500">أيام</span>
+              </div>
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-300 mt-1 flex items-center gap-1.5">
+                <CheckCircle2 size={13} className="text-emerald-500" />
+                <span>{noSpendDaysCount >= 5 ? 'انضباط ممتاز جداً' : noSpendDaysCount >= 2 ? 'أداء جيد' : 'فرصة لمزيد من التحكم'}</span>
+              </div>
+            </div>
+
+            <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
+              <span className="text-slate-400 font-medium">أيام التجاوز اليومي:</span>
+              <span className={cn("font-bold font-mono", overBudgetDaysCount > 0 ? "text-amber-500" : "text-emerald-500")}>
+                {overBudgetDaysCount} أيام
+              </span>
+            </div>
+          </motion.div>
+
+        </div>
+      </div>
+
+      {/* 2. Secondary Practical KPI Indicators Row */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {[
+          { 
+            label: 'أكبر فئة استهلاكاً', 
+            value: categoryData.length > 0 ? categoryData[0].name : '-', 
+            icon: <Target size={14} className="text-amber-500" />,
+            sub: categoryData.length > 0 ? formatCurrency(categoryData[0].value, currency) : '-'
+          },
+          { 
+            label: 'صافي التوفير المحقق', 
+            value: `${savingsRate}%`, 
+            icon: <Percent size={14} className="text-emerald-500" />,
+            sub: savingsRate >= 20 ? 'ممتاز (فوق الهدف)' : savingsRate > 0 ? 'مقبول' : 'لا يوجد توفير'
+          },
+          { 
+            label: 'حجم العمليات المسجلة', 
+            value: `${filteredExpensesLength + filteredIncomeLength} عملية`, 
+            icon: <Layers size={14} className="text-indigo-500" />,
+            sub: `${filteredExpensesLength} مصروف / ${filteredIncomeLength} دخل`
+          }
+        ].map((item, idx) => (
+          <motion.div 
+            key={idx}
+            variants={itemVariants} 
+            className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between text-slate-400 mb-1">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{item.label}</span>
+              {item.icon}
+            </div>
+            <span className="text-xs md:text-sm font-black text-slate-900 dark:text-white font-mono truncate">{item.value}</span>
+            <span className="text-[9px] font-bold text-slate-400 truncate mt-0.5">{item.sub}</span>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* 3. Primary Financial Health & Net Liquidity Hero Bento */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Financial Health Score Dial (5 cols on lg) */}
         <motion.div 
@@ -271,50 +437,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = React.memo(({
         </div>
       </div>
 
-      {/* 2. Secondary Practical KPI Indicators Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { 
-            label: 'متوسط الصرف اليومي', 
-            value: formatCurrency(averageDailyExpense, currency), 
-            icon: <Activity size={14} className="text-indigo-500" />,
-            sub: 'معدل الحرق اليومي'
-          },
-          { 
-            label: 'أعلى يوم صرفاً', 
-            value: highestExpenseDay.date !== '-' && highestExpenseDay.expenseAmount > 0 ? `${highestExpenseDay.fullDate}` : '-', 
-            icon: <Flame size={14} className="text-rose-500" />,
-            sub: highestExpenseDay.expenseAmount > 0 ? formatCurrency(highestExpenseDay.expenseAmount, currency) : 'لا يوجد'
-          },
-          { 
-            label: 'أكبر فئة استهلاكاً', 
-            value: categoryData.length > 0 ? categoryData[0].name : '-', 
-            icon: <Target size={14} className="text-amber-500" />,
-            sub: categoryData.length > 0 ? formatCurrency(categoryData[0].value, currency) : '-'
-          },
-          { 
-            label: 'صافي التوفير المحقق', 
-            value: `${savingsRate}%`, 
-            icon: <Award size={14} className="text-emerald-500" />,
-            sub: savingsRate >= 20 ? 'ممتاز (فوق الهدف)' : 'مقبول'
-          }
-        ].map((item, idx) => (
-          <motion.div 
-            key={idx}
-            variants={itemVariants} 
-            className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between"
-          >
-            <div className="flex items-center justify-between text-slate-400 mb-1">
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{item.label}</span>
-              {item.icon}
-            </div>
-            <span className="text-xs md:text-sm font-black text-slate-900 dark:text-white font-mono truncate">{item.value}</span>
-            <span className="text-[9px] font-bold text-slate-400 truncate mt-0.5">{item.sub}</span>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* 3. Behavioral Engine Insights & AI Advisor Tips */}
+      {/* 4. Behavioral Engine Insights & AI Advisor Tips */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-1">
         {/* Behavioral Engine Insights */}
         <div className="space-y-3">

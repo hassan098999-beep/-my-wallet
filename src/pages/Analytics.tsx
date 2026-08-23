@@ -31,6 +31,7 @@ import { useBehavioralEngine } from '../hooks/useBehavioralEngine';
 import PageHeader from '../components/ui/PageHeader';
 import { SeptemberToAugustBanner } from '../components/SeptemberToAugustBanner';
 import { SmartMonthAdviceBanner } from '../components/analytics/SmartMonthAdviceBanner';
+import { AnalyticsHighlightCard } from '../components/analytics/AnalyticsHighlightCard';
 import { OverviewSection } from '../components/analytics/OverviewSection';
 import { BudgetSection } from '../components/analytics/BudgetSection';
 import { ChartsSection } from '../components/analytics/ChartsSection';
@@ -519,7 +520,23 @@ const Analytics = () => {
         onSelectPreset={(preset) => handlePresetSelect(preset)}
       />
 
-      {/* 2. Unified Refined 4-Tab Navigation Bar with Full Mobile Horizontal Scroll Support */}
+      {/* 2. Top "الأهم الآن" Executive Data Center Highlight Card */}
+      <AnalyticsHighlightCard
+        netBalance={netBalance}
+        totalMonthlyIncome={totalMonthlyIncome}
+        totalMonthlyExpense={totalMonthlyExpense}
+        currency={currency}
+        expenseDiff={expenseDiff}
+        incomeDiff={incomeDiff}
+        prevMonthExpenses={prevMonthExpenses}
+        prevMonthIncome={prevMonthIncome}
+        categoryData={categoryData}
+        insights={insights}
+        aiInsights={aiInsights}
+        itemVariants={itemVariants}
+      />
+
+      {/* 3. Unified Refined 4-Tab Navigation Bar with Full Mobile Horizontal Scroll Support */}
       <motion.div 
         variants={itemVariants} 
         className="w-full max-w-full overflow-x-auto no-scrollbar py-0.5"
