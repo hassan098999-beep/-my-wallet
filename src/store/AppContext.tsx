@@ -1450,14 +1450,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return inc;
     });
 
-    // Also migrate budgets from 2026-09 to 2026-08
-    let newBudgets = [...(state.budgets || [])];
-    const sepBudgets = newBudgets.filter(b => isSepStr(b.month));
+    // Also migrate budgets from 2026-09 to 2026-08 (replace old September budget with August)
+    const sepBudgets = (state.budgets || []).filter(b => isSepStr(b.month));
+    const nonSepBudgets = (state.budgets || []).filter(b => !isSepStr(b.month));
+    let newBudgets = [...nonSepBudgets];
+    const deletedBudgetMonths: string[] = [];
     const migratedBudgets: any[] = [];
 
     sepBudgets.forEach(sepB => {
       affectedBudgets++;
-      const augMonth = convertSepToAug(sepB.month);
+      deletedBudgetMonths.push(sepB.month);
+      const augMonth = '2026-08';
       const existingAugIndex = newBudgets.findIndex(b => b.month === augMonth);
 
       if (existingAugIndex < 0) {
@@ -1487,10 +1490,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const totalAffected = affectedExpenses + affectedIncome + affectedBudgets;
 
-    if (totalAffected === 0) {
-      return 0;
-    }
-
     const updatedState = {
       ...state,
       expenses: newExpenses,
@@ -1508,6 +1507,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Reset selected month in localStorage to August 2026
     safeStorage.setItem('masarifi_budget_selected_month', '2026-08');
     safeStorage.setItem('masarifi_analytics_selected_month', '2026-08');
+    safeStorage.setItem('masarifi_sep_banner_dismissed', 'true');
 
     // Notify any mounted page to switch to August 2026
     if (typeof window !== 'undefined') {
@@ -1517,11 +1517,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // If user is authenticated with Firestore, write updates in chunks to prevent 500 limit
     if (user) {
       try {
-        const allOperations: { ref: any; data: any }[] = [];
+        const allOperations: { type?: 'delete' | 'set'; ref: any; data?: any }[] = [];
 
         migratedExpenseDocs.forEach(exp => {
           const { parsedDate, ...expToStore } = exp;
           allOperations.push({
+            type: 'set',
             ref: doc(db, 'users', user.uid, 'expenses', exp.id),
             data: { ...expToStore, uid: user.uid }
           });
@@ -1530,13 +1531,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         migratedIncomeDocs.forEach(inc => {
           const { parsedDate, ...incToStore } = inc;
           allOperations.push({
+            type: 'set',
             ref: doc(db, 'users', user.uid, 'income', inc.id),
             data: { ...incToStore, uid: user.uid }
           });
         });
 
+        deletedBudgetMonths.forEach(oldMonth => {
+          allOperations.push({
+            type: 'delete',
+            ref: doc(db, 'users', user.uid, 'budgets', oldMonth)
+          });
+        });
+
         migratedBudgets.forEach(b => {
           allOperations.push({
+            type: 'set',
             ref: doc(db, 'users', user.uid, 'budgets', b.month),
             data: { ...b, uid: user.uid }
           });
@@ -1548,7 +1558,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const chunk = allOperations.slice(i, i + CHUNK_SIZE);
           const batch = writeBatch(db);
           chunk.forEach(op => {
-            batch.set(op.ref, op.data, { merge: true });
+            if (op.type === 'delete') {
+              batch.delete(op.ref);
+            } else {
+              batch.set(op.ref, op.data, { merge: true });
+            }
           });
           await batch.commit();
         }
@@ -1557,7 +1571,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
 
-    toast.success(`تم بنجاح نقل وتصحيح ${affectedExpenses + affectedIncome} عملية وميزانية إلى شهر أوت الحالي! ✨`);
+    if (affectedExpenses + affectedIncome > 0 && affectedBudgets > 0) {
+      toast.success(`تم بنجاح نقل وتصحيح ${affectedExpenses + affectedIncome} عملية وسقف الميزانية إلى شهر أوت الحالي! ✨`);
+    } else if (affectedExpenses + affectedIncome > 0) {
+      toast.success(`تم بنجاح نقل وتصحيح ${affectedExpenses + affectedIncome} عملية إلى شهر أوت الحالي! ✨`);
+    } else if (affectedBudgets > 0) {
+      toast.success('تم بنجاح ترحيل وتحديث سقف الميزانية لشهر أوت الحالي! ✨');
+    } else {
+      toast.success('تم الانتقال إلى شهر أوت الحالي وضبط البيانات بنجاح! ✨');
+    }
     return totalAffected;
   };
 

@@ -35,6 +35,7 @@ export const SeptemberToAugustBanner: React.FC<SeptemberToAugustBannerProps> = (
     try {
       if (migrateSeptemberDataToAugust) {
         await migrateSeptemberDataToAugust();
+        setIsDismissed(true);
         if (onMigrateSuccess) {
           onMigrateSuccess('2026-08');
         }

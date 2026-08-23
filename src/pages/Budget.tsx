@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import { cn, hapticFeedback, getBudgetRange, getBudgetMonth, getWeekRange, safeStorage } from '../utils';
 import { parseISO, addDays, startOfDay, endOfDay } from 'date-fns';
-import { Save, Wallet, CircleCheckBig, Calendar, ArrowLeftRight, RefreshCw, Layers, Sliders, Sparkles } from 'lucide-react';
+import { Save, Wallet, CircleCheckBig, Calendar, ArrowLeftRight, RefreshCw, Layers, Sliders, Sparkles, History } from 'lucide-react';
 import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 import { BudgetAlerts } from '../components/BudgetAlerts';
@@ -14,9 +14,11 @@ import { BudgetPeriod } from '../types';
 // Sub-components
 import BudgetOverview from '../components/budget/BudgetOverview';
 import BudgetCategoryList from '../components/budget/BudgetCategoryList';
+import { BudgetHistoryTab } from '../components/budget/BudgetHistoryTab';
 
 const BudgetPage = () => {
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { 
     budgets, 
     setBudget, 
@@ -28,6 +30,31 @@ const BudgetPage = () => {
     rollingBudgetEnabled,
     setRollingBudgetEnabled 
   } = useAppContext();
+
+  // Tab State: 'current' | 'history'
+  const [activeTab, setActiveTab] = useState<'current' | 'history'>(() => {
+    return searchParams.get('tab') === 'history' ? 'history' : 'current';
+  });
+
+  // Sync tab with URL search params if changed externally
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'history' && activeTab !== 'history') {
+      setActiveTab('history');
+    } else if (tabParam !== 'history' && activeTab === 'history' && !tabParam) {
+      setActiveTab('current');
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab: 'current' | 'history') => {
+    hapticFeedback('light');
+    setActiveTab(tab);
+    if (tab === 'history') {
+      setSearchParams({ tab: 'history' });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   const [selectedMonth, setSelectedMonth] = useState(() => {
     return safeStorage.getItem('masarifi_budget_selected_month') || getBudgetMonth(new Date(), firstDayOfMonth);
@@ -448,20 +475,35 @@ const BudgetPage = () => {
           </div>
         </div>
 
-        {/* Navigation Tabs: (الميزانية / مصادر الدخل / المصاريف المتكررة) */}
+        {/* Navigation Tabs: (الميزانية الذكية / سجل الميزانية / مصادر الدخل / المصاريف المتكررة) */}
         <div className="flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto custom-scrollbar">
-          <Link
-            to="/budget"
+          <button
+            type="button"
+            onClick={() => handleTabChange('current')}
             className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0",
-              location.pathname === '/budget'
+              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0 cursor-pointer",
+              activeTab === 'current'
                 ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50"
                 : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
             )}
           >
             <Layers size={13} />
             <span>الميزانية الذكية</span>
-          </Link>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('history')}
+            className={cn(
+              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0 cursor-pointer",
+              activeTab === 'history'
+                ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/50"
+                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+            )}
+          >
+            <History size={13} />
+            <span>سجل الميزانية وتعديل الشهور</span>
+          </button>
 
           <Link
             to="/income"
@@ -502,55 +544,69 @@ const BudgetPage = () => {
       {/* Category smart budget warnings */}
       <BudgetAlerts />
 
-      {/* Overview component */}
-      <BudgetOverview
-        globalBudget={globalBudget}
-        setGlobalBudget={setGlobalBudget}
-        overallPeriod={overallPeriod}
-        setOverallPeriod={setOverallPeriod}
-        currency={currency}
-        totalSpent={totalSpent}
-        monthSpent={monthSpent}
-        weekSpent={weekSpent}
-        remainingBudget={remainingBudget}
-        overallPercentage={overallPercentage}
-        dailyLimit={dailyLimit}
-        remainingDays={remainingDays}
-        remainingDaysInWeek={remainingDaysInWeek}
-        daysInMonth={daysInMonth}
-        rollingBudgetEnabled={rollingBudgetEnabled}
-        setRollingBudgetEnabled={setRollingBudgetEnabled}
-        globalBudgetNum={globalBudgetNum}
-        chartData={chartData}
-        categories={categories}
-        suggestFromHistory={suggestFromHistory}
-        autoAllocate={autoAllocate}
-        isGenerating={isGenerating}
-        itemVariants={itemVariants}
-        selectedMonth={selectedMonth}
-        firstDayOfMonth={firstDayOfMonth}
-        setFirstDayOfMonth={setFirstDayOfMonth}
-        expenses={expenses}
-        budgets={budgets}
-        showSettings={showSettings}
-        setShowSettings={setShowSettings}
-      />
+      {activeTab === 'current' ? (
+        <>
+          {/* Overview component */}
+          <BudgetOverview
+            globalBudget={globalBudget}
+            setGlobalBudget={setGlobalBudget}
+            overallPeriod={overallPeriod}
+            setOverallPeriod={setOverallPeriod}
+            currency={currency}
+            totalSpent={totalSpent}
+            monthSpent={monthSpent}
+            weekSpent={weekSpent}
+            remainingBudget={remainingBudget}
+            overallPercentage={overallPercentage}
+            dailyLimit={dailyLimit}
+            remainingDays={remainingDays}
+            remainingDaysInWeek={remainingDaysInWeek}
+            daysInMonth={daysInMonth}
+            rollingBudgetEnabled={rollingBudgetEnabled}
+            setRollingBudgetEnabled={setRollingBudgetEnabled}
+            globalBudgetNum={globalBudgetNum}
+            chartData={chartData}
+            categories={categories}
+            suggestFromHistory={suggestFromHistory}
+            autoAllocate={autoAllocate}
+            isGenerating={isGenerating}
+            itemVariants={itemVariants}
+            selectedMonth={selectedMonth}
+            firstDayOfMonth={firstDayOfMonth}
+            setFirstDayOfMonth={setFirstDayOfMonth}
+            expenses={expenses}
+            budgets={budgets}
+            showSettings={showSettings}
+            setShowSettings={setShowSettings}
+          />
 
-      {/* Category List component */}
-      <BudgetCategoryList
-        categories={categories}
-        currentMonthExpenses={currentMonthExpenses}
-        currentWeekExpenses={currentWeekExpenses}
-        categoryBudgets={categoryBudgets}
-        categoryPeriods={categoryPeriods}
-        handleCategoryBudgetChange={handleCategoryBudgetChange}
-        handleCategoryPeriodChange={handleCategoryPeriodChange}
-        remainingDays={remainingDays}
-        remainingDaysInWeek={remainingDaysInWeek}
-        currency={currency}
-        categoryStatusesLookup={categoryStatusesLookup}
-        rollingBudgetEnabled={rollingBudgetEnabled}
-      />
+          {/* Category List component */}
+          <BudgetCategoryList
+            categories={categories}
+            currentMonthExpenses={currentMonthExpenses}
+            currentWeekExpenses={currentWeekExpenses}
+            categoryBudgets={categoryBudgets}
+            categoryPeriods={categoryPeriods}
+            handleCategoryBudgetChange={handleCategoryBudgetChange}
+            handleCategoryPeriodChange={handleCategoryPeriodChange}
+            remainingDays={remainingDays}
+            remainingDaysInWeek={remainingDaysInWeek}
+            currency={currency}
+            categoryStatusesLookup={categoryStatusesLookup}
+            rollingBudgetEnabled={rollingBudgetEnabled}
+          />
+        </>
+      ) : (
+        /* Historical Logs & Manual Transaction Month Fixer Tab */
+        <BudgetHistoryTab
+          currentSelectedMonth={selectedMonth}
+          onSelectMonthForBudget={(month) => {
+            setSelectedMonth(month);
+            safeStorage.setItem('masarifi_budget_selected_month', month);
+            handleTabChange('current');
+          }}
+        />
+      )}
     </motion.div>
   );
 };
