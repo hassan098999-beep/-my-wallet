@@ -102,6 +102,19 @@ const Analytics = () => {
     }
   }, [searchParams, location.state]);
 
+  // Listen for month migration events
+  useEffect(() => {
+    const handleMonthMigrated = (e: any) => {
+      const targetMonth = e?.detail?.targetMonth || '2026-08';
+      updateSelectedMonth(targetMonth);
+    };
+
+    window.addEventListener('masarifi:monthMigrated', handleMonthMigrated);
+    return () => {
+      window.removeEventListener('masarifi:monthMigrated', handleMonthMigrated);
+    };
+  }, [updateSelectedMonth]);
+
   const budget = useMemo(() => budgets?.find(b => b.month === selectedMonth), [budgets, selectedMonth]);
 
   const displayMonthName = useMemo(() => {

@@ -4,10 +4,11 @@ import { useAppContext } from '../store/AppContext';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import { cn, hapticFeedback, getBudgetRange, getBudgetMonth, getWeekRange, safeStorage } from '../utils';
 import { parseISO, addDays, startOfDay, endOfDay } from 'date-fns';
-import { Save, Wallet, CircleCheckBig, Calendar, ArrowLeftRight, RefreshCw, Layers, Sliders } from 'lucide-react';
+import { Save, Wallet, CircleCheckBig, Calendar, ArrowLeftRight, RefreshCw, Layers, Sliders, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 import { BudgetAlerts } from '../components/BudgetAlerts';
+import { SeptemberToAugustBanner } from '../components/SeptemberToAugustBanner';
 import { BudgetPeriod } from '../types';
 
 // Sub-components
@@ -31,6 +32,20 @@ const BudgetPage = () => {
   const [selectedMonth, setSelectedMonth] = useState(() => {
     return safeStorage.getItem('masarifi_budget_selected_month') || getBudgetMonth(new Date(), firstDayOfMonth);
   });
+
+  // Listen for month migration events across the app
+  useEffect(() => {
+    const handleMonthMigrated = (e: any) => {
+      const targetMonth = e?.detail?.targetMonth || '2026-08';
+      setSelectedMonth(targetMonth);
+      safeStorage.setItem('masarifi_budget_selected_month', targetMonth);
+    };
+
+    window.addEventListener('masarifi:monthMigrated', handleMonthMigrated);
+    return () => {
+      window.removeEventListener('masarifi:monthMigrated', handleMonthMigrated);
+    };
+  }, []);
   
   const currentBudget = useMemo(() => budgets.find(b => b.month === selectedMonth), [budgets, selectedMonth]);
 
@@ -369,6 +384,26 @@ const BudgetPage = () => {
               />
             </div>
 
+            {/* Quick Switch to August 2026 if September is selected */}
+            {selectedMonth === '2026-09' && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={() => {
+                  hapticFeedback('medium');
+                  setSelectedMonth('2026-08');
+                  safeStorage.setItem('masarifi_budget_selected_month', '2026-08');
+                  toast.success('تم الانتقال إلى ميزانية شهر أوت (أغسطس) 2026');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black transition-all cursor-pointer shadow-md shadow-amber-500/20 animate-pulse"
+                title="التبديل الفوري إلى شهر أوت 2026"
+              >
+                <Sparkles size={13} />
+                <span>عرض شهر أوت 2026 الحالي</span>
+              </motion.button>
+            )}
+
             {/* Settings Quick Toggle Button */}
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -455,6 +490,14 @@ const BudgetPage = () => {
           </Link>
         </div>
       </div>
+
+      {/* Migration banner if September data or budget is detected */}
+      <SeptemberToAugustBanner
+        onMigrateSuccess={(newMonth) => {
+          setSelectedMonth(newMonth);
+          safeStorage.setItem('masarifi_budget_selected_month', newMonth);
+        }}
+      />
 
       {/* Category smart budget warnings */}
       <BudgetAlerts />

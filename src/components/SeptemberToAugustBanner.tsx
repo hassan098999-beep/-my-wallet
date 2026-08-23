@@ -1,18 +1,29 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../store/AppContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { CalendarSync, ArrowRightLeft, CheckCircle2, X, Sparkles, AlertTriangle } from 'lucide-react';
+import { CalendarSync, Sparkles, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export const SeptemberToAugustBanner: React.FC = () => {
-  const { expenses, income, migrateSeptemberDataToAugust } = useAppContext();
+interface SeptemberToAugustBannerProps {
+  onMigrateSuccess?: (targetMonth: string) => void;
+}
+
+export const SeptemberToAugustBanner: React.FC<SeptemberToAugustBannerProps> = ({ onMigrateSuccess }) => {
+  const { expenses = [], income = [], budgets = [], migrateSeptemberDataToAugust } = useAppContext();
   const [isMigrating, setIsMigrating] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
+  // Check September pattern across dates and months
+  const isSep = (d?: string | null) => {
+    if (!d || typeof d !== 'string') return false;
+    return d.includes('-09-') || d.includes('/09/') || d.endsWith('-09') || d.includes('2026-09') || d.includes('2026/09');
+  };
+
   // Count operations with date in September (-09- or /09/)
-  const sepExpensesCount = (expenses || []).filter(e => e.date && (e.date.includes('-09-') || e.date.includes('/09/'))).length;
-  const sepIncomeCount = (income || []).filter(i => i.date && (i.date.includes('-09-') || i.date.includes('/09/'))).length;
-  const totalSepCount = sepExpensesCount + sepIncomeCount;
+  const sepExpensesCount = (expenses || []).filter(e => isSep(e.date)).length;
+  const sepIncomeCount = (income || []).filter(i => isSep(i.date)).length;
+  const sepBudgetsCount = (budgets || []).filter(b => isSep(b.month)).length;
+  const totalSepCount = sepExpensesCount + sepIncomeCount + sepBudgetsCount;
 
   // If no operations in September or dismissed, don't show
   if (totalSepCount === 0 || isDismissed) {
@@ -24,6 +35,9 @@ export const SeptemberToAugustBanner: React.FC = () => {
     try {
       if (migrateSeptemberDataToAugust) {
         await migrateSeptemberDataToAugust();
+        if (onMigrateSuccess) {
+          onMigrateSuccess('2026-08');
+        }
       }
     } catch (err) {
       console.error(err);
@@ -50,14 +64,14 @@ export const SeptemberToAugustBanner: React.FC = () => {
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="text-sm md:text-base font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <span>تنبيه تصحيح التواريخ: تم رصد {totalSepCount} عملية مسجلة في شهر سبتمبر</span>
+                  <span>تنبيه تصحيح التواريخ: تم رصد {totalSepCount} عملية ومخصصات في شهر سبتمبر</span>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300">
                     أوت فارغ حالياً
                   </span>
                 </h4>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl">
-                بسبب تسجيل المصاريف سابقاً بتاريخ شهر سبتمبر، يظهر شهر أوت الحالي بدون عمليات. يمكنك بنقرة واحدة تعديل تواريخ جميع هذه العمليات ({sepExpensesCount} مصاريف و {sepIncomeCount} مداخيل) ونقلها إلى <strong className="text-amber-700 dark:text-amber-300 font-black">شهر أوت (أغسطس) الحالي</strong> لتظهر في ميزانيتك ولوحاتك الإحصائية فوراً.
+                بسبب تسجيل العمليات سابقاً في شهر سبتمبر، تظهر ميزانية شهر أوت الحالي بدون عمليات. يمكنك بنقرة واحدة تعديل تواريخ جميع هذه العمليات ({sepExpensesCount} مصاريف، {sepIncomeCount} مداخيل{sepBudgetsCount > 0 ? `، وميزانية شهر سبتمبر` : ''}) ونقلها بالكامل إلى <strong className="text-amber-700 dark:text-amber-300 font-black">شهر أوت (أغسطس) الحالي</strong> لتظهر في صفحة الميزانية ولوحاتك الإحصائية فوراً.
               </p>
             </div>
           </div>
@@ -72,7 +86,7 @@ export const SeptemberToAugustBanner: React.FC = () => {
               {isMigrating ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>جارٍ نقل العمليات...</span>
+                  <span>جارٍ نقل العمليات والميزانية...</span>
                 </>
               ) : (
                 <>

@@ -1402,13 +1402,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const migrateSeptemberDataToAugust = async (): Promise<number> => {
     let affectedExpenses = 0;
     let affectedIncome = 0;
+    let affectedBudgets = 0;
     const migratedExpenseDocs: any[] = [];
     const migratedIncomeDocs: any[] = [];
 
+    const isSepStr = (d?: string | null) => {
+      if (!d || typeof d !== 'string') return false;
+      return d.includes('-09-') || d.includes('/09/') || d.endsWith('-09') || d.includes('2026-09') || d.includes('2026/09');
+    };
+
+    const convertSepToAug = (d: string) => {
+      return d
+        .replace(/2026([-/])0?9(\b|[-/T])/, '2026$108$2')
+        .replace(/[-/]09[-/]/g, (match) => match.replace('09', '08'))
+        .replace(/[-/]9[-/]/g, (match) => match.replace('9', '08'))
+        .replace(/-09$/, '-08')
+        .replace(/\/09$/, '/08');
+    };
+
     const newExpenses = (state.expenses || []).map(exp => {
-      if (exp.date && (exp.date.includes('-09-') || exp.date.includes('/09/'))) {
+      if (isSepStr(exp.date)) {
         affectedExpenses++;
-        const newDate = exp.date.replace(/[-/]09[-/]/g, (match: string) => match.replace('09', '08'));
+        const newDate = convertSepToAug(exp.date);
         const updated = {
           ...exp,
           date: newDate,
@@ -1421,9 +1436,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     const newIncome = (state.income || []).map(inc => {
-      if (inc.date && (inc.date.includes('-09-') || inc.date.includes('/09/'))) {
+      if (isSepStr(inc.date)) {
         affectedIncome++;
-        const newDate = inc.date.replace(/[-/]09[-/]/g, (match: string) => match.replace('09', '08'));
+        const newDate = convertSepToAug(inc.date);
         const updated = {
           ...inc,
           date: newDate,
@@ -1435,26 +1450,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return inc;
     });
 
-    // Also migrate budgets if any exist for month -09 and not -08
+    // Also migrate budgets from 2026-09 to 2026-08
     let newBudgets = [...(state.budgets || [])];
-    const sepBudgets = newBudgets.filter(b => b.month && b.month.endsWith('-09'));
+    const sepBudgets = newBudgets.filter(b => isSepStr(b.month));
     const migratedBudgets: any[] = [];
+
     sepBudgets.forEach(sepB => {
-      const augMonth = sepB.month.replace('-09', '-08');
-      const existingAug = newBudgets.find(b => b.month === augMonth);
-      if (!existingAug) {
+      affectedBudgets++;
+      const augMonth = convertSepToAug(sepB.month);
+      const existingAugIndex = newBudgets.findIndex(b => b.month === augMonth);
+
+      if (existingAugIndex < 0) {
         const newB = {
           ...sepB,
           month: augMonth
         };
         newBudgets.push(newB);
         migratedBudgets.push(newB);
+      } else {
+        // Merge with existing August budget
+        const existingAug = newBudgets[existingAugIndex];
+        const newB = {
+          ...existingAug,
+          ...sepB,
+          month: augMonth,
+          categoryBudgets: { ...(sepB.categoryBudgets || {}), ...(existingAug.categoryBudgets || {}) },
+          categoryWeeklyBudgets: { ...(sepB.categoryWeeklyBudgets || {}), ...(existingAug.categoryWeeklyBudgets || {}) },
+          categoryPeriods: { ...(sepB.categoryPeriods || {}), ...(existingAug.categoryPeriods || {}) },
+          amount: (sepB.amount && sepB.amount > 0) ? sepB.amount : (existingAug.amount || 0),
+          period: sepB.period || existingAug.period || 'monthly'
+        };
+        newBudgets[existingAugIndex] = newB;
+        migratedBudgets.push(newB);
       }
     });
 
-    const totalAffected = affectedExpenses + affectedIncome;
+    const totalAffected = affectedExpenses + affectedIncome + affectedBudgets;
 
-    if (totalAffected === 0 && sepBudgets.length === 0) {
+    if (totalAffected === 0) {
       return 0;
     }
 
@@ -1471,6 +1504,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       expenses: updatedState.expenses.map(({ parsedDate, ...rest }: any) => rest),
       income: updatedState.income.map(({ parsedDate, ...rest }: any) => rest)
     }));
+
+    // Reset selected month in localStorage to August 2026
+    safeStorage.setItem('masarifi_budget_selected_month', '2026-08');
+    safeStorage.setItem('masarifi_analytics_selected_month', '2026-08');
+
+    // Notify any mounted page to switch to August 2026
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('masarifi:monthMigrated', { detail: { targetMonth: '2026-08' } }));
+    }
 
     // If user is authenticated with Firestore, write updates in chunks to prevent 500 limit
     if (user) {
@@ -1515,16 +1557,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
 
-    toast.success(`تم بنجاح نقل وتصحيح ${totalAffected} عملية إلى شهر أوت الحالي! ✨`);
+    toast.success(`تم بنجاح نقل وتصحيح ${affectedExpenses + affectedIncome} عملية وميزانية إلى شهر أوت الحالي! ✨`);
     return totalAffected;
   };
 
   // Auto-migrate September transactions to August if detected on load or sync
   useEffect(() => {
     if (isAutoMigratingRef.current) return;
-    const hasSepExpenses = (state.expenses || []).some(e => e.date && (e.date.includes('-09-') || e.date.includes('/09/')));
-    const hasSepIncome = (state.income || []).some(i => i.date && (i.date.includes('-09-') || i.date.includes('/09/')));
-    const hasSepBudgets = (state.budgets || []).some(b => b.month && b.month.endsWith('-09'));
+    const isSepStr = (d?: string | null) => {
+      if (!d || typeof d !== 'string') return false;
+      return d.includes('-09-') || d.includes('/09/') || d.endsWith('-09') || d.includes('2026-09') || d.includes('2026/09');
+    };
+
+    const hasSepExpenses = (state.expenses || []).some(e => isSepStr(e.date));
+    const hasSepIncome = (state.income || []).some(i => isSepStr(i.date));
+    const hasSepBudgets = (state.budgets || []).some(b => isSepStr(b.month));
 
     if (hasSepExpenses || hasSepIncome || hasSepBudgets) {
       isAutoMigratingRef.current = true;
