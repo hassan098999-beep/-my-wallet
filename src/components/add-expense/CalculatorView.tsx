@@ -145,9 +145,9 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
           <span className="text-xl sm:text-2xl font-light opacity-80 shrink-0">{currency}</span>
         </div>
         {/* Subtle info if expression has operators */}
-        {/[+\-*/]/.test(expression) && (
+        {/[+\-*/]/.test(expression) && evaluateExpression(expression) !== null && (
           <div className="text-sm font-bold bg-white/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm animate-pulse">
-            ={formatCurrency(evaluateExpression(expression), currency)}
+            ={formatCurrency(evaluateExpression(expression)!, currency)}
           </div>
         )}
 

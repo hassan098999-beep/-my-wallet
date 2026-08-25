@@ -15,6 +15,7 @@ import { BudgetPeriod } from '../types';
 import BudgetOverview from '../components/budget/BudgetOverview';
 import BudgetCategoryList from '../components/budget/BudgetCategoryList';
 import { BudgetHistoryTab } from '../components/budget/BudgetHistoryTab';
+import { BabyBudgetAssistant } from '../components/budget/BabyBudgetAssistant';
 
 const BudgetPage = () => {
   const location = useLocation();
@@ -578,6 +579,14 @@ const BudgetPage = () => {
             budgets={budgets}
             showSettings={showSettings}
             setShowSettings={setShowSettings}
+          />
+
+          {/* Smart Baby & Child Budget Assistant */}
+          <BabyBudgetAssistant
+            selectedMonth={selectedMonth}
+            onBudgetApplied={(catId, amount) => {
+              handleCategoryBudgetChange(catId, amount.toString());
+            }}
           />
 
           {/* Category List component */}

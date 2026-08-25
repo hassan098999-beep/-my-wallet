@@ -16,10 +16,9 @@ interface AddExpenseModalProps {
   onClose: () => void;
   editExpenseData?: Expense;
   initialGoalId?: string;
-  initialMode?: 'quick' | 'calculator';
 }
 
-const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, editExpenseData, initialGoalId, initialMode }) => {
+const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, editExpenseData, initialGoalId }) => {
   const { categories, accounts, expenses, goals, addExpense, addIncome, updateExpense, updateIncome, transferAccount, addCategory, currency, budgets, firstDayOfMonth } = useAppContext();
   
   const currentMonth = getBudgetMonth(new Date(), firstDayOfMonth || 1);
@@ -111,7 +110,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
       .filter(e => e.categoryId === categoryId && e.date && e.date.startsWith(currentMonthStr))
       .reduce((sum, e) => sum + e.amount, 0);
 
-    const enteredAmount = evaluateExpression(expression);
+    const evaluated = evaluateExpression(expression);
+    const enteredAmount = evaluated ?? 0;
     const remainingBefore = limit - spentThisMonth;
     const remainingAfter = remainingBefore - enteredAmount;
 
@@ -177,7 +177,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
       }
       setActiveView('main');
     }
-  }, [isOpen, categories, accounts, editExpenseData, initialGoalId, initialMode]);
+  }, [isOpen, categories, accounts, editExpenseData, initialGoalId]);
 
   const [isAutoMatched, setIsAutoMatched] = useState(false);
 
@@ -362,6 +362,10 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
     const hasOperator = /[+\-*/]/.test(expression);
     if (hasOperator) {
       const result = evaluateExpression(expression);
+      if (result === null) {
+        toast.error('عملية حسابية غير صحيحة');
+        return;
+      }
       setExpression(result.toString());
     } else {
       handleSubmit();
@@ -372,8 +376,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
     hapticFeedback('medium');
     const finalAmount = evaluateExpression(expression);
     
-    if (finalAmount <= 0) {
-      toast.error('الرجاء إدخال مبلغ صحيح أكبر من الصفر');
+    if (finalAmount === null || finalAmount <= 0) {
+      toast.error(finalAmount === null ? 'عملية حسابية غير صحيحة' : 'الرجاء إدخال مبلغ صحيح أكبر من الصفر');
       return;
     }
     

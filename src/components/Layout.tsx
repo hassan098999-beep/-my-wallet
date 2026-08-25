@@ -13,7 +13,6 @@ const Layout = () => {
   const navigate = useNavigate();
   const currentOutlet = useOutlet();
   const { isAddModalOpen, setIsAddModalOpen, editingExpense, setEditingExpense, initialGoalId, setInitialGoalId } = useAppContext();
-  const [addModalMode, setAddModalMode] = React.useState<'quick' | 'calculator'>('quick');
 
   // Trigger navigation progress bar
   const [isNavigating, setIsNavigating] = React.useState(false);
@@ -32,7 +31,6 @@ const Layout = () => {
     const params = new URLSearchParams(location.search);
     const action = params.get('action');
     if (action === 'add' || action === 'add-expense') {
-      setAddModalMode('calculator');
       setIsAddModalOpen(true);
       navigate(location.pathname, { replace: true });
     }
@@ -73,7 +71,7 @@ const Layout = () => {
       </div>
 
       <Sidebar 
-        onAddClick={() => { setAddModalMode('quick'); setIsAddModalOpen(true); }} 
+        onAddClick={() => { setIsAddModalOpen(true); }} 
       />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
@@ -123,7 +121,7 @@ const Layout = () => {
 
         <div className="md:hidden">
           <BottomNav 
-            onAddClick={() => { setAddModalMode('quick'); setIsAddModalOpen(true); }} 
+            onAddClick={() => { setIsAddModalOpen(true); }} 
           />
         </div>
       </div>
@@ -137,7 +135,6 @@ const Layout = () => {
         }} 
         editExpenseData={editingExpense || undefined}
         initialGoalId={initialGoalId || undefined}
-        initialMode={addModalMode}
       />
     </div>
   );

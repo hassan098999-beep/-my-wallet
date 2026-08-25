@@ -1,4 +1,4 @@
-export const evaluateExpression = (expr: string): number => {
+export const evaluateExpression = (expr: string): number | null => {
   try {
     let cleanExpr = expr.replace(/[^0-9+\-*/.]/g, '');
     // Remove trailing operators
@@ -6,8 +6,8 @@ export const evaluateExpression = (expr: string): number => {
     if (!cleanExpr) return 0;
     // eslint-disable-next-line no-new-func
     const result = new Function(`return ${cleanExpr}`)();
-    return isNaN(result) || !isFinite(result) ? 0 : result;
+    return typeof result !== 'number' || isNaN(result) || !isFinite(result) ? null : result;
   } catch {
-    return 0;
+    return null;
   }
 };
