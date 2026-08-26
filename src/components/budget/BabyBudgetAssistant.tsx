@@ -12,11 +12,13 @@ import { formatCurrency, hapticFeedback, cn, getBudgetMonth } from '../../utils'
 interface BabyBudgetAssistantProps {
   selectedMonth: string;
   onBudgetApplied?: (catId: string, amount: number) => void;
+  defaultOpen?: boolean;
 }
 
 export const BabyBudgetAssistant: React.FC<BabyBudgetAssistantProps> = ({
   selectedMonth,
   onBudgetApplied,
+  defaultOpen = true,
 }) => {
   const { 
     categories, 
@@ -29,7 +31,7 @@ export const BabyBudgetAssistant: React.FC<BabyBudgetAssistantProps> = ({
     setBudget 
   } = useAppContext();
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   // Find Baby Category in state
   const babyCategory = useMemo(() => {

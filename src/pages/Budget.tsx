@@ -4,8 +4,11 @@ import { useAppContext } from '../store/AppContext';
 import { useBudgetStatus } from '../hooks/useBudgetStatus';
 import { cn, hapticFeedback, getBudgetRange, getBudgetMonth, getWeekRange, safeStorage } from '../utils';
 import { parseISO, addDays, startOfDay, endOfDay } from 'date-fns';
-import { Save, Wallet, CircleCheckBig, Calendar, ArrowLeftRight, RefreshCw, Layers, Sliders, Sparkles, History } from 'lucide-react';
-import { motion } from 'motion/react';
+import { 
+  Save, CircleCheckBig, Calendar, ArrowLeftRight, RefreshCw, 
+  Layers, Sliders, Sparkles, History, BarChart2, Baby, PieChart
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
 import { BudgetAlerts } from '../components/BudgetAlerts';
 import { SeptemberToAugustBanner } from '../components/SeptemberToAugustBanner';
@@ -14,8 +17,12 @@ import { BudgetPeriod } from '../types';
 // Sub-components
 import BudgetOverview from '../components/budget/BudgetOverview';
 import BudgetCategoryList from '../components/budget/BudgetCategoryList';
+import { BudgetAnalyticsTab } from '../components/budget/BudgetAnalyticsTab';
 import { BudgetHistoryTab } from '../components/budget/BudgetHistoryTab';
 import { BabyBudgetAssistant } from '../components/budget/BabyBudgetAssistant';
+import { BudgetSettingsModal } from '../components/budget/BudgetSettingsModal';
+
+type ActiveViewTab = 'current' | 'analytics' | 'baby' | 'history';
 
 const BudgetPage = () => {
   const location = useLocation();
@@ -32,26 +39,30 @@ const BudgetPage = () => {
     setRollingBudgetEnabled 
   } = useAppContext();
 
-  // Tab State: 'current' | 'history'
-  const [activeTab, setActiveTab] = useState<'current' | 'history'>(() => {
-    return searchParams.get('tab') === 'history' ? 'history' : 'current';
+  // Tab State: 'current' | 'analytics' | 'baby' | 'history'
+  const [activeTab, setActiveTab] = useState<ActiveViewTab>(() => {
+    const tabParam = searchParams.get('tab') as ActiveViewTab;
+    if (tabParam && ['current', 'analytics', 'baby', 'history'].includes(tabParam)) {
+      return tabParam;
+    }
+    return 'current';
   });
 
   // Sync tab with URL search params if changed externally
   useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'history' && activeTab !== 'history') {
-      setActiveTab('history');
-    } else if (tabParam !== 'history' && activeTab === 'history' && !tabParam) {
+    const tabParam = searchParams.get('tab') as ActiveViewTab;
+    if (tabParam && tabParam !== activeTab && ['current', 'analytics', 'baby', 'history'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    } else if (!tabParam && activeTab !== 'current') {
       setActiveTab('current');
     }
   }, [searchParams]);
 
-  const handleTabChange = (tab: 'current' | 'history') => {
+  const handleTabChange = (tab: ActiveViewTab) => {
     hapticFeedback('light');
     setActiveTab(tab);
-    if (tab === 'history') {
-      setSearchParams({ tab: 'history' });
+    if (tab !== 'current') {
+      setSearchParams({ tab });
     } else {
       setSearchParams({});
     }
@@ -81,7 +92,7 @@ const BudgetPage = () => {
   const [overallPeriod, setOverallPeriod] = useState<BudgetPeriod>(currentBudget?.period || 'monthly');
   const [isSaved, setIsSaved] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showSettings, setShowSettings] = useState(() => !currentBudget?.amount || currentBudget.amount === 0);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   
   const [categoryBudgets, setCategoryBudgets] = useState<Record<string, string>>(
     currentBudget?.categoryBudgets 
@@ -177,7 +188,7 @@ const BudgetPage = () => {
     setCategoryPeriods(prev => ({ ...prev, [id]: period }));
   };
 
-  // One-click Smart Fluid Allocation (Proportional to habits and categories)
+  // One-click Smart Allocation
   const autoAllocate = () => {
     const totalBudget = Number(globalBudget) || 0;
     if (totalBudget <= 0) {
@@ -198,7 +209,7 @@ const BudgetPage = () => {
         return;
       }
 
-      // Check if we have past expenses to allocate by actual spending proportions
+      // Check past expenses
       const pastExpenses = expenses.filter(e => !e.isTransfer);
       const catSpentMap: Record<string, number> = {};
       pastExpenses.forEach(e => {
@@ -218,7 +229,6 @@ const BudgetPage = () => {
           }
         });
       } else {
-        // Equal balanced distribution
         const perItemMonthly = monthlyTotal / activeCats.length;
         activeCats.forEach(c => {
           const isWeeklyCat = categoryPeriods[c.id] === 'weekly';
@@ -235,11 +245,11 @@ const BudgetPage = () => {
       toast.success(
         <div className="flex flex-col gap-1 text-right font-tajawal">
           <span className="font-black text-sm">تم التوزيع التناسبي المرن للميزانية ✨</span>
-          <span className="text-xs opacity-90">تم تقسيم السقف المالي بمرونة كاملة تتناسب مع احتياجاتك وفئاتك.</span>
+          <span className="text-xs opacity-90">تم تقسيم السقف المالي بمرونة تتناسب مع احتياجاتك وفئاتك.</span>
         </div>,
         { duration: 3500 }
       );
-    }, 500);
+    }, 450);
   };
 
   const suggestFromHistory = () => {
@@ -293,7 +303,7 @@ const BudgetPage = () => {
         </div>,
         { duration: 4000 }
       );
-    }, 700);
+    }, 500);
   };
 
   const currentMonthExpenses = useMemo(() => {
@@ -316,8 +326,6 @@ const BudgetPage = () => {
 
   const {
     totalSpent,
-    monthSpent,
-    weekSpent,
     globalBudgetNum,
     overallPercentage,
     remainingDays,
@@ -345,151 +353,136 @@ const BudgetPage = () => {
     }).filter(item => item.spent > 0 || item.budgeted > 0);
   }, [categories, currentMonthExpenses, currentWeekExpenses, categoryBudgets, categoryPeriods]);
 
-  // Stagger Animations
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.06 } }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 12 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.35 } }
-  };
-
   return (
-    <motion.div 
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-6 p-3 sm:p-4 md:p-6 pb-28 w-full max-w-7xl mx-auto text-right font-tajawal rtl"
-    >
-      {/* Top Header & Navigation Tabs */}
-      <div className="space-y-4">
-        {/* Page Title Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              لوحة الميزانية الذكية
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-              تتبع السقف المالي، الميزانية المتدحرجة، ومخصصات الفئات اليومية والأسبوعية
-            </p>
+    <div className="space-y-5 p-3 sm:p-4 md:p-6 pb-28 w-full max-w-7xl mx-auto text-right font-tajawal rtl">
+      
+      {/* Top Header Bar: Clean & High-Clarity */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-150 dark:border-slate-800">
+        <div>
+          <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            الميزانية والإنفاق
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+            تتبع وضبط سقف الصرف ومخصصات الفئات اليومية والأسبوعية
+          </p>
+        </div>
+
+        {/* Action Controls: Month Picker, Quick Switch, Settings & Save */}
+        <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-center">
+          
+          {/* Month Selector */}
+          <div className="relative">
+            <Calendar className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 size-3.5 pointer-events-none" />
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => {
+                hapticFeedback('light');
+                const val = e.target.value;
+                setSelectedMonth(val);
+                safeStorage.setItem('masarifi_budget_selected_month', val);
+              }}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-2.5 pr-8 py-1.5 text-xs font-black text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/20 shadow-2xs cursor-pointer"
+            />
           </div>
 
-          {/* Action controls: Month picker, Start day & Save Button */}
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start sm:self-center">
-            {/* Cycle day */}
-            <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 shadow-2xs">
-              <span className="text-[10px] font-bold text-slate-400">الدورة:</span>
-              <select
-                value={firstDayOfMonth}
-                onChange={(e) => {
-                  hapticFeedback('light');
-                  setFirstDayOfMonth(Number(e.target.value));
-                  toast.success(`دورتك المالية ستبدأ يوم ${e.target.value} من كل شهر.`);
-                }}
-                className="bg-transparent text-xs font-black text-slate-900 dark:text-white outline-none cursor-pointer"
-              >
-                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                  <option key={day} value={day}>{day}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Custom Month Selector */}
-            <div className="relative">
-              <Calendar className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 size-3.5 pointer-events-none" />
-              <input
-                type="month"
-                value={selectedMonth}
-                onChange={(e) => {
-                  hapticFeedback('light');
-                  const val = e.target.value;
-                  setSelectedMonth(val);
-                  safeStorage.setItem('masarifi_budget_selected_month', val);
-                }}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-2.5 pr-8 py-1.5 text-xs font-black text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/20"
-              />
-            </div>
-
-            {/* Quick Switch to August 2026 if September is selected */}
-            {selectedMonth === '2026-09' && (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="button"
-                onClick={() => {
-                  hapticFeedback('medium');
-                  setSelectedMonth('2026-08');
-                  safeStorage.setItem('masarifi_budget_selected_month', '2026-08');
-                  toast.success('تم الانتقال إلى ميزانية شهر أوت (أغسطس) 2026');
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black transition-all cursor-pointer shadow-md shadow-amber-500/20 animate-pulse"
-                title="التبديل الفوري إلى شهر أوت 2026"
-              >
-                <Sparkles size={13} />
-                <span>عرض شهر أوت 2026 الحالي</span>
-              </motion.button>
-            )}
-
-            {/* Settings Quick Toggle Button */}
+          {/* Quick Switch to August 2026 if September is selected */}
+          {selectedMonth === '2026-09' && (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="button"
               onClick={() => {
-                hapticFeedback('light');
-                const next = !showSettings;
-                setShowSettings(next);
-                if (next) {
-                  setTimeout(() => {
-                    document.getElementById('global-budget-input')?.focus();
-                    document.getElementById('budget-settings-panel')?.scrollIntoView({ behavior: 'smooth' });
-                  }, 80);
-                }
+                hapticFeedback('medium');
+                setSelectedMonth('2026-08');
+                safeStorage.setItem('masarifi_budget_selected_month', '2026-08');
+                toast.success('تم الانتقال إلى ميزانية شهر أوت (أغسطس) 2026');
               }}
-              className={cn(
-                "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all border cursor-pointer active:scale-95 shadow-2xs",
-                showSettings 
-                  ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900" 
-                  : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
-              )}
-              title="إعدادات وتعديل الميزانية"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black transition-all cursor-pointer shadow-md shadow-amber-500/20"
+              title="التبديل الفوري إلى شهر أوت 2026"
             >
-              <Sliders size={13} />
-              <span>{showSettings ? 'إخفاء الإعدادات' : 'الإعدادات'}</span>
+              <Sparkles size={13} />
+              <span>شهر أوت الحالي</span>
             </motion.button>
+          )}
 
-            {/* Save Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleSave}
-              className={cn(
-                "flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl font-black text-xs transition-all shadow-2xs cursor-pointer active:scale-95",
-                isSaved ? "bg-emerald-500 text-white" : "bg-emerald-600 hover:bg-emerald-700 text-white"
-              )}
-            >
-              {isSaved ? <CircleCheckBig size={14} className="animate-bounce" /> : <Save size={14} />}
-              <span>{isSaved ? 'تم الحفظ' : 'حفظ الميزانية'}</span>
-            </motion.button>
-          </div>
+          {/* Settings Modal Button */}
+          <button
+            type="button"
+            onClick={() => {
+              hapticFeedback('light');
+              setIsSettingsModalOpen(true);
+            }}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-2xs"
+            title="إعدادات الميزانية الشاملة"
+          >
+            <Sliders size={13} className="text-slate-400" />
+            <span>الإعدادات</span>
+          </button>
+
+          {/* Save Button */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleSave}
+            className={cn(
+              "flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl font-black text-xs transition-all shadow-2xs cursor-pointer active:scale-95",
+              isSaved ? "bg-emerald-500 text-white" : "bg-emerald-600 hover:bg-emerald-700 text-white"
+            )}
+          >
+            {isSaved ? <CircleCheckBig size={14} className="animate-bounce" /> : <Save size={14} />}
+            <span>{isSaved ? 'تم الحفظ' : 'حفظ الميزانية'}</span>
+          </motion.button>
+
         </div>
+      </div>
 
-        {/* Navigation Tabs: (الميزانية الذكية / سجل الميزانية / مصادر الدخل / المصاريف المتكررة) */}
-        <div className="flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto custom-scrollbar">
+      {/* Smart Segmented Views Bar (تبويبات التنقل الذكية المدمجة) */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-150 dark:border-slate-800 pb-2">
+        
+        {/* Main Tab Controls */}
+        <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar">
+          
           <button
             type="button"
             onClick={() => handleTabChange('current')}
             className={cn(
               "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0 cursor-pointer",
               activeTab === 'current'
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50"
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/60 shadow-2xs"
                 : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
             )}
           >
             <Layers size={13} />
-            <span>الميزانية الذكية</span>
+            <span>الميزانية والإنفاق</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('analytics')}
+            className={cn(
+              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0 cursor-pointer",
+              activeTab === 'analytics'
+                ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-900/60 shadow-2xs"
+                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+            )}
+          >
+            <BarChart2 size={13} />
+            <span>التحليل البياني</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('baby')}
+            className={cn(
+              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0 cursor-pointer",
+              activeTab === 'baby'
+                ? "bg-pink-50 text-pink-700 border border-pink-200 dark:bg-pink-950/50 dark:text-pink-300 dark:border-pink-900/60 shadow-2xs"
+                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+            )}
+          >
+            <Baby size={13} className="text-pink-500" />
+            <span>مساعد الرضيع 🍼</span>
           </button>
 
           <button
@@ -498,40 +491,35 @@ const BudgetPage = () => {
             className={cn(
               "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0 cursor-pointer",
               activeTab === 'history'
-                ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/50"
+                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs"
                 : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
             )}
           >
             <History size={13} />
-            <span>سجل الميزانية وتعديل الشهور</span>
+            <span>سجل وتعديل الشهور</span>
           </button>
 
+        </div>
+
+        {/* Quick Links to Income and Recurring */}
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
           <Link
             to="/income"
-            className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0",
-              location.pathname === '/income'
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50"
-                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-            )}
+            className="hover:text-slate-700 dark:hover:text-slate-200 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
           >
-            <ArrowLeftRight size={13} />
+            <ArrowLeftRight size={11} />
             <span>مصادر الدخل</span>
           </Link>
-
+          <span>•</span>
           <Link
             to="/recurring"
-            className={cn(
-              "px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0",
-              location.pathname === '/recurring'
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50"
-                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-            )}
+            className="hover:text-slate-700 dark:hover:text-slate-200 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
           >
-            <RefreshCw size={13} />
+            <RefreshCw size={11} />
             <span>المصاريف المتكررة</span>
           </Link>
         </div>
+
       </div>
 
       {/* Migration banner if September data or budget is detected */}
@@ -545,9 +533,10 @@ const BudgetPage = () => {
       {/* Category smart budget warnings */}
       <BudgetAlerts />
 
-      {activeTab === 'current' ? (
-        <>
-          {/* Overview component */}
+      {/* View Content Rendering */}
+      {activeTab === 'current' && (
+        <div className="space-y-6">
+          {/* Master Summary Hero Card */}
           <BudgetOverview
             globalBudget={globalBudget}
             setGlobalBudget={setGlobalBudget}
@@ -555,8 +544,6 @@ const BudgetPage = () => {
             setOverallPeriod={setOverallPeriod}
             currency={currency}
             totalSpent={totalSpent}
-            monthSpent={monthSpent}
-            weekSpent={weekSpent}
             remainingBudget={remainingBudget}
             overallPercentage={overallPercentage}
             dailyLimit={dailyLimit}
@@ -566,30 +553,17 @@ const BudgetPage = () => {
             rollingBudgetEnabled={rollingBudgetEnabled}
             setRollingBudgetEnabled={setRollingBudgetEnabled}
             globalBudgetNum={globalBudgetNum}
-            chartData={chartData}
-            categories={categories}
             suggestFromHistory={suggestFromHistory}
             autoAllocate={autoAllocate}
             isGenerating={isGenerating}
-            itemVariants={itemVariants}
             selectedMonth={selectedMonth}
             firstDayOfMonth={firstDayOfMonth}
-            setFirstDayOfMonth={setFirstDayOfMonth}
             expenses={expenses}
             budgets={budgets}
-            showSettings={showSettings}
-            setShowSettings={setShowSettings}
+            onOpenSettings={() => setIsSettingsModalOpen(true)}
           />
 
-          {/* Smart Baby & Child Budget Assistant */}
-          <BabyBudgetAssistant
-            selectedMonth={selectedMonth}
-            onBudgetApplied={(catId, amount) => {
-              handleCategoryBudgetChange(catId, amount.toString());
-            }}
-          />
-
-          {/* Category List component */}
+          {/* Clean, Filterable Category Budgets List */}
           <BudgetCategoryList
             categories={categories}
             currentMonthExpenses={currentMonthExpenses}
@@ -603,10 +577,39 @@ const BudgetPage = () => {
             currency={currency}
             categoryStatusesLookup={categoryStatusesLookup}
             rollingBudgetEnabled={rollingBudgetEnabled}
+            onAutoAllocate={autoAllocate}
+            onSuggestFromHistory={suggestFromHistory}
+            isGenerating={isGenerating}
           />
-        </>
-      ) : (
-        /* Historical Logs & Manual Transaction Month Fixer Tab */
+        </div>
+      )}
+
+      {activeTab === 'analytics' && (
+        <BudgetAnalyticsTab
+          chartData={chartData}
+          categories={categories}
+          currency={currency}
+          selectedMonth={selectedMonth}
+          firstDayOfMonth={firstDayOfMonth}
+          expenses={expenses}
+          budgets={budgets}
+          globalBudgetNum={globalBudgetNum}
+          totalSpent={totalSpent}
+        />
+      )}
+
+      {activeTab === 'baby' && (
+        <div className="space-y-4">
+          <BabyBudgetAssistant
+            selectedMonth={selectedMonth}
+            onBudgetApplied={(catId, amount) => {
+              handleCategoryBudgetChange(catId, amount.toString());
+            }}
+          />
+        </div>
+      )}
+
+      {activeTab === 'history' && (
         <BudgetHistoryTab
           currentSelectedMonth={selectedMonth}
           onSelectMonthForBudget={(month) => {
@@ -616,7 +619,26 @@ const BudgetPage = () => {
           }}
         />
       )}
-    </motion.div>
+
+      {/* Global Settings & AI Allocator Modal */}
+      <BudgetSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        globalBudget={globalBudget}
+        setGlobalBudget={setGlobalBudget}
+        overallPeriod={overallPeriod}
+        setOverallPeriod={setOverallPeriod}
+        firstDayOfMonth={firstDayOfMonth}
+        setFirstDayOfMonth={setFirstDayOfMonth}
+        rollingBudgetEnabled={rollingBudgetEnabled}
+        setRollingBudgetEnabled={setRollingBudgetEnabled}
+        currency={currency}
+        autoAllocate={autoAllocate}
+        suggestFromHistory={suggestFromHistory}
+        isGenerating={isGenerating}
+      />
+
+    </div>
   );
 };
 
