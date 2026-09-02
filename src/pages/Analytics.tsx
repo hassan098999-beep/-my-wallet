@@ -66,7 +66,12 @@ const Analytics = () => {
   // Period Preset State
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('this_month');
   const [selectedMonth, setSelectedMonth] = useState(() => {
-    return safeStorage.getItem('masarifi_analytics_selected_month') || getBudgetMonth(new Date(), firstDayOfMonth);
+    const saved = safeStorage.getItem('masarifi_analytics_selected_month');
+    const current = getBudgetMonth(new Date(), firstDayOfMonth);
+    if (saved === '2026-08' && current === '2026-09') {
+      return '2026-09';
+    }
+    return saved || current;
   }); // YYYY-MM
 
   const updateSelectedMonth = useCallback((val: string) => {
@@ -106,7 +111,7 @@ const Analytics = () => {
   // Listen for month migration events
   useEffect(() => {
     const handleMonthMigrated = (e: any) => {
-      const targetMonth = e?.detail?.targetMonth || '2026-08';
+      const targetMonth = e?.detail?.targetMonth || getBudgetMonth(new Date(), firstDayOfMonth);
       updateSelectedMonth(targetMonth);
     };
 
@@ -114,7 +119,7 @@ const Analytics = () => {
     return () => {
       window.removeEventListener('masarifi:monthMigrated', handleMonthMigrated);
     };
-  }, [updateSelectedMonth]);
+  }, [updateSelectedMonth, firstDayOfMonth]);
 
   const budget = useMemo(() => budgets?.find(b => b.month === selectedMonth), [budgets, selectedMonth]);
 

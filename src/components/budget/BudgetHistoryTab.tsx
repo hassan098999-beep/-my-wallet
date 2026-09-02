@@ -76,7 +76,8 @@ export const BudgetHistoryTab: React.FC<BudgetHistoryTabProps> = ({
     source?: string;
   } | null>(null);
 
-  const [batchMoveTargetMonth, setBatchMoveTargetMonth] = useState<string>('2026-08');
+  const currentMonthKey = format(new Date(), 'yyyy-MM');
+  const [batchMoveTargetMonth, setBatchMoveTargetMonth] = useState<string>(() => currentMonthKey);
   const [isBatchMoveModalOpen, setIsBatchMoveModalOpen] = useState(false);
   const [quickMoveTx, setQuickMoveTx] = useState<{ tx: any; type: 'expense' | 'income' } | null>(null);
   const [editingBudgetMonth, setEditingBudgetMonth] = useState<Budget | null>(null);
@@ -177,10 +178,9 @@ export const BudgetHistoryTab: React.FC<BudgetHistoryTabProps> = ({
   // Available unique month list for selector
   const availableMonths = useMemo(() => {
     const list = monthSummaries.map(m => m.month);
-    if (!list.includes('2026-08')) list.unshift('2026-08');
-    if (!list.includes('2026-09')) list.push('2026-09');
+    if (!list.includes(currentMonthKey)) list.unshift(currentMonthKey);
     return Array.from(new Set(list)).sort((a, b) => b.localeCompare(a));
-  }, [monthSummaries]);
+  }, [monthSummaries, currentMonthKey]);
 
   // 2. Flatten and filter transactions for manual audit & editing
   const filteredTransactions = useMemo(() => {
@@ -829,15 +829,12 @@ export const BudgetHistoryTab: React.FC<BudgetHistoryTabProps> = ({
                     const isSelected = selectedTxIds.has(item.id);
                     const isExpense = item.type === 'expense';
                     const category = isExpense ? categories.find(c => c.id === item.categoryId) : null;
-                    const isSepDate = item.date.includes('-09-') || item.date.includes('/09/') || item.date.startsWith('2026-09');
-
                     return (
                       <tr 
                         key={item.id}
                         className={cn(
                           "hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors",
-                          isSelected && "bg-indigo-50/50 dark:bg-indigo-950/30",
-                          isSepDate && "bg-amber-50/30 dark:bg-amber-950/20"
+                          isSelected && "bg-indigo-50/50 dark:bg-indigo-950/30"
                         )}
                       >
                         {/* Checkbox */}
@@ -860,11 +857,6 @@ export const BudgetHistoryTab: React.FC<BudgetHistoryTabProps> = ({
                             <span className="font-black text-slate-800 dark:text-slate-100 max-w-xs truncate">
                               {item.note}
                             </span>
-                            {isSepDate && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300">
-                                سبتمبر
-                              </span>
-                            )}
                           </div>
                         </td>
 
@@ -1013,8 +1005,8 @@ export const BudgetHistoryTab: React.FC<BudgetHistoryTabProps> = ({
                       onClick={() => handleQuickMoveMonth(quickMoveTx, m)}
                       className={cn(
                         "p-3 rounded-xl border text-xs font-black transition-all text-center cursor-pointer",
-                        m === '2026-08'
-                          ? "bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 dark:bg-amber-950/40 dark:border-amber-700 dark:text-amber-200"
+                        m === currentMonthKey
+                          ? "bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-900 dark:bg-emerald-950/40 dark:border-emerald-700 dark:text-emerald-200"
                           : "bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
                       )}
                     >

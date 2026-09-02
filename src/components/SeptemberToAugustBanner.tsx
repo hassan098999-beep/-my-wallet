@@ -9,40 +9,40 @@ interface SeptemberToAugustBannerProps {
 }
 
 export const SeptemberToAugustBanner: React.FC<SeptemberToAugustBannerProps> = ({ onMigrateSuccess }) => {
-  const { expenses = [], income = [], budgets = [], migrateSeptemberDataToAugust } = useAppContext();
+  const { expenses = [], income = [], migrateAugustDataToSeptember } = useAppContext();
   const [isMigrating, setIsMigrating] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  // Check September pattern across dates and months
-  const isSep = (d?: string | null) => {
-    if (!d || typeof d !== 'string') return false;
-    return d.includes('-09-') || d.includes('/09/') || d.endsWith('-09') || d.includes('2026-09') || d.includes('2026/09');
+  // Detect operations that were added in September 2026 but converted to August 2026
+  const isForcedAug = (item: any) => {
+    if (!item || !item.date) return false;
+    const isAug = item.date.startsWith('2026-08') || item.date.includes('-08-') || item.date.includes('/08/');
+    const createdInSep = item.createdAt && (item.createdAt.includes('2026-09') || item.createdAt.includes('-09-'));
+    return isAug && Boolean(createdInSep);
   };
 
-  // Count operations with date in September (-09- or /09/)
-  const sepExpensesCount = (expenses || []).filter(e => isSep(e.date)).length;
-  const sepIncomeCount = (income || []).filter(i => isSep(i.date)).length;
-  const sepBudgetsCount = (budgets || []).filter(b => isSep(b.month)).length;
-  const totalSepCount = sepExpensesCount + sepIncomeCount + sepBudgetsCount;
+  const forcedExpensesCount = (expenses || []).filter(isForcedAug).length;
+  const forcedIncomeCount = (income || []).filter(isForcedAug).length;
+  const totalForcedCount = forcedExpensesCount + forcedIncomeCount;
 
-  // If no operations in September or dismissed, don't show
-  if (totalSepCount === 0 || isDismissed) {
+  // If no mistakenly converted operations or dismissed, don't show
+  if (totalForcedCount === 0 || isDismissed) {
     return null;
   }
 
-  const handleFixDates = async () => {
+  const handleRestoreToSeptember = async () => {
     setIsMigrating(true);
     try {
-      if (migrateSeptemberDataToAugust) {
-        await migrateSeptemberDataToAugust();
+      if (migrateAugustDataToSeptember) {
+        await migrateAugustDataToSeptember(true);
         setIsDismissed(true);
         if (onMigrateSuccess) {
-          onMigrateSuccess('2026-08');
+          onMigrateSuccess('2026-09');
         }
       }
     } catch (err) {
       console.error(err);
-      toast.error('حدث خطأ أثناء نقل التواريخ');
+      toast.error('حدث خطأ أثناء نقل العمليات');
     } finally {
       setIsMigrating(false);
     }
@@ -54,25 +54,25 @@ export const SeptemberToAugustBanner: React.FC<SeptemberToAugustBannerProps> = (
         initial={{ opacity: 0, y: -12, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -12, scale: 0.98 }}
-        className="relative overflow-hidden rounded-2xl border-2 border-amber-300 dark:border-amber-500/40 bg-gradient-to-r from-amber-50 via-orange-50/70 to-amber-100/50 dark:from-amber-950/40 dark:via-slate-900 dark:to-orange-950/30 p-4 md:p-5 shadow-lg shadow-amber-500/10 mb-5"
+        className="relative overflow-hidden rounded-2xl border-2 border-emerald-300 dark:border-emerald-500/40 bg-gradient-to-r from-emerald-50 via-teal-50/70 to-emerald-100/50 dark:from-emerald-950/40 dark:via-slate-900 dark:to-teal-950/30 p-4 md:p-5 shadow-lg shadow-emerald-500/10 mb-5"
         dir="rtl"
       >
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-start gap-3.5 flex-1">
-            <div className="p-3 rounded-2xl bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+            <div className="p-3 rounded-2xl bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
               <CalendarSync className="w-6 h-6 animate-pulse" />
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="text-sm md:text-base font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <span>تنبيه تصحيح التواريخ: تم رصد {totalSepCount} عملية ومخصصات في شهر سبتمبر</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300">
-                    أوت فارغ حالياً
+                  <span>تصحيح التواريخ: تم رصد {totalForcedCount} عملية أُدخلت حديثاً في سبتمبر وتحولت إلى أوت</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-200 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-300">
+                    سبتمبر هو الشهر الحالي
                   </span>
                 </h4>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl">
-                بسبب تسجيل العمليات سابقاً في شهر سبتمبر، تظهر ميزانية شهر أوت الحالي بدون عمليات. يمكنك بنقرة واحدة تعديل تواريخ جميع هذه العمليات ({sepExpensesCount} مصاريف، {sepIncomeCount} مداخيل{sepBudgetsCount > 0 ? `، وميزانية شهر سبتمبر` : ''}) ونقلها بالكامل إلى <strong className="text-amber-700 dark:text-amber-300 font-black">شهر أوت (أغسطس) الحالي</strong> لتظهر في صفحة الميزانية ولوحاتك الإحصائية فوراً.
+                بسبب التحويل السابق، تم تحويل تواريخ {forcedExpensesCount} مصاريف و{forcedIncomeCount} مداخيل مسجلة حديثاً إلى شهر أوت. يمكنك بنقرة واحدة إعادتها إلى مكانها الصحيح في <strong className="text-emerald-700 dark:text-emerald-300 font-black">شهر سبتمبر الحالي (2026-09)</strong>.
               </p>
             </div>
           </div>
@@ -80,19 +80,19 @@ export const SeptemberToAugustBanner: React.FC<SeptemberToAugustBannerProps> = (
           <div className="flex items-center gap-2 self-stretch md:self-auto justify-end shrink-0">
             <button
               type="button"
-              onClick={handleFixDates}
+              onClick={handleRestoreToSeptember}
               disabled={isMigrating}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-xs md:text-sm font-bold shadow-md shadow-amber-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs md:text-sm font-bold shadow-md shadow-emerald-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 cursor-pointer"
             >
               {isMigrating ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>جارٍ نقل العمليات والميزانية...</span>
+                  <span>جارٍ نقل العمليات إلى سبتمبر...</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  <span>⚡ تصحيح ونقل العمليات إلى شهر أوت الآن</span>
+                  <span>⚡ إعادة العمليات لشهر سبتمبر الآن</span>
                 </>
               )}
             </button>
@@ -100,7 +100,7 @@ export const SeptemberToAugustBanner: React.FC<SeptemberToAugustBannerProps> = (
               type="button"
               onClick={() => setIsDismissed(true)}
               title="إغلاق التنبيه"
-              className="p-2.5 rounded-xl border border-amber-200 dark:border-amber-800/40 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 transition-all cursor-pointer"
+              className="p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800/40 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 transition-all cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>

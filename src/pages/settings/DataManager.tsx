@@ -24,7 +24,7 @@ const DataManager = () => {
     dailyBudget, rollingBudgetEnabled, theme, currency, achievements,
     goals, income, notifications, hasCompletedOnboarding, userName,
     firstDayOfMonth, bestStreak, offlineMode, toggleOfflineMode,
-    isPinSet, setAppPin, migrateSeptemberDataToAugust
+    isPinSet, setAppPin, migrateSeptemberDataToAugust, migrateAugustDataToSeptember
   } = useAppContext();
   
   const [deferredPrompt, setDeferredPrompt] = useState<any>(window.deferredPrompt || null);
@@ -379,34 +379,36 @@ const DataManager = () => {
 
         {/* Date Repair & Migration Tool */}
         <div className="mt-6 pt-6 md:mt-8 md:pt-8 border-t border-slate-100 dark:border-slate-800">
-          <div className="p-4 md:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
+          <div className="p-4 md:p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
                   <CalendarSync size={20} />
                 </div>
                 <div>
                   <h4 className="text-xs md:text-sm font-black text-slate-900 dark:text-white">
-                    أداة تصحيح ومزامنة التواريخ (سبتمبر ⭢ أوت)
+                    أداة تصحيح ومزامنة التواريخ (أوت ⭢ سبتمبر الحالي)
                   </h4>
                   <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-bold">
-                    نقل وتصحيح العمليات التي سُجلت سابقاً بتاريخ شهر سبتمبر وإعادتها لشهر أوت (أغسطس) الحالي.
+                    إعادة ونقل العمليات التي تحولت بالخطأ لشهر أوت إلى شهر سبتمبر الحالي (2026-09).
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={async () => {
-                  hapticFeedback('medium');
-                  if (migrateSeptemberDataToAugust) {
-                    await migrateSeptemberDataToAugust();
-                  }
-                }}
-                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-[11px] font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-              >
-                <Sparkles size={14} />
-                <span>⚡ تصحيح ونقل العمليات الآن</span>
-              </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    hapticFeedback('medium');
+                    if (migrateAugustDataToSeptember) {
+                      await migrateAugustDataToSeptember(false);
+                    }
+                  }}
+                  className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-[11px] font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                >
+                  <Sparkles size={14} />
+                  <span>⚡ تصحيح ونقل لسبتمبر الحالي</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

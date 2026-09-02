@@ -206,6 +206,7 @@ interface AppContextProps extends AppState {
   updateAutoRoundUpSetting: (setting: AutoRoundUpSetting | undefined) => Promise<void>;
   applyTunisianFamilyTemplate: () => Promise<void>;
   migrateSeptemberDataToAugust: () => Promise<number>;
+  migrateAugustDataToSeptember: (onlyRecent?: boolean) => Promise<number>;
   isPinSet: boolean;
   isLocked: boolean;
   setIsLocked: (locked: boolean) => void;
@@ -1583,25 +1584,155 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return totalAffected;
   };
 
-  // Auto-migrate September transactions to August if detected on load or sync
-  useEffect(() => {
-    if (isAutoMigratingRef.current) return;
-    const isSepStr = (d?: string | null) => {
-      if (!d || typeof d !== 'string') return false;
-      return d.includes('-09-') || d.includes('/09/') || d.endsWith('-09') || d.includes('2026-09') || d.includes('2026/09');
+  const migrateAugustDataToSeptember = async (onlyRecent = false): Promise<number> => {
+    let affectedExpenses = 0;
+    let affectedIncome = 0;
+    let affectedBudgets = 0;
+    const migratedExpenseDocs: any[] = [];
+    const migratedIncomeDocs: any[] = [];
+
+    const isTargetAug = (item: any) => {
+      if (!item || !item.date) return false;
+      const isAug = item.date.startsWith('2026-08') || item.date.includes('-08-') || item.date.includes('/08/');
+      if (!isAug) return false;
+      if (onlyRecent) {
+        return Boolean(item.createdAt && (item.createdAt.includes('2026-09') || item.createdAt.includes('-09-')));
+      }
+      return true;
     };
 
-    const hasSepExpenses = (state.expenses || []).some(e => isSepStr(e.date));
-    const hasSepIncome = (state.income || []).some(i => isSepStr(i.date));
-    const hasSepBudgets = (state.budgets || []).some(b => isSepStr(b.month));
+    const convertAugToSep = (d: string) => {
+      return d
+        .replace(/2026([-/])0?8(\b|[-/T])/, '2026$109$2')
+        .replace(/[-/]08[-/]/g, (match) => match.replace('08', '09'))
+        .replace(/[-/]8[-/]/g, (match) => match.replace('8', '09'))
+        .replace(/-08$/, '-09')
+        .replace(/\/08$/, '/09');
+    };
 
-    if (hasSepExpenses || hasSepIncome || hasSepBudgets) {
-      isAutoMigratingRef.current = true;
-      migrateSeptemberDataToAugust().finally(() => {
-        isAutoMigratingRef.current = false;
-      });
+    const newExpenses = (state.expenses || []).map(exp => {
+      if (isTargetAug(exp)) {
+        affectedExpenses++;
+        const newDate = convertAugToSep(exp.date);
+        const updated = {
+          ...exp,
+          date: newDate,
+          parsedDate: safeParseISO(newDate)
+        };
+        migratedExpenseDocs.push(updated);
+        return updated;
+      }
+      return exp;
+    });
+
+    const newIncome = (state.income || []).map(inc => {
+      if (isTargetAug(inc)) {
+        affectedIncome++;
+        const newDate = convertAugToSep(inc.date);
+        const updated = {
+          ...inc,
+          date: newDate,
+          parsedDate: safeParseISO(newDate)
+        };
+        migratedIncomeDocs.push(updated);
+        return updated;
+      }
+      return inc;
+    });
+
+    let newBudgets = [...(state.budgets || [])];
+    const augBudget = newBudgets.find(b => b.month === '2026-08');
+    const hasSepBudget = newBudgets.some(b => b.month === '2026-09');
+    const migratedBudgets: any[] = [];
+
+    if (augBudget && !hasSepBudget) {
+      affectedBudgets++;
+      const newSepBudget = {
+        ...augBudget,
+        month: '2026-09'
+      };
+      newBudgets.push(newSepBudget);
+      migratedBudgets.push(newSepBudget);
     }
-  }, [state.expenses, state.income, state.budgets, user]);
+
+    const totalAffected = affectedExpenses + affectedIncome + affectedBudgets;
+
+    const updatedState = {
+      ...state,
+      expenses: newExpenses,
+      income: newIncome,
+      budgets: newBudgets
+    };
+
+    setState(updatedState);
+    safeStorage.setItem('masarifi_data', JSON.stringify({
+      ...updatedState,
+      expenses: updatedState.expenses.map(({ parsedDate, ...rest }: any) => rest),
+      income: updatedState.income.map(({ parsedDate, ...rest }: any) => rest)
+    }));
+
+    safeStorage.setItem('masarifi_budget_selected_month', '2026-09');
+    safeStorage.setItem('masarifi_analytics_selected_month', '2026-09');
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('masarifi:monthMigrated', { detail: { targetMonth: '2026-09' } }));
+    }
+
+    if (user) {
+      try {
+        const allOperations: { type?: 'delete' | 'set'; ref: any; data?: any }[] = [];
+
+        migratedExpenseDocs.forEach(exp => {
+          const { parsedDate, ...expToStore } = exp;
+          allOperations.push({
+            type: 'set',
+            ref: doc(db, 'users', user.uid, 'expenses', exp.id),
+            data: { ...expToStore, uid: user.uid }
+          });
+        });
+
+        migratedIncomeDocs.forEach(inc => {
+          const { parsedDate, ...incToStore } = inc;
+          allOperations.push({
+            type: 'set',
+            ref: doc(db, 'users', user.uid, 'income', inc.id),
+            data: { ...incToStore, uid: user.uid }
+          });
+        });
+
+        migratedBudgets.forEach(b => {
+          allOperations.push({
+            type: 'set',
+            ref: doc(db, 'users', user.uid, 'budgets', b.month),
+            data: { ...b, uid: user.uid }
+          });
+        });
+
+        const CHUNK_SIZE = 400;
+        for (let i = 0; i < allOperations.length; i += CHUNK_SIZE) {
+          const chunk = allOperations.slice(i, i + CHUNK_SIZE);
+          const batch = writeBatch(db);
+          chunk.forEach(op => {
+            if (op.type === 'delete') {
+              batch.delete(op.ref);
+            } else {
+              batch.set(op.ref, op.data, { merge: true });
+            }
+          });
+          await batch.commit();
+        }
+      } catch (cloudErr) {
+        console.error('Failed to sync migrated dates to Firestore:', cloudErr);
+      }
+    }
+
+    if (affectedExpenses + affectedIncome > 0) {
+      toast.success(`تم بنجاح نقل ${affectedExpenses + affectedIncome} عملية إلى شهر سبتمبر الحالي! ✨`);
+    } else {
+      toast.success('تم الانتقال إلى شهر سبتمبر الحالي! ✨');
+    }
+    return totalAffected;
+  };
 
 
   // Check for upcoming debts due within 3 days
@@ -1729,6 +1860,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     toggleOfflineMode,
     applyTunisianFamilyTemplate,
     migrateSeptemberDataToAugust,
+    migrateAugustDataToSeptember,
     isPinSet,
     isLocked,
     setIsLocked,
