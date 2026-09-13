@@ -22,15 +22,15 @@ export const ACHIEVEMENTS: Achievement[] = [
     title: 'سيد التصنيفات',
     description: 'استخدام جميع فئات المصاريف الأساسية',
     icon: 'LayoutGrid',
-    target: 6, // Matches DEFAULT_CATEGORIES size
+    target: 6,
     progress: 0,
   },
   {
     id: 'savings_streak',
-    title: 'سلسلة التوفير',
-    description: 'عدم تجاوز حد الإنفاق اليومي لمدة 5 أيام متتالية',
+    title: 'أسبوع التوفير',
+    description: 'عدم تجاوز حد الإنفاق اليومي لمدة 7 أيام متتالية',
     icon: 'Zap',
-    target: 5,
+    target: 7,
     progress: 0,
   },
   {
@@ -47,6 +47,14 @@ export const ACHIEVEMENTS: Achievement[] = [
     description: 'إكمال أول هدف ادخار لك',
     icon: 'Target',
     target: 1,
+    progress: 0,
+  },
+  {
+    id: 'fifty_expenses',
+    title: 'خمسون عملية',
+    description: 'تسجيل 50 عملية مالية',
+    icon: 'Layers',
+    target: 50,
     progress: 0,
   }
 ];

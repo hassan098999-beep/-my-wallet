@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, ChartPie, History, Plus, Sparkles, SlidersHorizontal, Baby, HandCoins, BarChart3, PiggyBank } from 'lucide-react';
+import { Home, ChartPie, History, Plus, Sparkles, SlidersHorizontal, Baby, HandCoins, BarChart3, PiggyBank, User } from 'lucide-react';
 import { cn, hapticFeedback } from '../utils';
 import { motion } from 'motion/react';
 import { useAppContext } from '../store/AppContext';
@@ -17,6 +17,7 @@ const subNavItems = [
   { path: '/transactions', name: 'سجل العمليات الكامل', icon: History },
   { path: '/debts', name: 'الديون والقروض', icon: HandCoins },
   { path: '/assistant', name: 'المساعد الذكي AI', icon: Sparkles },
+  { path: '/profile', name: 'الملف الشخصي', icon: User },
   { path: '/settings', name: 'إعدادات النظام', icon: SlidersHorizontal },
 ];
 

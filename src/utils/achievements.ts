@@ -119,6 +119,10 @@ export const evaluateAchievements = (state: AppState): Achievement[] => {
         break;
       }
 
+      case 'fifty_expenses':
+        progress = expenses.length;
+        break;
+
       default:
         progress = 0;
     }

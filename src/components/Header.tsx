@@ -33,6 +33,7 @@ const Header = () => {
       case '/savings': return 'الادخار والأهداف';
       case '/income': return 'الدخل';
       case '/family': return 'تفريرة العيلة';
+      case '/profile': return 'الملف الشخصي والإنجازات';
       case '/settings': return 'الإعدادات';
       case '/assistant': return 'المساعد الذكي';
       default: return 'مصاريفي';

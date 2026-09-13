@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
+import Profile from './pages/Profile';
 import Assistant from './pages/Assistant';
 import ShareAdd from './pages/ShareAdd';
 
@@ -48,6 +49,7 @@ function AppContent() {
               <Route path="savings" element={<SavingsPage />} />
               <Route path="savings-indicators" element={<SavingsIndicatorsPage />} />
               <Route path="family" element={<FamilyReport />} />
+              <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
               <Route path="assistant" element={<Assistant />} />
               <Route path="share-add" element={<ShareAdd />} />
