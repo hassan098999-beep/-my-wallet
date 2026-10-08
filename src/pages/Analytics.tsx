@@ -435,7 +435,7 @@ const Analytics = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-4 sm:space-y-6 px-3 sm:px-4 py-4 pb-32 relative text-right max-w-7xl mx-auto w-full"
+      className="space-y-5 sm:space-y-6 pb-24 relative text-right w-full font-tajawal"
       dir="rtl"
     >
       {/* 1. Header & Period Filters */}

@@ -75,11 +75,9 @@ const Layout = () => {
       />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
-        <div className="md:hidden">
-          <Header />
-        </div>
+        <Header />
         
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8 scroll-smooth pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-6 overflow-x-hidden relative custom-scrollbar">
+        <main className="flex-1 overflow-y-auto p-3.5 sm:p-5 md:p-6 lg:p-8 scroll-smooth pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-8 overflow-x-hidden relative custom-scrollbar">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -87,7 +85,7 @@ const Layout = () => {
               initial="initial"
               animate="animate"
               exit="exit"
-              className="min-h-full w-full flex flex-col"
+              className="min-h-full w-full max-w-7xl mx-auto flex flex-col"
             >
               <Suspense fallback={
                 <div className="flex items-center justify-center min-h-[50vh]">

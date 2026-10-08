@@ -362,7 +362,7 @@ const BudgetPage = () => {
   }, [categories, currentMonthExpenses, currentWeekExpenses, categoryBudgets, categoryPeriods]);
 
   return (
-    <div className="space-y-5 p-3 sm:p-4 md:p-6 pb-28 w-full max-w-7xl mx-auto text-right font-tajawal rtl">
+    <div className="space-y-6 pb-24 w-full text-right font-tajawal rtl">
       
       {/* Top Header Bar: Clean & High-Clarity */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-slate-150 dark:border-slate-800">

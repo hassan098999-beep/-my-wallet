@@ -645,7 +645,7 @@ const Dashboard = () => {
   [categories]);
 
   return (
-    <div className="space-y-6 p-4 pb-32 relative mt-2">
+    <div className="space-y-6 pb-20 relative font-tajawal w-full">
       
       {/* September to August Date Correction Banner */}
       <SeptemberToAugustBanner />

@@ -283,7 +283,7 @@ export const FamilyReport: React.FC = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-8 pb-16 max-w-7xl mx-auto px-3 sm:px-4 md:px-6 font-tajawal text-right"
+      className="space-y-7 pb-24 w-full font-tajawal text-right"
       dir="rtl"
     >
       {/* Top Header & Month Selector */}

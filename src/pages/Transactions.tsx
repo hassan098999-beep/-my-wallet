@@ -867,7 +867,7 @@ const Transactions = () => {
   };
 
   return (
-    <div className="space-y-6 p-4 pb-32 relative">
+    <div className="space-y-6 pb-24 relative font-tajawal w-full">
       <input
         type="file"
         ref={fileInputRef}

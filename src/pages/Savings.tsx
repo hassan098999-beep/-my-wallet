@@ -124,7 +124,7 @@ export const SavingsPage = () => {
 
   return (
     <div 
-      className="space-y-6 w-full max-w-full p-2 sm:p-4 pb-28 relative"
+      className="space-y-6 w-full pb-24 relative font-tajawal"
       dir="rtl"
     >
       {/* Page Header */}
@@ -149,7 +149,7 @@ export const SavingsPage = () => {
       />
 
       {/* Collapsible Smart Savings Simulator Section */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden transition-all">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden transition-all">
         <button
           onClick={() => {
             hapticFeedback('light');

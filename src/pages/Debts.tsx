@@ -109,7 +109,7 @@ const DebtsPage: React.FC = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6 w-full max-w-full p-4 pb-32 relative"
+      className="space-y-6 w-full pb-24 relative font-tajawal"
     >
       {/* Background Ambience */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">

@@ -27,73 +27,84 @@ export const SummaryKpiRow: React.FC<SummaryKpiRowProps> = ({
       variants={itemVariants}
       initial="hidden"
       animate="visible"
-      className="grid grid-cols-2 lg:grid-cols-4 gap-3.5"
+      className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4"
       dir="rtl"
     >
       {/* Card 1: Total Balance */}
-      <div className="relative overflow-hidden p-4 md:p-5 bg-white dark:bg-slate-900/90 border border-slate-150 dark:border-slate-800/85 rounded-2xl shadow-md dark:shadow-black/10 flex flex-col justify-between text-right transition-all hover:-translate-y-1 hover:shadow-lg">
-        <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
-        <div className="flex items-center justify-between mb-2">
-          <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+      <div className="relative overflow-hidden p-4 sm:p-5 bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs flex flex-col justify-between text-right transition-all hover:border-emerald-300 dark:hover:border-emerald-700/60 group">
+        <div className="flex items-center justify-between mb-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-transform group-hover:scale-105">
             <Wallet size={18} />
           </div>
-          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black tracking-wide">الرصيد الإجمالي 💳</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">الرصيد الإجمالي</span>
         </div>
-        <div className="flex flex-col">
-          <span className="text-sm md:text-lg font-black text-slate-900 dark:text-white font-mono truncate">
+        <div className="flex flex-col space-y-1">
+          <span className="text-base sm:text-xl md:text-2xl font-black text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate">
             {formatCurrency(totalNetWorth, currency)}
           </span>
           {totalGoals > 0 && (
-            <span className="text-[9px] text-slate-400 font-bold mt-0.5 border-t border-slate-100 dark:border-slate-800 pt-1">
-              متاح للإنفاق: {formatCurrency(Math.max(0, totalNetWorth - totalGoals), currency)}
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold truncate pt-1 border-t border-slate-100 dark:border-slate-800/80">
+              حر للإنفاق: {formatCurrency(Math.max(0, totalNetWorth - totalGoals), currency)}
             </span>
           )}
         </div>
       </div>
 
       {/* Card 2: Safe Remaining Today */}
-      <div className="relative overflow-hidden p-4 md:p-5 bg-white dark:bg-slate-900/90 border border-slate-150 dark:border-slate-800/85 rounded-2xl shadow-md dark:shadow-black/10 flex flex-col justify-between text-right transition-all hover:-translate-y-1 hover:shadow-lg">
-        <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/5 dark:bg-amber-500/10 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
-        <div className="flex items-center justify-between mb-2">
-          <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
-            <Zap size={18} className="animate-pulse" />
+      <div className="relative overflow-hidden p-4 sm:p-5 bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs flex flex-col justify-between text-right transition-all hover:border-amber-300 dark:hover:border-amber-700/60 group">
+        <div className="flex items-center justify-between mb-3">
+          <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center transition-transform group-hover:scale-105">
+            <Zap size={18} />
           </div>
-          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black tracking-wide">المتبقي الآمن اليوم ⚡</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">المتبقي الآمن اليوم</span>
         </div>
-        <span className={cn(
-          "text-sm md:text-lg font-black font-mono truncate",
-          remainingToday > 0 ? "text-emerald-500 dark:text-emerald-400" : "text-rose-500 dark:text-rose-400"
-        )}>
-          {formatCurrency(remainingToday, currency)}
-        </span>
+        <div className="flex flex-col space-y-1">
+          <span className={cn(
+            "text-base sm:text-xl md:text-2xl font-black font-mono tabular-nums tracking-tight truncate",
+            remainingToday > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+          )}>
+            {formatCurrency(remainingToday, currency)}
+          </span>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold truncate pt-1 border-t border-slate-100 dark:border-slate-800/80">
+            {remainingToday > 0 ? 'ضمن حد الأمان اليومي' : 'تجاوز حد اليوم'}
+          </span>
+        </div>
       </div>
 
       {/* Card 3: Monthly Expenses */}
-      <div className="relative overflow-hidden p-4 md:p-5 bg-white dark:bg-slate-900/90 border border-slate-150 dark:border-slate-800/85 rounded-2xl shadow-md dark:shadow-black/10 flex flex-col justify-between text-right transition-all hover:-translate-y-1 hover:shadow-lg">
-        <div className="absolute top-0 right-0 w-20 h-20 bg-rose-500/5 dark:bg-rose-500/10 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
-        <div className="flex items-center justify-between mb-2">
-          <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
+      <div className="relative overflow-hidden p-4 sm:p-5 bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs flex flex-col justify-between text-right transition-all hover:border-rose-300 dark:hover:border-rose-700/60 group">
+        <div className="flex items-center justify-between mb-3">
+          <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center transition-transform group-hover:scale-105">
             <Activity size={18} />
           </div>
-          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black tracking-wide">مصاريف الشهر 📈</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">مصاريف الشهر</span>
         </div>
-        <span className="text-sm md:text-lg font-black text-slate-900 dark:text-white font-mono truncate">
-          {formatCurrency(totalMonthlyExpense, currency)}
-        </span>
+        <div className="flex flex-col space-y-1">
+          <span className="text-base sm:text-xl md:text-2xl font-black text-slate-900 dark:text-white font-mono tabular-nums tracking-tight truncate">
+            {formatCurrency(totalMonthlyExpense, currency)}
+          </span>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold truncate pt-1 border-t border-slate-100 dark:border-slate-800/80">
+            إجمالي المدفوعات المسجلة
+          </span>
+        </div>
       </div>
 
       {/* Card 4: Global Budget */}
-      <div className="relative overflow-hidden p-4 md:p-5 bg-white dark:bg-slate-900/90 border border-slate-150 dark:border-slate-800/85 rounded-2xl shadow-md dark:shadow-black/10 flex flex-col justify-between text-right transition-all hover:-translate-y-1 hover:shadow-lg">
-        <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-bl-full pointer-events-none -mr-2 -mt-2" />
-        <div className="flex items-center justify-between mb-2">
-          <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+      <div className="relative overflow-hidden p-4 sm:p-5 bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs flex flex-col justify-between text-right transition-all hover:border-indigo-300 dark:hover:border-indigo-700/60 group">
+        <div className="flex items-center justify-between mb-3">
+          <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center transition-transform group-hover:scale-105">
             <Target size={18} />
           </div>
-          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black tracking-wide">الميزانية الإجمالية 🎯</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">الميزانية المرصودة</span>
         </div>
-        <span className="text-sm md:text-lg font-black text-indigo-600 dark:text-indigo-400 font-mono truncate">
-          {formatCurrency(globalBudgetNum, currency)}
-        </span>
+        <div className="flex flex-col space-y-1">
+          <span className="text-base sm:text-xl md:text-2xl font-black text-indigo-600 dark:text-indigo-400 font-mono tabular-nums tracking-tight truncate">
+            {formatCurrency(globalBudgetNum, currency)}
+          </span>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold truncate pt-1 border-t border-slate-100 dark:border-slate-800/80">
+            السقف المحدد للشهر
+          </span>
+        </div>
       </div>
     </motion.div>
   );
