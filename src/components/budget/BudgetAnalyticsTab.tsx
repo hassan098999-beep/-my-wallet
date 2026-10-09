@@ -2,17 +2,18 @@ import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { 
   BarChart2, Activity, TrendingUp, PieChart, ShieldCheck, 
-  Sparkles, Layers, ArrowUpRight
+  Sparkles, Layers, ArrowUpRight, Flame, AlertTriangle, 
+  Clock, Zap, Gauge, TrendingDown, Target, CheckCircle2
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip as RechartsTooltip, ResponsiveContainer, Cell,
   AreaChart, Area
 } from 'recharts';
-import { parseISO, subMonths, format } from 'date-fns';
+import { parseISO, subMonths, format, differenceInDays } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Category, Budget, Expense } from '../../types';
-import { formatCurrency, getBudgetMonth } from '../../utils';
+import { formatCurrency, getBudgetMonth, getBudgetRange, cn } from '../../utils';
 
 interface BudgetAnalyticsTabProps {
   chartData: Array<{ name: string; spent: number; budgeted: number; color?: string }>;
@@ -37,6 +38,64 @@ export const BudgetAnalyticsTab: React.FC<BudgetAnalyticsTabProps> = ({
   globalBudgetNum,
   totalSpent,
 }) => {
+  // Predictive Pace Analysis & Burnout Estimation
+  const paceMetrics = useMemo(() => {
+    if (!selectedMonth || globalBudgetNum <= 0) return null;
+    const { start: monthStart, end: monthEnd } = getBudgetRange(selectedMonth, firstDayOfMonth);
+    const today = new Date();
+    const daysInMonth = differenceInDays(monthEnd, monthStart) + 1;
+    
+    // Days elapsed so far
+    let daysElapsed = 1;
+    if (today > monthEnd) {
+      daysElapsed = daysInMonth;
+    } else if (today >= monthStart) {
+      daysElapsed = Math.max(1, differenceInDays(today, monthStart) + 1);
+    }
+
+    const remainingDays = Math.max(1, differenceInDays(monthEnd, today) + 1);
+    const remainingBudget = Math.max(0, globalBudgetNum - totalSpent);
+    const currentDailyRate = totalSpent > 0 ? totalSpent / daysElapsed : 0;
+    const safeDailyRate = remainingBudget > 0 ? remainingBudget / remainingDays : 0;
+    const originalDailyBudget = globalBudgetNum / daysInMonth;
+
+    // Projected total spend if current pace continues
+    const projectedSpend = totalSpent + (currentDailyRate * Math.max(0, remainingDays - 1));
+    const projectedDifference = globalBudgetNum - projectedSpend; // > 0 surplus, < 0 deficit
+
+    // Estimated exhaustion day
+    let exhaustionDay: number | null = null;
+    let daysUntilExhaustion: number | null = null;
+    if (currentDailyRate > 0) {
+      const daysPossible = Math.floor(globalBudgetNum / currentDailyRate);
+      if (daysPossible < daysInMonth) {
+        exhaustionDay = daysPossible;
+        daysUntilExhaustion = Math.max(0, Math.floor(remainingBudget / currentDailyRate));
+      }
+    }
+
+    const paceRatio = safeDailyRate > 0 ? currentDailyRate / safeDailyRate : (currentDailyRate > 0 ? 2 : 1);
+    const isBurningFast = paceRatio > 1.15;
+    const isCritical = paceRatio > 1.4 || totalSpent > globalBudgetNum;
+
+    return {
+      daysInMonth,
+      daysElapsed,
+      remainingDays,
+      remainingBudget,
+      currentDailyRate,
+      safeDailyRate,
+      originalDailyBudget,
+      projectedSpend,
+      projectedDifference,
+      exhaustionDay,
+      daysUntilExhaustion,
+      paceRatio,
+      isBurningFast,
+      isCritical
+    };
+  }, [selectedMonth, firstDayOfMonth, globalBudgetNum, totalSpent]);
+
   // 6-Month Trend Data
   const trendData = useMemo(() => {
     if (!selectedMonth) return [];
@@ -101,8 +160,137 @@ export const BudgetAnalyticsTab: React.FC<BudgetAnalyticsTabProps> = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6 text-right font-tajawal rtl"
+      dir="rtl"
     >
-      {/* 50/30/20 Framework Cards */}
+      {/* 1. Predictive Pace & Burnout Monitor Card */}
+      {paceMetrics && (
+        <div className={cn(
+          "rounded-3xl p-6 border shadow-xs transition-all relative overflow-hidden",
+          paceMetrics.isCritical
+            ? "bg-rose-50/80 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/40"
+            : paceMetrics.isBurningFast
+            ? "bg-amber-50/80 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40"
+            : "bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40"
+        )}>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-5 border-b border-black/5 dark:border-white/5">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-xs",
+                paceMetrics.isCritical
+                  ? "bg-rose-500 text-white"
+                  : paceMetrics.isBurningFast
+                  ? "bg-amber-500 text-white"
+                  : "bg-emerald-600 text-white"
+              )}>
+                {paceMetrics.isCritical ? <Flame size={24} className="animate-pulse" /> : <Gauge size={24} />}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">
+                    محرك وتيرة الصرف والتنبؤ بنفاذ الميزانية (Pace Engine)
+                  </h3>
+                  <span className={cn(
+                    "text-[10px] font-black px-2.5 py-0.5 rounded-full border",
+                    paceMetrics.isCritical
+                      ? "bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-200 border-rose-300 dark:border-rose-800"
+                      : paceMetrics.isBurningFast
+                      ? "bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-200 border-amber-300 dark:border-amber-800"
+                      : "bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800"
+                  )}>
+                    {paceMetrics.isCritical ? 'وتيرة حرجة 🚨' : paceMetrics.isBurningFast ? 'وتيرة متسارعة ⚠️' : 'وتيرة متوازنة وآمنة ✅'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                  خوارزمية ذكية تقارن معدل صرفك اليومي الفعلي بالحد اليومي الآمن لتفادي نفاذ الرصيد قبل نهاية الشهر
+                </p>
+              </div>
+            </div>
+
+            {/* Projection Verdict */}
+            <div className="text-right">
+              <span className="text-[10px] font-bold text-slate-400 block">المصير المالي التقديري للشهر:</span>
+              <p className={cn(
+                "text-sm font-black mt-0.5",
+                paceMetrics.projectedDifference >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+              )}>
+                {paceMetrics.projectedDifference >= 0 
+                  ? `فائض متوقع قدره ${formatCurrency(paceMetrics.projectedDifference, currency)} 🎉` 
+                  : `عجز متوقع قدره ${formatCurrency(Math.abs(paceMetrics.projectedDifference), currency)} ⚠️`}
+              </p>
+            </div>
+          </div>
+
+          {/* Metrics Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-5">
+            <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60">
+              <span className="text-[10px] font-bold text-slate-400 block mb-1">معدل صرفك اليومي الفعلي</span>
+              <p className="text-lg font-black text-slate-900 dark:text-white font-mono">
+                {formatCurrency(paceMetrics.currentDailyRate, currency)} <span className="text-[10px] font-normal text-slate-400">/ يوم</span>
+              </p>
+              <span className="text-[10px] font-bold text-slate-400 block mt-1">
+                خلال الـ {paceMetrics.daysElapsed} أيام المنقضية
+              </span>
+            </div>
+
+            <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60">
+              <span className="text-[10px] font-bold text-slate-400 block mb-1">المعدل اليومي الآمن المتاح</span>
+              <p className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                {formatCurrency(paceMetrics.safeDailyRate, currency)} <span className="text-[10px] font-normal text-slate-400">/ يوم</span>
+              </p>
+              <span className="text-[10px] font-bold text-slate-400 block mt-1">
+                لـ {paceMetrics.remainingDays} يوماً متبقية
+              </span>
+            </div>
+
+            <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60">
+              <span className="text-[10px] font-bold text-slate-400 block mb-1">إجمالي الصرف المتوقع</span>
+              <p className="text-lg font-black text-slate-900 dark:text-white font-mono">
+                {formatCurrency(paceMetrics.projectedSpend, currency)}
+              </p>
+              <span className="text-[10px] font-bold text-slate-400 block mt-1">
+                السقف: {formatCurrency(globalBudgetNum, currency)}
+              </span>
+            </div>
+
+            <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60">
+              <span className="text-[10px] font-bold text-slate-400 block mb-1">توقع نفاذ الميزانية</span>
+              {paceMetrics.daysUntilExhaustion !== null && paceMetrics.daysUntilExhaustion <= paceMetrics.remainingDays ? (
+                <div>
+                  <p className="text-lg font-black text-rose-600 dark:text-rose-400 font-mono">
+                    خلال {paceMetrics.daysUntilExhaustion} يوم!
+                  </p>
+                  <span className="text-[10px] font-bold text-rose-500 block mt-1">
+                    قبل نهاية الشهر بـ {paceMetrics.remainingDays - paceMetrics.daysUntilExhaustion} أيام
+                  </span>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                    تكفي حتى النهاية ✅
+                  </p>
+                  <span className="text-[10px] font-bold text-emerald-600/80 block mt-1">
+                    ضمن المخطط الآمن
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Actionable Pace Guidance */}
+          <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-xs font-bold">
+            <span className="text-slate-600 dark:text-slate-300 flex items-center gap-2">
+              <Target size={14} className="text-emerald-500" />
+              <span>
+                {paceMetrics.currentDailyRate > paceMetrics.safeDailyRate
+                  ? `نصيحة وتيرة: خفّض إنفاقك اليومي إلى ${formatCurrency(paceMetrics.safeDailyRate, currency)} لاستعادة التوازن وإكمال الشهر بأمان.`
+                  : 'أداء ممتاز! وتيرة صرفك اليومية أقل من الحد المسموح، مما يتيح لك تحقيق فائض ادخاري محترم.'}
+              </span>
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* 2. 50/30/20 Framework Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Needs */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xs space-y-3">
@@ -177,7 +365,7 @@ export const BudgetAnalyticsTab: React.FC<BudgetAnalyticsTabProps> = ({
         </div>
       </div>
 
-      {/* Comparative Horizontal Bar Chart (Categories) */}
+      {/* 3. Comparative Horizontal Bar Chart (Categories) */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-150 dark:border-slate-800">
           <div>
@@ -252,7 +440,7 @@ export const BudgetAnalyticsTab: React.FC<BudgetAnalyticsTabProps> = ({
         )}
       </div>
 
-      {/* 6-Month Trend Area Chart */}
+      {/* 4. 6-Month Trend Area Chart */}
       {trendData.length > 0 && (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-150 dark:border-slate-800">

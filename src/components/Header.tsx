@@ -1,18 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings2, PiggyBank, RefreshCcw, LogOut, LogIn, UserCircle, Moon, Sun, Wallet, SlidersHorizontal, Loader2, HandCoins, BarChart3, History } from 'lucide-react';
+import { Settings2, PiggyBank, RefreshCcw, LogOut, LogIn, UserCircle, Moon, Sun, Wallet, SlidersHorizontal, Loader2, HandCoins, BarChart3, History, ShieldCheck, ChartPie } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
+import { OfflineSyncIndicator } from './OfflineSyncIndicator';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../utils';
 import { useAppContext } from '../store/AppContext';
 
 const dropdownItems = [
-  { path: '/analytics', name: 'التحليلات والإحصائيات 📊', icon: BarChart3 },
-  { path: '/transactions', name: 'سجل العمليات 📜', icon: History },
-  { path: '/debts', name: 'الديون والقروض (لي / علي) 🤝', icon: HandCoins },
-  { path: '/income', name: 'إدارة الدخل 💰', icon: Wallet },
-  { path: '/recurring', name: 'المصاريف المتكررة 🔄', icon: RefreshCcw },
+  { path: '/savings-indicators', name: 'مؤشر الصحة المالية والتوفير 🛡️', icon: ShieldCheck },
+  { path: '/recurring', name: 'الالتزامات والفواتير الدورية 🔄', icon: RefreshCcw },
+  { path: '/budget', name: 'الميزانية ووتيرة الصرف 📊', icon: ChartPie },
   { path: '/savings', name: 'الادخار والأهداف 🎯', icon: PiggyBank },
+  { path: '/analytics', name: 'التحليلات والإحصائيات 📈', icon: BarChart3 },
+  { path: '/transactions', name: 'سجل العمليات 📜', icon: History },
+  { path: '/debts', name: 'الديون والقروض 🤝', icon: HandCoins },
+  { path: '/income', name: 'إدارة الدخل 💰', icon: Wallet },
   { path: '/settings', name: 'الإعدادات والتحكم ⚙️', icon: SlidersHorizontal },
 ];
 
@@ -65,6 +68,9 @@ const Header = () => {
       
       {/* Zone 3: Actions (Theme, Notifications, Settings/Profile) */}
       <div className="flex items-center gap-2">
+        {/* Offline & Sync Status Indicator */}
+        <OfflineSyncIndicator />
+
         {/* Theme Toggle */}
         <div className="relative group">
           <button

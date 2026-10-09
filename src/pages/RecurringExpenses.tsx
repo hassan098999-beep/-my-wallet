@@ -191,6 +191,17 @@ const RecurringExpenses = () => {
     setIsAdding(false);
   };
 
+  const handleApplyPreset = (preset: { note: string; categoryId: string; subcategoryId?: string; amount?: string; interval: RecurringInterval }) => {
+    setEditingId(null);
+    setNote(preset.note);
+    setCategoryId(preset.categoryId);
+    setSubcategoryId(preset.subcategoryId || '');
+    setAmount(preset.amount || '');
+    setInterval(preset.interval);
+    setIsAdding(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
@@ -456,6 +467,7 @@ const RecurringExpenses = () => {
             deleteRecurringExpense={deleteRecurringExpense}
             intervalLabels={intervalLabels}
             setIsAdding={setIsAdding}
+            onApplyPreset={handleApplyPreset}
           />
         </>
       )}

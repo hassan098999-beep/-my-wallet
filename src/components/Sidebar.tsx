@@ -1,13 +1,15 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, ChartPie, History, Plus, Sparkles, SlidersHorizontal, Baby, HandCoins, BarChart3, PiggyBank, User } from 'lucide-react';
+import { Home, ChartPie, History, Plus, Sparkles, SlidersHorizontal, Baby, HandCoins, BarChart3, PiggyBank, User, ShieldCheck, RefreshCcw } from 'lucide-react';
 import { cn, hapticFeedback } from '../utils';
 import { motion } from 'motion/react';
 import { useAppContext } from '../store/AppContext';
 
 const mainNavItems = [
   { path: '/', name: 'الرئيسية العائلية', icon: Home },
-  { path: '/budget', name: 'الميزانية والالتزامات', icon: ChartPie },
+  { path: '/savings-indicators', name: 'مؤشر الصحة والتوفير 🛡️', icon: ShieldCheck },
+  { path: '/recurring', name: 'الالتزامات والفواتير 🔄', icon: RefreshCcw },
+  { path: '/budget', name: 'الميزانية ووتيرة الصرف', icon: ChartPie },
   { path: '/savings', name: 'منصة الادخار الذكي', icon: PiggyBank },
   { path: '/family', name: 'التقارير العائلية', icon: Baby },
 ];

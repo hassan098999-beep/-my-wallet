@@ -21,6 +21,7 @@ import { DashboardTabSwitcher, DashboardTab } from '../components/dashboard/Dash
 import { VaultsSection } from '../components/dashboard/VaultsSection';
 import { TodayOperationsPanel } from '../components/dashboard/TodayOperationsPanel';
 import { InsightsSection } from '../components/dashboard/InsightsSection';
+import { UpcomingCommitmentsBanner } from '../components/dashboard/UpcomingCommitmentsBanner';
 
 const Dashboard = () => {
   const { 
@@ -664,6 +665,9 @@ const Dashboard = () => {
 
       {/* Category and global smart budget alerts */}
       <BudgetAlerts />
+
+      {/* Upcoming & Urgent Commitments / Bills Banner */}
+      <UpcomingCommitmentsBanner />
 
       {/* 2. Intelligent Segmented KPI Row */}
       <SummaryKpiRow

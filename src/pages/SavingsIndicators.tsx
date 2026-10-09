@@ -1,48 +1,61 @@
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../store/AppContext';
-import { formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth } from '../utils';
+import { formatCurrency, hapticFeedback, getBudgetRange, getBudgetMonth, cn } from '../utils';
 import { parseISO } from 'date-fns';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   PiggyBank, TrendingUp, Sparkles, Percent, Baby, 
   UtensilsCrossed, House, HeartPulse, Lightbulb, 
-  ShieldCheck, AlertTriangle, ArrowRight, Sliders, Info, Coins, Calculator, CheckCircle2
+  ShieldCheck, AlertTriangle, ArrowRight, Sliders, Info, 
+  Coins, Calculator, CheckCircle2, Gauge, Flame, Target, 
+  Wallet, RefreshCw, Zap, ShieldAlert, ArrowUpRight
 } from 'lucide-react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, RadialBarChart, RadialBar } from 'recharts';
+import { ResponsiveContainer, RadialBarChart, RadialBar } from 'recharts';
 import { Link } from 'react-router-dom';
+import { calculateDetailedHealthReport } from '../utils/healthCalculator';
 
 const SavingsIndicators = () => {
-  const { income, expenses, categories, currency, firstDayOfMonth } = useAppContext();
+  const { 
+    income, 
+    expenses, 
+    categories, 
+    currency, 
+    firstDayOfMonth, 
+    budgets, 
+    accounts, 
+    goals, 
+    recurringExpenses 
+  } = useAppContext();
 
   // 1. Simulation states
-  const [foodSavingPct, setFoodSavingPct] = useState(15); // Default simulated 15% save in groceries
-  const [babySavingPct, setBabySavingPct] = useState(10); // Default simulated 10% save in baby items in bulk
-  const [leisureSavingPct, setLeisureSavingPct] = useState(25); // Default simulated 25% save in coffee/leisure
+  const [foodSavingPct, setFoodSavingPct] = useState(15);
+  const [babySavingPct, setBabySavingPct] = useState(10);
+  const [leisureSavingPct, setLeisureSavingPct] = useState(25);
 
   // 2. Fetch current budget month based on first day of month setting
   const currentMonth = useMemo(() => getBudgetMonth(new Date(), firstDayOfMonth), [firstDayOfMonth]);
+
+  // 3. Compute Comprehensive Health Report
+  const healthReport = useMemo(() => {
+    return calculateDetailedHealthReport({
+      income,
+      expenses,
+      budgets,
+      accounts,
+      categories,
+      goals,
+      recurringExpenses,
+      currentMonth,
+      firstDayOfMonth,
+      currency
+    });
+  }, [income, expenses, budgets, accounts, categories, goals, recurringExpenses, currentMonth, firstDayOfMonth, currency]);
+
+  // Extract category expenses for simulation
   const { start: monthStart, end: monthEnd } = useMemo(() => getBudgetRange(currentMonth, firstDayOfMonth), [currentMonth, firstDayOfMonth]);
-
-  // 3. Compute income, expenses and category breakdowns
-  const monthlyTotals = useMemo(() => {
-    const totalExpense = expenses
-      .filter(e => {
-        if (e.isTransfer) return false;
-        const d = parseISO(e.date);
-        return d >= monthStart && d <= monthEnd;
-      })
-      .reduce((sum, e) => sum + e.amount, 0);
-
-    const totalIncome = income
-      .filter(i => {
-        if (i.isTransfer) return false;
-        const d = parseISO(i.date);
-        return d >= monthStart && d <= monthEnd;
-      })
-      .reduce((sum, i) => sum + i.amount, 0);
-    
-    // Expenses grouped by Category
-    const categoryExpenses = expenses
+  
+  const categoryExpenses = useMemo(() => {
+    return expenses
       .filter(e => {
         if (e.isTransfer) return false;
         const d = parseISO(e.date);
@@ -52,132 +65,29 @@ const SavingsIndicators = () => {
         acc[e.categoryId] = (acc[e.categoryId] || 0) + e.amount;
         return acc;
       }, {} as Record<string, number>);
+  }, [expenses, monthStart, monthEnd]);
 
-    return { totalExpense, totalIncome, categoryExpenses };
-  }, [expenses, income, monthStart, monthEnd]);
+  const categoriesList = categories || [];
+  const foodCategory = categoriesList.find(c => c.name.includes('سوق') || c.name.includes('قفة') || c.id === '1');
+  const babyCategory = categoriesList.find(c => c.name.includes('رضيع') || c.name.includes('بيبي') || c.id === '2');
+  const leisureCategory = categoriesList.find(c => c.name.includes('مقهى') || c.name.includes('ترفيه') || c.type === 'want' || c.id === '6');
 
-  const totalIncome = monthlyTotals.totalIncome;
-  const totalExpense = monthlyTotals.totalExpense;
-  const actualSavings = Math.max(0, totalIncome - totalExpense);
-  const savingRate = totalIncome > 0 ? (actualSavings / totalIncome) * 100 : 0;
+  const foodExpense = foodCategory ? (categoryExpenses[foodCategory.id] || 0) : 0;
+  const babyExpense = babyCategory ? (categoryExpenses[babyCategory.id] || 0) : 0;
+  const leisureExpense = leisureCategory ? (categoryExpenses[leisureCategory.id] || 0) : 0;
 
-  // Find the exact category IDs for our Tunisian model
-  const categoriesList = useMemo(() => categories || [], [categories]);
-  const foodCategory = useMemo(() => categoriesList.find(c => c.name === 'قضية السوق والقفة' || c.id === '1'), [categoriesList]);
-  const babyCategory = useMemo(() => categoriesList.find(c => c.name === 'لوازم ومصروف الرضيع' || c.id === '2'), [categoriesList]);
-  const housingCategory = useMemo(() => categoriesList.find(c => c.name === 'البيت والفواتير' || c.id === '3'), [categoriesList]);
-  const medicalCategory = useMemo(() => categoriesList.find(c => c.name === 'صحة وطبيب الأطفال' || c.id === '5'), [categoriesList]);
-  const leisureCategory = useMemo(() => categoriesList.find(c => c.name === 'ترفيه ومقهى ومواسم' || c.id === '6'), [categoriesList]);
-
-  const foodExpense = foodCategory ? (monthlyTotals.categoryExpenses[foodCategory.id] || 0) : 0;
-  const babyExpense = babyCategory ? (monthlyTotals.categoryExpenses[babyCategory.id] || 0) : 0;
-  const housingExpense = housingCategory ? (monthlyTotals.categoryExpenses[housingCategory.id] || 0) : 0;
-  const medicalExpense = medicalCategory ? (monthlyTotals.categoryExpenses[medicalCategory.id] || 0) : 0;
-  const leisureExpense = leisureCategory ? (monthlyTotals.categoryExpenses[leisureCategory.id] || 0) : 0;
-
-  // 4. Calculate simulation updates
+  // Simulator totals
   const simulatedSavedFood = (foodExpense * foodSavingPct) / 100;
   const simulatedSavedBaby = (babyExpense * babySavingPct) / 100;
   const simulatedSavedLeisure = (leisureExpense * leisureSavingPct) / 100;
   
   const simulatedExtraSavings = simulatedSavedFood + simulatedSavedBaby + simulatedSavedLeisure;
-  const simulatedTotalSavings = actualSavings + simulatedExtraSavings;
-  const simulatedSavingRate = totalIncome > 0 ? (simulatedTotalSavings / totalIncome) * 100 : 0;
-
-  // Determine Savings Health Category
-  const savingsGrade = useMemo(() => {
-    if (totalIncome === 0) return { title: 'قيد الانتظار', color: 'text-slate-500 bg-slate-100 dark:bg-slate-900', desc: 'يرجى إدخال البيانات ومصادر الدخل الشهرية لبدء التحليل.' };
-    if (savingRate <= 0) return { title: 'مرحلة الخطر (استهلاك كلي ومكشوف)', color: 'text-rose-600 bg-rose-50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30', desc: 'كامل المدخول يذهب في النفقات الاستهلاكية الحالية دون ترك أي هامش أمان لمستقبل الطفل وطوارئ الصحة.' };
-    if (savingRate < 10) return { title: 'معدل هش غير كافٍ', color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30', desc: 'ادخاركم أقل من 10%. بوجود رضيع صغير، تعتبر هذه النسبة حساسة حيث إن أي طارئ صحي مفاجئ للبيبي قد يخل بالتوازن المالي بالكامل.' };
-    if (savingRate <= 22) return { title: 'موقع آمن ومتوازن', color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-950/30', desc: 'رائع جداً! ميزانيتكم متوازنة وصحية وضمن أفضل المعدلات التونسية الملائمة لأسرة في حداثة عهدها، وتكفي لتكوين درع أمان محترم.' };
-    return { title: 'امتياز واستقرار مالي رفيع', color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/20 border-indigo-100 dark:border-indigo-900/30', desc: 'نسبة ادخار تتجاوز 22%! قدرة مذهلة على ترشيد الإنفاق وإحكام السيطرة المالية. ينصح بالبدء فوراً بفتح حساب توفير طويل المدى للرضيع.' };
-  }, [savingRate, totalIncome]);
-
-  // Generate recommendations based on the actual spending distribution
-  const diagnostics = useMemo(() => {
-    const list: any[] = [];
-    if (totalIncome === 0) return [];
-
-    // Food diagnostic
-    if (foodExpense > 0) {
-      const pct = (foodExpense / totalIncome) * 100;
-      if (pct > 30) {
-        list.push({
-          icon: UtensilsCrossed,
-          title: 'تكلفة قفة الطعام مرتفعة جداً',
-          assessment: `تلتهم القفة وحاجيات الأكل حوالي ${pct.toFixed(0)}% من مجمل مدخولكم الشهري. الشراء اليومي من المغازات ومحلات العطارة يزيد من المصاريف الجانبية.`,
-          action: 'تخصيص تسوق أسبوعي جماعي من "السوق الأسبوعي" الشعبي لشراء الخضراوات واللحوم والأسماك دفعة واحدة، يقلص الكلفة برمتها بنسبة 20%.'
-        });
-      } else {
-        list.push({
-          icon: UtensilsCrossed,
-          title: 'استهلاك قفة عقلاني',
-          assessment: `تمثل قفة عيش الأسرة ${pct.toFixed(0)}% من الدخل وهو مؤشر ممتاز على التحكم في ميزانية الطعام والاعتماد على الطبخ المنزلي.`,
-          action: 'واصلوا هذا التوازن واعتمدوا على إعداد قائمات الوجبات الأسبوعية مسبقاً.'
-        });
-      }
-    }
-
-    // Baby diagnostic
-    if (babyExpense > 0) {
-      const pct = (babyExpense / totalIncome) * 100;
-      if (pct > 15) {
-        list.push({
-          icon: Baby,
-          title: 'نفقات الرضيع تحتاج ترتيب وجدولة',
-          assessment: `تستأثر لوازم الرضيع بـ ${pct.toFixed(0)}% من الدخل. مع حفاظات الرضع (الكوش) وحليب الصيدليات والمراهم، تتصاعد المصاريف سريعاً.`,
-          action: 'تجنب شراء الحفاضات بالعلب الصغيرة وبصفة يومية. اقتنائها بالحزمة الكبيرة (Giant Pack) ومن مغازات الجملة الكبرى أو المستودعات يوفر مبالغ هامة شهرياً.'
-        });
-      } else {
-        list.push({
-          icon: Baby,
-          title: 'مصروف الرضيع مثالي ومدروس',
-          assessment: `تخصيص ${pct.toFixed(0)}% من ميزانية العائلة للطفل الرضيع يدل على حكمة اقتصادية وموازنة جيدة بين مستلزمات البيبي والمصاريف الأساسية الأخرى.`,
-          action: 'حاولوا الاستمرار في هذا الإنفاق وحقن المدخرات في صندوق خاص لتأمين تطعيمات حيوية ومصاريف الطبيب الفجائية.'
-        });
-      }
-    }
-
-    // Housing & Bills diagnostic
-    if (housingExpense > 0) {
-      const pct = (housingExpense / totalIncome) * 100;
-      if (pct > 25) {
-        list.push({
-          icon: House,
-          title: 'فواتير ومصاريف البيت ثقيلة',
-          assessment: `خدمات وإيجار وفواتير المنزل تلتهم ${pct.toFixed(0)}% من دخل العائلة. الارتفاع المتتالي لفواتير الشركة التونسية للكهرباء والغاز (STEG) والصوناد يثقل كاهلكم.`,
-          action: 'ابدأ بخفض استهلاك المكيّفات والأجهزة الإلكترونية في فترات الذروة، واحرص على قراءة العداد بشكل يدوي وتقديمه بانتظام لتتجنب الفواتير التقديرية الخيالية.'
-        });
-      }
-    }
-
-    // Medical diagnostics
-    if (medicalExpense > 0) {
-      const pct = (medicalExpense / totalIncome) * 100;
-      if (pct > 12) {
-        list.push({
-          icon: HeartPulse,
-          title: 'ملاحظة طبية وتلاقيح الرضيع',
-          assessment: `معدل علاج وطبيب عائلتكم مرتفع هذا الشهر بنسبة ${pct.toFixed(0)}%، حيث يشمل فيزيتات طبيب الأطفال والأدوية والتلاقيح الضرورية.`,
-          action: 'للرعاية الصحية، يُفضل الاستفادة من التلاقيح المجانية والبرامج الوطنية في مراكز رعاية الأم والطفل العمومية (مستوصفات البلدية) فهي تضاهي جودة عيادات الأخصائيين وتقلل الكلفة الكلية.'
-        });
-      }
-    }
-
-    // Default emergency advisory
-    list.push({
-      icon: Lightbulb,
-      title: 'صندوق الأمان المالي الاستعجالي',
-      assessment: 'العائلات التي لديها طفل رضيع تحتاج إلى سيولة فورية بسبب احتمالية زيارات طبيب الأطفال أو نزلات البرد المفاجئة التي تستوجب شراء أدوية وصيدلية في الليل.',
-      action: 'اجعل هدفك الأول ادخار "مبلغ عاجل" نقدي (Cash) يتراوح بين 200 إلى 400 دينار موضوع في المنزل بعيداً عن البطاقات البنكية، ولا تلمسه أبداً لغير الطوارئ الصحية المحضة بلطف على الرضيع.'
-    });
-
-    return list;
-  }, [foodExpense, babyExpense, housingExpense, medicalExpense, totalIncome]);
+  const simulatedTotalSavings = healthReport.actualSavings + simulatedExtraSavings;
+  const simulatedSavingRate = healthReport.totalIncome > 0 ? (simulatedTotalSavings / healthReport.totalIncome) * 100 : 0;
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+    visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
   };
 
   const itemVariants = {
@@ -185,12 +95,12 @@ const SavingsIndicators = () => {
     visible: { opacity: 1, y: 0 }
   };
 
-  // Prepare Radial chart data for Recharts
+  // Radial chart data
   const radialData = [
     {
-      name: 'معدل التوفير الفعلي',
-      value: Math.min(100, Math.round(savingRate)),
-      fill: savingRate >= 20 ? '#10b981' : savingRate > 10 ? '#3b82f6' : '#f59e0b',
+      name: 'مؤشر الصحة المالية',
+      value: healthReport.score,
+      fill: healthReport.score >= 85 ? '#059669' : healthReport.score >= 70 ? '#2563eb' : healthReport.score >= 50 ? '#d97706' : '#e11d48',
     }
   ];
 
@@ -206,308 +116,426 @@ const SavingsIndicators = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6 pb-16 w-full max-w-full px-2"
+      className="space-y-6 pb-20 w-full max-w-full px-2 font-tajawal"
+      dir="rtl"
     >
-      {/* Header and Context Title */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-        <div className="space-y-0.5 text-right">
-          <h1 className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-white flex items-center gap-2 justify-end">
-            <span>مؤشرات التوفير العائلية</span>
-            <PiggyBank className="text-emerald-500 size-6" />
-          </h1>
-          <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium">
-            صُمم خصيصاً لمراقبة ميزانية ومستقبل العائلة التونسية (الأب والأم والرضيع)
-          </p>
+      {/* 1. Header & Title Zone */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-5 md:p-6 rounded-3xl shadow-xs">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
+              <ShieldCheck size={24} />
+            </div>
+            <div>
+              <h1 className="text-lg md:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <span>مؤشر الصحة المالية ومستشار التوفير</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300">
+                  SMART AI
+                </span>
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                تحليل علمي شامل لمدى متانة ميزانيتك، صندوق الطوارئ، وتوصيات ادخار مخصصة
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="bg-slate-100 dark:bg-slate-900 px-3 py-1.5 rounded-xl text-[10px] font-semibold text-slate-600 dark:text-slate-300">
-          دورة الحساب الحالية: <span className="font-mono">{currentMonth}</span>
+
+        <div className="flex items-center gap-2 self-end md:self-auto">
+          <div className="bg-slate-100 dark:bg-slate-800/80 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
+            الدورة المالية: <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{currentMonth}</span>
+          </div>
+          <Link
+            to="/budget"
+            className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+          >
+            <span>ضبط الميزانية</span>
+            <ArrowRight size={13} className="rotate-180" />
+          </Link>
         </div>
       </div>
 
-      {totalIncome === 0 ? (
+      {healthReport.totalIncome === 0 ? (
         <motion.div 
           variants={itemVariants}
-          className="glass-card p-8 rounded-3xl border border-dashed border-amber-500/30 bg-amber-500/5 text-center space-y-4"
+          className="bg-amber-500/5 border border-amber-500/20 rounded-3xl p-8 text-center space-y-4"
         >
           <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 mx-auto">
             <AlertTriangle size={32} />
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-white">لم نجد أي مدخول مسجل لهذا الشهر!</h3>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">لم نجد أي مدخول مسجل لهذا الشهر!</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-              لتتمكن من حساب نسبة الادخار بدقة وتقديم مؤشرات التوفير المخصصة والذكية لعائلتك، يجب أولاً إدخال مدخولك الشهري الإجمالي (مرتب الأب، مرتب الأم، إلخ).
+              لحساب مؤشر الصحة المالية بدقة وتقديم توصيات ادخار ملائمة لدخلك، يرجى تسجيل مصادر الدخل أولاً.
             </p>
           </div>
-          <div className="pt-2">
+          <div>
             <Link 
               to="/income" 
-              className="btn-primary px-6 py-3 rounded-2xl font-semibold text-xs inline-flex items-center gap-2 shadow-lg shadow-emerald-500/20"
+              className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs inline-flex items-center gap-2 shadow-md shadow-emerald-600/20"
             >
-              <span>إرساء وإدخال الدخل والانطلاق</span>
+              <span>تسجيل الدخل الشهري</span>
               <ArrowRight size={14} className="rotate-180" />
             </Link>
           </div>
         </motion.div>
       ) : (
         <>
-          {/* Main Financial State Grid */}
+          {/* 2. Top Banner: Big Health Score Card & Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Left Box: Simple Overview Info */}
+            {/* Left: Overall Health Score Gauge Card */}
             <motion.div 
               variants={itemVariants} 
-              className="glass-card p-5 rounded-3xl border border-slate-100 dark:border-slate-800 flex flex-col justify-between space-y-6 md:col-span-2"
+              className={cn(
+                "p-6 rounded-3xl border shadow-xs flex flex-col justify-between space-y-4 text-center md:text-right relative overflow-hidden",
+                healthReport.gradeBg,
+                healthReport.gradeBorder
+              )}
             >
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Coins className="text-emerald-500 size-5" />
-                  <h3 className="text-xs font-semibold text-slate-600 dark:text-slate-400 leading-none">الملخص الحسابي للشهر</h3>
+              <div>
+                <div className="flex items-center justify-between pb-3 border-b border-black/5 dark:border-white/5">
+                  <span className="text-xs font-black text-slate-500 dark:text-slate-400">مؤشر الصحة المالية الإجمالي</span>
+                  <span className={cn(
+                    "text-xs font-black px-2.5 py-0.5 rounded-full border",
+                    healthReport.gradeColor,
+                    "bg-white/80 dark:bg-slate-900/80"
+                  )}>
+                    {healthReport.grade}
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-slate-800/80">
-                    <p className="text-[9px] font-bold text-slate-400 mb-0.5">إجمالي المداخيل العائلية</p>
-                    <p className="text-base md:text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(totalIncome, currency)}</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-slate-800/80">
-                    <p className="text-[9px] font-bold text-slate-400 mb-0.5">إجمالي المصاريف والنفقات</p>
-                    <p className="text-base md:text-lg font-bold text-rose-600 dark:text-rose-400">{formatCurrency(totalExpense, currency)}</p>
+                <div className="h-44 w-full flex items-center justify-center relative my-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadialBarChart 
+                      cx="50%" 
+                      cy="50%" 
+                      innerRadius="65%" 
+                      outerRadius="100%" 
+                      barSize={14} 
+                      data={radialData} 
+                      startAngle={180} 
+                      endAngle={-180}
+                    >
+                      <RadialBar
+                        background
+                        dataKey="value"
+                        cornerRadius={14}
+                      />
+                    </RadialBarChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-4xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
+                      {healthReport.score}
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">من 100 نقطة</span>
                   </div>
                 </div>
 
-                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">الفائض المدخّر الفعلي</p>
-                    <p className="text-lg md:text-xl font-bold text-slate-900 dark:text-white leading-none mt-1-5">
-                      {formatCurrency(actualSavings, currency)}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[9px] font-bold text-slate-400">معدل التوفير</p>
-                    <p className="text-lg md:text-xl font-bold text-emerald-600 tracking-tighter mt-1-5">
-                      {savingRate.toFixed(1)}%
-                    </p>
-                  </div>
-                </div>
+                <p className="text-xs font-bold leading-relaxed text-slate-700 dark:text-slate-300">
+                  {healthReport.gradeDescription}
+                </p>
               </div>
 
-              {/* Savings Evaluation Card */}
-              <div className={`p-4 border rounded-2xl space-y-1.5 ${savingsGrade.color}`}>
-                <div className="flex items-center gap-2 justify-between">
-                  <span className="text-xs font-semibold flex items-center gap-1.5">
-                    <ShieldCheck size={14} className="shrink-0" />
-                    التقييم: <span className="underline">{savingsGrade.title}</span>
-                  </span>
-                  <span className="text-[9px] font-semibold bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-full text-slate-600 dark:text-slate-300">نصيحة تلقائية</span>
-                </div>
-                <p className="text-[10px] md:text-xs font-semibold leading-relaxed text-right text-slate-700 dark:text-slate-200">
-                  {savingsGrade.desc}
-                </p>
+              <div className="pt-3 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-[11px] font-bold text-slate-500">
+                <span>السيولة المتاحة:</span>
+                <span className="font-mono text-slate-900 dark:text-white font-black">
+                  {formatCurrency(healthReport.totalLiquidBalance, currency)}
+                </span>
               </div>
             </motion.div>
 
-            {/* Right Box: Thermometer or Simple Visual Circle indicating savings percentage */}
+            {/* Right: Cash Flow Snapshot */}
             <motion.div 
               variants={itemVariants} 
-              className="glass-card p-5 rounded-3xl border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center text-center space-y-4"
+              className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-6 rounded-3xl shadow-xs md:col-span-2 flex flex-col justify-between space-y-5"
             >
-              <div className="space-y-1 w-full text-right">
-                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block">مقياس توفير الميزانية</span>
-                <p className="text-xs font-semibold text-slate-800 dark:text-white">النسبة المئوية الحالية للادخار</p>
-              </div>
-
-              <div className="h-44 w-full flex items-center justify-center relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadialBarChart 
-                    cx="50%" 
-                    cy="50%" 
-                    innerRadius="60%" 
-                    outerRadius="100%" 
-                    barSize={14} 
-                    data={radialData} 
-                    startAngle={180} 
-                    endAngle={-180}
-                  >
-                    <RadialBar
-                      background
-                      dataKey="value"
-                      cornerRadius={14}
-                    />
-                  </RadialBarChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-bold font-mono tracking-tight text-slate-900 dark:text-white">
-                    {Math.round(savingRate)}%
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Coins className="text-emerald-500 size-5" />
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white">ملخص التدفق النقدي الشهري</h3>
+                  </div>
+                  <span className="text-xs font-bold text-slate-400 font-mono">
+                    {healthReport.savingsRate.toFixed(1)}% نسبة الادخار
                   </span>
-                  <span className="text-[10px] font-semibold text-slate-500 mt-1 leading-none">توفير من مجموع الدخل</span>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/30">
+                    <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-1">إجمالي المداخيل</p>
+                    <p className="text-base md:text-lg font-black text-slate-900 dark:text-white font-mono">
+                      {formatCurrency(healthReport.totalIncome, currency)}
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-rose-50/50 dark:bg-rose-950/20 rounded-2xl border border-rose-200/60 dark:border-rose-900/30">
+                    <p className="text-[10px] font-bold text-rose-600 dark:text-rose-400 mb-1">إجمالي المصاريف</p>
+                    <p className="text-base md:text-lg font-black text-slate-900 dark:text-white font-mono">
+                      {formatCurrency(healthReport.totalExpense, currency)}
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-blue-50/50 dark:bg-blue-950/20 rounded-2xl border border-blue-200/60 dark:border-blue-900/30 col-span-2 md:col-span-1">
+                    <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1">الفائض المدخّر الفعلي</p>
+                    <p className="text-base md:text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                      {formatCurrency(healthReport.actualSavings, currency)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 50/30/20 Visual Bar */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-850 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 space-y-2">
+                  <div className="flex justify-between items-center text-xs font-bold text-slate-600 dark:text-slate-300">
+                    <span>توزيع الصرف الفعلي (ضروريات / كماليات / ادخار):</span>
+                    <span className="font-mono text-[11px] text-slate-400">قاعدة 50/30/20</span>
+                  </div>
+
+                  <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden flex">
+                    <div 
+                      className="bg-rose-500 h-full transition-all" 
+                      style={{ width: `${Math.min(100, healthReport.needsVsWants.needsPct)}%` }}
+                      title={`الضروريات: ${healthReport.needsVsWants.needsPct.toFixed(0)}%`}
+                    />
+                    <div 
+                      className="bg-amber-500 h-full transition-all" 
+                      style={{ width: `${Math.min(100, healthReport.needsVsWants.wantsPct)}%` }}
+                      title={`الكماليات: ${healthReport.needsVsWants.wantsPct.toFixed(0)}%`}
+                    />
+                    <div 
+                      className="bg-emerald-500 h-full transition-all" 
+                      style={{ width: `${Math.min(100, healthReport.needsVsWants.savingsPct)}%` }}
+                      title={`الادخار: ${healthReport.needsVsWants.savingsPct.toFixed(0)}%`}
+                    />
+                  </div>
+
+                  <div className="flex justify-between items-center text-[10px] font-bold pt-1">
+                    <span className="text-rose-500 flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-rose-500" />
+                      ضروريات: {healthReport.needsVsWants.needsPct.toFixed(0)}%
+                    </span>
+                    <span className="text-amber-500 flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                      كماليات: {healthReport.needsVsWants.wantsPct.toFixed(0)}%
+                    </span>
+                    <span className="text-emerald-500 flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      ادخار: {healthReport.needsVsWants.savingsPct.toFixed(0)}%
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-1 font-bold">
-                <p className="text-[10px] text-slate-400">معدل التوفير المستهدف السليم للعائلات</p>
-                <div className="flex gap-1.5 justify-center text-[10px] text-slate-600 dark:text-slate-300">
-                  <span className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500">حرج: &lt;10%</span>
-                  <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500">مقبول: 10%-20%</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">رائع: &gt;20%</span>
-                </div>
+              {/* Safety Shield Advisory */}
+              <div className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
+                <span>احتياطي الطوارئ الحالي يغطي <strong>{healthReport.emergencyRunwayMonths.toFixed(1)} شهر</strong> من نفقات العائلة المعتادة.</span>
               </div>
             </motion.div>
           </div>
 
-          {/* SIMULATOR CARD */}
-          <motion.div 
-            variants={itemVariants}
-            className="glass-card p-5 md:p-6 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-5"
-          >
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div className="space-y-0.5 text-right w-full sm:w-auto">
-                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 block flex items-end justify-end gap-1">
-                  <span>أداة تفاعلية للمحاكاة المباشرة</span>
-                  <Sliders size={12} />
-                </span>
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-white">محاكي ميزانية وترشيد المصاريف</h3>
-                <p className="text-[10px] text-slate-400 font-semibold mt-0.5 leading-relaxed">
-                  احسب كم يمكنك ادخاره بتعديل طفيف على سلوك شراء قفة عيش العائلة، مستلزمات البيبي والمواسم.
-                </p>
-              </div>
-              <div className="bg-gradient-to-tr from-emerald-500/15 to-emerald-400/5 dark:from-emerald-500/10 dark:to-emerald-500/0 px-4 py-3 rounded-2xl border border-emerald-500/20 text-right w-full sm:w-auto">
-                <p className="text-[9px] font-bold text-slate-400">الوفر المالي التقديري الإضافي شهرياً</p>
-                <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                  {formatCurrency(simulatedExtraSavings, currency)}
-                </p>
-              </div>
+          {/* 3. The 4 Health Pillars Deep Breakdown */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+              <Gauge className="text-emerald-500 size-4" />
+              <h2 className="text-sm font-black text-slate-900 dark:text-white">محاور تقييم الصحة المالية الأربعة</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-              <div className="space-y-5">
-                {/* Food Simulation */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center text-right">
-                    <span className="text-[10px] font-semibold text-slate-400">(الحالي: {formatCurrency(foodExpense, currency)})</span>
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
-                      <span>ترشيد قفة السوق ومواد العطارة</span>
-                      <UtensilsCrossed size={12} className="text-rose-500" />
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="font-mono text-xs font-bold text-slate-600 w-12 text-left">{foodSavingPct}%</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="40"
-                      value={foodSavingPct}
-                      onChange={(e) => handleSliderChange('food', Number(e.target.value))}
-                      className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                    />
-                  </div>
-                  <p className="text-[9px] text-slate-400 font-bold text-right">سيوفر لعائلتكم حوالي <span className="text-emerald-500 font-mono">{formatCurrency(simulatedSavedFood, currency)}</span> شهرياً</p>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Object.entries(healthReport.pillars).map(([key, pillar]) => {
+                const isPillarExcellent = pillar.status === 'excellent';
+                const isPillarGood = pillar.status === 'good';
+                const isPillarWarning = pillar.status === 'warning';
 
-                {/* Baby Simulation */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center text-right">
-                    <span className="text-[10px] font-semibold text-slate-400">(الحالي: {formatCurrency(babyExpense, currency)})</span>
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
-                      <span>توفير لوازم الرضيع (البيع بالجملة)</span>
-                      <Baby size={12} className="text-cyan-500" />
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="font-mono text-xs font-bold text-slate-600 w-12 text-left">{babySavingPct}%</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="30"
-                      value={babySavingPct}
-                      onChange={(e) => handleSliderChange('baby', Number(e.target.value))}
-                      className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                    />
-                  </div>
-                  <p className="text-[9px] text-slate-400 font-bold text-right">سيوفر لعائلتكم حوالي <span className="text-emerald-500 font-mono">{formatCurrency(simulatedSavedBaby, currency)}</span> شهرياً</p>
-                </div>
-
-                {/* Leisure Simulation */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center text-right">
-                    <span className="text-[10px] font-semibold text-slate-400">(الحالي: {formatCurrency(leisureExpense, currency)})</span>
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
-                      <span>التحكم في مصاريف المقهى والترفيه</span>
-                      <Sparkles size={12} className="text-amber-500" />
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="font-mono text-xs font-bold text-slate-600 w-12 text-left">{leisureSavingPct}%</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="60"
-                      value={leisureSavingPct}
-                      onChange={(e) => handleSliderChange('leisure', Number(e.target.value))}
-                      className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                    />
-                  </div>
-                  <p className="text-[9px] text-slate-400 font-bold text-right">سيوفر لعائلتكم حوالي <span className="text-emerald-500 font-mono">{formatCurrency(simulatedSavedLeisure, currency)}</span> شهرياً</p>
-                </div>
-              </div>
-
-              {/* Simulation Result Details */}
-              <div className="bg-slate-50 dark:bg-slate-900/40 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col justify-between space-y-3">
-                <div className="space-y-1.5 text-right">
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">مقارنة معدل الادخار التقديري</p>
-                  <div className="flex items-center gap-3 justify-end text-sm">
-                    <span className="line-through text-slate-400 font-mono">{savingRate.toFixed(1)}%</span>
-                    <span className="text-slate-400">←</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono text-lg">{simulatedSavingRate.toFixed(1)}%</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1 text-right border-t border-slate-200/50 dark:border-slate-800/55 pt-3">
-                  <span className="text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md">
-                    المستقبل المالي المتوقع
-                  </span>
-                  <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-350 leading-relaxed mt-1.5">
-                    الالتزام بهذا الترشيد البسيط يوفر لعائلتك مبلغاً صافياً مقداره <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(simulatedTotalSavings, currency)}</span> شهرياً. هذا المبلغ يكفي لتغطية نفقات طبيب الأطفال بالكامل وتكوين مدخرات صلبة لمستقبل مدرسة الصغير وصندوق الطوارئ الصحي.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* DIAGNOSTICS & ADVICE LIST FROM EXPERTS */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-white text-right flex items-center gap-1.5 justify-end">
-              <span>توجيهات وإرشادات حماية الميزانية العائلية</span>
-              <Lightbulb className="text-amber-500 size-4" />
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {diagnostics.map((diag, index) => {
-                const IconComponent = diag.icon;
                 return (
                   <motion.div
-                    key={index}
+                    key={key}
                     variants={itemVariants}
-                    className="p-5 bg-white dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex gap-4 text-right"
+                    className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-5 rounded-3xl shadow-xs flex flex-col justify-between space-y-3"
                   >
-                    <div className="flex-1 space-y-2">
-                      <h4 className="text-xs font-semibold text-slate-900 dark:text-white">{diag.title}</h4>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                        {diag.assessment}
-                      </p>
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-start gap-2 justify-end">
-                        <span className="text-[9px] font-bold text-slate-600 dark:text-slate-300 leading-relaxed text-right">
-                          {diag.action}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-400">{pillar.benchmark}</span>
+                        <span className={cn(
+                          "text-[10px] font-black px-2 py-0.5 rounded-full",
+                          isPillarExcellent ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300" :
+                          isPillarGood ? "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300" :
+                          isPillarWarning ? "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300" :
+                          "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
+                        )}>
+                          {pillar.score} / {pillar.maxScore} نقطة
                         </span>
-                        <CheckCircle2 size={12} className="text-emerald-500 shrink-0 mt-0.5" />
+                      </div>
+
+                      <h4 className="text-xs font-black text-slate-900 dark:text-white">{pillar.title}</h4>
+                      <div className="text-base font-black font-mono text-slate-900 dark:text-white">
+                        {pillar.displayValue}
+                      </div>
+
+                      <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            isPillarExcellent ? "bg-emerald-500" :
+                            isPillarGood ? "bg-blue-500" :
+                            isPillarWarning ? "bg-amber-500" : "bg-rose-500"
+                          )}
+                          style={{ width: `${pillar.percentage}%` }}
+                        />
                       </div>
                     </div>
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-900/50 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800 shrink-0 self-start">
-                      <IconComponent size={20} />
-                    </div>
+
+                    <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-2.5">
+                      {pillar.feedback}
+                    </p>
                   </motion.div>
                 );
               })}
             </div>
           </div>
+
+          {/* 4. Actionable Savings Recommendations */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <Sparkles className="text-amber-500 size-4" />
+                <h2 className="text-sm font-black text-slate-900 dark:text-white">خطة التوصيات الإجرائية المباشرة لتطوير التوفير</h2>
+              </div>
+              <span className="text-[11px] font-bold text-slate-400">توصيات مخصصة لعائلتك</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {healthReport.recommendations.map((rec) => (
+                <motion.div
+                  key={rec.id}
+                  variants={itemVariants}
+                  className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-5 rounded-3xl shadow-xs flex flex-col justify-between space-y-4 hover:border-emerald-300 dark:hover:border-emerald-800 transition-all"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={cn(
+                        "text-[10px] font-black px-2.5 py-0.5 rounded-full border",
+                        rec.priority === 'high' ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200" :
+                        "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200"
+                      )}>
+                        {rec.priority === 'high' ? 'أولوية قصوى ⚡' : 'أولوية متوسطة 💡'}
+                      </span>
+                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                        {rec.impact}
+                      </span>
+                    </div>
+
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white">{rec.title}</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                      {rec.description}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <Link
+                      to={rec.actionLink}
+                      className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-emerald-600 hover:text-white dark:bg-slate-800 dark:hover:bg-emerald-600 text-slate-800 dark:text-slate-200 text-xs font-black transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                    >
+                      <span>{rec.actionLabel}</span>
+                      <ArrowRight size={13} className="rotate-180 group-hover:-translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* 5. Interactive Savings Simulator */}
+          <motion.div 
+            variants={itemVariants}
+            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-6 rounded-3xl shadow-xs space-y-5"
+          >
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <Sliders size={12} />
+                  <span>محاكي الادخار الفوري والتأثير على الميزانية</span>
+                </span>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">محاكي ترشيد النفقات التفاعلي</h3>
+                <p className="text-xs text-slate-400 font-medium">
+                  جرّب تحريك المؤشرات لترى مقدار الفائض التقديري الذي ستكسبه عائلتك شهرياً
+                </p>
+              </div>
+
+              <div className="bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 text-right">
+                <p className="text-[10px] font-bold text-slate-400">الوفر الإضافي التقديري شهرياً:</p>
+                <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                  +{formatCurrency(simulatedExtraSavings, currency)}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+              {/* Food Simulation */}
+              <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
+                <div className="flex justify-between items-center text-xs font-bold">
+                  <span className="text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <UtensilsCrossed size={14} className="text-rose-500" />
+                    <span>قفة السوق والعطارة</span>
+                  </span>
+                  <span className="font-mono text-emerald-600">{foodSavingPct}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="40"
+                  value={foodSavingPct}
+                  onChange={(e) => handleSliderChange('food', Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                />
+                <p className="text-[10px] text-slate-400 font-bold">
+                  يوفر لعائلتكم: <span className="text-emerald-500 font-mono">{formatCurrency(simulatedSavedFood, currency)}</span>
+                </p>
+              </div>
+
+              {/* Baby Simulation */}
+              <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
+                <div className="flex justify-between items-center text-xs font-bold">
+                  <span className="text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Baby size={14} className="text-cyan-500" />
+                    <span>لوازم وحفاضات الرضيع</span>
+                  </span>
+                  <span className="font-mono text-emerald-600">{babySavingPct}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="30"
+                  value={babySavingPct}
+                  onChange={(e) => handleSliderChange('baby', Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                />
+                <p className="text-[10px] text-slate-400 font-bold">
+                  يوفر لعائلتكم: <span className="text-emerald-500 font-mono">{formatCurrency(simulatedSavedBaby, currency)}</span>
+                </p>
+              </div>
+
+              {/* Leisure Simulation */}
+              <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/60">
+                <div className="flex justify-between items-center text-xs font-bold">
+                  <span className="text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-amber-500" />
+                    <span>المقاهي والكماليات</span>
+                  </span>
+                  <span className="font-mono text-emerald-600">{leisureSavingPct}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="60"
+                  value={leisureSavingPct}
+                  onChange={(e) => handleSliderChange('leisure', Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                />
+                <p className="text-[10px] text-slate-400 font-bold">
+                  يوفر لعائلتكم: <span className="text-emerald-500 font-mono">{formatCurrency(simulatedSavedLeisure, currency)}</span>
+                </p>
+              </div>
+            </div>
+          </motion.div>
         </>
       )}
     </motion.div>

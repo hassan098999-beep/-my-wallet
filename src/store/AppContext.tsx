@@ -162,6 +162,7 @@ interface AppContextProps extends AppState {
   addRecurringExpense: (expense: Omit<RecurringExpense, 'id' | 'createdAt'>) => void;
   updateRecurringExpense: (id: string, expense: Partial<RecurringExpense>) => void;
   deleteRecurringExpense: (id: string) => void;
+  payRecurringExpenseNow: (id: string, customAccountId?: string) => Promise<void>;
   addGamaeya: (gamaeya: Omit<import('../types').Gamaeya, 'id' | 'createdAt' | 'status' | 'payments'>) => void;
   updateGamaeya: (id: string, updates: Partial<import('../types').Gamaeya>) => void;
   deleteGamaeya: (id: string) => void;
@@ -711,6 +712,98 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.warn('Recurring expense deleted locally (buffered for sync):', error);
       }
     }
+  };
+
+  const payRecurringExpenseNow = async (id: string, customAccountId?: string) => {
+    const re = state.recurringExpenses.find(e => e.id === id);
+    if (!re) return;
+
+    const accountId = customAccountId || re.accountId || state.accounts[0]?.id || 'cash';
+    const account = state.accounts.find(a => a.id === accountId);
+    
+    // Calculate next occurrence date
+    const currentNextDate = safeParseISO(re.nextDate || new Date().toISOString().split('T')[0]);
+    let updatedNextDate: Date;
+    switch (re.interval) {
+      case 'daily':
+        updatedNextDate = addDays(currentNextDate, 1);
+        break;
+      case 'weekly':
+        updatedNextDate = addWeeks(currentNextDate, 1);
+        break;
+      case 'monthly':
+        updatedNextDate = addMonths(currentNextDate, 1);
+        break;
+      case 'yearly':
+        updatedNextDate = addYears(currentNextDate, 1);
+        break;
+      default:
+        updatedNextDate = addMonths(currentNextDate, 1);
+    }
+    const updatedNextDateStr = format(updatedNextDate, 'yyyy-MM-dd');
+
+    // Create the new Expense transaction
+    const newExpenseId = crypto.randomUUID();
+    const todayIso = new Date().toISOString();
+    const newExpense: Expense = {
+      id: newExpenseId,
+      amount: re.amount,
+      categoryId: re.categoryId,
+      subcategoryId: re.subcategoryId,
+      accountId: accountId,
+      note: re.note ? `${re.note} (تسديد دوري)` : 'تسديد التزام دوري',
+      paymentMethod: re.paymentMethod || (accountId === 'bank' ? 'card' : 'cash'),
+      date: todayIso.split('T')[0],
+      createdAt: todayIso,
+      parsedDate: new Date(),
+    };
+
+    // Optimistic local update
+    setState(prev => {
+      const updatedAccounts = prev.accounts.map(acc => {
+        if (acc.id === accountId) {
+          return { ...acc, balance: acc.balance - re.amount };
+        }
+        return acc;
+      });
+
+      const updatedRecurring = prev.recurringExpenses.map(item => {
+        if (item.id === id) {
+          return { ...item, nextDate: updatedNextDateStr };
+        }
+        return item;
+      });
+
+      return {
+        ...prev,
+        expenses: [newExpense, ...prev.expenses],
+        accounts: updatedAccounts,
+        recurringExpenses: updatedRecurring,
+      };
+    });
+
+    // Cloud update
+    if (user) {
+      try {
+        const batch = writeBatch(db);
+        const expRef = doc(db, 'users', user.uid, 'expenses', newExpense.id);
+        batch.set(expRef, { ...newExpense, uid: user.uid });
+
+        const reRef = doc(db, 'users', user.uid, 'recurringExpenses', id);
+        batch.update(reRef, { nextDate: updatedNextDateStr });
+
+        if (account) {
+          const accRef = doc(db, 'users', user.uid, 'accounts', accountId);
+          batch.update(accRef, { balance: account.balance - re.amount });
+        }
+
+        await batch.commit();
+      } catch (err) {
+        console.warn('Offline buffered write for payRecurringExpenseNow:', err);
+      }
+    }
+
+    toast.success(`تم تأكيد دفع «${re.note || 'الالتزام'}» وخصم ${re.amount} ${state.currency} وتحديث الجدول! ✅`);
   };
 
   const processDueRecurringExpenses = useCallback(async () => {
@@ -1815,6 +1908,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addRecurringExpense,
     updateRecurringExpense,
     deleteRecurringExpense,
+    payRecurringExpenseNow,
     addGamaeya,
     updateGamaeya,
     deleteGamaeya,
