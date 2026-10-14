@@ -12,7 +12,7 @@ const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentOutlet = useOutlet();
-  const { isAddModalOpen, setIsAddModalOpen, editingExpense, setEditingExpense, initialGoalId, setInitialGoalId } = useAppContext();
+  const { isAddModalOpen, setIsAddModalOpen, editingExpense, setEditingExpense, initialGoalId, setInitialGoalId, isLicensed } = useAppContext();
 
   // Trigger navigation progress bar
   const [isNavigating, setIsNavigating] = React.useState(false);
@@ -76,6 +76,20 @@ const Layout = () => {
 
       <div className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
         <Header />
+        {!isLicensed && (
+          <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-black flex items-center justify-between gap-2 shadow-md shrink-0 z-20">
+            <div className="flex items-center gap-2">
+              <span>⚠️</span>
+              <span>أنت تستخدم النسخة التجريبية (Trial). يمكنك تصفح جميع الشاشات، ولكن لا يمكنك إضافة أو تعديل المعاملات والمصاريف حتى يتم إدخال كود التفعيل.</span>
+            </div>
+            <Link
+              to="/pricing"
+              className="bg-slate-950 text-white px-4 py-1.5 rounded-xl text-xs font-black shadow hover:bg-slate-900 transition-all shrink-0"
+            >
+              تفعيل التطبيق الآن
+            </Link>
+          </div>
+        )}
         
         <main className="flex-1 overflow-y-auto p-3.5 sm:p-5 md:p-6 lg:p-8 scroll-smooth pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-8 overflow-x-hidden relative custom-scrollbar">
           <AnimatePresence mode="wait">

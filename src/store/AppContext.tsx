@@ -98,6 +98,7 @@ const INITIAL_STATE: AppState = {
   income: [],
   notifications: [],
   hasCompletedOnboarding: false,
+  isLicensed: false,
   userName: 'المستخدم الكريم',
   firstDayOfMonth: 1,
   bestStreak: 0,
@@ -357,7 +358,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           rollingBudgetEnabled: data.rollingBudgetEnabled ?? prev.rollingBudgetEnabled,
           bestStreak: data.bestStreak || prev.bestStreak,
           activeChallenge: data.activeChallenge !== undefined ? (data.activeChallenge || undefined) : prev.activeChallenge,
-          autoRoundUpSetting: data.autoRoundUpSetting !== undefined ? (data.autoRoundUpSetting || undefined) : prev.autoRoundUpSetting
+          autoRoundUpSetting: data.autoRoundUpSetting !== undefined ? (data.autoRoundUpSetting || undefined) : prev.autoRoundUpSetting,
+          isLicensed: data.isLicensed ?? prev.isLicensed,
+          licensePlan: data.licensePlan || prev.licensePlan,
+          activationCode: data.activationCode || prev.activationCode,
+          licenseExpiry: data.licenseExpiry || prev.licenseExpiry
         }));
       } else {
         // Initialize user profile in Firestore
@@ -372,7 +377,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dailyBudget: state.dailyBudget || 14,
           rollingBudgetEnabled: state.rollingBudgetEnabled ?? true,
           bestStreak: state.bestStreak || 0,
-          autoRoundUpSetting: state.autoRoundUpSetting || null
+          autoRoundUpSetting: state.autoRoundUpSetting || null,
+          isLicensed: false,
+          licensePlan: 'free',
+          activationCode: '',
+          licenseExpiry: ''
         });
       }
     });
@@ -1960,6 +1969,172 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const { addGamaeya, updateGamaeya, deleteGamaeya, payGamaeyaMonth, receiveGamaeyaPayout } = useGamaeyas({ state, setState, user, evaluateAchievements: null, addNotification });
   const { setBudget, setDailyBudget, setRollingBudgetEnabled } = useBudget({ state, setState, user, evaluateAchievements: null, addNotification });
 
+  const checkLicense = useCallback(() => {
+    if (!state.isLicensed) {
+      toast.error('⚠️ أنت تستخدم النسخة التجريبية (Trial). يرجى إدخال كود تفعيل صحيح من صفحة الباقات لتعديل أو إضافة المعاملات والمصاريف.', {
+        duration: 5000,
+        icon: '🔒'
+      });
+      return false;
+    }
+    return true;
+  }, [state.isLicensed]);
+
+  const addExpenseWrapped = (expense: any) => {
+    if (!checkLicense()) return;
+    return addExpense(expense);
+  };
+
+  const updateExpenseWrapped = (id: string, expense: any) => {
+    if (!checkLicense()) return;
+    return updateExpense(id, expense);
+  };
+
+  const deleteExpenseWrapped = (id: string) => {
+    if (!checkLicense()) return;
+    return deleteExpense(id);
+  };
+
+  const addIncomeWrapped = (income: any) => {
+    if (!checkLicense()) return;
+    return addIncome(income);
+  };
+
+  const updateIncomeWrapped = (id: string, income: any) => {
+    if (!checkLicense()) return;
+    return updateIncome(id, income);
+  };
+
+  const deleteIncomeWrapped = (id: string) => {
+    if (!checkLicense()) return;
+    return deleteIncome(id);
+  };
+
+  const addGoalWrapped = (goal: any) => {
+    if (!checkLicense()) return;
+    return addGoal(goal);
+  };
+
+  const updateGoalWrapped = (id: string, goal: any) => {
+    if (!checkLicense()) return;
+    return updateGoal(id, goal);
+  };
+
+  const deleteGoalWrapped = (id: string) => {
+    if (!checkLicense()) return;
+    return deleteGoal(id);
+  };
+
+  const addDebtWrapped = (debt: any) => {
+    if (!checkLicense()) return;
+    return addDebt(debt);
+  };
+
+  const updateDebtWrapped = (id: string, debt: any) => {
+    if (!checkLicense()) return;
+    return updateDebt(id, debt);
+  };
+
+  const addDebtPaymentWrapped = (debtId: string, payment: any) => {
+    if (!checkLicense()) return;
+    return addDebtPayment(debtId, payment);
+  };
+
+  const deleteDebtWrapped = (id: string) => {
+    if (!checkLicense()) return;
+    return deleteDebt(id);
+  };
+
+  const addCategoryWrapped = (category: any): Promise<Category> => {
+    if (!checkLicense()) return Promise.resolve({} as Category);
+    return addCategory(category);
+  };
+
+  const updateCategoryWrapped = (id: string, category: any) => {
+    if (!checkLicense()) return;
+    return updateCategory(id, category);
+  };
+
+  const deleteCategoryWrapped = (id: string) => {
+    if (!checkLicense()) return;
+    return deleteCategory(id);
+  };
+
+  const addAccountWrapped = (account: any) => {
+    if (!checkLicense()) return;
+    return addAccount(account);
+  };
+
+  const updateAccountWrapped = (id: string, account: any) => {
+    if (!checkLicense()) return;
+    return updateAccount(id, account);
+  };
+
+  const deleteAccountWrapped = (id: string) => {
+    if (!checkLicense()) return;
+    return deleteAccount(id);
+  };
+
+  const transferAccountWrapped = (fromId: string, toId: string, amount: number) => {
+    if (!checkLicense()) return;
+    return transferAccount(fromId, toId, amount);
+  };
+
+  const addGamaeyaWrapped = (gamaeya: any) => {
+    if (!checkLicense()) return;
+    return addGamaeya(gamaeya);
+  };
+
+  const updateGamaeyaWrapped = (id: string, updates: any) => {
+    if (!checkLicense()) return;
+    return updateGamaeya(id, updates);
+  };
+
+  const deleteGamaeyaWrapped = (id: string) => {
+    if (!checkLicense()) return;
+    return deleteGamaeya(id);
+  };
+
+  const payGamaeyaMonthWrapped = (gamaeyaId: string, monthIndex: number) => {
+    if (!checkLicense()) return;
+    return payGamaeyaMonth(gamaeyaId, monthIndex);
+  };
+
+  const receiveGamaeyaPayoutWrapped = (gamaeyaId: string) => {
+    if (!checkLicense()) return;
+    return receiveGamaeyaPayout(gamaeyaId);
+  };
+
+  const setBudgetWrapped = (budget: any) => {
+    if (!checkLicense()) return;
+    return setBudget(budget);
+  };
+
+  const setDailyBudgetWrapped = (dailyBudget: any) => {
+    if (!checkLicense()) return;
+    return setDailyBudget(dailyBudget);
+  };
+
+  const addRecurringExpenseWrapped = (expense: any) => {
+    if (!checkLicense()) return;
+    return addRecurringExpense(expense);
+  };
+
+  const updateRecurringExpenseWrapped = (id: string, expense: any) => {
+    if (!checkLicense()) return;
+    return updateRecurringExpense(id, expense);
+  };
+
+  const deleteRecurringExpenseWrapped = (id: string) => {
+    if (!checkLicense()) return;
+    return deleteRecurringExpense(id);
+  };
+
+  const payRecurringExpenseNowWrapped = (id: string, customAccountId?: string): Promise<void> => {
+    if (!checkLicense()) return Promise.resolve();
+    return payRecurringExpenseNow(id, customAccountId);
+  };
+
   const contextValue = useMemo(() => ({
     ...state,
     user,
@@ -1972,38 +2147,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setEditingExpense,
     initialGoalId,
     setInitialGoalId,
-    addExpense,
-    updateExpense,
-    deleteExpense,
-    addRecurringExpense,
-    updateRecurringExpense,
-    deleteRecurringExpense,
-    payRecurringExpenseNow,
-    addGamaeya,
-    updateGamaeya,
-    deleteGamaeya,
-    payGamaeyaMonth,
-    receiveGamaeyaPayout,
-    addCategory,
-    updateCategory,
-    deleteCategory,
+    addExpense: addExpenseWrapped,
+    updateExpense: updateExpenseWrapped,
+    deleteExpense: deleteExpenseWrapped,
+    addRecurringExpense: addRecurringExpenseWrapped,
+    updateRecurringExpense: updateRecurringExpenseWrapped,
+    deleteRecurringExpense: deleteRecurringExpenseWrapped,
+    payRecurringExpenseNow: payRecurringExpenseNowWrapped,
+    addGamaeya: addGamaeyaWrapped,
+    updateGamaeya: updateGamaeyaWrapped,
+    deleteGamaeya: deleteGamaeyaWrapped,
+    payGamaeyaMonth: payGamaeyaMonthWrapped,
+    receiveGamaeyaPayout: receiveGamaeyaPayoutWrapped,
+    addCategory: addCategoryWrapped,
+    updateCategory: updateCategoryWrapped,
+    deleteCategory: deleteCategoryWrapped,
     reorderCategories,
-    addAccount,
-    updateAccount,
-    deleteAccount,
-    transferAccount,
-    addGoal,
-    updateGoal,
-    deleteGoal,
-    addDebt,
-    updateDebt,
-    addDebtPayment,
-    deleteDebt,
-    addIncome,
-    updateIncome,
-    deleteIncome,
-    setBudget,
-    setDailyBudget,
+    addAccount: addAccountWrapped,
+    updateAccount: updateAccountWrapped,
+    deleteAccount: deleteAccountWrapped,
+    transferAccount: transferAccountWrapped,
+    addGoal: addGoalWrapped,
+    updateGoal: updateGoalWrapped,
+    deleteGoal: deleteGoalWrapped,
+    addDebt: addDebtWrapped,
+    updateDebt: updateDebtWrapped,
+    addDebtPayment: addDebtPaymentWrapped,
+    deleteDebt: deleteDebtWrapped,
+    addIncome: addIncomeWrapped,
+    updateIncome: updateIncomeWrapped,
+    deleteIncome: deleteIncomeWrapped,
+    setBudget: setBudgetWrapped,
+    setDailyBudget: setDailyBudgetWrapped,
     setRollingBudgetEnabled,
     setTheme,
     repeatExpense,
@@ -2036,9 +2211,67 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     user,
     isAuthReady,
     isAddModalOpen,
-    // Functions are stable because they are defined inside the component and don't depend on changing values directly (they use setState updater pattern)
-    // However, to be extra safe and follow best practices, we should ensure they are stable.
-    // Most of these functions are defined as const inside the component.
+    editingExpense,
+    initialGoalId,
+    addExpenseWrapped,
+    updateExpenseWrapped,
+    deleteExpenseWrapped,
+    addRecurringExpenseWrapped,
+    updateRecurringExpenseWrapped,
+    deleteRecurringExpenseWrapped,
+    payRecurringExpenseNowWrapped,
+    addGamaeyaWrapped,
+    updateGamaeyaWrapped,
+    deleteGamaeyaWrapped,
+    payGamaeyaMonthWrapped,
+    receiveGamaeyaPayoutWrapped,
+    addCategoryWrapped,
+    updateCategoryWrapped,
+    deleteCategoryWrapped,
+    reorderCategories,
+    addAccountWrapped,
+    updateAccountWrapped,
+    deleteAccountWrapped,
+    transferAccountWrapped,
+    addGoalWrapped,
+    updateGoalWrapped,
+    deleteGoalWrapped,
+    addDebtWrapped,
+    updateDebtWrapped,
+    addDebtPaymentWrapped,
+    deleteDebtWrapped,
+    addIncomeWrapped,
+    updateIncomeWrapped,
+    deleteIncomeWrapped,
+    setBudgetWrapped,
+    setDailyBudgetWrapped,
+    setRollingBudgetEnabled,
+    setTheme,
+    repeatExpense,
+    exportData,
+    exportToPDF,
+    importData,
+    updateAchievement,
+    addNotification,
+    removeNotification,
+    completeOnboarding,
+    setCurrency,
+    setUserName,
+    setFirstDayOfMonth,
+    updateAIInsights,
+    updateActiveChallenge,
+    updateAutoRoundUpSetting,
+    resetData,
+    toggleOfflineMode,
+    applyTunisianFamilyTemplate,
+    migrateSeptemberDataToAugust,
+    migrateAugustDataToSeptember,
+    isPinSet,
+    isLocked,
+    setIsLocked,
+    setAppPin,
+    verifyAppPin,
+    activateLicense,
   ]);
 
   return (
