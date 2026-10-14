@@ -51,14 +51,14 @@ export const FamilyHeroCard: React.FC<FamilyHeroCardProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg md:text-xl font-black text-white flex items-center gap-1.5">
-                <span>عائلة حسن الرياحي وسهير</span>
+                <span>ميزانية الأسرة والمنزل</span>
                 <span className="text-base">🏡</span>
               </h2>
             </div>
             <p className="text-xs text-slate-400 font-medium mt-0.5 flex items-center gap-2">
-              <span>برفقة الابن الرضيع <strong className="text-emerald-400">يحيى</strong> (شهر و 18 يوماً) 🍼</span>
+              <span>إدارة المصروفات اليومية والالتزامات الدورية بذكاء</span>
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-600" />
-              <span className="text-slate-400 font-mono font-bold">{memberCount} أفراد</span>
+              <span className="text-slate-400 font-mono font-bold">{memberCount} أفراد الأسرة</span>
             </p>
           </div>
         </div>

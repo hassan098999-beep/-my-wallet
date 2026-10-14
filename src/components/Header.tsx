@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings2, PiggyBank, RefreshCcw, LogOut, LogIn, UserCircle, Moon, Sun, Wallet, SlidersHorizontal, Loader2, HandCoins, BarChart3, History, ShieldCheck, ChartPie } from 'lucide-react';
+import { Settings2, PiggyBank, RefreshCcw, LogOut, LogIn, UserCircle, Moon, Sun, Wallet, SlidersHorizontal, Loader2, HandCoins, BarChart3, History, ShieldCheck, ChartPie, Crown } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { OfflineSyncIndicator } from './OfflineSyncIndicator';
@@ -8,6 +8,7 @@ import { cn } from '../utils';
 import { useAppContext } from '../store/AppContext';
 
 const dropdownItems = [
+  { path: '/pricing', name: 'الباقات والترقية التجارية 👑', icon: Crown },
   { path: '/savings-indicators', name: 'مؤشر الصحة المالية والتوفير 🛡️', icon: ShieldCheck },
   { path: '/recurring', name: 'الالتزامات والفواتير الدورية 🔄', icon: RefreshCcw },
   { path: '/budget', name: 'الميزانية ووتيرة الصرف 📊', icon: ChartPie },
@@ -39,6 +40,7 @@ const Header = () => {
       case '/profile': return 'الملف الشخصي والإنجازات';
       case '/settings': return 'الإعدادات';
       case '/assistant': return 'المساعد الذكي';
+      case '/pricing': return 'الباقات والترقية التجارية';
       default: return 'مصاريفي';
     }
   };

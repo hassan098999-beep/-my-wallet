@@ -239,7 +239,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, edit
     );
 
     // 1. Check for Baby terms
-    const babyTerms = ['حفاظ', 'حفاض', 'كوش', 'حليب', 'يحيى', 'رضيع', 'بيبي', 'baby', 'pampers', 'peaudouce', 'libero', 'ابتاميل', 'بريمالاك', 'العاب يحيى', 'لهاية'];
+    const babyTerms = ['حفاظ', 'حفاض', 'كوش', 'حليب', 'رضيع', 'بيبي', 'baby', 'pampers', 'peaudouce', 'libero', 'ابتاميل', 'بريمالاك', 'ألعاب أطفال', 'لهاية'];
     if (babyTerms.some(term => noteLower.includes(term)) && babyCat) {
       if (categoryId !== babyCat.id) {
         setCategoryId(babyCat.id);

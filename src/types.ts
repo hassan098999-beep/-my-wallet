@@ -295,6 +295,10 @@ export interface AppState {
   gamaeyas?: Gamaeya[];
   activeChallenge?: SmartSavingChallenge;
   autoRoundUpSetting?: AutoRoundUpSetting;
+  isLicensed?: boolean;
+  licensePlan?: 'free' | 'pro' | 'family' | 'enterprise';
+  activationCode?: string;
+  licenseExpiry?: string;
 }
 
 export interface AutoRoundUpSetting {

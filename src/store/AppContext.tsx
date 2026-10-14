@@ -98,7 +98,7 @@ const INITIAL_STATE: AppState = {
   income: [],
   notifications: [],
   hasCompletedOnboarding: false,
-  userName: 'حسن الرياحي',
+  userName: 'المستخدم الكريم',
   firstDayOfMonth: 1,
   bestStreak: 0,
   offlineMode: false,
@@ -106,27 +106,27 @@ const INITIAL_STATE: AppState = {
   aiInsights: {
     advice: [
       {
-        title: 'استراتيجية شراء مستلزمات الرضيع',
-        advice: 'شراء الحفاضات (الكوش) وحليب الأطفال بالعلب الكبيرة ومن مغازات الجملة يوفر ما بين 15% إلى 20% مقارنة بالصيدليات أو محلات العطارة الصغيرة.',
-        actionItem: 'قم بجدولة كميات شهرية واشترِ من فضاءات البيع بالجملة الكبرى.',
+        title: 'استراتيجية تحسين معدل الادخار',
+        advice: 'تخصيص ما لا يقل عن 20% من الدخل الشهري للطوارئ والاستثمار يعزز الصحة المالية ويحمي الأسرة من أي تقلبات مالية مفاجئة.',
+        actionItem: 'قم بتحويل جزء من الدخل تلقائياً إلى حساب الادخار فور استلام الراتب.',
         priority: 'high'
       },
       {
-        title: 'ترشيد استهلاك الكهرباء (STEG)',
-        advice: 'فواتير الشركة التونسية للكهرباء والغاز ترتفع بسرعة عند تجاوز الشريحة الاقتصادية. افصل الأجهزة ومكيفات الهواء في الغرف غير المستخدمة لتجنب فاتورة الستاغ التقديرية المرتفعة.',
-        actionItem: 'تثبيت استهلاك الطاقة واحرص على تسجيل قراءة العداد بانتظام.',
+        title: 'ترشيد استهلاك الفواتير والطاقة',
+        advice: 'مراقبة الاستهلاك المنزلي للكهرباء والماء والاتصالات وتجنب الاستهلاك العشوائي يوفر ما بين 15% إلى 25% من المصاريف الثابتة.',
+        actionItem: 'افحص الأجهزة غير الضرورية واعتمد كفاءة الطاقة في المنزل.',
         priority: 'medium'
       },
       {
-        title: 'صندوق طوارئ لرعاية الرضيع والصحة',
-        advice: 'بوجود رضيع صغير، تعتبر مصاريف طبيب الأطفال والأدوية والصيدلية أساسية ومفاجئة. ننصح بتخصيص 10% إلى 15% من الدخل كصندوق طوارئ صحي غير قابل للمس.',
-        actionItem: 'افتح حساب توفير فرعي باسم "الرضيع والصحة" وضع فيه مبلغاً ثابتاً شهرياً.',
+        title: 'بناء صندوق الطوارئ المعيشي',
+        advice: 'وجود طوارئ مالية (مثل المصاريف الصحية أو أعطال المنزل) يتطلب صندوق طوارئ يغطي 3 إلى 6 أشهر من النفقات الأساسية.',
+        actionItem: 'خصص مبلغاً ثابتاً شهرياً لحساب الطوارئ غير القابل للمس.',
         priority: 'high'
       },
       {
-        title: 'التخطيط لقفة العائلة الأسبوعية',
-        advice: 'التسوق من "سوق السبت والأحد" للخضار والغلال واللحوم بدلاً من المغازات الكبرى يوفر مبالغ قيمة جداً في تونس وينشط الاقتصاد المحلي.',
-        actionItem: 'حدد يوماً أسبوعياً للتسوق من السوق الأسبوعي الشعبي بقرية قريبة أو حيكم.',
+        title: 'التخطيط الذكي للمشتريات الأسبوعية',
+        advice: 'إعداد قائمة تسوق مسبقة والشراء من أسواق الجملة والأسواق الأسبوعية يقلل من هدر الميزانية ويضمن أفضل الأسعار.',
+        actionItem: 'خطط لمشتريات المنزل مسبقاً والتزم بالقائمة المحددة.',
         priority: 'medium'
       }
     ],
@@ -213,6 +213,7 @@ interface AppContextProps extends AppState {
   setIsLocked: (locked: boolean) => void;
   setAppPin: (pin: string | null) => Promise<boolean>;
   verifyAppPin: (pin: string) => Promise<boolean>;
+  activateLicense: (code: string) => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -366,7 +367,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           currency: state.currency,
           theme: state.theme,
           hasCompletedOnboarding: state.hasCompletedOnboarding,
-          userName: state.userName || 'حسن الرياحي',
+          userName: state.userName || 'المستخدم الكريم',
           firstDayOfMonth: state.firstDayOfMonth || 1,
           dailyBudget: state.dailyBudget || 14,
           rollingBudgetEnabled: state.rollingBudgetEnabled ?? true,
@@ -1313,6 +1314,49 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const activateLicense = useCallback(async (code: string): Promise<boolean> => {
+    const trimmed = code.trim().toUpperCase();
+    if (!trimmed || trimmed.length < 4) {
+      toast.error('الرجاء إدخال كود تفعيل صحيح');
+      return false;
+    }
+
+    let targetPlan: 'pro' | 'family' | 'enterprise' = 'pro';
+    if (trimmed.startsWith('FAM') || trimmed.startsWith('FAMILY')) {
+      targetPlan = 'family';
+    } else if (trimmed.startsWith('ENT') || trimmed.startsWith('WHITE')) {
+      targetPlan = 'enterprise';
+    } else {
+      targetPlan = 'pro';
+    }
+
+    const expiryDate = new Date();
+    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+
+    const licenseData = {
+      isLicensed: true,
+      licensePlan: targetPlan,
+      activationCode: trimmed,
+      licenseExpiry: expiryDate.toISOString()
+    };
+
+    if (user) {
+      try {
+        await updateDoc(doc(db, 'users', user.uid), licenseData);
+      } catch (error) {
+        console.error('Failed to update license in Firestore', error);
+      }
+    }
+
+    setState(prev => ({
+      ...prev,
+      ...licenseData
+    }));
+
+    toast.success(`تم تفعيل الترخيص بنجاح! مرحباً بك في ${targetPlan === 'family' ? 'باقة الأسرة والشركاء' : targetPlan === 'enterprise' ? 'ترخيص العلامة التجارية' : 'الباقة الاحترافية Pro'}`);
+    return true;
+  }, [user]);
+
   const toggleOfflineMode = async (enabled: boolean) => {
     setState(prev => ({ ...prev, offlineMode: enabled }));
     try {
@@ -1960,6 +2004,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsLocked,
     setAppPin,
     verifyAppPin,
+    activateLicense,
   }), [
     state,
     user,
