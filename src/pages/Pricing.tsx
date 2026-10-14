@@ -5,6 +5,7 @@ import {
   Smartphone, Building, Globe, ArrowRight, Star, HelpCircle,
   Lock, CheckCircle2, Gift, ChevronLeft, Award, Ticket
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAppContext } from '../store/AppContext';
 import { cn, formatCurrency } from '../utils';
 import toast from 'react-hot-toast';
@@ -351,6 +352,17 @@ export default function PricingPage() {
             </a>
           </div>
         </div>
+      </div>
+
+      {/* Admin Panel Quick Link Footer */}
+      <div className="max-w-7xl mx-auto px-4 pb-12 text-center">
+        <Link
+          to="/admin"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-slate-900 dark:bg-slate-800 text-white font-black text-xs shadow-lg hover:bg-slate-800 dark:hover:bg-slate-700 transition-all border border-slate-800"
+        >
+          <Lock className="w-4 h-4 text-emerald-400" />
+          <span>لوحة تحكم الأدمن (توليد وإدارة الأكواد)</span>
+        </Link>
       </div>
 
       {/* Activation Code Modal */}
