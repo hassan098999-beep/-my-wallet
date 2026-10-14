@@ -9,6 +9,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy,
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { cn } from '../utils';
+import { useAppContext } from '../store/AppContext';
 
 interface ActivationCodeRecord {
   id: string;
@@ -21,11 +22,40 @@ interface ActivationCodeRecord {
 }
 
 export default function AdminDashboard() {
+  const { user } = useAppContext();
   const [codes, setCodes] = useState<ActivationCodeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [planType, setPlanType] = useState<'pro' | 'family' | 'enterprise'>('pro');
   const [customPrefix, setCustomPrefix] = useState('');
+
+  // Security check: Only allow hassan098999@gmail.com
+  if (!user || user.email !== 'hassan098999@gmail.com') {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-4">
+        <div className="bg-white dark:bg-slate-900 max-w-md w-full p-8 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 text-center space-y-6">
+          <div className="w-20 h-20 bg-red-100 dark:bg-red-950 text-red-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
+            <ShieldAlert className="w-10 h-10" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white">منطقة مقيدة (Admin Only)</h2>
+            <p className="text-sm font-bold text-slate-500 leading-relaxed">
+              هذه اللوحة مخصصة حصرياً للمسؤول (حسان الرياحي - hassan098999@gmail.com). الحساب الحالي غير مصرح له بالدخول لتعديل الأكواد.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link
+              to="/"
+              className="inline-flex items-center justify-center gap-2 w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs shadow-lg hover:bg-emerald-700 transition-all uppercase tracking-wider"
+            >
+              <ArrowRight className="w-4 h-4" />
+              <span>العودة إلى الرئيسية</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch codes from Firestore
   const fetchCodes = async () => {
@@ -99,13 +129,14 @@ export default function AdminDashboard() {
   // Toggle active state
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
     try {
-      await updateDoc(doc(db, 'activation_codes', id), { isActive: !currentStatus });
+      await updateDoc(doc(db, 'activation_codes', id), {
+        isActive: !currentStatus
+      });
       setCodes(prev => prev.map(c => c.id === id ? { ...c, isActive: !currentStatus } : c));
-      toast.success(currentStatus ? 'تم إلغاء تفعيل الكود' : 'تم تفعيل الكود بنجاح');
+      toast.success(currentStatus ? 'تم تعطيل الكود بنجاح' : 'تم تفعيل الكود بنجاح');
     } catch (error) {
       console.error('Failed to update code status:', error);
-      setCodes(prev => prev.map(c => c.id === id ? { ...c, isActive: !currentStatus } : c));
-      toast.success('تم تحديث حالة الكود محلياً');
+      toast.error('فشل تحديث حالة الكود');
     }
   };
 
@@ -118,42 +149,41 @@ export default function AdminDashboard() {
       toast.success('تم حذف الكود بنجاح');
     } catch (error) {
       console.error('Failed to delete code:', error);
-      setCodes(prev => prev.filter(c => c.id !== id));
-      toast.success('تم حذف الكود محلياً');
+      toast.error('فشل حذف الكود');
     }
   };
 
-  // Copy to clipboard
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast.success(`تم نسخ الكود: ${code}`);
   };
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-24 font-tajawal text-right" dir="rtl">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
       {/* Admin Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 to-indigo-950 p-6 md:p-8 rounded-3xl text-white shadow-xl border border-slate-800">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-black border border-red-500/30">
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 md:p-10 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="space-y-3 relative z-10 text-center md:text-right">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-black">
             <ShieldAlert className="w-4 h-4" />
-            <span>لوحة التحكم الإدارية (Admin Master Panel)</span>
+            <span>لوحة تحكم الأدمن (محمية)</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight">إدارة أكواد التفعيل والاشتراكات</h1>
-          <p className="text-xs text-slate-300">
-            توليد وإدارة أكواد التفعيل للعملاء والمشتركين مع التحكم الكامل بالحالة والصلاحيات.
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight">إدارة أكواد التفعيل والاشتراكات</h1>
+          <p className="text-slate-300 text-xs md:text-sm font-bold max-w-xl">
+            مرحباً بك يا حسان. هذه اللوحة خاصة بك لتوليد وإدارة أكواد التفعيل للعملاء الذين يشترون الاشتراكات خارجياً.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 relative z-10">
           <Link
             to="/pricing"
-            className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-2"
+            className="px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-black text-xs transition-all flex items-center gap-2"
           >
-            <span>صفحة الباقات</span>
             <ArrowRight className="w-4 h-4 rotate-180" />
+            <span>عرض صفحة الباقات</span>
           </Link>
           <button
             onClick={fetchCodes}
-            className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors"
+            className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md text-white transition-all"
             title="تحديث البيانات"
           >
             <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
@@ -161,24 +191,29 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Code Generation Card */}
+      {/* Generator Box */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-        <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-emerald-600" />
-          <span>توليد كود تفعيل جديد</span>
-        </h3>
+        <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center font-black">
+            <Key className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">توليد كود تفعيل جديد</h3>
+            <p className="text-xs text-slate-400 font-bold">قم بتحديد الباقة وتوليد كود فريد لتسليمه للعميل بعد إتمام الدفع</p>
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">نوع الباقة المستهدفة</label>
             <select
               value={planType}
               onChange={(e) => setPlanType(e.target.value as any)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none"
+              className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-black text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="pro">الباقة الاحترافية (Pro)</option>
               <option value="family">باقة الأسرة والشركاء (Family)</option>
-              <option value="enterprise">رخصة العلامة التجارية (Enterprise)</option>
+              <option value="enterprise">ترخيص العلامة التجارية (Enterprise)</option>
             </select>
           </div>
 
@@ -186,10 +221,10 @@ export default function AdminDashboard() {
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">بادئة مخصصة (اختياري)</label>
             <input
               type="text"
-              placeholder="مثال:VIP, HASSAN, SUMMER"
+              placeholder="مثال: HASSAN أو VIP"
               value={customPrefix}
               onChange={(e) => setCustomPrefix(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none uppercase"
+              className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono font-black text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 uppercase"
             />
           </div>
 
@@ -197,7 +232,7 @@ export default function AdminDashboard() {
             <button
               onClick={handleGenerateCode}
               disabled={generating}
-              className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:opacity-95 text-white rounded-xl font-black text-xs shadow-md transition-all flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:opacity-95 text-white rounded-2xl font-black text-xs shadow-md transition-all flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
               <span>{generating ? 'جاري التوليد...' : 'توليد وحفظ في Firebase'}</span>
