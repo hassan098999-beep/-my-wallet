@@ -1322,12 +1322,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     let targetPlan: 'pro' | 'family' | 'enterprise' = 'pro';
-    if (trimmed.startsWith('FAM') || trimmed.startsWith('FAMILY')) {
-      targetPlan = 'family';
-    } else if (trimmed.startsWith('ENT') || trimmed.startsWith('WHITE')) {
-      targetPlan = 'enterprise';
-    } else {
-      targetPlan = 'pro';
+
+    try {
+      const q = query(collection(db, 'activation_codes'), where('code', '==', trimmed));
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const docSnap = snapshot.docs[0];
+        const data = docSnap.data();
+        if (data.isActive === false) {
+          toast.error('عذراً، هذا الكود معطل حالياً من قِبل الإدارة');
+          return false;
+        }
+        if (data.plan) {
+          targetPlan = data.plan;
+        }
+      } else {
+        if (trimmed.startsWith('FAM') || trimmed.startsWith('FAMILY')) {
+          targetPlan = 'family';
+        } else if (trimmed.startsWith('ENT') || trimmed.startsWith('WHITE')) {
+          targetPlan = 'enterprise';
+        } else {
+          targetPlan = 'pro';
+        }
+      }
+    } catch (err) {
+      console.warn('Could not query activation_codes in Firestore, using prefix rules', err);
+      if (trimmed.startsWith('FAM') || trimmed.startsWith('FAMILY')) {
+        targetPlan = 'family';
+      } else if (trimmed.startsWith('ENT') || trimmed.startsWith('WHITE')) {
+        targetPlan = 'enterprise';
+      } else {
+        targetPlan = 'pro';
+      }
     }
 
     const expiryDate = new Date();

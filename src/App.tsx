@@ -24,6 +24,7 @@ import SavingsPage from './pages/Savings';
 import SavingsIndicatorsPage from './pages/SavingsIndicators';
 import FamilyReport from './pages/FamilyReport';
 import PricingPage from './pages/Pricing';
+import AdminDashboard from './pages/AdminDashboard';
 
 function AppContent() {
   const { isLocked } = useAppContext();
@@ -55,6 +56,7 @@ function AppContent() {
               <Route path="assistant" element={<Assistant />} />
               <Route path="share-add" element={<ShareAdd />} />
               <Route path="pricing" element={<PricingPage />} />
+              <Route path="admin" element={<AdminDashboard />} />
             </Route>
           </Routes>
         </Suspense>

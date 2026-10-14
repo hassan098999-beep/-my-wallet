@@ -15,6 +15,7 @@ export default function PricingPage() {
   const [isActivateModalOpen, setIsActivateModalOpen] = useState(false);
   const [activePlanObj, setActivePlanObj] = useState<{ name: string; price: number; id: string } | null>(null);
   const [inputActivationCode, setInputActivationCode] = useState('');
+  const [directActivationCode, setDirectActivationCode] = useState('');
   const [isSubmittingCode, setIsSubmittingCode] = useState(false);
 
   const plans = [
@@ -100,20 +101,22 @@ export default function PricingPage() {
     setIsActivateModalOpen(true);
   };
 
-  const handleActivateSubmit = async (e: React.FormEvent) => {
+  const handleActivateSubmit = async (e: React.FormEvent, codeToSubmit?: string) => {
     e.preventDefault();
-    if (!inputActivationCode.trim()) {
+    const code = codeToSubmit || inputActivationCode;
+    if (!code.trim()) {
       toast.error('الرجاء إدخال كود التفعيل');
       return;
     }
 
     setIsSubmittingCode(true);
-    const success = await activateLicense(inputActivationCode);
+    const success = await activateLicense(code);
     setIsSubmittingCode(false);
 
     if (success) {
       setIsActivateModalOpen(false);
       setInputActivationCode('');
+      setDirectActivationCode('');
     }
   };
 
@@ -123,13 +126,13 @@ export default function PricingPage() {
       <div className="text-center space-y-4 pt-6">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-black">
           <Sparkles className="w-4 h-4 animate-spin" />
-          <span>نظام التفعيل بكود حقيقي (دفع واقعي وتفعيل فوري)</span>
+          <span>نظام التفعيل الفوري بأكواد الآمان</span>
         </div>
         <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
           خطط الأسعار والباقات التجاريّة
         </h1>
         <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-          اشتري الترخيص بالطريقة التي تفضلها في الواقع (نقداً، تحويل بنكي، أو وسائل دفع محلية)، وسنمنحك <span className="text-emerald-600 dark:text-emerald-400 font-bold">كود تفعيل خاص</span> تفتحه هنا لتتمتع بالنسخة الكاملة فوراً.
+          اشتري الترخيص بالطريقة التي تفضلها في الواقع، وسنمنحك <span className="text-emerald-600 dark:text-emerald-400 font-bold">كود تفعيل خاص</span> تفتحه هنا لتتمتع بالنسخة الكاملة فوراً.
         </p>
 
         {/* Current License Status Banner if licensed */}
@@ -154,6 +157,48 @@ export default function PricingPage() {
           </div>
         )}
 
+        {/* Professional Direct Activation Card */}
+        <div className="max-w-2xl mx-auto bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 rounded-3xl p-6 md:p-8 border border-emerald-500/30 text-white shadow-xl relative overflow-hidden text-right space-y-6">
+          <div className="absolute -left-16 -top-16 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-600/30 shrink-0">
+              <Lock className="w-7 h-7 text-white" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg md:text-xl font-black text-white flex items-center gap-2">
+                <span>تفعيل الاشتراك فوراً</span>
+                <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2.5 py-0.5 rounded-full font-bold">آمن ومحمي</span>
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                أدخل كود التفعيل الذي استلمته بعد الدفع الواقعي لإلغاء قفل كافة الميزات المتقدمة، تحليل الميزانية، وصندوق الطوارئ الآن.
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={(e) => handleActivateSubmit(e, directActivationCode)} className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="أدخل كود التفعيل (مثال: PRO-2026-XXXX)"
+                value={directActivationCode}
+                onChange={(e) => setDirectActivationCode(e.target.value)}
+                className="w-full px-4 py-3.5 pl-11 rounded-2xl bg-slate-800/90 border border-slate-700 text-sm font-mono font-black text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 uppercase tracking-wider"
+                required
+              />
+              <Key className="w-5 h-5 text-emerald-400 absolute left-3.5 top-3.5 pointer-events-none" />
+            </div>
+            <button
+              type="submit"
+              disabled={isSubmittingCode}
+              className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-95 text-white font-black text-xs rounded-2xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 shrink-0"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>{isSubmittingCode ? 'جاري التفعيل...' : 'تفعيل الكود'}</span>
+            </button>
+          </form>
+        </div>
+
         {/* Real-life purchase instructions */}
         <div className="max-w-3xl mx-auto bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-right space-y-3">
           <h3 className="text-sm md:text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -171,7 +216,7 @@ export default function PricingPage() {
             </div>
             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 space-y-1">
               <span className="font-black text-emerald-600">3. إدخال الكود</span>
-              <p>اضغط على زر التفعيل لأي باقة وأدخل الكود ليتم ترقية حسابك فوراً ودون انتظار.</p>
+              <p>أدخل الكود في خانة التفعيل أعلاه ليتم ترقية حسابك فوراً ودون انتظار.</p>
             </div>
           </div>
         </div>
